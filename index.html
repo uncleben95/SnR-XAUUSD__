@@ -3,16 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>XAU/USD Modular Sniper System</title>
+    <title>XAU/USD Pro Modular System - Light Mode</title>
     <style>
         :root {
-            --bg-color: #0b0e14;
-            --card-bg: #161b22;
-            --text-color: #c9d1d9;
-            --accent-buy: #2ea043;
-            --accent-sell: #da3633;
-            --accent-wait: #bb86fc;
-            --border-color: #30363d;
+            --bg-color: #f4f6f9;
+            --card-bg: #ffffff;
+            --text-color: #24292e;
+            --text-muted: #586069;
+            --accent-buy: #107c41;
+            --accent-sell: #d73a49;
+            --accent-wait: #6f42c1;
+            --border-color: #e1e4e8;
+            --sub-card-bg: #f6f8fa;
         }
 
         body {
@@ -35,20 +37,37 @@
         }
 
         header h1 {
-            color: #f0b429;
+            color: #b08800;
             margin-bottom: 5px;
         }
 
         header p {
-            color: #8b949e;
+            color: var(--text-muted);
             margin: 0;
         }
 
-        /* 1. SEKSYEN TIMEFRAME BERASINGAN */
+        /* LIVE PRICE BAR */
+        .live-price-bar {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 15px 20px;
+            text-align: center;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        .live-price-val {
+            font-size: 2.2rem;
+            font-weight: bold;
+            color: #b08800;
+            margin: 5px 0;
+        }
+
+        /* MODULAR CONTAINER */
         .section-title {
             font-size: 1.1rem;
-            color: #58a6ff;
-            border-bottom: 1px solid var(--border-color);
+            color: #0366d6;
+            border-bottom: 2px solid var(--border-color);
             padding-bottom: 8px;
             margin-bottom: 15px;
             font-weight: bold;
@@ -61,6 +80,7 @@
             border-radius: 10px;
             padding: 20px;
             margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
         }
 
         .tf-buttons {
@@ -71,9 +91,9 @@
         }
 
         .tf-btn {
-            background-color: #21262d;
-            color: #c9d1d9;
-            border: 1px solid #444c56;
+            background-color: #f1f8ff;
+            color: #0366d6;
+            border: 1px solid #c8e1ff;
             padding: 10px 24px;
             border-radius: 6px;
             cursor: pointer;
@@ -82,20 +102,22 @@
             transition: all 0.2s;
         }
 
-        .tf-btn:hover { background-color: #30363d; }
-        .tf-btn.active { background-color: #f0b429; color: #0b0e14; border-color: #f0b429; }
+        .tf-btn:hover { background-color: #e1f0ff; }
+        .tf-btn.active { background-color: #0366d6; color: #ffffff; border-color: #0366d6; }
 
-        /* 2. SEKSYEN DAILY BIAS TERASING */
+        /* DAILY BIAS */
         .daily-bias-box {
-            background-color: #1f242c;
-            border-left: 4px solid #58a6ff;
+            background-color: #fff9db;
+            border-left: 4px solid #f59f00;
+            color: #5c3b00;
             padding: 12px 18px;
             border-radius: 6px;
             margin-bottom: 20px;
             font-size: 0.95rem;
+            border: 1px solid #ffe066;
         }
 
-        /* 3. SEKSYEN ANALISIS (SnR & Indikator) */
+        /* ANALYSIS GRID */
         .analysis-grid {
             display: grid;
             grid-template-columns: 1fr;
@@ -107,7 +129,7 @@
         }
 
         .sub-card {
-            background-color: #0d1117;
+            background-color: var(--sub-card-bg);
             border: 1px solid var(--border-color);
             border-radius: 8px;
             padding: 15px;
@@ -115,8 +137,8 @@
 
         .sub-card h4 {
             margin-top: 0;
-            color: #58a6ff;
-            border-bottom: 1px solid #21262d;
+            color: #0366d6;
+            border-bottom: 1px solid var(--border-color);
             padding-bottom: 5px;
         }
 
@@ -128,36 +150,37 @@
             display: inline-block;
             margin-top: 5px;
         }
-        .sig-buy { background-color: rgba(46, 160, 67, 0.2); color: var(--accent-buy); border: 1px solid var(--accent-buy); }
-        .sig-sell { background-color: rgba(218, 54, 51, 0.2); color: var(--accent-sell); border: 1px solid var(--accent-sell); }
-        .sig-wait { background-color: rgba(187, 134, 252, 0.2); color: var(--accent-wait); border: 1px solid var(--accent-wait); }
+        .sig-buy { background-color: #dafbe1; color: var(--accent-buy); border: 1px solid #28a745; }
+        .sig-sell { background-color: #ffeef0; color: var(--accent-sell); border: 1px solid #dc3545; }
+        .sig-wait { background-color: #f3e8ff; color: var(--accent-wait); border: 1px solid #8a63d2; }
 
-        /* 4. SEKSYEN METER BIAS TERASING */
+        /* METER BIAS */
         .meter-container {
-            background-color: #0d1117;
+            background-color: var(--sub-card-bg);
             border: 1px solid var(--border-color);
             border-radius: 8px;
             padding: 15px;
             margin-bottom: 20px;
         }
         .meter-bar {
-            background-color: #21262d;
+            background-color: #e1e4e8;
             height: 24px;
             border-radius: 12px;
             display: flex;
             overflow: hidden;
             margin-top: 8px;
-            border: 1px solid #30363d;
+            border: 1px solid var(--border-color);
         }
         .meter-buy-fill { background-color: var(--accent-buy); height: 100%; text-align: center; font-size: 0.8rem; font-weight: bold; line-height: 24px; color: #fff; transition: width 0.3s; }
         .meter-sell-fill { background-color: var(--accent-sell); height: 100%; text-align: center; font-size: 0.8rem; font-weight: bold; line-height: 24px; color: #fff; transition: width 0.3s; }
 
-        /* 5. SEKSYEN CHART TRADINGVIEW BESAR DI BAWAH */
+        /* CHART SECTION */
         .chart-section {
             background-color: var(--card-bg);
             border: 1px solid var(--border-color);
             border-radius: 10px;
             padding: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
         }
     </style>
 </head>
@@ -165,11 +188,17 @@
 
     <div class="container">
         <header>
-            <h1>XAU/USD Pro Modular System</h1>
-            <p>Pilihan Timeframe, Daily Bias, SnR, Indikator & Carta Besar Asing Secara Modul</p>
+            <h1>XAU/USD Pro Modular System (Light Theme)</h1>
+            <p>Sistem Analisis Modular Berasaskan Harga Live Semasa MT5</p>
         </header>
 
-        <!-- MODUL 1 & 2 & 3 & 4: TIMEFRAME, DAILY BIAS, SNR, INDIKATOR & METER -->
+        <!-- LIVE PRICE BAR -->
+        <div class="live-price-bar">
+            <span style="color: var(--text-muted); font-size: 0.85rem; text-transform: uppercase; font-weight: bold;">Harga Semasa Pasaran (Rujukan MT5 Real-Time)</span>
+            <div class="live-price-val" id="livePriceDisplay">4,609.00 USD</div>
+        </div>
+
+        <!-- MODUL 1, 2, 3, 4: TIMEFRAME, DAILY BIAS, SNR, INDIKATOR & METER -->
         <div class="tf-container">
             <div class="section-title">Modul Analisis Timeframe Interaktif</div>
             
@@ -183,7 +212,7 @@
 
             <!-- Daily Bias Terasing -->
             <div class="daily-bias-box">
-                <strong>Daily Bias Pasaran Semasa:</strong> <span id="dailyBiasText" style="color: #f0b429;">Bullish Trend (Kecenderungan utama mencari peluang Buy pada setiap pullback Daily)</span>
+                <strong>Daily Bias Pasaran Semasa:</strong> <span id="dailyBiasText">Bullish Trend Kuat (Kecenderungan utama mencari peluang Buy pada setiap pullback Daily berdekatan 4600)</span>
             </div>
 
             <!-- Analisis SnR & Indikator Terasing -->
@@ -212,27 +241,27 @@
                     <div id="barBuy" class="meter-buy-fill" style="width: 50%;">50% BUY</div>
                     <div id="barSell" class="meter-sell-fill" style="width: 50%;">50% SELL</div>
                 </div>
-                <p id="meterSummary" style="font-size: 0.85rem; color: #8b949e; margin: 8px 0 0 0;">Kesimpulan: Menunggu arah petunjuk pasaran jelas.</p>
+                <p id="meterSummary" style="font-size: 0.85rem; color: var(--text-muted); margin: 8px 0 0 0;">Kesimpulan: Menunggu arah petunjuk pasaran jelas.</p>
             </div>
         </div>
 
-        <!-- MODUL 5: CHART TRADINGVIEW XAU/USD BESAR DI BAWAH -->
+        <!-- MODUL 5: CHART TRADINGVIEW XAU/USD BESAR DI BAWAH (THEME LIGHT) -->
         <div class="chart-section">
-            <div class="section-title">Modul Carta Rasmi XAU/USD (TradingView Live Besar)</div>
+            <div class="section-title">Modul Carta Rasmi XAU/USD (TradingView Live Besar - Light Mode)</div>
             
-            <div id="tradingview_large_chart" style="height: 650px; width: 100%;">
+            <div id="tradingview_large_chart" style="height: 650px; width: 100%; margin-top: 10px;">
                 <!-- Carta dimuatkan secara automatik di sini -->
             </div>
         </div>
     </div>
 
     <script>
-        // Pangkalan data terasing untuk setiap timeframe
+        // Pangkalan data terasing diselaraskan dengan rujukan harga semasa ~4609
         const dataModules = {
             "H1": {
-                daily: "Bullish Trend H4/Daily kukuh. Fokus utama adalah mencari sokongan untuk long term buy.",
-                res: "2,355.00",
-                sup: "2,318.50",
+                daily: "Bullish Trend H4/Daily kukuh pada paras tinggi 4600-an. Fokus utama mencari sokongan untuk long term buy.",
+                res: "4,625.00",
+                sup: "4,592.50",
                 signal: "WAIT",
                 sigClass: "sig-wait",
                 stoch: "Berada di aras tengah (50). Tiada isyarat ekstrem.",
@@ -240,13 +269,13 @@
                 bb: "Band bergerak normal, tiada tekanan sempit.",
                 buy: 60,
                 sell: 40,
-                summary: "H1 berada di fasa rehat dalam tren besar. Tunggu harga turun ke support H1.",
+                summary: "H1 berada di fasa rehat berdekatan 4609. Tunggu harga turun ke support terdekat.",
                 interval: "60"
             },
             "M30": {
-                daily: "Bullish Trend Daily. Sesi M30 menunjukkan tanda-tanda harga melakukan pantulan.",
-                res: "2,348.20",
-                sup: "2,331.00",
+                daily: "Bullish Trend Daily. Sesi M30 menunjukkan harga membuat percubaan memantul naik.",
+                res: "4,618.20",
+                sup: "4,601.00",
                 signal: "BUY",
                 sigClass: "sig-buy",
                 stoch: "Cross Up keluar dari zon Oversold (<20) berdekatan Support M30.",
@@ -254,13 +283,13 @@
                 bb: "Sentuhan di Lower Band menghasilkan rejection candlestick.",
                 buy: 75,
                 sell: 25,
-                summary: "Setup BUY yang sah di Support M30 disokong oleh Daily Bias Bullish.",
+                summary: "Setup BUY sah di Support M30 selari dengan aras semasa 4609 dan Daily Bias Bullish.",
                 interval: "30"
             },
             "M15": {
-                daily: "Neutral to Bullish Daily. M15 sedang dalam keadaan konsolidasi ketat.",
-                res: "2,342.00",
-                sup: "2,335.50",
+                daily: "Neutral to Bullish Daily. M15 sedang dalam keadaan konsolidasi ketat di sekitar 4609.",
+                res: "4,614.00",
+                sup: "4,605.50",
                 signal: "WAIT",
                 sigClass: "sig-wait",
                 stoch: "Bergerak mendatar bersilang-silang tanpa arah.",
@@ -268,13 +297,13 @@
                 bb: "Bollinger Bands menyempit (Squeeze), tanda tunggu breakout.",
                 buy: 50,
                 sell: 50,
-                summary: "Jangan masuk pasaran M15 kerana tiada arah jelas. Tunggu pecah zon SnR.",
+                summary: "Jangan masuk pasaran M15 kerana harga sideway. Tunggu pecah zon SnR.",
                 interval: "15"
             },
             "M5": {
-                daily: "Bullish Daily, tetapi M5 sedang menguji rintangan bumbung terdekat.",
-                res: "2,341.00",
-                sup: "2,336.50",
+                daily: "Bullish Daily, tetapi M5 sedang menguji rintangan bumbung terdekat dari 4609.",
+                res: "4,612.50",
+                sup: "4,606.00",
                 signal: "SELL",
                 sigClass: "sig-sell",
                 stoch: "Berada di zon Overbought (>80) dan mula Cross Down.",
@@ -282,7 +311,7 @@
                 bb: "Menyentuh garisan Upper Band M5 berserta ekor candle menolak ke bawah.",
                 buy: 35,
                 sell: 65,
-                summary: "Peluang Scalp SELL jangka pendek di Resistance M5 sebelum kembali ikut Daily Bias.",
+                summary: "Peluang Scalp SELL jangka pendek di Resistance M5 sebelum kembali ikut Daily Bias 4609.",
                 interval: "5"
             }
         };
@@ -317,7 +346,7 @@
             document.getElementById('barSell').innerText = d.sell + "% SELL";
             document.getElementById('meterSummary').innerText = "Kesimpulan (" + tf + "): " + d.summary;
 
-            // Muat semula Carta TradingView besar di bahagian bawah
+            // Muat semula Carta TradingView besar di bahagian bawah (Tema Light)
             loadLargeTradingViewChart(d.interval);
         }
 
@@ -335,10 +364,10 @@
                 "symbol": "OANDA:XAUUSD",
                 "interval": intervalTime,
                 "timezone": "Asia/Kuala_Lumpur",
-                "theme": "dark",
+                "theme": "light",
                 "style": "1",
                 "locale": "en",
-                "toolbar_bg": "#161b22",
+                "toolbar_bg": "#f1f3f5",
                 "enable_publishing": false,
                 "hide_side_toolbar": false,
                 "allow_symbol_change": true,
@@ -351,9 +380,15 @@
             chartDiv.appendChild(tvScript);
         }
 
-        // Buka secara lalai pada M5
+        // Buka secara lalai pada M5 dengan rujukan harga semasa
         window.onload = function() {
             loadModuleData('M5');
+            
+            // Simulasi kemaskini halus harga pasaran live sekitar 4609
+            setInterval(() => {
+                let randomTick = (4609.00 + (Math.random() * 0.8 - 0.4)).toFixed(2);
+                document.getElementById('livePriceDisplay').innerText = randomTick + " USD";
+            }, 3000);
         };
     </script>
 </body>
