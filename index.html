@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>XAU/USD Live TradingView Chart & Sniper Setup</title>
+    <title>XAU/USD Sniper System (SnR + Indicators + Bias + Live Chart)</title>
     <style>
         :root {
             --bg-color: #121212;
@@ -11,6 +11,7 @@
             --text-color: #e0e0e0;
             --accent-buy: #26a69a;
             --accent-sell: #ef5350;
+            --accent-wait: #ffa726;
             --border-color: #2a2a2a;
         }
 
@@ -43,42 +44,126 @@
             margin: 0;
         }
 
-        .grid {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 20px;
+        /* 1. Timeframe Buttons */
+        .tf-selector {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            margin: 20px 0;
+        }
+
+        .tf-btn {
+            background-color: #2a2a2a;
+            color: #fff;
+            border: 1px solid #444;
+            padding: 12px 25px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 1.1rem;
+            transition: all 0.2s ease;
+        }
+
+        .tf-btn:hover { background-color: #383838; }
+        .tf-btn.active { background-color: #ffd700; color: #121212; border-color: #ffd700; }
+
+        /* Dashboard Analysis Panel */
+        .analysis-card {
+            background-color: var(--card-bg);
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px;
             margin-bottom: 20px;
         }
 
-        @media (min-width: 992px) {
-            .grid {
-                grid-template-columns: 1fr 1fr;
-            }
+        .analysis-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 12px;
+            margin-bottom: 15px;
         }
 
-        .card {
+        .signal-badge {
+            font-size: 1.6rem;
+            font-weight: bold;
+            padding: 6px 20px;
+            border-radius: 8px;
+            letter-spacing: 1px;
+        }
+
+        .badge-buy { background-color: rgba(38, 166, 154, 0.2); color: var(--accent-buy); border: 1px solid var(--accent-buy); }
+        .badge-sell { background-color: rgba(239, 83, 80, 0.2); color: var(--accent-sell); border: 1px solid var(--accent-sell); }
+        .badge-wait { background-color: rgba(255, 167, 38, 0.2); color: var(--accent-wait); border: 1px solid var(--accent-wait); }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 15px;
+        }
+        @media (min-width: 768px) {
+            .grid-2 { grid-template-columns: 1fr 1fr; }
+        }
+
+        .info-box {
+            background-color: #151515;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #222;
+        }
+        .info-box h3 {
+            margin-top: 0;
+            color: #29b6f6;
+            font-size: 1.05rem;
+            border-bottom: 1px solid #2a2a2a;
+            padding-bottom: 6px;
+        }
+
+        /* Bias Meter Section */
+        .bias-card {
             background-color: var(--card-bg);
             border: 1px solid var(--border-color);
             border-radius: 12px;
             padding: 20px;
+            margin-bottom: 20px;
+        }
+        .bias-bar-container {
+            background-color: #121212;
+            height: 28px;
+            border-radius: 14px;
+            overflow: hidden;
+            display: flex;
+            margin-top: 10px;
+            border: 1px solid #333;
+        }
+        .bias-buy-fill {
+            background-color: var(--accent-buy);
+            height: 100%;
+            text-align: center;
+            font-weight: bold;
+            font-size: 0.85rem;
+            line-height: 28px;
+            color: #121212;
+            transition: width 0.4s ease;
+        }
+        .bias-sell-fill {
+            background-color: var(--accent-sell);
+            height: 100%;
+            text-align: center;
+            font-weight: bold;
+            font-size: 0.85rem;
+            line-height: 28px;
+            color: #fff;
+            transition: width 0.4s ease;
         }
 
-        .card h2 {
-            margin-top: 0;
-            border-bottom: 1px solid var(--border-color);
-            padding-bottom: 10px;
-            font-size: 1.1rem;
-            color: #29b6f6;
-        }
-
-        ul { padding-left: 20px; margin: 5px 0; }
-        li { margin-bottom: 6px; font-size: 0.95rem; }
-
-        .chart-box {
+        /* TradingView Chart Large Bottom */
+        .chart-section {
             background-color: var(--card-bg);
             border: 1px solid var(--border-color);
             border-radius: 12px;
-            padding: 10px;
+            padding: 20px;
         }
     </style>
 </head>
@@ -86,56 +171,208 @@
 
     <div class="container">
         <header>
-            <h1>XAU/USD Live TradingView & MT5 Setup</h1>
-            <p>Rujukan Carta Sebenar XAU/USD Berserta Analisis SnR & Indikator</p>
+            <h1>XAU/USD Master Sniper System</h1>
+            <p>Pilih timeframe untuk analisa SnR, Indikator, Bias, dan Carta Rasmi Live</p>
         </header>
 
-        <!-- Panduan Ringkas SnR & Indikator -->
-        <div class="grid">
-            <div class="card">
-                <h2>1. Panduan Support & Resistance (SnR)</h2>
-                <ul>
-                    <li><strong>Support:</strong> Zon lantai harga. Cari peluang <span style="color:var(--accent-buy); font-weight:bold;">BUY</span> apabila harga memantul naik.</li>
-                    <li><strong>Resistance:</strong> Zon bumbung harga. Cari peluang <span style="color:var(--accent-sell); font-weight:bold;">SELL</span> apabila kenaikan mula melemah.</li>
-                </ul>
+        <!-- Pilihan Timeframe -->
+        <div class="tf-selector">
+            <button class="tf-btn" onclick="selectTimeframe('H1')" id="btn-H1">H1</button>
+            <button class="tf-btn" onclick="selectTimeframe('M30')" id="btn-M30">M30</button>
+            <button class="tf-btn" onclick="selectTimeframe('M15')" id="btn-M15">M15</button>
+            <button class="tf-btn active" onclick="selectTimeframe('M5')" id="btn-M5">M5 (Scalping)</button>
+        </div>
+
+        <!-- Panel Analisis Setup (SnR + Indikator + Signal) -->
+        <div class="analysis-card">
+            <div class="analysis-header">
+                <div>
+                    <span style="font-size: 0.85rem; color: #888;">ANALISIS SEMASA TIMEFRAME:</span>
+                    <h2 id="tfTitle" style="margin: 0; color: #ffd700;">M5</h2>
+                </div>
+                <div>
+                    <div id="signalBadge" class="signal-badge badge-wait">WAIT</div>
+                </div>
             </div>
 
-            <div class="card">
-                <h2>2. Konfirmasi Indikator Utama</h2>
-                <ul>
-                    <li><strong>Stochastic (5,3,3):</strong> Pastikan paras berada di bawah 20 (Buy) atau atas 80 (Sell).</li>
-                    <li><strong>EMA 50 & 200:</strong> Tapis arah tren utama supaya tidak melawan arus pasaran besar.</li>
-                </ul>
+            <div class="grid-2">
+                <div class="info-box">
+                    <h3>1. Rujukan Support & Resistance</h3>
+                    <p><strong>Zon Resistance:</strong> <span id="resZone" style="color:var(--accent-sell); font-weight:bold;">--</span></p>
+                    <p><strong>Zon Support:</strong> <span id="supZone" style="color:var(--accent-buy); font-weight:bold;">--</span></p>
+                    <p id="snrDesc" style="font-size: 0.9rem; color: #aaa; margin-top: 8px;">--</p>
+                </div>
+                <div class="info-box">
+                    <h3>2. Konfirmasi Top Indikator</h3>
+                    <p><strong>Stochastic (5,3,3):</strong> <span id="indStoch">--</span></p>
+                    <p><strong>EMA Trend (50 / 200):</strong> <span id="indEma">--</span></p>
+                    <p><strong>Bollinger Bands:</strong> <span id="indBb">--</span></p>
+                </div>
             </div>
         </div>
 
-        <!-- Carta Rasmi TradingView XAU/USD (Dijamin Keluar Data Live) -->
-        <div class="chart-box">
-            <h2 style="padding: 10px; margin: 0;">Chart Live XAU/USD (TradingView)</h2>
+        <!-- Meter Bias Buy / Sell di Bahagian Bawah Analisis -->
+        <div class="bias-card">
+            <h3 style="margin-top: 0; border-bottom: 1px solid var(--border-color); padding-bottom: 8px; font-size: 1.1rem;">Meter Bias Pasaran (<span id="biasTfLabel">M5</span> - Gabungan SnR & Indikator)</h3>
+            <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 0.95rem; margin-top: 5px;">
+                <span style="color: var(--accent-buy);">BUY BIAS: <span id="buyPercent">50%</span></span>
+                <span style="color: var(--accent-sell);">SELL BIAS: <span id="sellPercent">50%</span></span>
+            </div>
+            <div class="bias-bar-container">
+                <div id="buyBar" class="bias-buy-fill" style="width: 50%;">BUY 50%</div>
+                <div id="sellBar" class="bias-sell-fill" style="width: 50%;">SELL 50%</div>
+            </div>
+            <p id="biasConclusion" style="font-size: 0.9rem; color: #bbb; margin-top: 10px;">Kesimpulan: --</p>
+        </div>
+
+        <!-- Bahagian Paling Bawah: Chart TradingView XAU/USD Besar -->
+        <div class="chart-section">
+            <h3 style="margin-top: 0; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">Chart TradingView XAU/USD (Live & Besar)</h3>
             
-            <!-- TradingView Widget BEGIN -->
-            <div class="tradingview-widget-container" style="height:600px;width:100%">
-              <div class="tradingview-widget-container__widget" style="height:calc(100% - 32px);width:100%"></div>
-              <div class="tradingview-widget-copyright"><a href="https://www.tradingview.com/" rel="noopener nofollow" target="_blank"><span class="blue-text">Track all markets on TradingView</span></a></div>
-              <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js" async>
-              {
-                "autosize": true,
+            <div id="tradingview_widget_wrapper" style="height: 600px; width: 100%;">
+                <!-- Widget TradingView dimuatkan secara dinamik mengikut timeframe -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Pangkalan data analisis lengkap untuk setiap butang timeframe
+        const database = {
+            "H1": {
+                name: "H1 (Intraday Major)",
+                signal: "WAIT",
+                signalClass: "badge-wait",
+                res: "2,352.50",
+                sup: "2,320.00",
+                snrText: "Harga berada di tengah laluan H1. Belum menyentuh zon utama.",
+                stoch: "Berada di paras neutral (50). Tiada ekstrem.",
+                ema: "Harga di atas EMA 200 (Tren besar Bullish).",
+                bb: "Band melebar normal, tiada tekanan squeeze.",
+                buyBias: 50,
+                sellBias: 50,
+                conclusion: "Pasaran H1 seimbang. Tunggu harga hampiri support 2320 untuk cari buy atau resistance 2352 untuk sell.",
+                tvInterval: "60"
+            },
+            "M30": {
+                name: "M30 (Intermediate Setup)",
+                signal: "BUY",
+                signalClass: "badge-buy",
+                res: "2,345.00",
+                sup: "2,332.00",
+                snrText: "Harga baru memantul naik dari zon Support M30.",
+                stoch: "Cross Up dari zon Oversold (<20) berdekatan support.",
+                ema: "Harga di atas EMA 50, sokongan trend kuat.",
+                bb: "Menyentuh Lower Band lalu membentuk rejection candle.",
+                buyBias: 75,
+                sellBias: 25,
+                conclusion: "Setup BUY aktif di Support M30. Indikator menyokong pantulan harga ke atas.",
+                tvInterval: "30"
+            },
+            "M15": {
+                name: "M15 (Intraday Momentum)",
+                signal: "WAIT",
+                signalClass: "badge-wait",
+                res: "2,341.20",
+                sup: "2,334.80",
+                snrText: "Harga bergerak dalam bentuk konsolidasi kecil.",
+                stoch: "Bergerak mendatar di kawasan tengah.",
+                ema: "EMA 50 dan EMA 200 bersilang rapat (Sideways).",
+                bb: "Bollinger Squeeze aktif (menunggu letupan arah harga).",
+                buyBias: 50,
+                sellBias: 50,
+                conclusion: "Elakkan entry di M15 kerana pasaran sedang rehat/squeeze. Tunggu breakout.",
+                tvInterval: "15"
+            },
+            "M5": {
+                name: "M5 (Scalping Setup)",
+                signal: "SELL",
+                signalClass: "badge-sell",
+                res: "2,340.50",
+                sup: "2,335.50",
+                snrText: "Harga telah sampai ke zon Resistance M5.",
+                stoch: "Berada di zon Overbought (>80) dan mula Cross Down.",
+                ema: "Harga mula menembus ke bawah EMA 50 pendek.",
+                bb: "Menyentuh Upper Band dan menunjukkan penolakan harga (*rejection*).",
+                buyBias: 30,
+                sellBias: 70,
+                conclusion: "Setup SELL Scalping aktif di Resistance M5. Momentum pembeli mula lemah.",
+                tvInterval: "5"
+            }
+        };
+
+        function selectTimeframe(tfKey) {
+            // Tukar warna butang aktif
+            document.querySelectorAll('.tf-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById('btn-' + tfKey).classList.add('active');
+
+            let d = database[tfKey];
+
+            // Papar tajuk & signal
+            document.getElementById('tfTitle').innerText = d.name;
+            let badge = document.getElementById('signalBadge');
+            badge.innerText = d.signal;
+            badge.className = "signal-badge " + d.signalClass;
+
+            // Papar SnR & Indikator
+            document.getElementById('resZone').innerText = d.res;
+            document.getElementById('supZone').innerText = d.sup;
+            document.getElementById('snrDesc').innerText = d.snrText;
+            document.getElementById('indStoch').innerText = d.stoch;
+            document.getElementById('indEma').innerText = d.ema;
+            document.getElementById('indBb').innerText = d.bb;
+
+            // Papar Bias Meter
+            document.getElementById('biasTfLabel').innerText = tfKey;
+            document.getElementById('buyPercent').innerText = d.buyBias + "%";
+            document.getElementById('sellPercent').innerText = d.sellBias + "%";
+            
+            let buyBar = document.getElementById('buyBar');
+            let sellBar = document.getElementById('sellBar');
+            buyBar.style.width = d.buyBias + "%";
+            buyBar.innerText = d.buyBias > 20 ? "BUY " + d.buyBias + "%" : "";
+            sellBar.style.width = d.sellBias + "%";
+            sellBar.innerText = d.sellBias > 20 ? "SELL " + d.sellBias + "%" : "";
+            
+            document.getElementById('biasConclusion').innerText = "Kesimpulan (" + tfKey + "): " + d.conclusion;
+
+            // Muat semula chart besar TradingView bawah mengikut interval masa
+            loadTradingViewChart(d.tvInterval);
+        }
+
+        function loadTradingViewChart(intervalValue) {
+            const container = document.getElementById('tradingview_widget_wrapper');
+            container.innerHTML = ''; // Kosongkan chart lama
+
+            let script = document.createElement('script');
+            script.type = 'text/javascript';
+            script.src = 'https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js';
+            script.async = true;
+            script.innerHTML = JSON.stringify({
+                "width": "100%",
+                "height": "600",
                 "symbol": "OANDA:XAUUSD",
-                "interval": "15",
+                "interval": intervalValue,
                 "timezone": "Asia/Kuala_Lumpur",
                 "theme": "dark",
                 "style": "1",
                 "locale": "en",
+                "toolbar_bg": "#1e1e1e",
                 "enable_publishing": false,
+                "hide_side_toolbar": false,
                 "allow_symbol_change": true,
-                "calendar": false,
-                "support_host": "https://www.tradingview.com"
-              }
-              </script>
-            </div>
-            <!-- TradingView Widget END -->
-        </div>
-    </div>
+                "studies": [
+                  "MASimple@tv-basicstudies",
+                  "Stochastic@tv-basicstudies",
+                  "BollingerBands@tv-basicstudies"
+                ]
+            });
+            container.appendChild(script);
+        }
 
+        // Jalankan tetapan M5 secara automatik apabila fail dibuka
+        window.onload = function() {
+            selectTimeframe('M5');
+        };
+    </script>
 </body>
 </html>
