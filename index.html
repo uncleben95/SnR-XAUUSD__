@@ -189,7 +189,7 @@
     <div class="container">
         <header>
             <h1>XAU/USD Pro Modular System (Light Theme)</h1>
-            <p>Sistem Analisis Modular Berasaskan Harga Live Semasa MT5</p>
+            <p>Sistem Analisis Modular Berasaskan Harga Live Semasa MT5 (~4609)</p>
         </header>
 
         <!-- LIVE PRICE BAR -->
@@ -212,7 +212,7 @@
 
             <!-- Daily Bias Terasing -->
             <div class="daily-bias-box">
-                <strong>Daily Bias Pasaran Semasa:</strong> <span id="dailyBiasText">Bullish Trend Kuat (Kecenderungan utama mencari peluang Buy pada setiap pullback Daily berdekatan 4600)</span>
+                <strong>Daily Bias Pasaran Semasa:</strong> <span id="dailyBiasText">Bullish Trend Kuat pada paras 4600-an. Fokus utama mencari peluang Buy pada pullback.</span>
             </div>
 
             <!-- Analisis SnR & Indikator Terasing -->
@@ -256,12 +256,12 @@
     </div>
 
     <script>
-        // Pangkalan data terasing diselaraskan dengan rujukan harga semasa ~4609
+        // Pangkalan data terasing diselaraskan secara dinamik dengan rujukan asas 4609.00
         const dataModules = {
             "H1": {
                 daily: "Bullish Trend H4/Daily kukuh pada paras tinggi 4600-an. Fokus utama mencari sokongan untuk long term buy.",
-                res: "4,625.00",
-                sup: "4,592.50",
+                resOffsetUp: 18.50,
+                supOffsetDown: 16.00,
                 signal: "WAIT",
                 sigClass: "sig-wait",
                 stoch: "Berada di aras tengah (50). Tiada isyarat ekstrem.",
@@ -269,13 +269,13 @@
                 bb: "Band bergerak normal, tiada tekanan sempit.",
                 buy: 60,
                 sell: 40,
-                summary: "H1 berada di fasa rehat berdekatan 4609. Tunggu harga turun ke support terdekat.",
+                summary: "H1 berada di fasa rehat berdekatan 4609. Tunggu harga turun ke support H1.",
                 interval: "60"
             },
             "M30": {
                 daily: "Bullish Trend Daily. Sesi M30 menunjukkan harga membuat percubaan memantul naik.",
-                res: "4,618.20",
-                sup: "4,601.00",
+                resOffsetUp: 12.00,
+                supOffsetDown: 10.00,
                 signal: "BUY",
                 sigClass: "sig-buy",
                 stoch: "Cross Up keluar dari zon Oversold (<20) berdekatan Support M30.",
@@ -288,8 +288,8 @@
             },
             "M15": {
                 daily: "Neutral to Bullish Daily. M15 sedang dalam keadaan konsolidasi ketat di sekitar 4609.",
-                res: "4,614.00",
-                sup: "4,605.50",
+                resOffsetUp: 7.50,
+                supOffsetDown: 6.50,
                 signal: "WAIT",
                 sigClass: "sig-wait",
                 stoch: "Bergerak mendatar bersilang-silang tanpa arah.",
@@ -302,8 +302,8 @@
             },
             "M5": {
                 daily: "Bullish Daily, tetapi M5 sedang menguji rintangan bumbung terdekat dari 4609.",
-                res: "4,612.50",
-                sup: "4,606.00",
+                resOffsetUp: 4.50,
+                supOffsetDown: 4.00,
                 signal: "SELL",
                 sigClass: "sig-sell",
                 stoch: "Berada di zon Overbought (>80) dan mula Cross Down.",
@@ -323,11 +323,19 @@
 
             let d = dataModules[tf];
 
+            // Ambil harga semasa dari elemen live text bar (atau asas 4609)
+            let currentPriceText = document.getElementById('livePriceDisplay').innerText;
+            let currentPrice = parseFloat(currentPriceText.replace(/[^0-9.]/g, '')) || 4609.00;
+
+            // Kira zon SnR secara automatik berdasarkan harga live terkini
+            let calculatedRes = (currentPrice + d.resOffsetUp).toFixed(2);
+            let calculatedSup = (currentPrice - d.supOffsetDown).toFixed(2);
+
             // Masukkan data ke modul masing-masing secara terasing
             document.getElementById('lblTf1').innerText = tf;
             document.getElementById('dailyBiasText').innerText = d.daily;
-            document.getElementById('resVal').innerText = d.res;
-            document.getElementById('supVal').innerText = d.sup;
+            document.getElementById('resVal').innerText = calculatedRes + " USD";
+            document.getElementById('supVal').innerText = calculatedSup + " USD";
             
             let sig = document.getElementById('signalBox');
             sig.innerText = d.signal;
