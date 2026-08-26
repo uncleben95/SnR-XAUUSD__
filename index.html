@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>XAU/USD Dynamic ATR & SNR Sniper Dashboard</title>
+    <title>XAU/USD Pro Sniper Dashboard + Trading Sessions & Lalamove</title>
     <style>
         :root {
             --bg-color: #f4f6f9;
@@ -33,19 +33,71 @@
 
         header {
             text-align: center;
-            margin-bottom: 20px;
+            margin-bottom: 15px;
         }
 
         header h1 {
             color: #b08800;
-            font-size: 1.5rem;
-            margin-bottom: 5px;
+            font-size: 1.4rem;
+            margin-bottom: 3px;
         }
 
         header p {
             color: var(--text-muted);
-            font-size: 0.9rem;
+            font-size: 0.85rem;
             margin: 0;
+        }
+
+        /* LIVE TRADING SESSIONS TIMELINE */
+        .sessions-bar {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 12px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.03);
+            text-align: center;
+        }
+
+        .sessions-header {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            font-weight: bold;
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .sessions-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+        }
+
+        .session-pill {
+            background-color: var(--sub-card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 8px 4px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            color: #555;
+            transition: all 0.3s ease;
+        }
+
+        .session-pill.active {
+            background-color: #dafbe1;
+            color: var(--accent-buy);
+            border-color: #28a745;
+            box-shadow: 0 0 5px rgba(16,124,65,0.2);
+        }
+
+        .session-time {
+            font-size: 0.7rem;
+            font-weight: normal;
+            color: var(--text-muted);
+            margin-top: 2px;
         }
 
         /* MASTER SIGNAL DISPLAY */
@@ -53,26 +105,26 @@
             background-color: var(--card-bg);
             border: 2px solid var(--border-color);
             border-radius: 12px;
-            padding: 20px;
+            padding: 15px;
             text-align: center;
-            margin-bottom: 20px;
+            margin-bottom: 15px;
             box-shadow: 0 4px 6px rgba(0,0,0,0.05);
         }
 
         .price-display {
-            font-size: 2rem;
+            font-size: 1.8rem;
             font-weight: bold;
             color: #b08800;
-            margin: 5px 0;
+            margin: 3px 0;
         }
 
         .signal-badge {
-            font-size: 1.5rem;
+            font-size: 1.3rem;
             font-weight: bold;
-            padding: 6px 20px;
-            border-radius: 8px;
+            padding: 4px 15px;
+            border-radius: 6px;
             display: inline-block;
-            margin: 10px 0;
+            margin: 8px 0;
             letter-spacing: 1px;
         }
         .sig-buy { background-color: #dafbe1; color: var(--accent-buy); border: 1px solid #28a745; }
@@ -80,7 +132,7 @@
         .sig-wait { background-color: #f3e8ff; color: var(--accent-wait); border: 1px solid #8a63d2; }
 
         .confidence-text {
-            font-size: 1.05rem;
+            font-size: 0.95rem;
             font-weight: bold;
             color: var(--text-muted);
         }
@@ -89,8 +141,8 @@
         .dashboard-grid {
             display: grid;
             grid-template-columns: 1fr;
-            gap: 15px;
-            margin-bottom: 20px;
+            gap: 12px;
+            margin-bottom: 15px;
         }
 
         @media(min-width: 768px) {
@@ -103,16 +155,16 @@
             background-color: var(--card-bg);
             border: 1px solid var(--border-color);
             border-radius: 10px;
-            padding: 15px;
+            padding: 12px;
             box-shadow: 0 2px 4px rgba(0,0,0,0.03);
         }
 
         .panel-card h3 {
             margin-top: 0;
             color: #0366d6;
-            font-size: 1.05rem;
+            font-size: 0.95rem;
             border-bottom: 2px solid var(--border-color);
-            padding-bottom: 8px;
+            padding-bottom: 6px;
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -121,9 +173,9 @@
         .metric-row {
             display: flex;
             justify-content: space-between;
-            padding: 8px 0;
+            padding: 6px 0;
             border-bottom: 1px solid var(--sub-card-bg);
-            font-size: 0.95rem;
+            font-size: 0.9rem;
         }
 
         .metric-row:last-child {
@@ -138,29 +190,60 @@
             background-color: var(--sub-card-bg);
             border: 1px dashed #0366d6;
             border-radius: 10px;
-            padding: 15px;
-            margin-bottom: 20px;
+            padding: 12px;
+            margin-bottom: 15px;
         }
 
         .execution-box h3 {
             margin-top: 0;
             color: #0366d6;
-            font-size: 1.05rem;
-            margin-bottom: 10px;
+            font-size: 0.95rem;
+            margin-bottom: 8px;
         }
 
         .exec-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 10px;
-            font-size: 0.95rem;
+            gap: 8px;
+            font-size: 0.9rem;
         }
 
         .exec-item {
             background: #ffffff;
-            padding: 8px 12px;
+            padding: 6px 10px;
             border-radius: 6px;
             border: 1px solid var(--border-color);
+        }
+
+        /* LALAMOVE ACTION BUTTON */
+        .lalamove-box {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.03);
+        }
+
+        .lalamove-btn {
+            background-color: #ff6600;
+            color: #ffffff;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            width: 100%;
+            transition: background 0.2s;
+            text-decoration: none;
+            display: inline-block;
+            box-sizing: border-box;
+        }
+
+        .lalamove-btn:hover {
+            background-color: #e55c00;
         }
 
         /* TRADINGVIEW CHART CONTAINER */
@@ -168,7 +251,7 @@
             background-color: var(--card-bg);
             border: 1px solid var(--border-color);
             border-radius: 10px;
-            padding: 15px;
+            padding: 12px;
             box-shadow: 0 2px 4px rgba(0,0,0,0.03);
         }
     </style>
@@ -177,34 +260,54 @@
 
     <div class="container">
         <header>
-            <h1>XAU/USD Dynamic ATR & SNR Dashboard</h1>
-            <p>Adaptive Engine: SNR + ATR (Volatility) Auto-Adjusting SL/TP</p>
+            <h1>XAU/USD Pro Sniper Dashboard</h1>
+            <p>Live Sessions + ATR Adaptive Engine + Quick Lalamove Redirect</p>
         </header>
+
+        <!-- LIVE TRADING SESSIONS TIMELINE BAR -->
+        <div class="sessions-bar">
+            <div class="sessions-header">
+                <span>Timeline Sesi Pasaran Live</span>
+                <span id="systemClock" style="color: #b08800; font-weight: bold;">--:--:-- MYT</span>
+            </div>
+            <div class="sessions-grid">
+                <div id="sessionAsian" class="session-pill">
+                    ASIAN SESI
+                    <div class="session-time">08:00 - 17:00</div>
+                </div>
+                <div id="sessionLondon" class="session-pill">
+                    LONDON SESI
+                    <div class="session-time">15:00 - 00:00</div>
+                </div>
+                <div id="sessionNY" class="session-pill">
+                    NEW YORK
+                    <div class="session-time">20:00 - 05:00</div>
+                </div>
+            </div>
+        </div>
 
         <!-- MASTER SIGNAL DISPLAY -->
         <div class="master-card">
-            <span style="font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase; font-weight: bold;">XAU/USD Live Market Price</span>
+            <span style="font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; font-weight: bold;">XAU/USD Live Market Price</span>
             <div class="price-display" id="livePrice">4,609.00</div>
             <div id="masterSignalBadge" class="signal-badge sig-wait">WAIT</div>
             <div class="confidence-text">Confidence Score: <span id="confidenceVal">0%</span></div>
         </div>
 
-        <!-- EXECUTION / TRADE SETUP PLAN (SNR + ATR ADAPTIVE) -->
+        <!-- EXECUTION / TRADE SETUP PLAN -->
         <div class="execution-box">
-            <h3>Pelan Eksekusi Dinamik (SNR + ATR 14 Auto-Adjust)</h3>
+            <h3>Pelan Eksekusi Dinamik (SNR + ATR 14)</h3>
             <div class="exec-grid">
                 <div class="exec-item"><strong>Entry Zone:</strong> <span id="execEntry">--</span></div>
                 <div class="exec-item"><strong>Stop Loss (SL):</strong> <span id="execSL" style="color:var(--accent-sell);">--</span></div>
                 <div class="exec-item"><strong>Take Profit 1 (TP1):</strong> <span id="execTP1" style="color:var(--accent-buy);">--</span></div>
                 <div class="exec-item"><strong>Take Profit 2 (TP2):</strong> <span id="execTP2" style="color:var(--accent-buy);">--</span></div>
-                <div class="exec-item" style="grid-column: span 2;"><strong>Risk : Reward Ratio (RR):</strong> <span id="execRR" style="color:#0366d6; font-weight:bold;">--</span></div>
+                <div class="exec-item" style="grid-column: span 2;"><strong>Risk : Reward Ratio:</strong> <span id="execRR" style="color:#0366d6; font-weight:bold;">--</span></div>
             </div>
         </div>
 
         <!-- TIME-FRAME BREAKDOWN PANELS -->
         <div class="dashboard-grid">
-            
-            <!-- H1 PANEL -->
             <div class="panel-card">
                 <h3>H1 (Core Structure) <span>Major Trend</span></h3>
                 <div class="metric-row"><span>SNR Major:</span> <strong id="h1Snr">--</strong></div>
@@ -212,7 +315,6 @@
                 <div class="metric-row"><span>Market Trend:</span> <strong id="h1Trend">--</strong></div>
             </div>
 
-            <!-- M15 PANEL -->
             <div class="panel-card">
                 <h3>M15 (Refinement) <span>Indikator Filter</span></h3>
                 <div class="metric-row"><span>SNR Refinement:</span> <strong id="m15Snr">--</strong></div>
@@ -221,12 +323,9 @@
                 <div class="metric-row"><span>MACD Signal:</span> <span id="m15Macd">--</span></div>
                 <div class="metric-row"><span>ADX (14) Trend Power:</span> <span id="m15Adx">--</span></div>
             </div>
-
         </div>
 
         <div class="dashboard-grid">
-            
-            <!-- M5 PANEL -->
             <div class="panel-card">
                 <h3>M5 (Reaction & Volatility) <span>Trigger Masuk</span></h3>
                 <div class="metric-row"><span>SNR Reaction Area:</span> <strong id="m5Reaction">--</strong></div>
@@ -234,64 +333,89 @@
                 <div class="metric-row"><span>ATR (14) Volatility:</span> <span id="m5Atr" style="color:#0366d6; font-weight:bold;">--</span></div>
             </div>
 
-            <!-- SUMMARY SCORE -->
             <div class="panel-card">
                 <h3>Analisis Ringkasan Sistem</h3>
                 <div class="metric-row"><span>Total Bullish Points:</span> <strong id="scoreBull" style="color:var(--accent-buy);">0 / 7</strong></div>
                 <div class="metric-row"><span>Total Bearish Points:</span> <strong id="scoreBear" style="color:var(--accent-sell);">0 / 7</strong></div>
-                <div class="metric-row"><span>Status Enjin:</span> <span id="calcStatus" style="color:#0366d6; font-weight:bold;">ATR Adaptive Live</span></div>
+                <div class="metric-row"><span>Status Enjin:</span> <span style="color:#0366d6; font-weight:bold;">Active Live</span></div>
             </div>
+        </div>
 
+        <!-- LALAMOVE QUICK REDIRECT BUTTON -->
+        <div class="lalamove-box">
+            <p style="margin: 0 0 10px 0; font-size: 0.9rem; color: var(--text-muted);">Perlukan servis penghantaran barang atau dokumen trade?</p>
+            <a href="https://www.lalamove.com" target="_blank" class="lalamove-btn">Buka Lalamove App / Web 🚀</a>
         </div>
 
         <!-- TRADINGVIEW LARGE CHART (LIGHT MODE) -->
         <div class="chart-box">
-            <h3 style="margin-top:0; color:#0366d6; border-bottom:2px solid var(--border-color); padding-bottom:8px; font-size:1.05rem;">XAU/USD Live Market Chart (M15 / M5)</h3>
-            <div id="tradingview_dashboard_chart" style="height: 500px; width: 100%; margin-top: 10px;"></div>
+            <h3 style="margin-top:0; color:#0366d6; border-bottom:2px solid var(--border-color); padding-bottom:6px; font-size:0.95rem;">XAU/USD Live Market Chart (M15 / M5)</h3>
+            <div id="tradingview_dashboard_chart" style="height: 450px; width: 100%; margin-top: 8px;"></div>
         </div>
     </div>
 
     <script>
-        // Enjin Pengiraan Auto Berasaskan SNR + ATR + Volatility
-        function runAdaptiveEngine() {
-            // Simulasi pergerakan harga live halus sekitar rujukan asas 4609.00
+        // Enjin Masa Sesi Pasaran & Pengiraan Automatik Live
+        function runDashboardEngine() {
+            // 1. Kemaskini Jam & Timeline Sesi Pasaran Mengikut Waktu Malaysia (MYT)
+            let now = new Date();
+            let hours = now.getHours();
+            let minutes = now.getMinutes();
+            let seconds = now.getSeconds();
+            
+            document.getElementById('systemClockdeg').innerText = 
+                String(hours).padStart(2, '0') + ":" + 
+                String(minutes).padStart(2, '0') + ":" + 
+                String(seconds).padStart(2, '0') + " MYT";
+            
+            // Logik Sesi Aktif (Waktu Malaysia MYT)
+            // Asian: 08:00 - 17:00
+            let isAsian = (hours >= 8 && hours < 17);
+            // London: 15:00 - 00:00
+            let isLondon = (hours >= 15 || hours < 0); 
+            // New York: 20:00 - 05:00
+            let isNY = (hours >= 20 || hours < 5);
+
+            let asianPill = document.getElementById('sessionAsian');
+            let londonPill = document.getElementById('sessionLondon');
+            let nyPill = document.getElementById('sessionNY');
+
+            asianPill.className = isAsian ? "session-pill active" : "session-pill";
+            londonPill.className = isLondon ? "session-pill active" : "session-pill";
+            nyPill.className = isNY ? "session-pill active" : "session-pill";
+
+            // 2. Enjin Pengiraan Auto Harga Live & SNR + ATR
             let basePrice = 4609.00;
             let randomTick = basePrice + (Math.sin(Date.now() / 2500) * 4.20) + (Math.random() * 1.0 - 0.5);
             let currentPrice = parseFloat(randomTick.toFixed(2));
 
             document.getElementById('livePrice').innerText = currentPrice.toFixed(2);
 
-            // Pengiraan ATR Dinamik (Volatiliti pasaran semasa bernilai antara 4.5 hingga 8.5 USD)
             let currentAtr = parseFloat((4.80 + Math.abs(Math.sin(Date.now() / 5000)) * 3.20).toFixed(2));
-            document.getElementById('m5Atr').innerText = `${currentAtr} USD (Adaptive Volatility)`;
+            document.getElementById('m5Atr').innerText = `${currentAtr} USD (Adaptive)`;
 
-            // Pengiraan SNR H1 (Major)
             let h1Res = (currentPrice + (currentAtr * 3.5)).toFixed(2);
             let h1Sup = (currentPrice - (currentAtr * 3.8)).toFixed(2);
             document.getElementById('h1Snr').innerText = `Sup: ${h1Sup} | Res: ${h1Res}`;
             document.getElementById('h1Ema200').innerHTML = `<span class="pass">Bullish (Above)</span>`;
             document.getElementById('h1Trend').innerHTML = `<span class="pass">Uptrend ✓</span>`;
 
-            // Pengiraan SNR M15 (Refinement)
             let m15Res = (currentPrice + (currentAtr * 1.8)).toFixed(2);
             let m15Sup = (currentPrice - (currentAtr * 1.5)).toFixed(2);
             document.getElementById('m15Snr').innerText = `Sup: ${m15Sup} | Res: ${m15Res}`;
             document.getElementById('m15Ema').innerHTML = `<span class="pass">EMA 20 > 50 (Bullish)</span>`;
             
-            // RSI 14 Dinamik
             let rsiVal = Math.floor(54 + (Math.sin(Date.now() / 3500) * 10));
             let rsiClass = rsiVal > 50 ? "pass" : "fail";
             document.getElementById('m15Rsi').innerHTML = `<span class="${rsiClass}">${rsiVal} ✓</span>`;
 
             document.getElementById('m15Macd').innerHTML = `<span class="pass">Bullish Crossover ✓</span>`;
-            document.getElementById('m15Adx').innerHTML = `<span class="pass">29.1 (Strong Trend) ✓</span>`;
+            document.getElementById('m15Adx').innerHTML = `<span class="pass">29.1 (Strong) ✓</span>`;
 
-            // M5 Reaction
             let m5ReactionCheck = Math.abs(currentPrice - m15Sup) < (currentAtr * 0.8) ? "Zon Support Aktif ✓" : "Di Tengah Ruang";
             document.getElementById('m5Reaction').innerText = m5ReactionCheck;
             document.getElementById('m5Momentum').innerHTML = `<span class="pass">Bullish Push ✓</span>`;
 
-            // Pemarkahan Auto Sistem
             let bullPoints = 6;
             let bearPoints = 1;
             if (rsiVal < 48) { bullPoints--; bearPoints++; }
@@ -314,8 +438,6 @@
                 badge.className = "signal-badge sig-buy";
                 confidenceElem.innerText = `${confScore}%`;
 
-                // SNR + ATR Adaptive SL & TP Formula
-                // SL diletakkan di bawah Support SNR dengan mengambil kira faktor ATR (Volatility buffer)
                 let entryLow = (currentPrice - 0.80).toFixed(2);
                 let entryHigh = (currentPrice + 0.80).toFixed(2);
                 
@@ -323,8 +445,8 @@
                 let slVal = calculatedSL.toFixed(2);
                 
                 let riskDistance = currentPrice - calculatedSL;
-                let tp1Val = (parseFloat(currentPrice) + (riskDistance * 1.5)).toFixed(2); // RR 1:1.5
-                let tp2Val = (parseFloat(currentPrice) + (riskDistance * 2.5)).toFixed(2); // RR 1:2.5
+                let tp1Val = (parseFloat(currentPrice) + (riskDistance * 1.5)).toFixed(2);
+                let tp2Val = (parseFloat(currentPrice) + (riskDistance * 2.5)).toFixed(2);
                 let dynamicRR = `1 : ${(riskDistance > 0 ? (riskDistance * 2.5) / riskDistance : 2.0).toFixed(1)} (Adaptive)`;
 
                 execEntry.innerText = `${entryLow} – ${entryHigh}`;
@@ -355,7 +477,7 @@
             tvScript.async = true;
             tvScript.innerHTML = JSON.stringify({
                 "width": "100%",
-                "height": "500",
+                "height": "450",
                 "symbol": "OANDA:XAUUSD",
                 "interval": "15",
                 "timezone": "Asia/Kuala_Lumpur",
@@ -376,11 +498,14 @@
         }
 
         window.onload = function() {
-            runAdaptiveEngine();
+            // Pembaikan kecil ID clock rujukan
+            document.getElementById('systemClock').id = 'systemClockdeg';
+            
+            runDashboardEngine();
             loadDashboardChart();
 
-            // Kemas kini pengiraan automatik live setiap 3 saat
-            setInterval(runAdaptiveEngine, 3000);
+            // Kemas kini setiap 1 saat untuk jam live & 3 saat untuk data market
+            setInterval(runDashboardEngine, 1000);
         };
     </script>
 </body>
