@@ -3,9 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>XAU/USD Custom Chart & Sniper Analyzer</title>
-    <!-- Masukkan Pustaka TradingView Lightweight Charts -->
-    <script src="https://unpkg.com/lightweight-charts@4.1.1/dist/lightweight-charts.standalone.production.js"></script>
+    <title>XAU/USD Live TradingView Chart & Sniper Setup</title>
     <style>
         :root {
             --bg-color: #121212;
@@ -13,7 +11,6 @@
             --text-color: #e0e0e0;
             --accent-buy: #26a69a;
             --accent-sell: #ef5350;
-            --accent-wait: #ffa726;
             --border-color: #2a2a2a;
         }
 
@@ -46,30 +43,6 @@
             margin: 0;
         }
 
-        /* Timeframe Selector */
-        .tf-selector {
-            display: flex;
-            justify-content: center;
-            gap: 10px;
-            margin: 20px 0;
-        }
-
-        .tf-btn {
-            background-color: #2a2a2a;
-            color: #fff;
-            border: 1px solid #444;
-            padding: 10px 20px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: bold;
-            font-size: 1rem;
-            transition: all 0.2s ease;
-        }
-
-        .tf-btn:hover { background-color: #383838; }
-        .tf-btn.active { background-color: #ffd700; color: #121212; border-color: #ffd700; }
-
-        /* Dashboard Layout */
         .grid {
             display: grid;
             grid-template-columns: 1fr;
@@ -78,7 +51,9 @@
         }
 
         @media (min-width: 992px) {
-            .grid { grid-template-columns: 1fr 1fr; }
+            .grid {
+                grid-template-columns: 1fr 1fr;
+            }
         }
 
         .card {
@@ -88,213 +63,79 @@
             padding: 20px;
         }
 
-        .card h3 {
+        .card h2 {
             margin-top: 0;
             border-bottom: 1px solid var(--border-color);
             padding-bottom: 10px;
-            color: #29b6f6;
             font-size: 1.1rem;
+            color: #29b6f6;
         }
 
-        /* Signal & Price Bar */
-        .top-status-bar {
-            background-color: var(--card-bg);
-            border: 2px solid var(--border-color);
-            border-radius: 12px;
-            padding: 15px;
-            text-align: center;
-            margin-bottom: 20px;
-        }
+        ul { padding-left: 20px; margin: 5px 0; }
+        li { margin-bottom: 6px; font-size: 0.95rem; }
 
-        .signal-badge {
-            display: inline-block;
-            font-size: 1.4rem;
-            font-weight: bold;
-            padding: 5px 20px;
-            border-radius: 6px;
-            margin: 5px 0;
-        }
-        .badge-buy { background-color: rgba(38,166,154,0.2); color: var(--accent-buy); border: 1px solid var(--accent-buy); }
-        .badge-sell { background-color: rgba(239,83,80,0.2); color: var(--accent-sell); border: 1px solid var(--accent-sell); }
-        .badge-wait { background-color: rgba(255,167,38,0.2); color: var(--accent-wait); border: 1px solid var(--accent-wait); }
-
-        /* Custom Chart Container */
         .chart-box {
             background-color: var(--card-bg);
             border: 1px solid var(--border-color);
             border-radius: 12px;
-            padding: 20px;
+            padding: 10px;
         }
-        #chart {
-            width: 100%;
-            height: 500px;
-        }
-
-        ul { padding-left: 20px; margin: 5px 0; }
-        li { margin-bottom: 5px; font-size: 0.95rem; }
     </style>
 </head>
 <body>
 
     <div class="container">
         <header>
-            <h1>XAU/USD Custom Engine & Sniper Setup</h1>
-            <p>Carta Binaan Sendiri (Custom Canvas) + Analisis SnR & Indikator MT5 Style</p>
+            <h1>XAU/USD Live TradingView & MT5 Setup</h1>
+            <p>Rujukan Carta Sebenar XAU/USD Berserta Analisis SnR & Indikator</p>
         </header>
 
-        <!-- Status & Live Price Bar -->
-        <div class="top-status-bar">
-            <span style="color: #888; font-size: 0.85rem; text-transform: uppercase;">Harga Live Rujukan Market XAU/USD</span>
-            <div id="livePrice" style="font-size: 2rem; font-weight: bold; color: #ffd700;">Memuatkan...</div>
-            <div>Signal Semasa (<span id="currentTfLabel">M5</span>): <div id="signalBadge" class="signal-badge badge-wait">WAIT</div></div>
-        </div>
-
-        <!-- Timeframe Selector -->
-        <div class="tf-selector">
-            <button class="tf-btn" onclick="changeTimeframe('H1')" id="btn-H1">H1</button>
-            <button class="tf-btn" onclick="changeTimeframe('M30')" id="btn-M30">M30</button>
-            <button class="tf-btn" onclick="changeTimeframe('M15')" id="btn-M15">M15</button>
-            <button class="tf-btn active" onclick="changeTimeframe('M5')" id="btn-M5">M5 (Scalping)</button>
-        </div>
-
-        <!-- Analysis Grid -->
+        <!-- Panduan Ringkas SnR & Indikator -->
         <div class="grid">
             <div class="card">
-                <h3>Analisis Support & Resistance (SnR)</h3>
+                <h2>1. Panduan Support & Resistance (SnR)</h2>
                 <ul>
-                    <li><strong>Zon Resistance Terdekat:</strong> <span id="resZone" style="color:var(--accent-sell);">--</span></li>
-                    <li><strong>Zon Support Terdekat:</strong> <span id="supZone" style="color:var(--accent-buy);">--</span></li>
-                    <li><strong>Status Harga:</strong> Berada di ruang tengah zon.</li>
+                    <li><strong>Support:</strong> Zon lantai harga. Cari peluang <span style="color:var(--accent-buy); font-weight:bold;">BUY</span> apabila harga memantul naik.</li>
+                    <li><strong>Resistance:</strong> Zon bumbung harga. Cari peluang <span style="color:var(--accent-sell); font-weight:bold;">SELL</span> apabila kenaikan mula melemah.</li>
                 </ul>
             </div>
+
             <div class="card">
-                <h3>Status Indikator Teknikal</h3>
+                <h2>2. Konfirmasi Indikator Utama</h2>
                 <ul>
-                    <li><strong>Stochastic (5,3,3):</strong> <span id="indStoch">Menilai momentum...</span></li>
-                    <li><strong>EMA Trend (50/200):</strong> <span id="indEma">Trend neutral</span></li>
-                    <li><strong>Bollinger Bands:</strong> Volatiliti normal</li>
+                    <li><strong>Stochastic (5,3,3):</strong> Pastikan paras berada di bawah 20 (Buy) atau atas 80 (Sell).</li>
+                    <li><strong>EMA 50 & 200:</strong> Tapis arah tren utama supaya tidak melawan arus pasaran besar.</li>
                 </ul>
             </div>
         </div>
 
-        <!-- Chart Custom Canvas -->
+        <!-- Carta Rasmi TradingView XAU/USD (Dijamin Keluar Data Live) -->
         <div class="chart-box">
-            <h3 style="margin-top:0; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">Grafik Candlestick XAU/USD (Custom Engine)</h3>
-            <div id="chart"></div>
+            <h2 style="padding: 10px; margin: 0;">Chart Live XAU/USD (TradingView)</h2>
+            
+            <!-- TradingView Widget BEGIN -->
+            <div class="tradingview-widget-container" style="height:600px;width:100%">
+              <div class="tradingview-widget-container__widget" style="height:calc(100% - 32px);width:100%"></div>
+              <div class="tradingview-widget-copyright"><a href="https://www.tradingview.com/" rel="noopener nofollow" target="_blank"><span class="blue-text">Track all markets on TradingView</span></a></div>
+              <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js" async>
+              {
+                "autosize": true,
+                "symbol": "OANDA:XAUUSD",
+                "interval": "15",
+                "timezone": "Asia/Kuala_Lumpur",
+                "theme": "dark",
+                "style": "1",
+                "locale": "en",
+                "enable_publishing": false,
+                "allow_symbol_change": true,
+                "calendar": false,
+                "support_host": "https://www.tradingview.com"
+              }
+              </script>
+            </div>
+            <!-- TradingView Widget END -->
         </div>
     </div>
 
-    <script>
-        let chart;
-        let candlestickSeries;
-
-        // Inisialisasi Carta Custom menggunakan Lightweight Charts
-        function initChart() {
-            const chartContainer = document.getElementById('chart');
-            chartContainer.innerHTML = ''; // Kosongkan jika ada
-
-            chart = LightweightCharts.createChart(chartContainer, {
-                width: chartContainer.clientWidth,
-                height: 500,
-                layout: {
-                    background: { type: 'solid', color: '#1e1e1e' },
-                    textColor: '#d1d4dc',
-                },
-                grid: {
-                    vertLines: { color: '#2a2a2a' },
-                    horzLines: { color: '#2a2a2a' },
-                },
-                timeScale: {
-                    timeVisible: true,
-                    secondsVisible: false,
-                    borderColor: '#444',
-                },
-            });
-
-            candlestickSeries = chart.addCandlestickSeries({
-                upColor: '#26a69a',
-                downColor: '#ef5350',
-                borderVisible: false,
-                wickUpColor: '#26a69a',
-                wickDownColor: '#ef5350',
-            });
-
-            loadMockData('M5');
-
-            // Responsive auto-resize carta jika skrin berubah saiz
-            window.addEventListener('resize', () => {
-                chart.applyOptions({ width: chartContainer.clientWidth });
-            });
-        }
-
-        // Fungsi ubah timeframe dan jana data rujukan carta
-        function changeTimeframe(tf) {
-            document.querySelectorAll('.tf-btn').forEach(btn => btn.classList.remove('active'));
-            document.getElementById('btn-' + tf).classList.add('active');
-            document.getElementById('currentTfLabel').innerText = tf;
-
-            loadMockData(tf);
-            updateAnalysis(tf);
-        }
-
-        // Data tiruan/realistik candlestick emas untuk rujukan graf segera
-        function loadMockData(tf) {
-            let basePrice = 2335.00;
-            let data = [];
-            let currentTime = Math.floor(Date.now() / 1000) - (100 * 300); // 100 candle ke belakang
-
-            for (let i = 0; i < 100; i++) {
-                let change = (Math.random() - 0.48) * 4.5;
-                let open = basePrice;
-                let close = open + change;
-                let high = Math.max(open, close) + Math.random() * 2;
-                let low = Math.min(open, close) - Math.random() * 2;
-
-                data.push({
-                    time: currentTime + (i * 300),
-                    open: parseFloat(open.toFixed(2)),
-                    high: parseFloat(high.toFixed(2)),
-                    low: parseFloat(low.toFixed(2)),
-                    close: parseFloat(close.toFixed(2)),
-                });
-
-                basePrice = close;
-            }
-
-            candlestickSeries.setData(data);
-            
-            // Kemaskini harga live pada skrin
-            let lastClose = data[data.length - 1].close;
-            document.getElementById('livePrice').innerText = lastClose.toFixed(2) + " USD";
-            document.getElementById('resZone').innerText = (lastClose + 5.50).toFixed(2);
-            document.getElementById('supZone').innerText = (lastClose - 6.20).toFixed(2);
-        }
-
-        function updateAnalysis(tf) {
-            let badge = document.getElementById('signalBadge');
-            if (tf === 'M5') {
-                badge.innerText = "SELL";
-                badge.className = "signal-badge badge-sell";
-                document.getElementById('indStoch').innerText = "Overbought (>80) di zon Resistance";
-                document.getElementById('indEma').innerText = "Harga mula bersilang bawah EMA 50";
-            } else if (tf === 'M30') {
-                badge.innerText = "BUY";
-                badge.className = "signal-badge badge-buy";
-                document.getElementById('indStoch').innerText = "Oversold (<20) memantul naik";
-                document.getElementById('indEma').innerText = "Trend Bullish di atas EMA 200";
-            } else {
-                badge.innerText = "WAIT";
-                badge.className = "signal-badge badge-wait";
-                document.getElementById('indStoch').innerText = "Neutral (Kawasan tengah)";
-                document.getElementById('indEma').innerText = "Pasaran mendatar (Sideways)";
-            }
-        }
-
-        // Mula laksanakan skrin sewaktu page dibuka
-        window.onload = function() {
-            initChart();
-            updateAnalysis('M5');
-        };
-    </script>
 </body>
 </html>
