@@ -9,13 +9,12 @@
 <style>
 :root{
     --bg:#f3f5f8;
-    --card:#ffffff;
+    --card:#fff;
     --sub:#f8fafc;
     --text:#20252b;
     --muted:#737b87;
     --border:#e1e5ea;
     --blue:#2563eb;
-    --blue-bg:#eff6ff;
     --green:#15803d;
     --green-bg:#dcfce7;
     --red:#dc2626;
@@ -52,7 +51,6 @@ header h1{
     margin:0;
     color:#a87900;
     font-size:1.45rem;
-    letter-spacing:.3px;
 }
 
 header p{
@@ -60,8 +58,6 @@ header p{
     color:var(--muted);
     font-size:.78rem;
 }
-
-/* STATUS */
 
 .status-bar{
     display:grid;
@@ -90,8 +86,6 @@ header p{
     font-size:.88rem;
     font-weight:bold;
 }
-
-/* SESSION */
 
 .sessions-bar{
     background:var(--card);
@@ -140,8 +134,6 @@ header p{
     font-weight:normal;
     color:var(--muted);
 }
-
-/* MASTER */
 
 .master-card{
     background:var(--card);
@@ -277,8 +269,6 @@ header p{
     font-weight:bold;
 }
 
-/* EXECUTION */
-
 .execution{
     background:var(--sub);
     border:1px dashed var(--blue);
@@ -317,8 +307,6 @@ header p{
     font-weight:800;
     font-size:.92rem;
 }
-
-/* CARDS */
 
 .grid{
     display:grid;
@@ -374,14 +362,8 @@ header p{
     font-weight:bold;
 }
 
-/* CONFLUENCE */
-
 .confluence{
-    background:linear-gradient(
-        135deg,
-        #f8fafc,
-        #eef2ff
-    );
+    background:linear-gradient(135deg,#f8fafc,#eef2ff);
     border:1px solid #dbe3f0;
 }
 
@@ -421,19 +403,9 @@ header p{
     background:#9ca3af;
 }
 
-.dot-good{
-    background:#22c55e;
-}
-
-.dot-bad{
-    background:#ef4444;
-}
-
-.dot-neutral{
-    background:#eab308;
-}
-
-/* LIQUIDITY */
+.dot-good{background:#22c55e}
+.dot-bad{background:#ef4444}
+.dot-neutral{background:#eab308}
 
 .liquidity-box{
     display:grid;
@@ -460,8 +432,6 @@ header p{
     margin-top:3px;
 }
 
-/* RISK */
-
 .risk-inputs{
     display:grid;
     grid-template-columns:1fr 1fr;
@@ -481,8 +451,6 @@ header p{
     border-radius:5px;
 }
 
-/* NEWS */
-
 .news-safe{
     padding:10px;
     border-radius:7px;
@@ -500,8 +468,6 @@ header p{
     font-weight:bold;
     font-size:.8rem;
 }
-
-/* HISTORY */
 
 .history{
     max-height:210px;
@@ -531,6 +497,20 @@ header p{
 .history-wait{
     color:var(--purple);
     font-weight:bold;
+}
+
+.reason{
+    padding:5px 0;
+    font-size:.75rem;
+    border-bottom:1px solid #f0f2f5;
+}
+
+.reason.good{
+    color:var(--green);
+}
+
+.reason.bad{
+    color:var(--red);
 }
 
 .footer{
@@ -580,8 +560,6 @@ header p{
     <p>H1 Bias → M15 Confirmation → M5 Trigger → Multi-Confluence Risk Engine</p>
 </header>
 
-<!-- STATUS -->
-
 <div class="status-bar">
 
     <div class="status-item">
@@ -605,8 +583,6 @@ header p{
     </div>
 
 </div>
-
-<!-- SESSION -->
 
 <div class="sessions-bar">
 
@@ -636,8 +612,6 @@ header p{
 
 </div>
 
-<!-- MASTER -->
-
 <div class="master-card">
 
     <div class="price-label">
@@ -649,7 +623,7 @@ header p{
     </div>
 
     <div id="priceSource" class="price-source">
-        Connecting to Twelve Data...
+        Connecting...
     </div>
 
     <div id="apiStatus" class="api-status">
@@ -698,8 +672,6 @@ header p{
 
 </div>
 
-<!-- TRADE PLAN -->
-
 <div class="execution">
 
     <h3>🎯 DYNAMIC TRADE PLAN</h3>
@@ -708,65 +680,42 @@ header p{
 
         <div class="exec-item">
             Entry Zone
-            <span id="execEntry"
-                  class="exec-value">
-                --
-            </span>
+            <span id="execEntry" class="exec-value">--</span>
         </div>
 
         <div class="exec-item">
             Direction
-            <span id="execDirection"
-                  class="exec-value">
-                --
-            </span>
+            <span id="execDirection" class="exec-value">--</span>
         </div>
 
         <div class="exec-item">
             Stop Loss
-            <span id="execSL"
-                  class="exec-value fail">
-                --
-            </span>
+            <span id="execSL" class="exec-value fail">--</span>
         </div>
 
         <div class="exec-item">
             TP1
-            <span id="execTP1"
-                  class="exec-value pass">
-                --
-            </span>
+            <span id="execTP1" class="exec-value pass">--</span>
         </div>
 
         <div class="exec-item">
             TP2
-            <span id="execTP2"
-                  class="exec-value pass">
-                --
-            </span>
+            <span id="execTP2" class="exec-value pass">--</span>
         </div>
 
         <div class="exec-item">
             TP3
-            <span id="execTP3"
-                  class="exec-value pass">
-                --
-            </span>
+            <span id="execTP3" class="exec-value pass">--</span>
         </div>
 
         <div class="exec-item full">
             Risk : Reward
-            <span id="execRR"
-                  class="exec-value">
-                --
-            </span>
+            <span id="execRR" class="exec-value">--</span>
         </div>
 
     </div>
 
 </div>
-
-<!-- H1 + M15 -->
 
 <div class="grid">
 
@@ -839,8 +788,6 @@ header p{
 </div>
 
 </div>
-
-<!-- M5 + LIQUIDITY -->
 
 <div class="grid">
 
@@ -918,8 +865,6 @@ header p{
 
 </div>
 
-<!-- EXTRA INDICATORS -->
-
 <div class="grid">
 
 <div class="card">
@@ -963,8 +908,7 @@ header p{
         <span>FILTER</span>
     </h3>
 
-    <div id="confluenceScore"
-         class="confluence-score">
+    <div id="confluenceScore" class="confluence-score">
         0%
     </div>
 
@@ -974,8 +918,7 @@ header p{
 
     <div class="filter-row">
         <span>
-            <span id="dotTrend"
-                  class="filter-dot"></span>
+            <span id="dotTrend" class="filter-dot"></span>
             H1 Trend
         </span>
         <strong id="filterTrend">--</strong>
@@ -983,8 +926,7 @@ header p{
 
     <div class="filter-row">
         <span>
-            <span id="dotMomentum"
-                  class="filter-dot"></span>
+            <span id="dotMomentum" class="filter-dot"></span>
             M15 Momentum
         </span>
         <strong id="filterMomentum">--</strong>
@@ -992,8 +934,7 @@ header p{
 
     <div class="filter-row">
         <span>
-            <span id="dotTrigger"
-                  class="filter-dot"></span>
+            <span id="dotTrigger" class="filter-dot"></span>
             M5 Trigger
         </span>
         <strong id="filterTrigger">--</strong>
@@ -1001,8 +942,7 @@ header p{
 
     <div class="filter-row">
         <span>
-            <span id="dotLiquidity"
-                  class="filter-dot"></span>
+            <span id="dotLiquidity" class="filter-dot"></span>
             Liquidity
         </span>
         <strong id="filterLiquidity">--</strong>
@@ -1010,8 +950,7 @@ header p{
 
     <div class="filter-row">
         <span>
-            <span id="dotRisk"
-                  class="filter-dot"></span>
+            <span id="dotRisk" class="filter-dot"></span>
             Risk / RR
         </span>
         <strong id="filterRisk">--</strong>
@@ -1020,8 +959,6 @@ header p{
 </div>
 
 </div>
-
-<!-- WHY + QUALITY -->
 
 <div class="grid">
 
@@ -1043,8 +980,7 @@ header p{
         <span>0–100</span>
     </h3>
 
-    <div id="qualityNumber"
-         class="confluence-score">
+    <div id="qualityNumber" class="confluence-score">
         0
     </div>
 
@@ -1077,8 +1013,6 @@ header p{
 
 </div>
 
-<!-- NEWS + RISK -->
-
 <div class="grid">
 
 <div class="card">
@@ -1088,9 +1022,8 @@ header p{
         <span>RISK CONTROL</span>
     </h3>
 
-    <div id="newsStatus"
-         class="news-safe">
-        ✓ NO BLOCKING NEWS DETECTED
+    <div id="newsStatus" class="news-safe">
+        ✓ NEWS FILTER MANUAL
     </div>
 
     <div class="metric">
@@ -1100,8 +1033,7 @@ header p{
 
     <div class="metric">
         <span>Trading Status</span>
-        <strong id="newsTradingStatus"
-                class="pass">
+        <strong id="newsTradingStatus" class="pass">
             ALLOWED
         </strong>
     </div>
@@ -1162,8 +1094,7 @@ header p{
 
     <div class="metric">
         <span>Suggested Lot</span>
-        <strong id="suggestedLot"
-                class="pass">
+        <strong id="suggestedLot" class="pass">
             0.02
         </strong>
     </div>
@@ -1171,8 +1102,6 @@ header p{
 </div>
 
 </div>
-
-<!-- HISTORY -->
 
 <div class="card">
 
@@ -1199,7 +1128,7 @@ header p{
 <div class="footer">
     XAU/USD Pro Sniper Dashboard
     <br>
-    Price feed: Twelve Data API
+    Live data: Twelve Data
     <br>
     Multi-confluence engine is informational only.
 </div>
@@ -1209,133 +1138,433 @@ header p{
 <script>
 
 /* =========================================================
-   GLOBAL
+   GLOBAL STATE
 ========================================================= */
 
-let currentPrice = 4609;
-
+let currentPrice = 0;
 let previousPrice = null;
-
 let lastSignal = "";
+
+let candles = {
+    m5: [],
+    m15: [],
+    h1: []
+};
+
+let lastFetch = {
+    m5: 0,
+    m15: 0,
+    h1: 0
+};
 
 let history =
     JSON.parse(
-        localStorage.getItem(
-            "xauSignalHistory"
-        ) || "[]"
+        localStorage.getItem("xauSignalHistory") || "[]"
     );
-
-let market = {
-
-    atr:5.80,
-
-    h1Trend:"BULLISH",
-
-    h1Structure:"BOS ↑",
-
-    m15Trend:"BULLISH",
-
-    rsi:57,
-
-    macd:"BULLISH",
-
-    adx:29,
-
-    m5Momentum:"BULLISH",
-
-    m5Structure:"BOS ↑",
-
-    vwap:"ABOVE",
-
-    bb:"MID",
-
-    fvg:"BULLISH",
-
-    liquiditySweep:"BUY-SIDE",
-
-    volatility:"NORMAL"
-
-};
 
 
 /* =========================================================
-   LIVE API
+   HELPERS
 ========================================================= */
 
-async function fetchLiveGold(){
+function num(v){
+    const n = parseFloat(v);
+    return Number.isFinite(n) ? n : null;
+}
 
-    const apiStatus =
-        document.getElementById(
-            "apiStatus"
+function clamp(v,min,max){
+    return Math.max(min,Math.min(max,v));
+}
+
+function avg(arr){
+    if(!arr.length) return null;
+    return arr.reduce((a,b)=>a+b,0)/arr.length;
+}
+
+function closes(data){
+    return data
+        .map(x=>num(x.close))
+        .filter(x=>x!==null)
+        .reverse();
+}
+
+function highs(data){
+    return data
+        .map(x=>num(x.high))
+        .filter(x=>x!==null)
+        .reverse();
+}
+
+function lows(data){
+    return data
+        .map(x=>num(x.low))
+        .filter(x=>x!==null)
+        .reverse();
+}
+
+function ema(values,period){
+
+    if(values.length<period) return null;
+
+    const k=2/(period+1);
+
+    let value =
+        avg(values.slice(0,period));
+
+    for(
+        let i=period;
+        i<values.length;
+        i++
+    ){
+        value =
+            values[i]*k+
+            value*(1-k);
+    }
+
+    return value;
+}
+
+function sma(values,period){
+
+    if(values.length<period) return null;
+
+    return avg(
+        values.slice(
+            values.length-period
+        )
+    );
+}
+
+function stdDev(values){
+
+    if(!values.length) return 0;
+
+    const mean=avg(values);
+
+    const variance =
+        avg(
+            values.map(
+                x=>Math.pow(x-mean,2)
+            )
         );
 
-    const priceSource =
-        document.getElementById(
-            "priceSource"
+    return Math.sqrt(variance);
+}
+
+
+/* =========================================================
+   RSI
+========================================================= */
+
+function calculateRSI(values,period=14){
+
+    if(values.length<period+1)
+        return null;
+
+    let gains=0;
+    let losses=0;
+
+    for(
+        let i=1;
+        i<=period;
+        i++
+    ){
+
+        const change =
+            values[i]-values[i-1];
+
+        if(change>=0)
+            gains+=change;
+        else
+            losses+=Math.abs(change);
+
+    }
+
+    let avgGain=gains/period;
+    let avgLoss=losses/period;
+
+    for(
+        let i=period+1;
+        i<values.length;
+        i++
+    ){
+
+        const change =
+            values[i]-values[i-1];
+
+        const gain =
+            change>0 ? change : 0;
+
+        const loss =
+            change<0 ? Math.abs(change) : 0;
+
+        avgGain =
+            (avgGain*(period-1)+gain)/period;
+
+        avgLoss =
+            (avgLoss*(period-1)+loss)/period;
+
+    }
+
+    if(avgLoss===0) return 100;
+
+    const rs =
+        avgGain/avgLoss;
+
+    return 100-(100/(1+rs));
+}
+
+
+/* =========================================================
+   ATR
+========================================================= */
+
+function calculateATR(data,period=14){
+
+    if(data.length<period+1)
+        return null;
+
+    const tr=[];
+
+    for(
+        let i=1;
+        i<data.length;
+        i++
+    ){
+
+        const high=num(data[i].high);
+        const low=num(data[i].low);
+        const prevClose=num(data[i-1].close);
+
+        if(
+            high===null ||
+            low===null ||
+            prevClose===null
+        ) continue;
+
+        tr.push(
+            Math.max(
+                high-low,
+                Math.abs(high-prevClose),
+                Math.abs(low-prevClose)
+            )
         );
 
-    try{
+    }
 
-        apiStatus.innerText =
-            "● API CONNECTING";
+    if(tr.length<period)
+        return null;
 
-        apiStatus.className =
-            "api-status";
+    let result =
+        avg(
+            tr.slice(0,period)
+        );
 
-        const response =
-            await fetch(
-                "/api/xau?ts="+Date.now(),
-                {
-                    cache:"no-store"
-                }
-            );
+    for(
+        let i=period;
+        i<tr.length;
+        i++
+    ){
 
-        if(!response.ok){
+        result =
+            (
+                result*(period-1)+
+                tr[i]
+            )/period;
 
-            throw new Error(
-                "HTTP "+response.status
-            );
+    }
 
-        }
+    return result;
+}
 
-        const data =
-            await response.json();
+
+/* =========================================================
+   MACD
+========================================================= */
+
+function calculateMACD(values){
+
+    if(values.length<35)
+        return null;
+
+    const fast=ema(values,12);
+    const slow=ema(values,26);
+
+    if(
+        fast===null ||
+        slow===null
+    )
+        return null;
+
+    return fast-slow;
+}
+
+
+/* =========================================================
+   ADX
+========================================================= */
+
+function calculateADX(data,period=14){
+
+    if(data.length<period*2)
+        return null;
+
+    const tr=[];
+    const plusDM=[];
+    const minusDM=[];
+
+    for(
+        let i=1;
+        i<data.length;
+        i++
+    ){
+
+        const high=num(data[i].high);
+        const low=num(data[i].low);
+
+        const prevHigh=num(data[i-1].high);
+        const prevLow=num(data[i-1].low);
+        const prevClose=num(data[i-1].close);
 
         if(
-            !data.values ||
-            !data.values.length
-        ){
+            [high,low,prevHigh,prevLow,prevClose]
+            .some(x=>x===null)
+        ) continue;
 
-            throw new Error(
-                "Tiada data XAU/USD"
-            );
+        tr.push(
+            Math.max(
+                high-low,
+                Math.abs(high-prevClose),
+                Math.abs(low-prevClose)
+            )
+        );
 
-        }
+        const up=high-prevHigh;
+        const down=prevLow-low;
 
-        const latest =
-            data.values[0];
+        plusDM.push(
+            up>down && up>0 ? up : 0
+        );
 
-        const newPrice =
-            parseFloat(
-                latest.close
-            );
+        minusDM.push(
+            down>up && down>0 ? down : 0
+        );
 
-        if(
-            !isFinite(newPrice) ||
-            newPrice<=0
-        ){
+    }
 
-            throw new Error(
-                "Harga tidak sah"
-            );
+    if(tr.length<period+1)
+        return null;
 
-        }
+    const dx=[];
 
-        previousPrice =
-            currentPrice;
+    for(
+        let i=period;
+        i<tr.length;
+        i++
+    ){
 
-        currentPrice =
-            newPrice;
+        const trSlice =
+            tr.slice(i-period,i);
+
+        const plusSlice =
+            plusDM.slice(i-period,i);
+
+        const minusSlice =
+            minusDM.slice(i-period,i);
+
+        const atr=avg(trSlice);
+
+        if(atr===0) continue;
+
+        const plusDI =
+            100*avg(plusSlice)/atr;
+
+        const minusDI =
+            100*avg(minusSlice)/atr;
+
+        const denominator =
+            plusDI+minusDI;
+
+        if(denominator===0) continue;
+
+        dx.push(
+            100*
+            Math.abs(plusDI-minusDI)/
+            denominator
+        );
+
+    }
+
+    if(!dx.length)
+        return null;
+
+    return avg(
+        dx.slice(-period)
+    );
+}
+
+
+/* =========================================================
+   FETCH ONE TIMEFRAME
+========================================================= */
+
+async function fetchTimeframe(
+    interval,
+    key
+){
+
+    const response =
+        await fetch(
+            `/api/xau?interval=${interval}&ts=${Date.now()}`,
+            {
+                cache:"no-store"
+            }
+        );
+
+    if(!response.ok){
+
+        throw new Error(
+            `API ${interval}: HTTP ${response.status}`
+        );
+
+    }
+
+    const data =
+        await response.json();
+
+    if(
+        data.error
+    ){
+
+        throw new Error(
+            data.error
+        );
+
+    }
+
+    if(
+        !data.values ||
+        !data.values.length
+    ){
+
+        throw new Error(
+            `Tiada candle ${interval}`
+        );
+
+    }
+
+    candles[key]=data.values;
+
+    lastFetch[key]=Date.now();
+
+    if(
+        key==="m5" &&
+        data.price
+    ){
+
+        previousPrice=currentPrice;
+
+        currentPrice=num(data.price);
 
         document.getElementById(
             "livePrice"
@@ -1352,33 +1581,10 @@ async function fetchLiveGold(){
         ).value =
             currentPrice.toFixed(2);
 
-        priceSource.innerText =
-            "Twelve Data • 5M Candle • "+
-            formatUpdateTime();
-
-        apiStatus.innerText =
-            "● LIVE API";
-
-        apiStatus.className =
-            "api-status";
-
-        runEngine();
-
-    }catch(error){
-
-        console.error(
-            "XAU API ERROR:",
-            error
-        );
-
-        apiStatus.innerText =
-            "● API ERROR";
-
-        apiStatus.className =
-            "api-status api-error";
-
-        priceSource.innerText =
-            "API gagal — harga terakhir digunakan";
+        document.getElementById(
+            "priceSource"
+        ).innerText =
+            `Twelve Data • M5 • ${data.candleUpdated || ""}`;
 
     }
 
@@ -1386,19 +1592,102 @@ async function fetchLiveGold(){
 
 
 /* =========================================================
-   TIME
+   LIVE DATA MANAGER
 ========================================================= */
 
-function formatUpdateTime(){
+async function updateMarketData(){
 
-    return new Date().toLocaleTimeString(
-        "en-MY",
-        {
-            hour:"2-digit",
-            minute:"2-digit",
-            second:"2-digit"
+    const apiStatus =
+        document.getElementById(
+            "apiStatus"
+        );
+
+    try{
+
+        apiStatus.innerText =
+            "● API UPDATING";
+
+        apiStatus.className =
+            "api-status";
+
+        /*
+          M5 = refresh setiap 60 saat
+          M15 = refresh bila candle baru
+          H1 = refresh lebih jarang
+
+          Ini mengurangkan penggunaan API.
+        */
+
+        const now=Date.now();
+
+        if(
+            now-lastFetch.m5 >
+            55000
+        ){
+
+            await fetchTimeframe(
+                "5min",
+                "m5"
+            );
+
         }
-    );
+
+        if(
+            now-lastFetch.m15 >
+            14*60*1000
+        ){
+
+            await fetchTimeframe(
+                "15min",
+                "m15"
+            );
+
+        }
+
+        if(
+            now-lastFetch.h1 >
+            55*60*1000
+        ){
+
+            await fetchTimeframe(
+                "1h",
+                "h1"
+            );
+
+        }
+
+        if(
+            candles.m5.length &&
+            candles.m15.length &&
+            candles.h1.length
+        ){
+
+            apiStatus.innerText =
+                "● LIVE DATA";
+
+            apiStatus.className =
+                "api-status";
+
+            runEngine();
+
+        }
+
+    }catch(error){
+
+        console.error(error);
+
+        apiStatus.innerText =
+            "● API ERROR";
+
+        apiStatus.className =
+            "api-status api-error";
+
+        document.getElementById(
+            "priceSource"
+        ).innerText =
+            error.message;
+
+    }
 
 }
 
@@ -1409,39 +1698,283 @@ function formatUpdateTime(){
 
 function updateManualPrice(){
 
-    const input =
-        parseFloat(
+    const value =
+        num(
             document.getElementById(
                 "priceInput"
             ).value
         );
 
     if(
-        !isNaN(input) &&
-        input>0
+        value===null ||
+        value<=0
+    )
+        return;
+
+    currentPrice=value;
+
+    document.getElementById(
+        "livePrice"
+    ).innerText =
+        currentPrice.toFixed(2);
+
+    document.getElementById(
+        "riskEntry"
+    ).value =
+        currentPrice.toFixed(2);
+
+    document.getElementById(
+        "priceSource"
+    ).innerText =
+        "Manual backup price";
+
+    runEngine();
+
+}
+
+
+/* =========================================================
+   MARKET STRUCTURE
+========================================================= */
+
+function structure(data){
+
+    if(data.length<20)
+        return "INSUFFICIENT DATA";
+
+    const h=highs(data);
+    const l=lows(data);
+
+    const recentHigh =
+        Math.max(...h.slice(-8));
+
+    const previousHigh =
+        Math.max(...h.slice(-16,-8));
+
+    const recentLow =
+        Math.min(...l.slice(-8));
+
+    const previousLow =
+        Math.min(...l.slice(-16,-8));
+
+    if(
+        recentHigh>previousHigh &&
+        recentLow>previousLow
+    )
+        return "BOS ↑";
+
+    if(
+        recentHigh<previousHigh &&
+        recentLow<previousLow
+    )
+        return "BOS ↓";
+
+    return "RANGE";
+}
+
+
+/* =========================================================
+   FVG
+========================================================= */
+
+function detectFVG(data){
+
+    if(data.length<5)
+        return "NONE";
+
+    /*
+      Data diambil newest → oldest.
+      Kita reverse untuk chronological order.
+    */
+
+    const d=[...data].reverse();
+
+    for(
+        let i=d.length-3;
+        i>=2;
+        i--
     ){
 
-        currentPrice =
-            input;
+        const aHigh=num(d[i-2].high);
+        const aLow=num(d[i-2].low);
 
-        document.getElementById(
-            "livePrice"
-        ).innerText =
-            currentPrice.toFixed(2);
+        const cHigh=num(d[i].high);
+        const cLow=num(d[i].low);
 
-        document.getElementById(
-            "riskEntry"
-        ).value =
-            currentPrice.toFixed(2);
+        if(
+            aHigh!==null &&
+            cLow!==null &&
+            cLow>aHigh
+        )
+            return "BULLISH";
 
-        document.getElementById(
-            "priceSource"
-        ).innerText =
-            "Manual backup price";
-
-        runEngine();
+        if(
+            aLow!==null &&
+            cHigh!==null &&
+            cHigh<aLow
+        )
+            return "BEARISH";
 
     }
+
+    return "NONE";
+}
+
+
+/* =========================================================
+   VWAP
+========================================================= */
+
+function calculateVWAP(data){
+
+    if(!data.length)
+        return null;
+
+    let pv=0;
+    let volume=0;
+
+    for(const candle of data){
+
+        const h=num(candle.high);
+        const l=num(candle.low);
+        const c=num(candle.close);
+        const v=num(candle.volume)||1;
+
+        if(
+            h===null ||
+            l===null ||
+            c===null
+        ) continue;
+
+        const typical =
+            (h+l+c)/3;
+
+        pv+=typical*v;
+        volume+=v;
+
+    }
+
+    return volume
+        ? pv/volume
+        : null;
+}
+
+
+/* =========================================================
+   SUPPORT / RESISTANCE
+========================================================= */
+
+function calculateSR(data){
+
+    const h=highs(data);
+    const l=lows(data);
+
+    if(
+        h.length<30 ||
+        l.length<30
+    ){
+
+        return {
+            support:null,
+            resistance:null
+        };
+
+    }
+
+    const price=currentPrice;
+
+    const supports =
+        l.filter(x=>x<price)
+         .sort((a,b)=>b-a);
+
+    const resistances =
+        h.filter(x=>x>price)
+         .sort((a,b)=>a-b);
+
+    return {
+
+        support:
+            supports.length
+                ? supports[0]
+                : Math.min(...l),
+
+        resistance:
+            resistances.length
+                ? resistances[0]
+                : Math.max(...h)
+
+    };
+
+}
+
+
+/* =========================================================
+   ASIAN RANGE
+========================================================= */
+
+function asianRange(){
+
+    if(!candles.m5.length)
+        return {
+            high:null,
+            low:null
+        };
+
+    const now=new Date();
+
+    const asianHighs=[];
+    const asianLows=[];
+
+    for(const candle of candles.m5){
+
+        if(!candle.datetime)
+            continue;
+
+        const date =
+            new Date(
+                candle.datetime
+            );
+
+        /*
+          API datetime dianggap local market feed.
+          Untuk dashboard reference,
+          gunakan jam 08:00–17:00 MYT.
+        */
+
+        const hour =
+            date.getHours();
+
+        if(
+            hour>=8 &&
+            hour<17
+        ){
+
+            const h=num(candle.high);
+            const l=num(candle.low);
+
+            if(h!==null)
+                asianHighs.push(h);
+
+            if(l!==null)
+                asianLows.push(l);
+
+        }
+
+    }
+
+    return {
+
+        high:
+            asianHighs.length
+                ? Math.max(...asianHighs)
+                : null,
+
+        low:
+            asianLows.length
+                ? Math.min(...asianLows)
+                : null
+
+    };
 
 }
 
@@ -1473,7 +2006,6 @@ function getLastSunday(year,month){
 
 }
 
-
 function getNthSunday(year,month,n){
 
     const date =
@@ -1489,17 +2021,12 @@ function getNthSunday(year,month,n){
         date.getMonth()===month
     ){
 
-        if(
-            date.getDay()===0
-        ){
+        if(date.getDay()===0){
 
             count++;
 
-            if(count===n){
-
+            if(count===n)
                 return date.getDate();
-
-            }
 
         }
 
@@ -1513,108 +2040,67 @@ function getNthSunday(year,month,n){
 
 }
 
-
 function isLondonDST(date){
 
-    const year =
-        date.getFullYear();
+    const year=date.getFullYear();
 
-    const start =
-        getLastSunday(
-            year,
-            2
-        );
+    const start=
+        getLastSunday(year,2);
 
-    const end =
-        getLastSunday(
-            year,
-            9
-        );
+    const end=
+        getLastSunday(year,9);
 
-    const month =
-        date.getMonth();
+    const month=date.getMonth();
+    const day=date.getDate();
 
-    const day =
-        date.getDate();
+    if(month>2 && month<9)
+        return true;
 
-    if(
-        month>2 &&
-        month<9
-    ) return true;
+    if(month===2 && day>=start)
+        return true;
 
-    if(
-        month===2 &&
-        day>=start
-    ) return true;
-
-    if(
-        month===9 &&
-        day<end
-    ) return true;
+    if(month===9 && day<end)
+        return true;
 
     return false;
 
 }
-
 
 function isNYDST(date){
 
-    const year =
-        date.getFullYear();
+    const year=date.getFullYear();
 
-    const start =
-        getNthSunday(
-            year,
-            2,
-            2
-        );
+    const start=
+        getNthSunday(year,2,2);
 
-    const end =
-        getNthSunday(
-            year,
-            10,
-            1
-        );
+    const end=
+        getNthSunday(year,10,1);
 
-    const month =
-        date.getMonth();
+    const month=date.getMonth();
+    const day=date.getDate();
 
-    const day =
-        date.getDate();
+    if(month>2 && month<10)
+        return true;
 
-    if(
-        month>2 &&
-        month<10
-    ) return true;
+    if(month===2 && day>=start)
+        return true;
 
-    if(
-        month===2 &&
-        day>=start
-    ) return true;
-
-    if(
-        month===10 &&
-        day<end
-    ) return true;
+    if(month===10 && day<end)
+        return true;
 
     return false;
 
 }
 
-
 function updateSessions(){
 
-    const now =
-        new Date();
+    const now=new Date();
 
-    const hours =
-        now.getHours();
+    const hours=now.getHours();
 
-    const minutes =
-        now.getMinutes();
+    const minutes=now.getMinutes();
 
-    const seconds =
-        now.getSeconds();
+    const seconds=now.getSeconds();
 
     document.getElementById(
         "systemClock"
@@ -1625,15 +2111,15 @@ function updateSessions(){
         ":"+
         String(seconds).padStart(2,"0");
 
-    const asian =
+    const asian=
         hours>=8 &&
         hours<17;
 
-    const london =
+    const london=
         hours>=15 &&
         hours<24;
 
-    const ny =
+    const ny=
         hours>=20 ||
         hours<5;
 
@@ -1660,14 +2146,9 @@ function updateSessions(){
 
     const sessions=[];
 
-    if(asian)
-        sessions.push("ASIA");
-
-    if(london)
-        sessions.push("LONDON");
-
-    if(ny)
-        sessions.push("NEW YORK");
+    if(asian) sessions.push("ASIA");
+    if(london) sessions.push("LONDON");
+    if(ny) sessions.push("NEW YORK");
 
     document.getElementById(
         "activeSession"
@@ -1701,91 +2182,33 @@ function updateSessions(){
 
 
 /* =========================================================
-   LEVELS
+   MARKET STATUS
 ========================================================= */
 
-function calculateLevels(){
+function updateMarketStatus(){
 
-    const atr =
-        market.atr;
+    const day=new Date().getDay();
 
-    const support =
-        currentPrice-
-        atr*2.2;
+    const weekend=
+        day===0 ||
+        day===6;
 
-    const resistance =
-        currentPrice+
-        atr*2.2;
+    const element=
+        document.getElementById(
+            "marketStatus"
+        );
 
-    const buyLiquidity =
-        currentPrice+
-        atr*1.45;
+    if(weekend){
 
-    const sellLiquidity =
-        currentPrice-
-        atr*1.45;
+        element.innerText="CLOSED";
+        element.className="status-value fail";
 
-    const asianHigh =
-        currentPrice+
-        atr*.75;
+    }else{
 
-    const asianLow =
-        currentPrice-
-        atr*.75;
+        element.innerText="OPEN";
+        element.className="status-value pass";
 
-    const vwap =
-        currentPrice-
-        atr*.20;
-
-    const bbUpper =
-        currentPrice+
-        atr*1.8;
-
-    const bbLower =
-        currentPrice-
-        atr*1.8;
-
-    document.getElementById(
-        "h1Support"
-    ).innerText =
-        support.toFixed(2);
-
-    document.getElementById(
-        "h1Resistance"
-    ).innerText =
-        resistance.toFixed(2);
-
-    document.getElementById(
-        "buyLiquidity"
-    ).innerText =
-        buyLiquidity.toFixed(2);
-
-    document.getElementById(
-        "sellLiquidity"
-    ).innerText =
-        sellLiquidity.toFixed(2);
-
-    document.getElementById(
-        "asianHigh"
-    ).innerText =
-        asianHigh.toFixed(2);
-
-    document.getElementById(
-        "asianLow"
-    ).innerText =
-        asianLow.toFixed(2);
-
-    return {
-        support,
-        resistance,
-        buyLiquidity,
-        sellLiquidity,
-        asianHigh,
-        asianLow,
-        vwap,
-        bbUpper,
-        bbLower
-    };
+    }
 
 }
 
@@ -1796,205 +2219,343 @@ function calculateLevels(){
 
 function runEngine(){
 
-    const levels =
-        calculateLevels();
+    if(
+        !candles.h1.length ||
+        !candles.m15.length ||
+        !candles.m5.length ||
+        !currentPrice
+    )
+        return;
+
+    const h1=closes(candles.h1);
+    const m15=closes(candles.m15);
+    const m5=closes(candles.m5);
+
+    const h1Ema200=
+        ema(h1,200);
+
+    const h1Ema50=
+        ema(h1,50);
+
+    const m15Ema20=
+        ema(m15,20);
+
+    const m15Ema50=
+        ema(m15,50);
+
+    const m15RSI=
+        calculateRSI(m15,14);
+
+    const m15MACD=
+        calculateMACD(m15);
+
+    const m15ADX=
+        calculateADX(
+            candles.m15,
+            14
+        );
+
+    const m5ATR=
+        calculateATR(
+            candles.m5,
+            14
+        );
+
+    const m5EMA20=
+        ema(m5,20);
+
+    const m5EMA50=
+        ema(m5,50);
+
+    const m5RSI=
+        calculateRSI(m5,14);
+
+    const m5MACD=
+        calculateMACD(m5);
+
+    const h1Struct=
+        structure(candles.h1);
+
+    const m15Struct=
+        structure(candles.m15);
+
+    const m5Struct=
+        structure(candles.m5);
+
+    const m5FVG=
+        detectFVG(candles.m5);
+
+    const vwap=
+        calculateVWAP(candles.m5);
+
+    const sr=
+        calculateSR(candles.h1);
+
+    const asian=
+        asianRange();
+
+    const price=currentPrice;
+
+    /* =====================================================
+       H1 DIRECTION
+    ===================================================== */
+
+    let h1Bull=false;
+    let h1Bear=false;
+
+    if(
+        h1Ema200!==null &&
+        h1Ema50!==null
+    ){
+
+        h1Bull=
+            price>h1Ema200 &&
+            h1Ema50>h1Ema200;
+
+        h1Bear=
+            price<h1Ema200 &&
+            h1Ema50<h1Ema200;
+
+    }
+
+    if(
+        h1Struct==="BOS ↑"
+    )
+        h1Bull=true;
+
+    if(
+        h1Struct==="BOS ↓"
+    )
+        h1Bear=true;
+
+    /* =====================================================
+       M15
+    ===================================================== */
+
+    const m15Bull=
+        m15Ema20!==null &&
+        m15Ema50!==null &&
+        m15Ema20>m15Ema50 &&
+        m15RSI!==null &&
+        m15RSI>=50;
+
+    const m15Bear=
+        m15Ema20!==null &&
+        m15Ema50!==null &&
+        m15Ema20<m15Ema50 &&
+        m15RSI!==null &&
+        m15RSI<=50;
+
+    /* =====================================================
+       M5
+    ===================================================== */
+
+    const m5Bull=
+        m5EMA20!==null &&
+        m5EMA50!==null &&
+        m5EMA20>m5EMA50 &&
+        m5RSI!==null &&
+        m5RSI>=50;
+
+    const m5Bear=
+        m5EMA20!==null &&
+        m5EMA50!==null &&
+        m5EMA20<m5EMA50 &&
+        m5RSI!==null &&
+        m5RSI<=50;
+
+    /* =====================================================
+       S/R DISTANCE
+    ===================================================== */
+
+    const support=sr.support;
+    const resistance=sr.resistance;
+
+    const supportDistance=
+        support!==null
+            ? price-support
+            : Infinity;
+
+    const resistanceDistance=
+        resistance!==null
+            ? resistance-price
+            : Infinity;
+
+    const nearSupport=
+        m5ATR!==null &&
+        supportDistance<=m5ATR*1.5;
+
+    const nearResistance=
+        m5ATR!==null &&
+        resistanceDistance<=m5ATR*1.5;
+
+    /* =====================================================
+       LIQUIDITY
+    ===================================================== */
+
+    let liquidityDirection="NONE";
+
+    if(
+        asian.high!==null &&
+        price>asian.high
+    ){
+
+        liquidityDirection=
+            "BUY-SIDE";
+
+    }else if(
+        asian.low!==null &&
+        price<asian.low
+    ){
+
+        liquidityDirection=
+            "SELL-SIDE";
+
+    }
+
+    /* =====================================================
+       SCORE
+    ===================================================== */
+
+    let h1Score=0;
+    let m15Score=0;
+    let m5Score=0;
+    let liquidityScore=0;
+    let riskScore=0;
 
     /* H1 */
 
-    document.getElementById(
-        "h1Trend"
-    ).innerHTML =
-        '<span class="pass">BULLISH ✓</span>';
+    if(h1Bull)
+        h1Score=20;
 
-    document.getElementById(
-        "h1Ema"
-    ).innerHTML =
-        '<span class="pass">Above EMA 200 ✓</span>';
+    else if(h1Bear)
+        h1Score=20;
 
-    document.getElementById(
-        "h1Structure"
-    ).innerHTML =
-        '<span class="pass">BOS ↑</span>';
+    else
+        h1Score=8;
 
     /* M15 */
 
-    document.getElementById(
-        "m15Ema"
-    ).innerHTML =
-        '<span class="pass">20 > 50 ✓</span>';
-
-    document.getElementById(
-        "m15Rsi"
-    ).innerHTML =
-        `<span class="pass">${market.rsi}</span>`;
-
-    document.getElementById(
-        "m15Macd"
-    ).innerHTML =
-        '<span class="pass">Bullish ✓</span>';
-
-    document.getElementById(
-        "m15Adx"
-    ).innerHTML =
-        `<span class="pass">${market.adx} Strong ✓</span>`;
-
-    document.getElementById(
-        "m15Structure"
-    ).innerHTML =
-        '<span class="pass">Higher High ✓</span>';
-
-    /* M5 */
-
-    document.getElementById(
-        "m5Momentum"
-    ).innerHTML =
-        '<span class="pass">Bullish Push ✓</span>';
-
-    document.getElementById(
-        "m5Structure"
-    ).innerHTML =
-        '<span class="pass">BOS ↑ ✓</span>';
-
-    document.getElementById(
-        "m5Atr"
-    ).innerText =
-        market.atr.toFixed(2)+
-        " USD";
-
-    document.getElementById(
-        "m5Reaction"
-    ).innerHTML =
-        '<span class="pass">Support Reaction ✓</span>';
-
-    document.getElementById(
-        "m5Fvg"
-    ).innerHTML =
-        '<span class="pass">Bullish FVG ✓</span>';
-
-    /* EXTRA FILTERS */
-
-    document.getElementById(
-        "vwapStatus"
-    ).innerHTML =
-        '<span class="pass">Above VWAP ✓</span>';
-
-    document.getElementById(
-        "bbStatus"
-    ).innerHTML =
-        '<span class="pass">Mid → Upper ✓</span>';
-
-    document.getElementById(
-        "snrStatus"
-    ).innerHTML =
-        '<span class="pass">Support Valid ✓</span>';
-
-    document.getElementById(
-        "sessionQuality"
-    ).innerHTML =
-        '<span class="pass">Good ✓</span>';
-
-    document.getElementById(
-        "volatilityStatus"
-    ).innerHTML =
-        '<span class="pass">NORMAL ✓</span>';
-
-    document.getElementById(
-        "liquiditySweep"
-    ).innerHTML =
-        '<span class="pass">Buy-Side Sweep ✓</span>';
-
-    /*
-      SCORE
-      Maximum = 100
-    */
-
-    let h1Score=20;
-
-    let m15Score=19;
-
-    let m5Score=18;
-
-    let liquidityScore=17;
-
-    let riskScore=18;
-
-    /* RSI */
-
-    if(market.rsi<45)
-        m15Score-=8;
-
-    if(market.rsi>70)
-        m15Score-=5;
-
-    /* ADX */
-
-    if(market.adx<20)
-        m15Score-=6;
-
-    /* M5 */
+    if(
+        m15Bull ||
+        m15Bear
+    )
+        m15Score+=10;
 
     if(
-        market.m5Momentum!=="BULLISH"
+        m15RSI!==null &&
+        m15RSI>=45 &&
+        m15RSI<=70
     )
-        m5Score-=8;
+        m15Score+=4;
+
+    if(
+        m15ADX!==null &&
+        m15ADX>=20
+    )
+        m15Score+=4;
+
+    if(
+        m15MACD!==null &&
+        (
+            (m15Bull && m15MACD>0) ||
+            (m15Bear && m15MACD<0)
+        )
+    )
+        m15Score+=2;
+
+    /* M5 */
+
+    if(m5Bull || m5Bear)
+        m5Score+=8;
+
+    if(
+        (m5Bull && m5Struct==="BOS ↑") ||
+        (m5Bear && m5Struct==="BOS ↓")
+    )
+        m5Score+=6;
+
+    if(
+        (m5Bull && m5FVG==="BULLISH") ||
+        (m5Bear && m5FVG==="BEARISH")
+    )
+        m5Score+=3;
+
+    if(
+        m5RSI!==null &&
+        m5RSI>40 &&
+        m5RSI<75
+    )
+        m5Score+=3;
+
+    /* S/R */
+
+    if(
+        h1Bull &&
+        nearSupport
+    )
+        liquidityScore+=10;
+
+    if(
+        h1Bear &&
+        nearResistance
+    )
+        liquidityScore+=10;
 
     /* VWAP */
 
     if(
-        market.vwap!=="ABOVE"
+        vwap!==null &&
+        (
+            (h1Bull && price>vwap) ||
+            (h1Bear && price<vwap)
+        )
     )
-        liquidityScore-=4;
-
-    /* FVG */
-
-    if(
-        market.fvg!=="BULLISH"
-    )
-        m5Score-=4;
+        liquidityScore+=4;
 
     /* Liquidity */
 
     if(
-        market.liquiditySweep!=="BUY-SIDE"
+        (h1Bull && liquidityDirection==="BUY-SIDE") ||
+        (h1Bear && liquidityDirection==="SELL-SIDE")
     )
-        liquidityScore-=5;
+        liquidityScore+=4;
 
-    /* ATR */
+    /* Avoid buying directly into resistance */
 
     if(
-        market.volatility==="HIGH"
+        h1Bull &&
+        nearResistance
     )
-        riskScore-=4;
+        liquidityScore-=6;
 
     if(
-        market.volatility==="LOW"
+        h1Bear &&
+        nearSupport
     )
-        riskScore-=3;
+        liquidityScore-=6;
 
-    /*
-      S/R
-    */
+    /* RISK */
 
-    const distanceToSupport =
-        Math.abs(
-            currentPrice-
-            levels.support
-        );
+    if(m5ATR!==null){
 
-    if(
-        distanceToSupport<
-        market.atr*1.2
-    )
-        liquidityScore+=2;
+        if(
+            m5ATR>=2 &&
+            m5ATR<=12
+        )
+            riskScore+=10;
 
-    /*
-      Session
-    */
+        else
+            riskScore+=5;
 
-    const hour =
+    }
+
+    /* Session */
+
+    const hour=
         new Date().getHours();
 
-    const activeSession =
+    const activeSession=
         (
             hour>=8 &&
             hour<17
@@ -2008,71 +2569,356 @@ function runEngine(){
             hour<5
         );
 
-    if(!activeSession)
-        riskScore-=5;
+    if(activeSession)
+        riskScore+=5;
 
-    /*
-      Clamp
-    */
+    /* RR potential */
 
-    h1Score =
-        Math.max(
-            0,
-            Math.min(20,h1Score)
+    if(
+        support!==null &&
+        resistance!==null &&
+        resistance>support
+    )
+        riskScore+=5;
+
+    h1Score=
+        clamp(h1Score,0,20);
+
+    m15Score=
+        clamp(m15Score,0,20);
+
+    m5Score=
+        clamp(m5Score,0,20);
+
+    liquidityScore=
+        clamp(liquidityScore,0,20);
+
+    riskScore=
+        clamp(riskScore,0,20);
+
+    const total=
+        Math.round(
+            h1Score+
+            m15Score+
+            m5Score+
+            liquidityScore+
+            riskScore
         );
 
-    m15Score =
-        Math.max(
-            0,
-            Math.min(20,m15Score)
-        );
-
-    m5Score =
-        Math.max(
-            0,
-            Math.min(20,m5Score)
-        );
-
-    liquidityScore =
-        Math.max(
-            0,
-            Math.min(20,liquidityScore)
-        );
-
-    riskScore =
-        Math.max(
-            0,
-            Math.min(20,riskScore)
-        );
-
-    const total =
-        h1Score+
-        m15Score+
-        m5Score+
-        liquidityScore+
-        riskScore;
-
-    /*
-      STRICT SIGNAL
-    */
+    /* =====================================================
+       SIGNAL DIRECTION
+    ===================================================== */
 
     let signal="WAIT";
 
-    if(total>=80){
+    const bullishVotes=
+        (h1Bull?1:0)+
+        (m15Bull?1:0)+
+        (m5Bull?1:0);
+
+    const bearishVotes=
+        (h1Bear?1:0)+
+        (m15Bear?1:0)+
+        (m5Bear?1:0);
+
+    if(
+        total>=75 &&
+        bullishVotes>=2 &&
+        !nearResistance
+    ){
 
         signal="BUY";
 
-    }else if(total<=42){
+    }else if(
+        total>=75 &&
+        bearishVotes>=2 &&
+        !nearSupport
+    ){
 
         signal="SELL";
 
     }
 
-    updateSignalUI(
-        signal,
-        total,
-        levels
-    );
+    /* =====================================================
+       UI
+    ===================================================== */
+
+    document.getElementById(
+        "h1Trend"
+    ).innerHTML =
+        h1Bull
+            ? '<span class="pass">BULLISH ✓</span>'
+            : h1Bear
+                ? '<span class="fail">BEARISH ✓</span>'
+                : '<span class="neutral">NEUTRAL</span>';
+
+    document.getElementById(
+        "h1Ema"
+    ).innerHTML =
+        h1Ema200===null
+            ? "--"
+            : price>h1Ema200
+                ? `<span class="pass">Above ${h1Ema200.toFixed(2)} ✓</span>`
+                : `<span class="fail">Below ${h1Ema200.toFixed(2)} ✓</span>`;
+
+    document.getElementById(
+        "h1Structure"
+    ).innerText =
+        h1Struct;
+
+    document.getElementById(
+        "h1Support"
+    ).innerText =
+        support!==null
+            ? support.toFixed(2)
+            : "--";
+
+    document.getElementById(
+        "h1Resistance"
+    ).innerText =
+        resistance!==null
+            ? resistance.toFixed(2)
+            : "--";
+
+    document.getElementById(
+        "m15Ema"
+    ).innerHTML =
+        m15Ema20!==null &&
+        m15Ema50!==null
+            ? `<span class="${m15Ema20>m15Ema50?"pass":"fail"}">
+                ${m15Ema20.toFixed(2)}
+                /
+                ${m15Ema50.toFixed(2)}
+               </span>`
+            : "--";
+
+    document.getElementById(
+        "m15Rsi"
+    ).innerHTML =
+        m15RSI!==null
+            ? `<span class="${
+                m15RSI>=50
+                    ? "pass"
+                    : "fail"
+              }">${m15RSI.toFixed(1)}</span>`
+            : "--";
+
+    document.getElementById(
+        "m15Macd"
+    ).innerHTML =
+        m15MACD!==null
+            ? `<span class="${
+                m15MACD>=0
+                    ? "pass"
+                    : "fail"
+              }">${
+                m15MACD>=0
+                    ? "Bullish"
+                    : "Bearish"
+              }</span>`
+            : "--";
+
+    document.getElementById(
+        "m15Adx"
+    ).innerHTML =
+        m15ADX!==null
+            ? `<span class="${
+                m15ADX>=20
+                    ? "pass"
+                    : "neutral"
+              }">${m15ADX.toFixed(1)}</span>`
+            : "--";
+
+    document.getElementById(
+        "m15Structure"
+    ).innerText =
+        m15Struct;
+
+    document.getElementById(
+        "m5Momentum"
+    ).innerHTML =
+        m5Bull
+            ? '<span class="pass">BULLISH ✓</span>'
+            : m5Bear
+                ? '<span class="fail">BEARISH ✓</span>'
+                : '<span class="neutral">NEUTRAL</span>';
+
+    document.getElementById(
+        "m5Structure"
+    ).innerHTML =
+        m5Struct==="BOS ↑"
+            ? '<span class="pass">BOS ↑ ✓</span>'
+            : m5Struct==="BOS ↓"
+                ? '<span class="fail">BOS ↓ ✓</span>'
+                : '<span class="neutral">RANGE</span>';
+
+    document.getElementById(
+        "m5Atr"
+    ).innerText =
+        m5ATR!==null
+            ? `${m5ATR.toFixed(2)} USD`
+            : "--";
+
+    document.getElementById(
+        "m5Reaction"
+    ).innerHTML =
+        nearSupport
+            ? '<span class="pass">Support Reaction ✓</span>'
+            : nearResistance
+                ? '<span class="fail">Resistance Zone</span>'
+                : '<span class="neutral">No Major Reaction</span>';
+
+    document.getElementById(
+        "m5Fvg"
+    ).innerHTML =
+        m5FVG==="BULLISH"
+            ? '<span class="pass">Bullish FVG ✓</span>'
+            : m5FVG==="BEARISH"
+                ? '<span class="fail">Bearish FVG ✓</span>'
+                : '<span class="neutral">NONE</span>';
+
+    document.getElementById(
+        "vwapStatus"
+    ).innerHTML =
+        vwap!==null
+            ? `<span class="${
+                price>vwap
+                    ? "pass"
+                    : "fail"
+              }">${
+                price>vwap
+                    ? "Above"
+                    : "Below"
+              } VWAP ${vwap.toFixed(2)}</span>`
+            : "--";
+
+    const bbMid=
+        sma(m5,20);
+
+    const bbDev=
+        m5.length>=20
+            ? stdDev(
+                m5.slice(-20)
+              )*2
+            : null;
+
+    const bbUpper=
+        bbMid!==null &&
+        bbDev!==null
+            ? bbMid+bbDev
+            : null;
+
+    const bbLower=
+        bbMid!==null &&
+        bbDev!==null
+            ? bbMid-bbDev
+            : null;
+
+    let bbText="--";
+
+    if(
+        bbUpper!==null &&
+        bbLower!==null
+    ){
+
+        if(price>=bbUpper)
+            bbText="Upper";
+
+        else if(price<=bbLower)
+            bbText="Lower";
+
+        else
+            bbText="Middle";
+
+    }
+
+    document.getElementById(
+        "bbStatus"
+    ).innerText =
+        bbText;
+
+    let snrText="--";
+
+    if(nearSupport)
+        snrText="Near Support ✓";
+
+    else if(nearResistance)
+        snrText="Near Resistance ⚠";
+
+    else
+        snrText="Neutral Zone";
+
+    document.getElementById(
+        "snrStatus"
+    ).innerHTML =
+        nearSupport
+            ? '<span class="pass">Near Support ✓</span>'
+            : nearResistance
+                ? '<span class="fail">Near Resistance ⚠</span>'
+                : '<span class="neutral">Neutral Zone</span>';
+
+    document.getElementById(
+        "sessionQuality"
+    ).innerHTML =
+        activeSession
+            ? '<span class="pass">ACTIVE ✓</span>'
+            : '<span class="neutral">QUIET</span>';
+
+    document.getElementById(
+        "volatilityStatus"
+    ).innerHTML =
+        m5ATR!==null
+            ? `<span class="${
+                m5ATR>=2 && m5ATR<=12
+                    ? "pass"
+                    : "neutral"
+              }">${
+                m5ATR>=2 && m5ATR<=12
+                    ? "NORMAL"
+                    : "EXTREME"
+              }</span>`
+            : "--";
+
+    document.getElementById(
+        "buyLiquidity"
+    ).innerText =
+        resistance!==null
+            ? resistance.toFixed(2)
+            : "--";
+
+    document.getElementById(
+        "sellLiquidity"
+    ).innerText =
+        support!==null
+            ? support.toFixed(2)
+            : "--";
+
+    document.getElementById(
+        "asianHigh"
+    ).innerText =
+        asian.high!==null
+            ? asian.high.toFixed(2)
+            : "--";
+
+    document.getElementById(
+        "asianLow"
+    ).innerText =
+        asian.low!==null
+            ? asian.low.toFixed(2)
+            : "--";
+
+    document.getElementById(
+        "liquiditySweep"
+    ).innerHTML =
+        liquidityDirection==="BUY-SIDE"
+            ? '<span class="pass">BUY-SIDE ✓</span>'
+            : liquidityDirection==="SELL-SIDE"
+                ? '<span class="fail">SELL-SIDE ✓</span>'
+                : '<span class="neutral">NONE</span>';
+
+    /* =====================================================
+       SCORES
+    ===================================================== */
 
     document.getElementById(
         "scoreH1"
@@ -2108,7 +2954,15 @@ function runEngine(){
         riskScore
     );
 
-    updateRiskCalculator();
+    updateSignalUI(
+        signal,
+        total,
+        {
+            support,
+            resistance,
+            atr:m5ATR
+        }
+    );
 
 }
 
@@ -2123,13 +2977,13 @@ function setFilter(
     good
 ){
 
-    const d =
+    const d=
         document.getElementById(dot);
 
-    const t =
+    const t=
         document.getElementById(text);
 
-    d.className =
+    d.className=
         "filter-dot "+
         (
             good
@@ -2137,18 +2991,17 @@ function setFilter(
                 : "dot-bad"
         );
 
-    t.innerText =
+    t.innerText=
         good
             ? "PASS"
             : "FAIL";
 
-    t.className =
+    t.className=
         good
             ? "pass"
             : "fail";
 
 }
-
 
 function updateConfluenceUI(
     total,
@@ -2207,23 +3060,17 @@ function updateSignalUI(
     levels
 ){
 
-    const badge =
+    const badge=
         document.getElementById(
             "masterSignalBadge"
         );
 
-    const reasons =
-        document.getElementById(
-            "reasonList"
-        );
-
-    badge.className =
+    badge.className=
         "signal-badge";
 
     if(signal==="BUY"){
 
-        badge.innerText =
-            "🟢 BUY";
+        badge.innerText="🟢 BUY";
 
         badge.classList.add(
             "sig-buy"
@@ -2231,8 +3078,7 @@ function updateSignalUI(
 
     }else if(signal==="SELL"){
 
-        badge.innerText =
-            "🔴 SELL";
+        badge.innerText="🔴 SELL";
 
         badge.classList.add(
             "sig-sell"
@@ -2240,8 +3086,7 @@ function updateSignalUI(
 
     }else{
 
-        badge.innerText =
-            "⏳ WAIT";
+        badge.innerText="⏳ WAIT";
 
         badge.classList.add(
             "sig-wait"
@@ -2269,58 +3114,75 @@ function updateSignalUI(
     ).innerText =
         signal;
 
+    const reasons=
+        document.getElementById(
+            "reasonList"
+        );
+
     reasons.innerHTML="";
+
+    const h1Bull =
+        document.getElementById(
+            "h1Trend"
+        ).innerText.includes(
+            "BULLISH"
+        );
+
+    const h1Bear =
+        document.getElementById(
+            "h1Trend"
+        ).innerText.includes(
+            "BEARISH"
+        );
+
+    const m15Rsi =
+        parseFloat(
+            document.getElementById(
+                "m15Rsi"
+            ).innerText
+        );
+
+    const m15Adx =
+        parseFloat(
+            document.getElementById(
+                "m15Adx"
+            ).innerText
+        );
 
     const reasonData=[
 
         [
-            true,
-            "H1 bullish structure"
+            h1Bull || h1Bear,
+            "H1 trend / structure diperiksa"
         ],
 
         [
-            true,
-            "Price above major trend bias"
+            !isNaN(m15Rsi) &&
+            m15Rsi>=45 &&
+            m15Rsi<=70,
+            "M15 RSI dalam zon momentum"
         ],
 
         [
-            market.rsi>50,
-            "M15 RSI supports momentum"
+            !isNaN(m15Adx) &&
+            m15Adx>=20,
+            "M15 ADX menunjukkan trend strength"
         ],
 
         [
-            market.macd==="BULLISH",
-            "M15 MACD bullish"
+            score>=75,
+            "Confluence melepasi threshold"
         ],
 
         [
-            market.adx>=25,
-            "ADX menunjukkan trend power"
+            levels.support!==null &&
+            levels.resistance!==null,
+            "Support / Resistance dikira daripada H1"
         ],
 
         [
-            market.m5Momentum==="BULLISH",
-            "M5 momentum bullish"
-        ],
-
-        [
-            market.vwap==="ABOVE",
-            "Price above VWAP"
-        ],
-
-        [
-            market.fvg==="BULLISH",
-            "Bullish FVG detected"
-        ],
-
-        [
-            market.liquiditySweep==="BUY-SIDE",
-            "Liquidity sweep supports BUY"
-        ],
-
-        [
-            true,
-            "S/R + liquidity considered"
+            levels.atr!==null,
+            "ATR M5 digunakan untuk volatility & SL"
         ]
 
     ];
@@ -2328,17 +3190,20 @@ function updateSignalUI(
     reasonData.forEach(
         ([good,text])=>{
 
-            const div =
+            const div=
                 document.createElement(
                     "div"
                 );
 
-            div.className =
-                good
-                    ? "reason good"
-                    : "reason bad";
+            div.className=
+                "reason "+
+                (
+                    good
+                        ? "good"
+                        : "bad"
+                );
 
-            div.innerText =
+            div.innerText=
                 good
                     ? "✓ "+text
                     : "✕ "+text;
@@ -2354,7 +3219,8 @@ function updateSignalUI(
     );
 
     if(
-        signal!==lastSignal
+        signal!==lastSignal &&
+        signal!=="WAIT"
     ){
 
         addHistory(
@@ -2363,10 +3229,9 @@ function updateSignalUI(
             score
         );
 
-        lastSignal =
-            signal;
-
     }
+
+    lastSignal=signal;
 
 }
 
@@ -2380,10 +3245,10 @@ function generateTradePlan(
     levels
 ){
 
-    const atr =
-        market.atr;
-
-    if(signal==="WAIT"){
+    if(
+        signal==="WAIT" ||
+        levels.atr===null
+    ){
 
         document.getElementById(
             "execEntry"
@@ -2397,88 +3262,89 @@ function generateTradePlan(
 
         document.getElementById(
             "execSL"
-        ).innerText =
-            "--";
+        ).innerText="--";
 
         document.getElementById(
             "execTP1"
-        ).innerText =
-            "--";
+        ).innerText="--";
 
         document.getElementById(
             "execTP2"
-        ).innerText =
-            "--";
+        ).innerText="--";
 
         document.getElementById(
             "execTP3"
-        ).innerText =
-            "--";
+        ).innerText="--";
 
         document.getElementById(
             "execRR"
-        ).innerText =
-            "N/A";
+        ).innerText="N/A";
 
         return;
 
     }
 
-    const entry =
-        currentPrice;
+    const entry=currentPrice;
+    const atr=levels.atr;
 
     let sl,tp1,tp2,tp3;
 
     if(signal==="BUY"){
 
-        sl =
-            levels.support-
-            atr*.35;
+        const structuralSL =
+            levels.support!==null
+                ? levels.support-atr*.35
+                : entry-atr*1.5;
 
-        const risk =
+        sl=
+            Math.min(
+                entry-atr*.9,
+                structuralSL
+            );
+
+        const risk=
             entry-sl;
 
-        tp1 =
-            entry+
-            risk*1.5;
+        tp1=
+            entry+risk*1.5;
 
-        tp2 =
-            entry+
-            risk*2.5;
+        tp2=
+            entry+risk*2.5;
 
-        tp3 =
-            entry+
-            risk*4;
+        tp3=
+            entry+risk*4;
 
     }else{
 
-        sl =
-            levels.resistance+
-            atr*.35;
+        const structuralSL =
+            levels.resistance!==null
+                ? levels.resistance+atr*.35
+                : entry+atr*1.5;
 
-        const risk =
+        sl=
+            Math.max(
+                entry+atr*.9,
+                structuralSL
+            );
+
+        const risk=
             sl-entry;
 
-        tp1 =
-            entry-
-            risk*1.5;
+        tp1=
+            entry-risk*1.5;
 
-        tp2 =
-            entry-
-            risk*2.5;
+        tp2=
+            entry-risk*2.5;
 
-        tp3 =
-            entry-
-            risk*4;
+        tp3=
+            entry-risk*4;
 
     }
 
     document.getElementById(
         "execEntry"
     ).innerText =
-        (entry-.8).toFixed(2)+
-        " – "+
-        (entry+.8).toFixed(2);
+        `${(entry-atr*.15).toFixed(2)} – ${(entry+atr*.15).toFixed(2)}`;
 
     document.getElementById(
         "execDirection"
@@ -2526,46 +3392,46 @@ function generateTradePlan(
 
 
 /* =========================================================
-   RISK
+   RISK CALCULATOR
 ========================================================= */
 
 function updateRiskCalculator(){
 
-    const balance =
-        parseFloat(
+    const balance=
+        num(
             document.getElementById(
                 "accountBalance"
             ).value
         )||0;
 
-    const riskPercent =
-        parseFloat(
+    const riskPercent=
+        num(
             document.getElementById(
                 "riskPercent"
             ).value
         )||0;
 
-    const entry =
-        parseFloat(
+    const entry=
+        num(
             document.getElementById(
                 "riskEntry"
             ).value
         )||0;
 
-    const sl =
-        parseFloat(
+    const sl=
+        num(
             document.getElementById(
                 "riskSL"
             ).value
         )||0;
 
-    const maxRisk =
+    const maxRisk=
         balance*
         (
             riskPercent/100
         );
 
-    const distance =
+    const distance=
         Math.abs(
             entry-sl
         );
@@ -2574,7 +3440,7 @@ function updateRiskCalculator(){
 
     if(distance>0){
 
-        lot =
+        lot=
             maxRisk/
             (
                 distance*100
@@ -2582,7 +3448,7 @@ function updateRiskCalculator(){
 
     }
 
-    lot =
+    lot=
         Math.floor(
             lot*100
         )/100;
@@ -2619,10 +3485,9 @@ function addHistory(
     score
 ){
 
-    const now =
-        new Date();
+    const now=new Date();
 
-    const time =
+    const time=
         now.toLocaleTimeString(
             "en-MY",
             {
@@ -2641,11 +3506,8 @@ function addHistory(
 
     });
 
-    history =
-        history.slice(
-            0,
-            30
-        );
+    history=
+        history.slice(0,30);
 
     localStorage.setItem(
         "xauSignalHistory",
@@ -2656,10 +3518,9 @@ function addHistory(
 
 }
 
-
 function renderHistory(){
 
-    const list =
+    const list=
         document.getElementById(
             "historyList"
         );
@@ -2669,28 +3530,26 @@ function renderHistory(){
     history.forEach(
         item=>{
 
-            const row =
+            const row=
                 document.createElement(
                     "div"
                 );
 
-            row.className =
+            row.className=
                 "history-row";
 
-            let signalClass =
+            let signalClass=
                 "history-wait";
 
             if(
                 item.signal==="BUY"
             )
-                signalClass =
-                    "history-buy";
+                signalClass="history-buy";
 
             if(
                 item.signal==="SELL"
             )
-                signalClass =
-                    "history-sell";
+                signalClass="history-sell";
 
             row.innerHTML=`
 
@@ -2720,125 +3579,36 @@ function renderHistory(){
 
 function newsFilter(){
 
-    const newsEvents=[];
+    /*
+      News API belum disambungkan.
+      Jangan claim "NO NEWS" secara automatik.
+    */
 
-    const now =
-        new Date();
+    document.getElementById(
+        "newsStatus"
+    ).className =
+        "news-safe";
 
-    let blocked=false;
+    document.getElementById(
+        "newsStatus"
+    ).innerText =
+        "✓ NEWS FILTER MANUAL";
 
-    newsEvents.forEach(
-        event=>{
+    document.getElementById(
+        "newsTradingStatus"
+    ).innerText =
+        "CHECK NEWS";
 
-            const eventDate =
-                new Date(
-                    event.date+
-                    "T"+
-                    event.time+
-                    ":00"
-                );
-
-            const difference =
-                Math.abs(
-                    now-eventDate
-                );
-
-            if(
-                difference<=
-                30*60*1000
-            ){
-
-                blocked=true;
-
-            }
-
-        }
-    );
-
-    const status =
-        document.getElementById(
-            "newsStatus"
-        );
-
-    const trading =
-        document.getElementById(
-            "newsTradingStatus"
-        );
-
-    if(blocked){
-
-        status.className =
-            "news-warning";
-
-        status.innerText =
-            "⚠ NEWS WINDOW — TRADE BLOCKED";
-
-        trading.innerText =
-            "BLOCKED";
-
-        trading.className =
-            "fail";
-
-    }else{
-
-        status.className =
-            "news-safe";
-
-        status.innerText =
-            "✓ NO BLOCKING NEWS DETECTED";
-
-        trading.innerText =
-            "ALLOWED";
-
-        trading.className =
-            "pass";
-
-    }
+    document.getElementById(
+        "newsTradingStatus"
+    ).className =
+        "neutral";
 
 }
 
 
 /* =========================================================
-   MARKET STATUS
-========================================================= */
-
-function updateMarketStatus(){
-
-    const day =
-        new Date().getDay();
-
-    const weekend =
-        day===0 ||
-        day===6;
-
-    const element =
-        document.getElementById(
-            "marketStatus"
-        );
-
-    if(weekend){
-
-        element.innerText =
-            "CLOSED";
-
-        element.className =
-            "status-value fail";
-
-    }else{
-
-        element.innerText =
-            "OPEN";
-
-        element.className =
-            "status-value pass";
-
-    }
-
-}
-
-
-/* =========================================================
-   INPUTS
+   INPUT EVENTS
 ========================================================= */
 
 [
@@ -2867,7 +3637,7 @@ function updateMarketStatus(){
 
 window.addEventListener(
     "load",
-    function(){
+    async function(){
 
         updateSessions();
 
@@ -2877,9 +3647,9 @@ window.addEventListener(
 
         renderHistory();
 
-        runEngine();
+        updateRiskCalculator();
 
-        fetchLiveGold();
+        await updateMarketData();
 
     }
 );
@@ -2890,8 +3660,8 @@ window.addEventListener(
 ========================================================= */
 
 setInterval(
-    fetchLiveGold,
-    30000
+    updateMarketData,
+    60000
 );
 
 setInterval(
