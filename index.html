@@ -202,6 +202,56 @@ font-weight:bold;
 color:#a87900
 }
 
+/* NOTIFICATION */
+
+.notification-control{
+background:var(--card);
+border:1px solid var(--border);
+border-radius:10px;
+padding:9px;
+margin-bottom:10px;
+display:flex;
+justify-content:space-between;
+align-items:center;
+gap:8px;
+box-shadow:var(--shadow)
+}
+
+.notification-info{
+min-width:0
+}
+
+.notification-title{
+font-size:.7rem;
+font-weight:bold
+}
+
+.notification-status{
+font-size:.6rem;
+color:var(--muted);
+margin-top:2px
+}
+
+.notification-button{
+border:none;
+background:var(--blue);
+color:#fff;
+border-radius:6px;
+padding:7px 11px;
+font-size:.68rem;
+font-weight:bold;
+cursor:pointer;
+white-space:nowrap
+}
+
+.notification-button.active{
+background:var(--green)
+}
+
+.notification-button.blocked{
+background:var(--red)
+}
+
 /* MASTER */
 
 .master-card{
@@ -646,6 +696,14 @@ font-size:1.7rem
 height:220px
 }
 
+.notification-control{
+padding:8px
+}
+
+.notification-button{
+padding:7px 9px
+}
+
 }
 </style>
 </head>
@@ -739,6 +797,31 @@ XAU/USD • LIVE 5M
 </div>
 
 </div>
+
+</div>
+
+<!-- NOTIFICATION CONTROL -->
+
+<div class="notification-control">
+
+<div class="notification-info">
+
+<div class="notification-title">
+🔔 SIGNAL ALERT SYSTEM
+</div>
+
+<div id="notificationStatus" class="notification-status">
+Notification belum diaktifkan
+</div>
+
+</div>
+
+<button
+id="notificationButton"
+class="notification-button"
+onclick="enableNotifications()">
+🔔 ENABLE
+</button>
 
 </div>
 
@@ -1352,11 +1435,12 @@ audioReady=true;
 
 }catch(e){
 
-console.log("Audio tidak tersedia");
+console.log("Audio tidak tersedia",e);
 
 }
 
 }
+
 
 function playAlertSound(signal){
 
@@ -1428,6 +1512,326 @@ console.log("Alert sound error",e);
 }
 
 }
+
+
+/* =========================================================
+   NOTIFICATION SYSTEM
+========================================================= */
+
+function updateNotificationStatus(){
+
+const status=
+document.getElementById(
+"notificationStatus"
+);
+
+const button=
+document.getElementById(
+"notificationButton"
+);
+
+if(!status||!button)
+return;
+
+
+/* Browser tak support */
+
+if(!("Notification" in window)){
+
+status.innerText=
+"❌ Browser tidak support Web Notification";
+
+status.style.color=
+"var(--red)";
+
+button.innerText=
+"NOT SUPPORTED";
+
+button.classList.remove(
+"active"
+);
+
+button.classList.add(
+"blocked"
+);
+
+button.disabled=true;
+
+return;
+
+}
+
+
+/* Permission granted */
+
+if(Notification.permission==="granted"){
+
+status.innerText=
+"🟢 Notification ACTIVE";
+
+status.style.color=
+"var(--green)";
+
+button.innerText=
+"✓ ACTIVE";
+
+button.classList.remove(
+"blocked"
+);
+
+button.classList.add(
+"active"
+);
+
+button.disabled=false;
+
+return;
+
+}
+
+
+/* Permission denied */
+
+if(Notification.permission==="denied"){
+
+status.innerText=
+"🔴 Notification BLOCKED — buka Settings browser";
+
+status.style.color=
+"var(--red)";
+
+button.innerText=
+"BLOCKED";
+
+button.classList.remove(
+"active"
+);
+
+button.classList.add(
+"blocked"
+);
+
+button.disabled=false;
+
+return;
+
+}
+
+
+/* Default */
+
+status.innerText=
+"⚪ Notification belum diaktifkan";
+
+status.style.color=
+"var(--muted)";
+
+button.innerText=
+"🔔 ENABLE";
+
+button.classList.remove(
+"active",
+"blocked"
+);
+
+button.disabled=false;
+
+}
+
+
+/* =========================================================
+   ENABLE NOTIFICATIONS
+========================================================= */
+
+async function enableNotifications(){
+
+/*
+   User interaction akan unlock audio.
+*/
+
+initAudio();
+
+updateNotificationStatus();
+
+if(!("Notification" in window)){
+
+alert(
+"Browser ini tidak menyokong Web Notification.\n\n"+
+"Dashboard alert dan bunyi masih boleh digunakan."
+);
+
+return;
+
+}
+
+
+/*
+   Kalau permission sudah granted
+*/
+
+if(Notification.permission==="granted"){
+
+updateNotificationStatus();
+
+try{
+
+new Notification(
+"🟢 XAU/USD Pro Sniper",
+{
+body:
+"Notification sudah aktif.",
+icon:"/icon.png"
+}
+);
+
+}catch(e){
+
+console.log(
+"Test notification error:",
+e
+);
+
+}
+
+return;
+
+}
+
+
+/*
+   Kalau sudah denied
+*/
+
+if(Notification.permission==="denied"){
+
+alert(
+"Notification telah BLOCKED oleh browser.\n\n"+
+"Pergi ke Settings browser → Website Settings / Notifications → "+
+"benarkan notification untuk website ini."
+);
+
+updateNotificationStatus();
+
+return;
+
+}
+
+
+/*
+   Request permission
+*/
+
+try{
+
+const permission=
+await Notification.requestPermission();
+
+updateNotificationStatus();
+
+if(permission==="granted"){
+
+alert(
+"✅ Notification berjaya diaktifkan."
+);
+
+try{
+
+new Notification(
+"🟢 XAU/USD Pro Sniper",
+{
+body:
+"Signal alert sekarang aktif.",
+icon:"/icon.png"
+}
+);
+
+}catch(e){
+
+console.log(
+"Test notification error:",
+e
+);
+
+}
+
+}
+
+else if(permission==="denied"){
+
+alert(
+"❌ Notification telah disekat."
+);
+
+}
+
+else{
+
+alert(
+"Notification belum dibenarkan."
+);
+
+}
+
+}catch(error){
+
+console.error(
+"Notification permission error:",
+error
+);
+
+alert(
+"Notification tidak dapat diaktifkan pada browser ini."
+);
+
+updateNotificationStatus();
+
+}
+
+}
+
+
+/* =========================================================
+   SEND NOTIFICATION
+========================================================= */
+
+function sendBrowserNotification(
+title,
+body
+){
+
+if(!("Notification" in window))
+return;
+
+if(Notification.permission!=="granted")
+return;
+
+try{
+
+new Notification(
+title,
+{
+body,
+icon:"/icon.png",
+tag:"xau-signal",
+renotify:true
+}
+);
+
+}catch(e){
+
+console.log(
+"Browser notification error:",
+e
+);
+
+}
+
+}
+
+
+/* =========================================================
+   SHOW SIGNAL ALERT
+========================================================= */
 
 function showSignalAlert(
 signal,
@@ -1507,85 +1911,6 @@ sendBrowserNotification(
 );
 
 }
-
-}
-
-function sendBrowserNotification(
-title,
-body
-){
-
-if(
-!("Notification" in window)
-)
-return;
-
-if(
-Notification.permission==="granted"
-){
-
-try{
-
-new Notification(
-title,
-{
-body,
-icon:"/icon.png"
-}
-);
-
-}catch(e){}
-
-}
-
-}
-
-function enableNotifications(){
-
-initAudio();
-
-if(
-!("Notification" in window)
-){
-
-alert(
-"Browser ini tidak menyokong notification. Alert dalam dashboard + bunyi masih boleh digunakan."
-);
-
-return;
-
-}
-
-if(
-Notification.permission==="granted"
-){
-
-alert(
-"Notification sudah aktif."
-);
-
-return;
-
-}
-
-Notification.requestPermission()
-.then(permission=>{
-
-if(permission==="granted"){
-
-alert(
-"Notification berjaya diaktifkan."
-);
-
-}else{
-
-alert(
-"Browser notification tidak dibenarkan. Dashboard alert dan bunyi masih digunakan."
-);
-
-}
-
-});
 
 }
 
@@ -2915,7 +3240,8 @@ c.volume||1;
 totalPV+=
 typical*v;
 
-totalV+=v;
+totalV+=
+v;
 
 });
 
@@ -4370,6 +4696,8 @@ renderHistory();
 
 updateRiskCalculator();
 
+updateNotificationStatus();
+
 fetchLiveGold();
 
 }
@@ -4393,6 +4721,16 @@ updateSessions,
 setInterval(
 updateMarketStatus,
 10000
+);
+
+/*
+   Check permission periodically.
+   Useful kalau user change permission dari browser settings.
+*/
+
+setInterval(
+updateNotificationStatus,
+5000
 );
 
 </script>
