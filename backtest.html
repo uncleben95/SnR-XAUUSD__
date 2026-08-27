@@ -15,12 +15,8 @@
 --border:#e1e5ea;
 --blue:#2563eb;
 --green:#15803d;
---green-bg:#dcfce7;
 --red:#dc2626;
---red-bg:#fee2e2;
 --yellow:#a16207;
---yellow-bg:#fef9c3;
---purple:#7c3aed;
 }
 
 *{box-sizing:border-box}
@@ -62,6 +58,10 @@ border-radius:10px;
 padding:12px;
 margin-bottom:10px;
 box-shadow:0 4px 16px rgba(0,0,0,.05)
+}
+
+h3{
+margin:0 0 10px
 }
 
 button{
@@ -181,6 +181,21 @@ line-height:1.5;
 color:var(--muted)
 }
 
+.progress{
+height:5px;
+background:#e5e7eb;
+border-radius:5px;
+overflow:hidden;
+margin-top:8px
+}
+
+.progress-bar{
+height:100%;
+width:0%;
+background:var(--blue);
+transition:width .1s
+}
+
 @media(max-width:650px){
 
 .stats{
@@ -199,6 +214,7 @@ grid-template-columns:repeat(2,1fr)
 <h1>XAU/USD PRO SNIPER — BACKTEST</h1>
 <p>Replay engine menggunakan candle 5M daripada /api/xau</p>
 </header>
+
 
 <div class="card">
 
@@ -223,6 +239,10 @@ RUN BACKTEST
 
 <div id="status" class="status">
 Ready.
+</div>
+
+<div class="progress">
+<div id="progressBar" class="progress-bar"></div>
 </div>
 
 </div>
@@ -363,7 +383,17 @@ SL menggunakan ATR 1.15x / S&R seperti engine dashboard. TP default = 2R.
 
 <br><br>
 
-⚠️ Backtest ini ialah historical simulation, bukan jaminan profit live. Spread, slippage, broker execution dan news impact tidak dimodelkan.
+<strong>BACKTEST MODE:</strong>
+Setiap signal hanya melihat candle sehingga waktu signal.
+Tiada candle masa depan digunakan untuk FVG, VWAP, S&R atau indicator.
+
+<br><br>
+
+Jika candle yang sama menyentuh SL dan TP, trade dikira LOSS sebagai conservative assumption.
+
+<br><br>
+
+⚠️ Backtest ialah historical simulation, bukan jaminan profit live. Spread, slippage, broker execution dan news impact tidak dimodelkan.
 
 </div>
 
@@ -383,7 +413,7 @@ let trades=[];
 
 
 /* =========================================================
-   HELPERS
+   BASIC HELPERS
 ========================================================= */
 
 function avg(arr){
@@ -422,39 +452,6 @@ e*(1-k);
 }
 
 return e;
-
-}
-
-
-function sma(values,period){
-
-if(values.length<period)
-return null;
-
-return avg(
-values.slice(-period)
-);
-
-}
-
-
-function std(values,period){
-
-if(values.length<period)
-return null;
-
-let a=
-values.slice(-period);
-
-let m=avg(a);
-
-return Math.sqrt(
-avg(
-a.map(x=>
-(x-m)**2
-)
-)
-);
 
 }
 
@@ -531,6 +528,10 @@ trs.slice(-period)
 }
 
 
+/* =========================================================
+   MACD
+========================================================= */
+
 function macd(values){
 
 if(values.length<35)
@@ -589,6 +590,10 @@ line>signal
 
 }
 
+
+/* =========================================================
+   ADX
+========================================================= */
 
 function adx(data,period=14){
 
@@ -773,13 +778,20 @@ null;
 
 
 /* =========================================================
-   ENGINE
+   SIGNAL ENGINE
 ========================================================= */
 
 function calculateSignal(data){
 
 if(data.length<300)
 return null;
+
+
+/*
+ IMPORTANT:
+ data = replay history ONLY.
+ Tidak menggunakan global candles.
+*/
 
 let m5=data;
 
@@ -799,6 +811,7 @@ h1.length<210
 )
 return null;
 
+
 let c5=
 m5.map(x=>x.close);
 
@@ -807,6 +820,7 @@ m15.map(x=>x.close);
 
 let c1=
 h1.map(x=>x.close);
+
 
 let m5Data={
 
@@ -817,6 +831,7 @@ atr:atr(m5),
 macd:macd(c5)
 
 };
+
 
 let m15Data={
 
@@ -829,6 +844,7 @@ macd:macd(c15)
 
 };
 
+
 let h1Data={
 
 ema200:ema(c1,200),
@@ -836,6 +852,7 @@ ema50:ema(c1,50),
 atr:atr(h1)
 
 };
+
 
 if(
 !m5Data.atr||
@@ -845,13 +862,17 @@ if(
 return null;
 
 
-/* LEVELS */
+/* =========================================================
+   LEVELS
+   ONLY HISTORICAL CANDLES
+========================================================= */
 
 let recent5=
 m5.slice(-50);
 
 let recent15=
 m15.slice(-30);
+
 
 let high5=
 Math.max(
@@ -873,6 +894,7 @@ Math.min(
 ...recent15.map(x=>x.low)
 );
 
+
 let levels={
 
 support:low15,
@@ -883,7 +905,9 @@ sellLiquidity:low5
 };
 
 
-/* STRUCTURE */
+/* =========================================================
+   STRUCTURE
+========================================================= */
 
 let last5=
 m5[m5.length-1];
@@ -891,9 +915,11 @@ m5[m5.length-1];
 let prev5=
 m5[m5.length-2];
 
+
 let m5Bull=
 last5.close>prev5.close &&
 last5.high>=prev5.high;
+
 
 let last15=
 m15[m15.length-1];
@@ -901,14 +927,17 @@ m15[m15.length-1];
 let old15=
 m15[m15.length-3];
 
+
 let m15Bull=
 last15.close>old15.close;
+
 
 let lastH1=
 h1[h1.length-1];
 
 let oldH1=
 h1[h1.length-4];
+
 
 let h1Bull=
 lastH1.close>oldH1.close &&
@@ -918,7 +947,9 @@ lastH1.close>h1Data.ema200
 );
 
 
-/* SCORE */
+/* =========================================================
+   SCORE
+========================================================= */
 
 let scoreH1=0;
 let scoreM15=0;
@@ -944,12 +975,10 @@ bearVotes++;
 
 }
 
-let price=
-last5.close;
 
 if(
 h1Data.ema200 &&
-price>h1Data.ema200
+last5.close>h1Data.ema200
 ){
 
 scoreH1+=6;
@@ -978,6 +1007,7 @@ bearVotes++;
 
 }
 
+
 if(
 m15Data.rsi>=50&&
 m15Data.rsi<=68
@@ -994,6 +1024,7 @@ bearVotes++;
 
 }
 
+
 if(m15Data.macd?.bull){
 
 scoreM15+=4;
@@ -1004,6 +1035,7 @@ bullVotes++;
 bearVotes++;
 
 }
+
 
 if(
 m15Data.adx?.value>=20
@@ -1027,9 +1059,10 @@ bearVotes++;
 
 }
 
+
 if(
 m5Data.ema20 &&
-price>m5Data.ema20
+last5.close>m5Data.ema20
 ){
 
 scoreM5+=5;
@@ -1041,6 +1074,7 @@ bearVotes++;
 
 }
 
+
 if(
 m5Data.rsi>=50&&
 m5Data.rsi<75
@@ -1050,85 +1084,10 @@ scoreM5+=4;
 
 }
 
+
 if(m5Data.macd?.bull){
 
 scoreM5+=3;
-bullVotes++;
-
-}
-
-
-/* LOCATION */
-
-let distSupport=
-Math.abs(
-price-levels.support
-);
-
-let distResistance=
-Math.abs(
-levels.resistance-price
-);
-
-let nearSupport=
-distSupport<=
-m5Data.atr*1.2;
-
-let nearResistance=
-distResistance<=
-m5Data.atr*1.2;
-
-if(nearSupport){
-
-scoreLiq+=8;
-bullVotes++;
-
-}
-
-if(nearResistance){
-
-scoreLiq+=8;
-bearVotes++;
-
-}
-
-
-/* FVG */
-
-let c3=
-candles[candles.length-3];
-
-let bullishFVG=
-last5.low>c3.high;
-
-let bearishFVG=
-last5.high<c3.low;
-
-if(bullishFVG){
-
-scoreM5+=3;
-bullVotes++;
-
-}
-
-if(bearishFVG){
-
-bearVotes++;
-
-}
-
-
-/* VWAP */
-
-let vwap=
-calcVWAP(m5);
-
-let aboveVWAP=
-price>vwap;
-
-if(aboveVWAP){
-
-scoreLiq+=2;
 bullVotes++;
 
 }else{
@@ -1138,7 +1097,110 @@ bearVotes++;
 }
 
 
-/* VOLATILITY */
+/* =========================================================
+   LOCATION
+========================================================= */
+
+let distSupport=
+Math.abs(
+last5.close-levels.support
+);
+
+let distResistance=
+Math.abs(
+levels.resistance-last5.close
+);
+
+
+let nearSupport=
+distSupport<=
+m5Data.atr*1.2;
+
+let nearResistance=
+distResistance<=
+m5Data.atr*1.2;
+
+
+if(nearSupport){
+
+scoreLiq+=8;
+bullVotes++;
+
+}
+
+
+if(nearResistance){
+
+scoreLiq+=8;
+bearVotes++;
+
+}
+
+
+/* =========================================================
+   FVG
+   FIXED:
+   Gunakan data replay, bukan global candles.
+========================================================= */
+
+if(m5.length>=3){
+
+let c1=m5[m5.length-3];
+let c3=m5[m5.length-1];
+
+let bullishFVG=
+c3.low>c1.high;
+
+let bearishFVG=
+c3.high<c1.low;
+
+
+if(bullishFVG){
+
+scoreM5+=3;
+bullVotes++;
+
+}
+
+
+if(bearishFVG){
+
+scoreM5+=3;
+bearVotes++;
+
+}
+
+}
+
+
+/* =========================================================
+   VWAP
+========================================================= */
+
+let vwap=
+calcVWAP(m5);
+
+let aboveVWAP=
+vwap!==null &&
+last5.close>vwap;
+
+
+if(aboveVWAP){
+
+scoreLiq+=2;
+bullVotes++;
+
+}else{
+
+scoreLiq+=2;
+bearVotes++;
+
+}
+
+
+/* =========================================================
+   VOLATILITY
+========================================================= */
 
 let volatility="NORMAL";
 
@@ -1147,6 +1209,7 @@ volatility="HIGH";
 
 if(m5Data.atr<2.5)
 volatility="LOW";
+
 
 if(volatility==="NORMAL")
 scoreRisk+=7;
@@ -1158,11 +1221,17 @@ if(volatility==="LOW")
 scoreRisk+=4;
 
 
-/* SESSION */
+/* =========================================================
+   SESSION
+========================================================= */
 
 let d=new Date(last5.time);
 
-let hour=d.getHours();
+let hour=d.getUTCHours()+8;
+
+if(hour>=24)
+hour-=24;
+
 
 let active=
 (
@@ -1176,6 +1245,7 @@ hour>=20||
 hour<5
 );
 
+
 if(active)
 scoreRisk+=7;
 else
@@ -1188,6 +1258,7 @@ scoreM5=Math.min(20,scoreM5);
 scoreLiq=Math.min(20,scoreLiq);
 scoreRisk=Math.min(20,scoreRisk);
 
+
 let total=
 scoreH1+
 scoreM15+
@@ -1196,9 +1267,12 @@ scoreLiq+
 scoreRisk;
 
 
-/* SIGNAL */
+/* =========================================================
+   SIGNAL
+========================================================= */
 
 let signal="WAIT";
+
 
 if(
 total>=75 &&
@@ -1213,6 +1287,7 @@ signal="BUY";
 
 }
 
+
 if(
 total>=75 &&
 bearVotes>=7 &&
@@ -1226,11 +1301,12 @@ signal="SELL";
 
 }
 
+
 return{
 
 signal,
 score:total,
-price,
+price:last5.close,
 atr:m5Data.atr,
 support:levels.support,
 resistance:levels.resistance,
@@ -1255,18 +1331,22 @@ cache:"no-store"
 }
 );
 
+
 if(!response.ok)
 throw new Error(
 "API HTTP "+response.status
 );
 
+
 const data=
 await response.json();
+
 
 if(!data.values?.length)
 throw new Error(
 "Tiada data candle"
 );
+
 
 candles=
 data.values
@@ -1284,8 +1364,12 @@ volume:Number(x.volume)||0
 
 }))
 .filter(x=>
-isFinite(x.close)
+isFinite(x.close) &&
+isFinite(x.high) &&
+isFinite(x.low) &&
+isFinite(x.open)
 );
+
 
 return candles;
 
@@ -1300,7 +1384,7 @@ function simulateTrade(
 signal,
 index,
 entry,
-atr,
+atrValue,
 support,
 resistance,
 rr
@@ -1308,27 +1392,31 @@ rr
 
 let sl;
 
+
 if(signal==="BUY"){
 
 sl=Math.min(
-support-atr*.25,
-entry-atr*1.15
+support-atrValue*.25,
+entry-atrValue*1.15
 );
 
 }else{
 
 sl=Math.max(
-resistance+atr*.25,
-entry+atr*1.15
+resistance+atrValue*.25,
+entry+atrValue*1.15
 );
 
 }
 
+
 let risk=
 Math.abs(entry-sl);
 
+
 if(!risk)
 return null;
+
 
 let tp=
 signal==="BUY"
@@ -1339,10 +1427,8 @@ entry-risk*rr;
 
 
 /*
-   Cari candle selepas signal.
-   Jika SL dan TP kena dalam candle yang sama,
-   kita anggap SL kena dahulu
-   (conservative assumption).
+ IMPORTANT:
+ Hanya candle selepas signal.
 */
 
 for(
@@ -1355,6 +1441,7 @@ let c=candles[j];
 
 let hitSL=false;
 let hitTP=false;
+
 
 if(signal==="BUY"){
 
@@ -1374,6 +1461,13 @@ c.low<=tp;
 
 }
 
+
+/*
+ Conservative:
+ jika SL dan TP berlaku dalam candle
+ yang sama → LOSS
+*/
+
 if(hitSL&&hitTP){
 
 return{
@@ -1390,6 +1484,7 @@ tp
 
 }
 
+
 if(hitSL){
 
 return{
@@ -1405,6 +1500,7 @@ tp
 };
 
 }
+
 
 if(hitTP){
 
@@ -1423,6 +1519,7 @@ tp
 }
 
 }
+
 
 return{
 
@@ -1446,30 +1543,33 @@ tp
 async function runBacktest(){
 
 const btn=
-document.getElementById(
-"runBtn"
-);
+document.getElementById("runBtn");
 
 const status=
-document.getElementById(
-"status"
-);
+document.getElementById("status");
+
+const progress=
+document.getElementById("progressBar");
+
 
 btn.disabled=true;
 
+progress.style.width="0%";
+
 status.innerText=
 "Loading candle data...";
+
 
 try{
 
 await loadCandles();
 
+
 let max=
 Number(
-document.getElementById(
-"maxCandles"
-).value
+document.getElementById("maxCandles").value
 )||3000;
+
 
 candles=
 candles.slice(
@@ -1479,25 +1579,28 @@ candles.length-max
 )
 );
 
+
 let rr=
 Number(
-document.getElementById(
-"tpRR"
-).value
+document.getElementById("tpRR").value
 )||2;
+
 
 trades=[];
 
+
 let lastTradeIndex=-999;
+
 
 for(
 let i=300;
-i<candles.length-20;
+i<candles.length-1;
 i++
 ){
 
 /*
-   Replay data sampai candle semasa.
+ Replay:
+ signal hanya melihat candles[0...i]
 */
 
 let slice=
@@ -1506,27 +1609,28 @@ candles.slice(
 i+1
 );
 
+
 let result=
 calculateSignal(slice);
+
 
 if(!result)
 continue;
 
-if(
-result.signal==="WAIT"
-)
+
+if(result.signal==="WAIT")
 continue;
 
 
 /*
-   Elak multiple trade pada signal
-   yang sama / overlap.
+ Elak duplicate / overlapping signal.
 */
 
 if(
 i-lastTradeIndex<10
 )
 continue;
+
 
 let trade=
 simulateTrade(
@@ -1539,8 +1643,10 @@ result.resistance,
 rr
 );
 
+
 if(!trade)
 continue;
+
 
 trade.signal=
 result.signal;
@@ -1551,19 +1657,43 @@ result.score;
 trade.time=
 result.time;
 
+
 trades.push(trade);
 
 lastTradeIndex=i;
 
+
+/*
+ Progress UI
+*/
+
+if(i%20===0){
+
+let pct=
+(
+(i-300)/
+(candles.length-300)
+)*100;
+
+progress.style.width=
+Math.max(
+0,
+Math.min(100,pct)
+)+"%";
+
+status.innerText=
+`Replay ${i-300}/${candles.length-300} • ${trades.length} trade`;
+
+}
+
 }
 
 
-/*
-   OPEN trades tidak dikira
-   sebagai win/loss.
-*/
+progress.style.width="100%";
+
 
 renderResults();
+
 
 status.innerText=
 `Backtest selesai • ${candles.length} candle • ${trades.length} trade`;
@@ -1597,23 +1727,28 @@ trades.filter(
 t=>t.result!=="OPEN"
 );
 
+
 let wins=
 closed.filter(
 t=>t.result==="WIN"
 );
+
 
 let losses=
 closed.filter(
 t=>t.result==="LOSS"
 );
 
+
 let total=
 closed.length;
+
 
 let winRate=
 total?
 wins.length/total*100:
 0;
+
 
 let netR=
 closed.reduce(
@@ -1621,11 +1756,13 @@ closed.reduce(
 0
 );
 
+
 let grossWin=
 wins.reduce(
 (a,t)=>a+t.r,
 0
 );
+
 
 let grossLoss=
 Math.abs(
@@ -1635,17 +1772,21 @@ losses.reduce(
 )
 );
 
+
 let pf=
 grossLoss?
 grossWin/grossLoss:
 grossWin?Infinity:0;
 
 
-/* DD */
+/* =========================================================
+   DRAW DOWN
+========================================================= */
 
 let equity=0;
 let peak=0;
 let maxDD=0;
+
 
 closed.forEach(t=>{
 
@@ -1669,10 +1810,13 @@ dd
 });
 
 
-/* LOSS STREAK */
+/* =========================================================
+   LOSS STREAK
+========================================================= */
 
 let currentLoss=0;
 let maxLoss=0;
+
 
 closed.forEach(t=>{
 
@@ -1695,22 +1839,27 @@ currentLoss=0;
 });
 
 
-/* BUY / SELL */
+/* =========================================================
+   BUY / SELL
+========================================================= */
 
 let buys=
 closed.filter(
 t=>t.signal==="BUY"
 );
 
+
 let sells=
 closed.filter(
 t=>t.signal==="SELL"
 );
 
+
 let buyWins=
 buys.filter(
 t=>t.result==="WIN"
 );
+
 
 let sellWins=
 sells.filter(
@@ -1718,31 +1867,40 @@ t=>t.result==="WIN"
 );
 
 
+/* =========================================================
+   DISPLAY
+========================================================= */
+
 document.getElementById(
 "totalTrades"
 ).innerText=
 total;
+
 
 document.getElementById(
 "winRate"
 ).innerText=
 winRate.toFixed(1)+"%";
 
+
 document.getElementById(
 "wins"
 ).innerText=
 wins.length;
+
 
 document.getElementById(
 "losses"
 ).innerText=
 losses.length;
 
+
 document.getElementById(
 "netR"
 ).innerText=
 (netR>=0?"+":"")+
 netR.toFixed(2)+"R";
+
 
 document.getElementById(
 "profitFactor"
@@ -1751,21 +1909,25 @@ pf===Infinity?
 "∞":
 pf.toFixed(2);
 
+
 document.getElementById(
 "maxDD"
 ).innerText=
 "-"+
 maxDD.toFixed(2)+"R";
 
+
 document.getElementById(
 "lossStreak"
 ).innerText=
 maxLoss;
 
+
 document.getElementById(
 "buyTrades"
 ).innerText=
 buys.length;
+
 
 document.getElementById(
 "buyWinRate"
@@ -1776,10 +1938,12 @@ buyWins.length/buys.length*100
 ).toFixed(1)+"%":
 "0%";
 
+
 document.getElementById(
 "sellTrades"
 ).innerText=
 sells.length;
+
 
 document.getElementById(
 "sellWinRate"
@@ -1791,14 +1955,18 @@ sellWins.length/sells.length*100
 "0%";
 
 
-/* TABLE */
+/* =========================================================
+   TABLE
+========================================================= */
 
 let list=
 document.getElementById(
 "tradeList"
 );
 
+
 list.innerHTML="";
+
 
 trades
 .slice()
@@ -1809,10 +1977,12 @@ trades
 let row=
 document.createElement("tr");
 
+
 let signalClass=
 t.signal==="BUY"?
 "buy":
 "sell";
+
 
 let resultClass=
 t.result==="WIN"?
@@ -1821,6 +1991,7 @@ t.result==="LOSS"?
 "loss":
 "yellow";
 
+
 let time=
 new Date(t.time)
 .toLocaleString(
@@ -1828,10 +1999,12 @@ new Date(t.time)
 {
 day:"2-digit",
 month:"2-digit",
+year:"2-digit",
 hour:"2-digit",
 minute:"2-digit"
 }
 );
+
 
 row.innerHTML=`
 
@@ -1861,11 +2034,19 @@ ${t.r>0?"+":""}${t.r.toFixed(2)}
 
 `;
 
+
 list.appendChild(row);
 
 });
 
 }
+
+
+/* =========================================================
+   INITIAL
+========================================================= */
+
+renderResults();
 
 </script>
 
