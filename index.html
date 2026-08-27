@@ -1,14 +1,12 @@
 <!DOCTYPE html>
 <html lang="ms">
 <head>
-
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 
 <title>XAU/USD Pro Sniper Dashboard</title>
 
 <style>
-
 :root{
 --bg:#f3f5f8;
 --card:#fff;
@@ -25,7 +23,7 @@
 --yellow-bg:#fef9c3;
 --purple:#7c3aed;
 --purple-bg:#f3e8ff;
---shadow:0 4px 16px rgba(0,0,0,.055);
+--shadow:0 4px 16px rgba(0,0,0,.055)
 }
 
 *{box-sizing:border-box}
@@ -35,37 +33,32 @@ margin:0;
 padding:12px;
 background:var(--bg);
 color:var(--text);
-font-family:Arial,Helvetica,sans-serif;
+font-family:Arial,Helvetica,sans-serif
 }
 
 .container{
 width:100%;
 max-width:1100px;
-margin:auto;
+margin:auto
 }
 
-header{
-text-align:center;
-margin-bottom:12px;
-}
-
+header{text-align:center;margin-bottom:12px}
 header h1{
 margin:0;
 color:#a87900;
-font-size:1.45rem;
+font-size:1.45rem
 }
-
 header p{
 margin:5px 0 0;
 color:var(--muted);
-font-size:.78rem;
+font-size:.78rem
 }
 
 .status-bar{
 display:grid;
 grid-template-columns:repeat(4,1fr);
 gap:8px;
-margin-bottom:12px;
+margin-bottom:12px
 }
 
 .status-item{
@@ -74,43 +67,37 @@ border:1px solid var(--border);
 border-radius:10px;
 padding:10px;
 text-align:center;
-box-shadow:var(--shadow);
+box-shadow:var(--shadow)
 }
 
 .status-label{
 color:var(--muted);
 font-size:.66rem;
-text-transform:uppercase;
+text-transform:uppercase
 }
 
 .status-value{
 margin-top:4px;
 font-size:.88rem;
-font-weight:bold;
+font-weight:bold
 }
 
-.pass{
-color:var(--green);
-font-weight:bold;
-}
+.pass{color:var(--green);font-weight:bold}
+.fail{color:var(--red);font-weight:bold}
+.neutral{color:var(--yellow);font-weight:bold}
 
-.fail{
-color:var(--red);
-font-weight:bold;
-}
-
-.neutral{
-color:var(--yellow);
-font-weight:bold;
-}
-
-.sessions-bar{
+.sessions-bar,
+.master-card,
+.card{
 background:var(--card);
 border:1px solid var(--border);
 border-radius:11px;
+box-shadow:var(--shadow)
+}
+
+.sessions-bar{
 padding:10px;
-margin-bottom:12px;
-box-shadow:var(--shadow);
+margin-bottom:12px
 }
 
 .sessions-header{
@@ -119,13 +106,13 @@ justify-content:space-between;
 margin-bottom:8px;
 font-size:.74rem;
 color:var(--muted);
-font-weight:bold;
+font-weight:bold
 }
 
 .sessions-grid{
 display:grid;
 grid-template-columns:repeat(3,1fr);
-gap:8px;
+gap:8px
 }
 
 .session-pill{
@@ -136,49 +123,46 @@ border:1px solid var(--border);
 border-radius:8px;
 font-size:.76rem;
 font-weight:bold;
-color:#666;
+color:#666
 }
 
 .session-pill.active{
 background:var(--green-bg);
 border-color:#22c55e;
-color:var(--green);
+color:var(--green)
 }
 
 .session-time{
 margin-top:3px;
 font-size:.65rem;
 font-weight:normal;
-color:var(--muted);
+color:var(--muted)
 }
 
 .master-card{
-background:var(--card);
 border:2px solid var(--border);
-border-radius:14px;
 padding:16px;
 text-align:center;
-margin-bottom:12px;
-box-shadow:var(--shadow);
+margin-bottom:12px
 }
 
 .price-label{
 font-size:.7rem;
 text-transform:uppercase;
 font-weight:bold;
-color:var(--muted);
+color:var(--muted)
 }
 
 .price-display{
 margin:4px 0;
 font-size:2.05rem;
 font-weight:800;
-color:#a87900;
+color:#a87900
 }
 
 .price-source{
 font-size:.65rem;
-color:var(--muted);
+color:var(--muted)
 }
 
 .api-status{
@@ -189,12 +173,12 @@ border-radius:5px;
 font-size:.65rem;
 font-weight:bold;
 background:var(--green-bg);
-color:var(--green);
+color:var(--green)
 }
 
 .api-error{
 background:var(--red-bg);
-color:var(--red);
+color:var(--red)
 }
 
 .signal-badge{
@@ -203,35 +187,33 @@ padding:7px 25px;
 border-radius:8px;
 margin:8px 0;
 font-size:1.25rem;
-font-weight:800;
+font-weight:800
 }
 
 .sig-buy{
 color:var(--green);
 background:var(--green-bg);
-border:1px solid #22c55e;
+border:1px solid #22c55e
 }
 
 .sig-sell{
 color:var(--red);
 background:var(--red-bg);
-border:1px solid #ef4444;
+border:1px solid #ef4444
 }
 
 .sig-wait{
 color:var(--purple);
 background:var(--purple-bg);
-border:1px solid #a78bfa;
+border:1px solid #a78bfa
 }
 
 .confidence{
 font-size:.9rem;
-color:var(--muted);
+color:var(--muted)
 }
 
-.confidence strong{
-color:var(--text);
-}
+.confidence strong{color:var(--text)}
 
 .quality-bar{
 width:100%;
@@ -239,14 +221,14 @@ height:10px;
 background:#e5e7eb;
 border-radius:20px;
 overflow:hidden;
-margin:7px 0;
+margin:7px 0
 }
 
 .quality-fill{
 height:100%;
 width:0%;
-transition:.3s;
-background:var(--green);
+transition:width .3s;
+background:var(--green)
 }
 
 .price-input-box{
@@ -254,19 +236,19 @@ background:var(--sub);
 border:1px dashed var(--blue);
 border-radius:9px;
 padding:10px;
-margin-top:10px;
+margin-top:10px
 }
 
 .price-input-box label{
 display:block;
 font-size:.72rem;
 font-weight:bold;
-margin-bottom:5px;
+margin-bottom:5px
 }
 
 .price-input-row{
 display:flex;
-gap:7px;
+gap:7px
 }
 
 .price-input{
@@ -274,7 +256,7 @@ width:100%;
 border:1px solid var(--border);
 border-radius:6px;
 padding:8px;
-font-size:.9rem;
+font-size:.9rem
 }
 
 .update-btn{
@@ -283,7 +265,7 @@ background:var(--blue);
 color:#fff;
 border-radius:6px;
 padding:8px 14px;
-font-weight:bold;
+font-weight:bold
 }
 
 .execution{
@@ -291,19 +273,19 @@ background:var(--sub);
 border:1px dashed var(--blue);
 border-radius:11px;
 padding:12px;
-margin-bottom:10px;
+margin-bottom:10px
 }
 
 .execution h3{
 margin:0 0 8px;
 color:var(--blue);
-font-size:.92rem;
+font-size:.92rem
 }
 
 .exec-grid{
 display:grid;
 grid-template-columns:repeat(2,1fr);
-gap:7px;
+gap:7px
 }
 
 .exec-item{
@@ -311,33 +293,27 @@ background:#fff;
 border:1px solid var(--border);
 border-radius:7px;
 padding:8px;
-font-size:.78rem;
+font-size:.78rem
 }
 
-.exec-item.full{
-grid-column:span 2;
-}
+.exec-item.full{grid-column:span 2}
 
 .exec-value{
 display:block;
 margin-top:3px;
 font-weight:800;
-font-size:.92rem;
+font-size:.92rem
 }
 
 .grid{
 display:grid;
 grid-template-columns:1fr;
 gap:10px;
-margin-bottom:10px;
+margin-bottom:10px
 }
 
 .card{
-background:var(--card);
-border:1px solid var(--border);
-border-radius:10px;
-padding:12px;
-box-shadow:var(--shadow);
+padding:12px
 }
 
 .card h3{
@@ -348,7 +324,7 @@ color:var(--blue);
 font-size:.9rem;
 display:flex;
 justify-content:space-between;
-align-items:center;
+align-items:center
 }
 
 .metric{
@@ -357,30 +333,27 @@ justify-content:space-between;
 gap:10px;
 padding:6px 0;
 border-bottom:1px solid #f0f2f5;
-font-size:.82rem;
+font-size:.82rem
 }
 
-.metric:last-child{
-border-bottom:none;
-}
+.metric:last-child{border-bottom:none}
 
 .confluence{
-background:linear-gradient(135deg,#f8fafc,#eef2ff);
-border:1px solid #dbe3f0;
+background:linear-gradient(135deg,#f8fafc,#eef2ff)
 }
 
 .confluence-score{
 font-size:2rem;
 text-align:center;
 font-weight:900;
-margin:4px 0;
+margin:4px 0
 }
 
 .confluence-sub{
 text-align:center;
 color:var(--muted);
 font-size:.68rem;
-margin-bottom:8px;
+margin-bottom:8px
 }
 
 .filter-row{
@@ -389,8 +362,10 @@ justify-content:space-between;
 align-items:center;
 padding:6px 0;
 border-bottom:1px solid #e8ebef;
-font-size:.76rem;
+font-size:.76rem
 }
+
+.filter-row:last-child{border-bottom:none}
 
 .filter-dot{
 width:8px;
@@ -398,7 +373,7 @@ height:8px;
 border-radius:50%;
 display:inline-block;
 margin-right:5px;
-background:#9ca3af;
+background:#9ca3af
 }
 
 .dot-good{background:#22c55e}
@@ -408,7 +383,7 @@ background:#9ca3af;
 .liquidity-box{
 display:grid;
 grid-template-columns:1fr 1fr;
-gap:8px;
+gap:8px
 }
 
 .liq{
@@ -416,29 +391,29 @@ padding:9px;
 border-radius:7px;
 background:var(--sub);
 border:1px solid var(--border);
-text-align:center;
+text-align:center
 }
 
 .liq small{
 display:block;
 color:var(--muted);
-font-size:.65rem;
+font-size:.65rem
 }
 
 .liq strong{
 display:block;
-margin-top:3px;
+margin-top:3px
 }
 
 .risk-inputs{
 display:grid;
 grid-template-columns:1fr 1fr;
-gap:7px;
+gap:7px
 }
 
 .risk-inputs label{
 font-size:.68rem;
-color:var(--muted);
+color:var(--muted)
 }
 
 .risk-inputs input{
@@ -446,7 +421,7 @@ width:100%;
 margin-top:3px;
 padding:7px;
 border:1px solid var(--border);
-border-radius:5px;
+border-radius:5px
 }
 
 .news-safe{
@@ -455,12 +430,21 @@ border-radius:7px;
 background:var(--green-bg);
 color:var(--green);
 font-weight:bold;
-font-size:.8rem;
+font-size:.8rem
+}
+
+.news-warning{
+padding:10px;
+border-radius:7px;
+background:var(--red-bg);
+color:var(--red);
+font-weight:bold;
+font-size:.8rem
 }
 
 .history{
 max-height:210px;
-overflow-y:auto;
+overflow-y:auto
 }
 
 .history-row{
@@ -470,68 +454,38 @@ gap:5px;
 padding:7px 2px;
 border-bottom:1px solid #eee;
 font-size:.72rem;
-align-items:center;
+align-items:center
 }
 
-.history-buy{
-color:var(--green);
-font-weight:bold;
-}
-
-.history-sell{
-color:var(--red);
-font-weight:bold;
-}
-
-.history-wait{
-color:var(--purple);
-font-weight:bold;
-}
+.history-buy{color:var(--green);font-weight:bold}
+.history-sell{color:var(--red);font-weight:bold}
+.history-wait{color:var(--purple);font-weight:bold}
 
 .reason{
 padding:5px 0;
-font-size:.76rem;
+font-size:.75rem
 }
 
-.reason.good{
-color:var(--green);
-}
-
-.reason.bad{
-color:var(--red);
-}
+.reason.good{color:var(--green)}
+.reason.bad{color:var(--red)}
 
 .footer{
 text-align:center;
 color:var(--muted);
 font-size:.65rem;
-padding:15px 0 5px;
+padding:15px 0 5px
 }
 
 @media(min-width:760px){
-.grid{
-grid-template-columns:1fr 1fr;
-}
+.grid{grid-template-columns:1fr 1fr}
 }
 
 @media(max-width:500px){
-
 body{padding:8px}
-
-.status-bar{
-grid-template-columns:repeat(2,1fr);
+.status-bar{grid-template-columns:repeat(2,1fr)}
+.sessions-grid{grid-template-columns:1fr}
+.price-display{font-size:1.7rem}
 }
-
-.sessions-grid{
-grid-template-columns:1fr;
-}
-
-.price-display{
-font-size:1.7rem;
-}
-
-}
-
 </style>
 </head>
 
@@ -541,7 +495,7 @@ font-size:1.7rem;
 
 <header>
 <h1>XAU/USD PRO SNIPER</h1>
-<p>H1 Bias → M15 Confirmation → M5 Trigger → Live Multi-Confluence Engine</p>
+<p>H1 Bias → M15 Confirmation → M5 Trigger → S/R + Liquidity → Risk Engine</p>
 </header>
 
 <div class="status-bar">
@@ -563,7 +517,7 @@ font-size:1.7rem;
 
 <div class="status-item">
 <div class="status-label">MYT</div>
-<div id="systemClock" class="status-value">--</div>
+<div id="systemClock" class="status-value">--:--:--</div>
 </div>
 
 </div>
@@ -597,16 +551,12 @@ NEW YORK
 
 <div class="master-card">
 
-<div class="price-label">
-XAU/USD MARKET PRICE
-</div>
+<div class="price-label">XAU/USD MARKET PRICE</div>
 
-<div id="livePrice" class="price-display">
-Loading...
-</div>
+<div id="livePrice" class="price-display">Loading...</div>
 
 <div id="priceSource" class="price-source">
-Connecting...
+Connecting to Twelve Data...
 </div>
 
 <div id="apiStatus" class="api-status">
@@ -615,8 +565,7 @@ Connecting...
 
 <br>
 
-<div id="masterSignalBadge"
-class="signal-badge sig-wait">
+<div id="masterSignalBadge" class="signal-badge sig-wait">
 ⏳ WAIT
 </div>
 
@@ -639,7 +588,7 @@ Entry Quality:
 class="price-input"
 type="number"
 step="0.01"
-placeholder="4609.00">
+placeholder="Contoh 4609.00">
 
 <button class="update-btn"
 onclick="updateManualPrice()">
@@ -647,9 +596,7 @@ UPDATE
 </button>
 
 </div>
-
 </div>
-
 </div>
 
 <div class="execution">
@@ -759,7 +706,6 @@ Risk : Reward
 </div>
 
 </div>
-
 </div>
 
 <div class="grid">
@@ -829,7 +775,6 @@ Risk : Reward
 </div>
 
 </div>
-
 </div>
 
 <div class="grid">
@@ -869,41 +814,38 @@ Risk : Reward
 
 <h3>SIGNAL CONFLUENCE <span>FILTER</span></h3>
 
-<div id="confluenceScore" class="confluence-score">
-0%
-</div>
+<div id="confluenceScore" class="confluence-score">0%</div>
 
 <div class="confluence-sub">
 Minimum 75% untuk signal aktif
 </div>
 
 <div class="filter-row">
-<span><span id="dotTrend" class="filter-dot"></span> H1 Trend</span>
+<span><span id="dotTrend" class="filter-dot"></span>H1 Trend</span>
 <strong id="filterTrend">--</strong>
 </div>
 
 <div class="filter-row">
-<span><span id="dotMomentum" class="filter-dot"></span> M15 Momentum</span>
+<span><span id="dotMomentum" class="filter-dot"></span>M15 Momentum</span>
 <strong id="filterMomentum">--</strong>
 </div>
 
 <div class="filter-row">
-<span><span id="dotTrigger" class="filter-dot"></span> M5 Trigger</span>
+<span><span id="dotTrigger" class="filter-dot"></span>M5 Trigger</span>
 <strong id="filterTrigger">--</strong>
 </div>
 
 <div class="filter-row">
-<span><span id="dotLiquidity" class="filter-dot"></span> Liquidity / SNR</span>
+<span><span id="dotLiquidity" class="filter-dot"></span>Liquidity</span>
 <strong id="filterLiquidity">--</strong>
 </div>
 
 <div class="filter-row">
-<span><span id="dotRisk" class="filter-dot"></span> Risk / RR</span>
+<span><span id="dotRisk" class="filter-dot"></span>Risk / RR</span>
 <strong id="filterRisk">--</strong>
 </div>
 
 </div>
-
 </div>
 
 <div class="grid">
@@ -948,7 +890,6 @@ Minimum 75% untuk signal aktif
 </div>
 
 </div>
-
 </div>
 
 <div class="grid">
@@ -958,7 +899,7 @@ Minimum 75% untuk signal aktif
 <h3>NEWS FILTER <span>RISK CONTROL</span></h3>
 
 <div id="newsStatus" class="news-safe">
-✓ NEWS FILTER MANUAL
+✓ MANUAL NEWS CHECK
 </div>
 
 <div class="metric">
@@ -988,17 +929,17 @@ ALLOWED
 
 <div>
 <label>RISK %</label>
-<input id="riskPercent" type="number" value="1" step=".1">
+<input id="riskPercent" type="number" value="1" step="0.1">
 </div>
 
 <div>
 <label>ENTRY</label>
-<input id="riskEntry" type="number" value="4609" step=".01">
+<input id="riskEntry" type="number" value="4609" step="0.01">
 </div>
 
 <div>
 <label>SL</label>
-<input id="riskSL" type="number" value="4604" step=".01">
+<input id="riskSL" type="number" value="4604" step="0.01">
 </div>
 
 </div>
@@ -1019,7 +960,6 @@ ALLOWED
 </div>
 
 </div>
-
 </div>
 
 <div class="card">
@@ -1038,204 +978,171 @@ ALLOWED
 <div id="historyList"></div>
 
 </div>
-
 </div>
 
 <div class="footer">
 XAU/USD Pro Sniper Dashboard
 <br>
-Live feed: Twelve Data
+Price feed: Twelve Data API
 <br>
-H1 / M15 / M5 indicators calculated from live candles.
-<br>
-Informational only — always confirm market conditions before trading.
+Live technical engine • Informational only
 </div>
 
 </div>
-
 
 <script>
 
-/* =========================================================
-GLOBAL
-========================================================= */
-
 let currentPrice=0;
 let previousPrice=null;
+let candles=[];
 let lastSignal="";
-let liveData=null;
+let history=JSON.parse(localStorage.getItem("xauSignalHistory")||"[]");
 
-let history=
-JSON.parse(
-localStorage.getItem("xauSignalHistory")||"[]"
-);
+const market={
+m5:{},
+m15:{},
+h1:{},
+levels:{}
+};
 
 
-/* =========================================================
-HELPERS
-========================================================= */
+/* =========================
+   HELPERS
+========================= */
 
 function num(v){
 return parseFloat(v);
 }
 
-function closes(c){
-return c.map(x=>num(x.close)).reverse();
+function avg(arr){
+if(!arr.length)return 0;
+return arr.reduce((a,b)=>a+b,0)/arr.length;
 }
-
-function highs(c){
-return c.map(x=>num(x.high)).reverse();
-}
-
-function lows(c){
-return c.map(x=>num(x.low)).reverse();
-}
-
-function sma(values,period){
-
-if(values.length<period)return null;
-
-let sum=0;
-
-for(
-let i=values.length-period;
-i<values.length;
-i++
-){
-sum+=values[i];
-}
-
-return sum/period;
-}
-
 
 function ema(values,period){
-
 if(values.length<period)return null;
 
-let start=sma(
-values.slice(0,period),
-period
-);
+let k=2/(period+1);
+let e=avg(values.slice(0,period));
 
-let e=start;
-
-const k=2/(period+1);
-
-for(
-let i=period;
-i<values.length;
-i++
-){
-
-e=
-(values[i]*k)+
-(e*(1-k));
-
+for(let i=period;i<values.length;i++){
+e=values[i]*k+e*(1-k);
 }
 
 return e;
 }
 
-
-function emaSeries(values,period){
-
-if(values.length<period)return [];
-
-let result=[];
-let e=sma(values.slice(0,period),period);
-
-result.push(e);
-
-const k=2/(period+1);
-
-for(
-let i=period;
-i<values.length;
-i++
-){
-
-e=
-values[i]*k+
-e*(1-k);
-
-result.push(e);
-
+function sma(values,period){
+if(values.length<period)return null;
+return avg(values.slice(-period));
 }
 
-return result;
-}
+function std(values,period){
+if(values.length<period)return null;
 
+let a=values.slice(-period);
+let m=avg(a);
+
+return Math.sqrt(
+avg(a.map(x=>(x-m)**2))
+);
+}
 
 function rsi(values,period=14){
 
-if(values.length<=period)return 50;
+if(values.length<period+1)return null;
 
 let gains=0;
 let losses=0;
 
-for(
-let i=1;
-i<=period;
-i++
-){
+for(let i=values.length-period;i<values.length;i++){
 
-let diff=
-values[i]-values[i-1];
+let d=values[i]-values[i-1];
 
-if(diff>=0)
-gains+=diff;
-else
-losses-=diff;
+if(d>0)gains+=d;
+else losses-=d;
 
 }
 
-let avgGain=gains/period;
-let avgLoss=losses/period;
+if(losses===0)return 100;
 
-for(
-let i=period+1;
-i<values.length;
-i++
-){
-
-let diff=
-values[i]-values[i-1];
-
-let gain=
-diff>0?diff:0;
-
-let loss=
-diff<0?-diff:0;
-
-avgGain=
-(avgGain*(period-1)+gain)/period;
-
-avgLoss=
-(avgLoss*(period-1)+loss)/period;
-
-}
-
-if(avgLoss===0)return 100;
-
-const rs=
-avgGain/avgLoss;
+let rs=(gains/period)/(losses/period);
 
 return 100-(100/(1+rs));
 }
 
+function atr(data,period=14){
 
-function atr(candles,period=14){
-
-if(candles.length<=period)return 0;
+if(data.length<period+1)return null;
 
 let trs=[];
 
-for(let i=1;i<candles.length;i++){
+for(let i=1;i<data.length;i++){
 
-const h=num(candles[i].high);
-const l=num(candles[i].low);
-const pc=num(candles[i-1].close);
+let h=data[i].high;
+let l=data[i].low;
+let pc=data[i-1].close;
+
+trs.push(
+Math.max(
+h-l,
+Math.abs(h-pc),
+Math.abs(l-pc)
+)
+);
+}
+
+return avg(trs.slice(-period));
+}
+
+function macd(values){
+
+if(values.length<35)return null;
+
+let fast=ema(values,12);
+let slow=ema(values,26);
+
+if(fast===null||slow===null)return null;
+
+let macdLine=fast-slow;
+
+let series=[];
+
+for(let i=26;i<=values.length;i++){
+
+let slice=values.slice(0,i);
+
+let e12=ema(slice,12);
+let e26=ema(slice,26);
+
+if(e12!==null&&e26!==null)
+series.push(e12-e26);
+}
+
+let signal=ema(series,9);
+
+return {
+line:macdLine,
+signal,
+bull:signal!==null&&macdLine>signal
+};
+}
+
+function adx(data,period=14){
+
+if(data.length<period*2+2)return null;
+
+let trs=[];
+let plus=[];
+let minus=[];
+
+for(let i=1;i<data.length;i++){
+
+let h=data[i].high;
+let l=data[i].low;
+let ph=data[i-1].high;
+let pl=data[i-1].low;
+let pc=data[i-1].close;
 
 trs.push(
 Math.max(
@@ -1245,547 +1152,166 @@ Math.abs(l-pc)
 )
 );
 
+let up=h-ph;
+let down=pl-l;
+
+plus.push(up>down&&up>0?up:0);
+minus.push(down>up&&down>0?down:0);
 }
 
-return sma(
-trs.slice(-period),
-period
-);
-}
+let tr=avg(trs.slice(-period));
+let p=avg(plus.slice(-period));
+let m=avg(minus.slice(-period));
 
+if(!tr)return null;
 
-function std(values){
+let pdi=100*p/tr;
+let mdi=100*m/tr;
 
-const mean=
-values.reduce((a,b)=>a+b,0)/
-values.length;
-
-const variance=
-values.reduce(
-(a,b)=>a+Math.pow(b-mean,2),
-0
-)/values.length;
-
-return Math.sqrt(variance);
-}
-
-
-function bollinger(values,period=20,mult=2){
-
-if(values.length<period)return null;
-
-const slice=
-values.slice(-period);
-
-const mid=
-sma(slice,period);
-
-const deviation=
-std(slice);
+let dx=100*Math.abs(pdi-mdi)/(pdi+mdi||1);
 
 return {
-mid,
-upper:mid+mult*deviation,
-lower:mid-mult*deviation
+value:dx,
+bull:pdi>mdi
 };
-
 }
 
 
-function macd(values){
+/* =========================
+   RESAMPLE
+========================= */
 
-const fast=emaSeries(values,12);
-const slow=emaSeries(values,26);
+function aggregate(data,minutes){
 
-if(!fast.length||!slow.length)
-return null;
+let out=[];
+let buckets={};
 
-const offset=26-12;
+data.forEach(c=>{
 
-const macdLine=[];
+let d=new Date(c.time);
+let ms=minutes*60000;
 
-for(
-let i=0;
-i<slow.length;
-i++
-){
+let key=Math.floor(d.getTime()/ms)*ms;
 
-const fastIndex=i+offset;
-
-if(fast[fastIndex]!==undefined){
-
-macdLine.push(
-fast[fastIndex]-slow[i]
-);
-
-}
-
-}
-
-const signal=
-ema(
-macdLine,
-9
-);
-
-const latest=
-macdLine[macdLine.length-1];
-
-return {
-line:latest,
-signal,
-bullish:
-latest>signal
+if(!buckets[key]){
+buckets[key]={
+time:new Date(key).toISOString(),
+open:c.open,
+high:c.high,
+low:c.low,
+close:c.close,
+volume:c.volume||0
 };
+}else{
+
+buckets[key].high=Math.max(
+buckets[key].high,c.high
+);
+
+buckets[key].low=Math.min(
+buckets[key].low,c.low
+);
+
+buckets[key].close=c.close;
+buckets[key].volume+=c.volume||0;
 
 }
 
+});
 
-/* =========================================================
-ADX
-========================================================= */
+Object.keys(buckets)
+.sort((a,b)=>a-b)
+.forEach(k=>out.push(buckets[k]));
 
-function adx(candles,period=14){
-
-if(candles.length<period*2)
-return 0;
-
-let tr=[];
-let plus=[];
-let minus=[];
-
-for(let i=1;i<candles.length;i++){
-
-const h=num(candles[i].high);
-const l=num(candles[i].low);
-
-const ph=num(candles[i-1].high);
-const pl=num(candles[i-1].low);
-const pc=num(candles[i-1].close);
-
-const up=h-ph;
-const down=pl-l;
-
-plus.push(
-up>down&&up>0?up:0
-);
-
-minus.push(
-down>up&&down>0?down:0
-);
-
-tr.push(
-Math.max(
-h-l,
-Math.abs(h-pc),
-Math.abs(l-pc)
-)
-);
-
-}
-
-let atrVal=sma(
-tr.slice(0,period),
-period
-);
-
-let p=sma(
-plus.slice(0,period),
-period
-);
-
-let m=sma(
-minus.slice(0,period),
-period
-);
-
-let dx=[];
-
-function calcDX(){
-
-const pdi=
-100*(p/atrVal);
-
-const mdi=
-100*(m/atrVal);
-
-return 100*
-Math.abs(pdi-mdi)/
-Math.max(pdi+mdi,.000001);
-
-}
-
-dx.push(calcDX());
-
-for(
-let i=period;
-i<tr.length;
-i++
-){
-
-atrVal=
-(atrVal*(period-1)+tr[i])/period;
-
-p=
-(p*(period-1)+plus[i])/period;
-
-m=
-(m*(period-1)+minus[i])/period;
-
-dx.push(calcDX());
-
-}
-
-if(dx.length<period)
-return dx[dx.length-1]||0;
-
-return sma(
-dx.slice(-period),
-period
-);
+return out;
 }
 
 
-/* =========================================================
-STRUCTURE
-========================================================= */
-
-function structure(candles,lookback=10){
-
-if(candles.length<lookback+3)
-return "NEUTRAL";
-
-const recent=
-candles.slice(
--(lookback+1)
-);
-
-const last=
-num(recent[recent.length-1].close);
-
-let high=-Infinity;
-let low=Infinity;
-
-for(
-let i=0;
-i<recent.length-1;
-i++
-){
-
-high=
-Math.max(
-high,
-num(recent[i].high)
-);
-
-low=
-Math.min(
-low,
-num(recent[i].low)
-);
-
-}
-
-if(last>high)
-return "BOS ↑";
-
-if(last<low)
-return "BOS ↓";
-
-const previous=
-num(recent[recent.length-2].close);
-
-if(last>previous)
-return "HH / HL";
-
-if(last<previous)
-return "LH / LL";
-
-return "RANGE";
-}
-
-
-/* =========================================================
-SUPPORT RESISTANCE
-========================================================= */
-
-function getSR(candles){
-
-const recent=
-candles.slice(-80);
-
-let support=Infinity;
-let resistance=-Infinity;
-
-for(let i=2;i<recent.length-2;i++){
-
-const l=num(recent[i].low);
-const h=num(recent[i].high);
-
-const l1=num(recent[i-1].low);
-const l2=num(recent[i+1].low);
-
-const h1=num(recent[i-1].high);
-const h2=num(recent[i+1].high);
-
-if(l<l1&&l<l2)
-support=Math.min(
-support,
-l
-);
-
-if(h>h1&&h>h2)
-resistance=Math.max(
-resistance,
-h
-);
-
-}
-
-const price=
-num(candles[0].close);
-
-if(!isFinite(support))
-support=price;
-
-if(!isFinite(resistance))
-resistance=price;
-
-return {
-support,
-resistance
-};
-
-}
-
-
-/* =========================================================
-VWAP
-========================================================= */
-
-function getVWAP(candles){
-
-const now=new Date();
-
-const day=
-now.toLocaleDateString(
-"en-CA",
-{timeZone:"Asia/Kuala_Lumpur"}
-);
-
-let pv=0;
-let volume=0;
-
-for(const c of candles){
-
-const date=
-new Date(c.datetime);
-
-const d=
-date.toLocaleDateString(
-"en-CA",
-{timeZone:"Asia/Kuala_Lumpur"}
-);
-
-if(d!==day)continue;
-
-const high=num(c.high);
-const low=num(c.low);
-const close=num(c.close);
-
-const typical=
-(high+low+close)/3;
-
-const v=
-num(c.volume)||1;
-
-pv+=typical*v;
-volume+=v;
-
-}
-
-if(!volume)return num(candles[0].close);
-
-return pv/volume;
-}
-
-
-/* =========================================================
-ASIAN RANGE
-========================================================= */
-
-function getAsianRange(candles){
-
-let high=-Infinity;
-let low=Infinity;
-
-for(const c of candles){
-
-const d=
-new Date(c.datetime);
-
-const hour=
-parseInt(
-d.toLocaleTimeString(
-"en-MY",
-{
-hour:"2-digit",
-hour12:false,
-timeZone:"Asia/Kuala_Lumpur"
-}
-)
-);
-
-if(hour>=8&&hour<17){
-
-high=
-Math.max(
-high,
-num(c.high)
-);
-
-low=
-Math.min(
-low,
-num(c.low)
-);
-
-}
-
-}
-
-const price=num(candles[0].close);
-
-if(!isFinite(high))high=price;
-if(!isFinite(low))low=price;
-
-return {high,low};
-
-}
-
-
-/* =========================================================
-FVG
-========================================================= */
-
-function detectFVG(candles){
-
-if(candles.length<4)
-return "NONE";
-
-const a=candles[2];
-const b=candles[1];
-const c=candles[0];
-
-const aHigh=num(a.high);
-const aLow=num(a.low);
-
-const cHigh=num(c.high);
-const cLow=num(c.low);
-
-if(cLow>aHigh)
-return "BULLISH";
-
-if(cHigh<aLow)
-return "BEARISH";
-
-return "NONE";
-}
-
-
-/* =========================================================
-LIVE API
-========================================================= */
+/* =========================
+   LIVE API
+========================= */
 
 async function fetchLiveGold(){
 
-const apiStatus=
-document.getElementById("apiStatus");
-
-const source=
-document.getElementById("priceSource");
+const api=document.getElementById("apiStatus");
+const source=document.getElementById("priceSource");
 
 try{
 
-apiStatus.innerText=
-"● API CONNECTING";
+api.innerText="● API CONNECTING";
+api.className="api-status";
 
-const response=
-await fetch(
+const response=await fetch(
 "/api/xau?ts="+Date.now(),
-{
-cache:"no-store"
-}
+{cache:"no-store"}
 );
 
 if(!response.ok)
-throw new Error(
-"HTTP "+response.status
+throw new Error("HTTP "+response.status);
+
+const data=await response.json();
+
+if(!data.values?.length)
+throw new Error("Tiada candle");
+
+const raw=data.values.reverse();
+
+candles=raw.map(x=>({
+time:x.datetime||x.time,
+open:num(x.open),
+high:num(x.high),
+low:num(x.low),
+close:num(x.close),
+volume:num(x.volume)||0
+})).filter(x=>
+isFinite(x.close)
 );
 
-const data=
-await response.json();
+if(!candles.length)
+throw new Error("Candle invalid");
 
-if(!data.candles)
-throw new Error(
-data.message||"Tiada candle"
-);
+const latest=candles[candles.length-1];
 
-liveData=data;
+previousPrice=currentPrice;
+currentPrice=latest.close;
 
-previousPrice=
-currentPrice;
+document.getElementById("livePrice")
+.innerText=currentPrice.toFixed(2);
 
-currentPrice=
-num(data.current.price);
+document.getElementById("priceInput")
+.value=currentPrice.toFixed(2);
 
-document.getElementById(
-"livePrice"
-).innerText=
-currentPrice.toFixed(2);
-
-document.getElementById(
-"priceInput"
-).value=
-currentPrice.toFixed(2);
-
-document.getElementById(
-"riskEntry"
-).value=
-currentPrice.toFixed(2);
+document.getElementById("riskEntry")
+.value=currentPrice.toFixed(2);
 
 source.innerText=
-"Twelve Data • Live candles • "+
+"Twelve Data • Live 5M Candle • "+
 formatUpdateTime();
 
-apiStatus.innerText=
-"● LIVE API";
-
-apiStatus.className=
-"api-status";
+api.innerText="● LIVE API";
+api.className="api-status";
 
 runEngine();
 
-}catch(error){
+}catch(e){
 
-console.error(error);
+console.error(e);
 
-apiStatus.innerText=
-"● API ERROR";
-
-apiStatus.className=
-"api-status api-error";
+api.innerText="● API ERROR";
+api.className="api-status api-error";
 
 source.innerText=
-error.message;
-
+"API gagal — cuba lagi dalam 30 saat";
 }
 
 }
 
+
+/* =========================
+   TIME
+========================= */
 
 function formatUpdateTime(){
-
 return new Date().toLocaleTimeString(
 "en-MY",
 {
@@ -1794,1238 +1320,1061 @@ minute:"2-digit",
 second:"2-digit"
 }
 );
+}
+
+function getLastSunday(year,month){
+
+let d=new Date(year,month+1,0);
+
+while(d.getDay()!==0)
+d.setDate(d.getDate()-1);
+
+return d.getDate();
+}
+
+function getNthSunday(year,month,n){
+
+let d=new Date(year,month,1);
+let count=0;
+
+while(d.getMonth()===month){
+
+if(d.getDay()===0){
+
+count++;
+
+if(count===n)return d.getDate();
 
 }
 
+d.setDate(d.getDate()+1);
+}
 
-/* =========================================================
-MANUAL PRICE
-========================================================= */
+return null;
+}
+
+function isLondonDST(date){
+
+let y=date.getFullYear();
+let start=getLastSunday(y,2);
+let end=getLastSunday(y,9);
+let m=date.getMonth();
+let d=date.getDate();
+
+if(m>2&&m<9)return true;
+if(m===2&&d>=start)return true;
+if(m===9&&d<end)return true;
+
+return false;
+}
+
+function isNYDST(date){
+
+let y=date.getFullYear();
+let start=getNthSunday(y,2,2);
+let end=getNthSunday(y,10,1);
+let m=date.getMonth();
+let d=date.getDate();
+
+if(m>2&&m<10)return true;
+if(m===2&&d>=start)return true;
+if(m===10&&d<end)return true;
+
+return false;
+}
+
+function updateSessions(){
+
+let now=new Date();
+let h=now.getHours();
+
+document.getElementById("systemClock")
+.innerText=now.toLocaleTimeString("en-MY");
+
+let asia=h>=8&&h<17;
+let london=h>=15&&h<24;
+let ny=h>=20||h<5;
+
+document.getElementById("sessionAsian")
+.classList.toggle("active",asia);
+
+document.getElementById("sessionLondon")
+.classList.toggle("active",london);
+
+document.getElementById("sessionNY")
+.classList.toggle("active",ny);
+
+let s=[];
+
+if(asia)s.push("ASIA");
+if(london)s.push("LONDON");
+if(ny)s.push("NEW YORK");
+
+document.getElementById("activeSession")
+.innerText=s.length?s.join(" + "):"OFF";
+
+document.getElementById("sessionStatus")
+.innerText=s.length?"● ACTIVE":"QUIET";
+
+document.getElementById("londonTime")
+.innerText=isLondonDST(now)
+?"15:00 – 00:00"
+:"16:00 – 01:00";
+
+document.getElementById("nyTime")
+.innerText=isNYDST(now)
+?"20:00 – 05:00"
+:"21:00 – 06:00";
+}
+
+
+/* =========================
+   MANUAL
+========================= */
 
 function updateManualPrice(){
 
-const input=
-num(
-document.getElementById(
-"priceInput"
-).value
+let p=num(
+document.getElementById("priceInput").value
 );
 
-if(!isFinite(input)||input<=0)
-return;
+if(p>0){
 
-currentPrice=input;
+currentPrice=p;
 
-document.getElementById(
-"livePrice"
-).innerText=
-currentPrice.toFixed(2);
+document.getElementById("livePrice")
+.innerText=p.toFixed(2);
 
-document.getElementById(
-"riskEntry"
-).value=
-currentPrice.toFixed(2);
+document.getElementById("riskEntry")
+.value=p.toFixed(2);
 
-document.getElementById(
-"priceSource"
-).innerText=
-"Manual backup price";
+document.getElementById("priceSource")
+.innerText="Manual backup price";
 
 runEngine();
 
 }
 
-
-/* =========================================================
-SESSION
-========================================================= */
-
-function updateSessions(){
-
-const now=new Date();
-
-const time=
-new Intl.DateTimeFormat(
-"en-GB",
-{
-timeZone:"Asia/Kuala_Lumpur",
-hour:"2-digit",
-minute:"2-digit",
-second:"2-digit",
-hour12:false
-}
-).format(now);
-
-document.getElementById(
-"systemClock"
-).innerText=time;
-
-const parts=
-time.split(":");
-
-const h=
-parseInt(parts[0]);
-
-const asian=
-h>=8&&h<17;
-
-const london=
-h>=15&&h<24;
-
-const ny=
-h>=20||h<5;
-
-document.getElementById(
-"sessionAsian"
-).classList.toggle(
-"active",asian
-);
-
-document.getElementById(
-"sessionLondon"
-).classList.toggle(
-"active",london
-);
-
-document.getElementById(
-"sessionNY"
-).classList.toggle(
-"active",ny
-);
-
-let sessions=[];
-
-if(asian)sessions.push("ASIA");
-if(london)sessions.push("LONDON");
-if(ny)sessions.push("NEW YORK");
-
-document.getElementById(
-"activeSession"
-).innerText=
-sessions.length?
-sessions.join(" + "):
-"OFF";
-
-document.getElementById(
-"sessionStatus"
-).innerText=
-sessions.length?
-"● ACTIVE":
-"QUIET";
-
-document.getElementById(
-"londonTime"
-).innerText=
-"15:00 – 00:00";
-
-document.getElementById(
-"nyTime"
-).innerText=
-"20:00 – 05:00";
-
 }
 
 
-/* =========================================================
-ENGINE
-========================================================= */
+/* =========================
+   ANALYSIS
+========================= */
+
+function analyze(){
+
+if(candles.length<100)return;
+
+let m5=candles;
+let m15=aggregate(candles,15);
+let h1=aggregate(candles,60);
+
+let c5=m5.map(x=>x.close);
+let c15=m15.map(x=>x.close);
+let c1=h1.map(x=>x.close);
+
+market.m5={
+ema20:ema(c5,20),
+ema50:ema(c5,50),
+rsi:rsi(c5),
+atr:atr(m5),
+macd:macd(c5)
+};
+
+market.m15={
+ema20:ema(c15,20),
+ema50:ema(c15,50),
+rsi:rsi(c15),
+atr:atr(m15),
+adx:adx(m15),
+macd:macd(c15)
+};
+
+market.h1={
+ema200:ema(c1,200),
+ema50:ema(c1,50),
+atr:atr(h1)
+};
+
+let look=50;
+
+let recent5=m5.slice(-look);
+
+let high5=Math.max(...recent5.map(x=>x.high));
+let low5=Math.min(...recent5.map(x=>x.low));
+
+let recent15=m15.slice(-30);
+
+let high15=Math.max(...recent15.map(x=>x.high));
+let low15=Math.min(...recent15.map(x=>x.low));
+
+market.levels={
+support:low15,
+resistance:high15,
+buyLiquidity:high5,
+sellLiquidity:low5
+};
+
+detectStructure(m5,m15,h1);
+
+detectAsianRange();
+
+}
+
+function detectStructure(m5,m15,h1){
+
+let last=m5[m5.length-1];
+let prev=m5[m5.length-2];
+
+market.m5.bull=
+last.close>prev.close &&
+last.high>=prev.high;
+
+market.m5.structure=
+market.m5.bull?"BOS ↑":"CHOCH / WEAK";
+
+let a=m15[m15.length-1];
+let b=m15[m15.length-3];
+
+market.m15.bull=
+a.close>b.close;
+
+market.m15.structure=
+market.m15.bull?"Higher High":"Lower High";
+
+let h=h1[h1.length-1];
+let hp=h1[h1.length-4];
+
+market.h1.bull=
+h.close>hp.close &&
+(
+market.h1.ema200===null ||
+h.close>market.h1.ema200
+);
+
+market.h1.structure=
+market.h1.bull?"BOS ↑":"BEARISH";
+}
+
+function detectAsianRange(){
+
+let now=new Date();
+
+let start=new Date(now);
+start.setHours(0,0,0,0);
+
+let asia=candles.filter(c=>{
+
+let d=new Date(c.time);
+
+return d>=start &&
+d.getHours()>=0 &&
+d.getHours()<8;
+
+});
+
+if(!asia.length){
+
+market.levels.asianHigh=market.levels.resistance;
+market.levels.asianLow=market.levels.support;
+return;
+}
+
+market.levels.asianHigh=
+Math.max(...asia.map(x=>x.high));
+
+market.levels.asianLow=
+Math.min(...asia.map(x=>x.low));
+}
+
+
+/* =========================
+   VWAP
+========================= */
+
+function calcVWAP(data){
+
+let totalPV=0;
+let totalV=0;
+
+data.slice(-288).forEach(c=>{
+
+let typical=(c.high+c.low+c.close)/3;
+let v=c.volume||1;
+
+totalPV+=typical*v;
+totalV+=v;
+
+});
+
+return totalV?totalPV/totalV:null;
+}
+
+
+/* =========================
+   ENGINE
+========================= */
 
 function runEngine(){
 
-if(
-!liveData||
-!liveData.candles||
-!currentPrice
-)return;
+if(!candles.length)return;
 
-const m5=
-liveData.candles.m5;
+analyze();
 
-const m15=
-liveData.candles.m15;
+let m5=market.m5;
+let m15=market.m15;
+let h1=market.h1;
+let l=market.levels;
 
-const h1=
-liveData.candles.h1;
+if(!m5.atr||!m15.rsi)return;
 
-const c5=
-closes(m5);
+let scoreH1=0;
+let scoreM15=0;
+let scoreM5=0;
+let scoreLiq=0;
+let scoreRisk=0;
 
-const c15=
-closes(m15);
-
-const c1=
-closes(h1);
+let bullVotes=0;
+let bearVotes=0;
 
 
 /* H1 */
 
-const h1Ema200=
-ema(c1,200);
+if(h1.bull){
+scoreH1+=14;
+bullVotes++;
+}else{
+scoreH1+=6;
+bearVotes++;
+}
 
-const h1Trend=
-currentPrice>h1Ema200?
-"BULLISH":
-"BEARISH";
-
-const h1Struct=
-structure(h1,15);
-
-const h1SR=
-getSR(h1);
+if(
+h1.ema200 &&
+currentPrice>h1.ema200
+){
+scoreH1+=6;
+bullVotes++;
+}else{
+bearVotes++;
+}
 
 
 /* M15 */
 
-const ema20=
-ema(c15,20);
+if(m15.ema20>m15.ema50){
+scoreM15+=7;
+bullVotes++;
+}else{
+bearVotes++;
+}
 
-const ema50=
-ema(c15,50);
+if(m15.rsi>=50&&m15.rsi<=68){
+scoreM15+=6;
+bullVotes++;
+}else if(m15.rsi<45){
+bearVotes++;
+}
 
-const m15Rsi=
-rsi(c15,14);
+if(m15.macd?.bull){
+scoreM15+=4;
+bullVotes++;
+}else{
+bearVotes++;
+}
 
-const m15Macd=
-macd(c15);
-
-const m15Adx=
-adx(m15,14);
-
-const m15Struct=
-structure(m15,15);
+if(m15.adx?.value>=20){
+scoreM15+=3;
+}
 
 
 /* M5 */
 
-const m5Atr=
-atr(m5,14);
-
-const m5Ema20=
-ema(c5,20);
-
-const m5Momentum=
-currentPrice>m5Ema20?
-"BULLISH":
-"BEARISH";
-
-const m5Struct=
-structure(m5,10);
-
-const fvg=
-detectFVG(m5);
-
-const sr5=
-getSR(m5);
-
-const vwap=
-getVWAP(m5);
-
-const bb=
-bollinger(c5,20,2);
-
-const asian=
-getAsianRange(m5);
-
-
-/* LIQUIDITY */
-
-const buyLiquidity=
-Math.max(
-h1SR.resistance,
-asian.high
-);
-
-const sellLiquidity=
-Math.min(
-h1SR.support,
-asian.low
-);
-
-let sweep="NONE";
+if(m5.bull){
+scoreM5+=8;
+bullVotes++;
+}else{
+bearVotes++;
+}
 
 if(
-currentPrice>asian.high
-)
-sweep="BUY-SIDE";
+m5.ema20 &&
+currentPrice>m5.ema20
+){
+scoreM5+=5;
+bullVotes++;
+}else{
+bearVotes++;
+}
 
-else if(
-currentPrice<asian.low
-)
-sweep="SELL-SIDE";
+if(
+m5.rsi>=50&&
+m5.rsi<75
+){
+scoreM5+=4;
+}
+
+if(
+m5.macd?.bull
+){
+scoreM5+=3;
+bullVotes++;
+}
+
+
+/* LOCATION */
+
+let distSupport=
+Math.abs(currentPrice-l.support);
+
+let distResistance=
+Math.abs(l.resistance-currentPrice);
+
+let nearSupport=
+distSupport<=m5.atr*1.2;
+
+let nearResistance=
+distResistance<=m5.atr*1.2;
+
+if(nearSupport){
+scoreLiq+=8;
+bullVotes++;
+}
+
+if(nearResistance){
+scoreLiq+=8;
+bearVotes++;
+}
+
+if(currentPrice>l.asianHigh){
+scoreLiq+=4;
+bullVotes++;
+}
+
+if(currentPrice<l.asianLow){
+scoreLiq+=4;
+bearVotes++;
+}
+
+
+/* FVG */
+
+let last=candles[candles.length-1];
+let c3=candles[candles.length-3];
+
+let bullishFVG=
+last.low>c3.high;
+
+let bearishFVG=
+last.high<c3.low;
+
+if(bullishFVG){
+scoreM5+=3;
+bullVotes++;
+}
+
+if(bearishFVG){
+bearVotes++;
+}
+
+
+/* VWAP */
+
+let vwap=calcVWAP(candles);
+
+let aboveVWAP=currentPrice>vwap;
 
 
 /* VOLATILITY */
 
 let volatility="NORMAL";
 
-if(
-m5Atr>0 &&
-m5Atr>6
-)
-volatility="HIGH";
-
-if(
-m5Atr>0 &&
-m5Atr<2.5
-)
-volatility="LOW";
-
-
-/* =========================================================
-SCORING
-========================================================= */
-
-let h1Score=0;
-let m15Score=0;
-let m5Score=0;
-let liquidityScore=0;
-let riskScore=0;
-
-
-/* H1 = 20 */
-
-if(h1Trend==="BULLISH")
-h1Score+=10;
-
-else
-h1Score+=0;
-
-if(
-h1Struct==="BOS ↑"||
-h1Struct==="HH / HL"
-)
-h1Score+=6;
-
-if(currentPrice>h1Ema200)
-h1Score+=4;
-
-
-/* M15 = 20 */
-
-if(
-ema20>ema50 &&
-currentPrice>ema20
-)
-m15Score+=7;
-
-else if(
-ema20<ema50 &&
-currentPrice<ema20
-)
-m15Score+=7;
-
-if(
-m15Rsi>=50&&
-m15Rsi<=68
-)
-m15Score+=5;
-
-if(
-m15Macd&&
-(
-m15Macd.bullish===
-(h1Trend==="BULLISH")
-)
-)
-m15Score+=4;
-
-if(m15Adx>=25)
-m15Score+=4;
-
-
-/* M5 = 20 */
-
-if(
-m5Momentum===
-h1Trend
-)
-m5Score+=7;
-
-if(
-(
-h1Trend==="BULLISH"&&
-m5Struct==="BOS ↑"
-)||
-(
-h1Trend==="BEARISH"&&
-m5Struct==="BOS ↓"
-)
-)
-m5Score+=7;
-
-if(
-(
-h1Trend==="BULLISH"&&
-fvg==="BULLISH"
-)||
-(
-h1Trend==="BEARISH"&&
-fvg==="BEARISH"
-)
-)
-m5Score+=4;
-
-if(m5Atr>0)
-m5Score+=2;
-
-
-/* LIQUIDITY / SNR = 20 */
-
-const nearSupport=
-Math.abs(
-currentPrice-h1SR.support
-)<=m5Atr*1.5;
-
-const nearResistance=
-Math.abs(
-currentPrice-h1SR.resistance
-)<=m5Atr*1.5;
-
-if(
-h1Trend==="BULLISH"&&
-nearSupport
-)
-liquidityScore+=7;
-
-else if(
-h1Trend==="BEARISH"&&
-nearResistance
-)
-liquidityScore+=7;
-
-if(
-h1Trend==="BULLISH"&&
-currentPrice>vwap
-)
-liquidityScore+=5;
-
-else if(
-h1Trend==="BEARISH"&&
-currentPrice<vwap
-)
-liquidityScore+=5;
-
-if(
-h1Trend==="BULLISH"&&
-currentPrice<buyLiquidity
-)
-liquidityScore+=4;
-
-else if(
-h1Trend==="BEARISH"&&
-currentPrice>sellLiquidity
-)
-liquidityScore+=4;
-
-if(
-sweep==="BUY-SIDE"&&
-h1Trend==="BULLISH"
-)
-liquidityScore+=4;
-
-else if(
-sweep==="SELL-SIDE"&&
-h1Trend==="BEARISH"
-)
-liquidityScore+=4;
-
-
-/* RISK = 20 */
+if(m5.atr>8)volatility="HIGH";
+if(m5.atr<2.5)volatility="LOW";
 
 if(volatility==="NORMAL")
-riskScore+=7;
+scoreRisk+=7;
 
-else if(volatility==="LOW")
-riskScore+=5;
+if(volatility==="HIGH")
+scoreRisk+=3;
 
-if(
-bb &&
-currentPrice>bb.lower&&
-currentPrice<bb.upper
-)
-riskScore+=5;
-
-if(
-Math.abs(
-currentPrice-h1SR.resistance
-)>m5Atr*1.2&&
-h1Trend==="BULLISH"
-)
-riskScore+=4;
-
-if(
-Math.abs(
-currentPrice-h1SR.support
-)>m5Atr*1.2&&
-h1Trend==="BEARISH"
-)
-riskScore+=4;
-
-riskScore+=4;
+if(volatility==="LOW")
+scoreRisk+=4;
 
 
-/* clamp */
+/* SESSION */
 
-h1Score=Math.min(20,h1Score);
-m15Score=Math.min(20,m15Score);
-m5Score=Math.min(20,m5Score);
-liquidityScore=Math.min(20,liquidityScore);
-riskScore=Math.min(20,riskScore);
+let hour=new Date().getHours();
 
-const total=
-h1Score+
-m15Score+
-m5Score+
-liquidityScore+
-riskScore;
+let active=
+(hour>=8&&hour<17)||
+(hour>=15&&hour<24)||
+(hour>=20||hour<5);
+
+if(active)scoreRisk+=7;
+else scoreRisk+=2;
 
 
-/* =========================================================
-SIGNAL
-========================================================= */
+/* DIRECTION SCORE */
+
+if(aboveVWAP){
+scoreLiq+=2;
+bullVotes++;
+}else{
+bearVotes++;
+}
+
+
+/* FINAL */
+
+scoreH1=Math.min(20,scoreH1);
+scoreM15=Math.min(20,scoreM15);
+scoreM5=Math.min(20,scoreM5);
+scoreLiq=Math.min(20,scoreLiq);
+scoreRisk=Math.min(20,scoreRisk);
+
+let total=
+scoreH1+
+scoreM15+
+scoreM5+
+scoreLiq+
+scoreRisk;
 
 let signal="WAIT";
 
+/*
+  Strict directional agreement.
+*/
+
 if(
-total>=75&&
-h1Trend==="BULLISH"&&
-m15Rsi<70
-)
+total>=75 &&
+bullVotes>=7 &&
+bullVotes>bearVotes+2
+){
 signal="BUY";
+}
 
-else if(
-total>=75&&
-h1Trend==="BEARISH"&&
-m15Rsi>30
-)
+if(
+total>=75 &&
+bearVotes>=7 &&
+bearVotes>bullVotes+2
+){
 signal="SELL";
+}
+
+updateUI(
+signal,
+total,
+scoreH1,
+scoreM15,
+scoreM5,
+scoreLiq,
+scoreRisk,
+vwap,
+volatility
+);
+
+}
 
 
-/* =========================================================
-UI
-========================================================= */
+/* =========================
+   UI
+========================= */
 
-document.getElementById(
-"h1Trend"
-).innerHTML=
-h1Trend==="BULLISH"?
-'<span class="pass">BULLISH ✓</span>':
-'<span class="fail">BEARISH ↓</span>';
+function html(id,txt,cls=""){
+document.getElementById(id).innerHTML=
+`<span class="${cls}">${txt}</span>`;
+}
 
-document.getElementById(
-"h1Ema"
-).innerHTML=
-currentPrice>h1Ema200?
-`<span class="pass">Above ${h1Ema200.toFixed(2)} ✓</span>`:
-`<span class="fail">Below ${h1Ema200.toFixed(2)} ✕</span>`;
+function updateUI(
+signal,
+total,
+h1,
+m15,
+m5,
+liq,
+risk,
+vwap,
+volatility
+){
 
-document.getElementById(
-"h1Structure"
-).innerHTML=
-h1Struct.includes("↑")?
-`<span class="pass">${h1Struct}</span>`:
-h1Struct.includes("↓")?
-`<span class="fail">${h1Struct}</span>`:
-`<span class="neutral">${h1Struct}</span>`;
+let badge=document.getElementById(
+"masterSignalBadge"
+);
 
-document.getElementById(
-"h1Support"
-).innerText=
-h1SR.support.toFixed(2);
+badge.className="signal-badge";
 
-document.getElementById(
-"h1Resistance"
-).innerText=
-h1SR.resistance.toFixed(2);
+if(signal==="BUY"){
+badge.innerText="🟢 BUY";
+badge.classList.add("sig-buy");
+}
+else if(signal==="SELL"){
+badge.innerText="🔴 SELL";
+badge.classList.add("sig-sell");
+}
+else{
+badge.innerText="⏳ WAIT";
+badge.classList.add("sig-wait");
+}
+
+document.getElementById("confidenceVal")
+.innerText=total+"/100";
+
+document.getElementById("qualityNumber")
+.innerText=total;
+
+document.getElementById("qualityFill")
+.style.width=total+"%";
+
+document.getElementById("confluenceScore")
+.innerText=total+"%";
+
+
+/* H1 */
+
+html(
+"h1Trend",
+market.h1.bull?"BULLISH ✓":"BEARISH",
+market.h1.bull?"pass":"fail"
+);
+
+html(
+"h1Ema",
+market.h1.ema200
+?currentPrice>market.h1.ema200
+?"Above "+market.h1.ema200.toFixed(2)
+:"Below "+market.h1.ema200.toFixed(2)
+:"--",
+currentPrice>market.h1.ema200?"pass":"fail"
+);
+
+html(
+"h1Structure",
+market.h1.structure,
+market.h1.bull?"pass":"fail"
+);
 
 
 /* M15 */
 
-document.getElementById(
-"m15Ema"
-).innerHTML=
-ema20>ema50?
-`<span class="pass">20 > 50 ✓</span>`:
-`<span class="fail">20 < 50 ✕</span>`;
+html(
+"m15Ema",
+`${market.m15.ema20.toFixed(2)} / ${market.m15.ema50.toFixed(2)}`,
+market.m15.ema20>market.m15.ema50?"pass":"fail"
+);
 
-document.getElementById(
-"m15Rsi"
-).innerHTML=
-m15Rsi>=50&&m15Rsi<=68?
-`<span class="pass">${m15Rsi.toFixed(1)}</span>`:
-`<span class="neutral">${m15Rsi.toFixed(1)}</span>`;
+html(
+"m15Rsi",
+market.m15.rsi.toFixed(1),
+market.m15.rsi>=50&&market.m15.rsi<70?"pass":"neutral"
+);
 
-document.getElementById(
-"m15Macd"
-).innerHTML=
-m15Macd?
-m15Macd.bullish?
-'<span class="pass">BULLISH ✓</span>':
-'<span class="fail">BEARISH ↓</span>':
-"--";
+html(
+"m15Macd",
+market.m15.macd?.bull?"Bullish ✓":"Bearish",
+market.m15.macd?.bull?"pass":"fail"
+);
 
-document.getElementById(
-"m15Adx"
-).innerHTML=
-m15Adx>=25?
-`<span class="pass">${m15Adx.toFixed(1)} Strong ✓</span>`:
-`<span class="neutral">${m15Adx.toFixed(1)} Weak</span>`;
+html(
+"m15Adx",
+market.m15.adx
+?market.m15.adx.value.toFixed(1)
+:"--",
+market.m15.adx?.value>=20?"pass":"neutral"
+);
 
-document.getElementById(
-"m15Structure"
-).innerHTML=
-m15Struct.includes("↑")?
-`<span class="pass">${m15Struct}</span>`:
-m15Struct.includes("↓")?
-`<span class="fail">${m15Struct}</span>`:
-`<span class="neutral">${m15Struct}</span>`;
+html(
+"m15Structure",
+market.m15.structure,
+market.m15.bull?"pass":"fail"
+);
 
 
 /* M5 */
 
-document.getElementById(
-"m5Momentum"
-).innerHTML=
-m5Momentum==="BULLISH"?
-'<span class="pass">BULLISH ✓</span>':
-'<span class="fail">BEARISH ↓</span>';
+html(
+"m5Momentum",
+market.m5.ema20>market.m5.ema50
+?"Bullish Push ✓"
+:"Bearish Push",
+market.m5.ema20>market.m5.ema50?"pass":"fail"
+);
 
-document.getElementById(
-"m5Structure"
-).innerHTML=
-m5Struct.includes("↑")?
-`<span class="pass">${m5Struct}</span>`:
-m5Struct.includes("↓")?
-`<span class="fail">${m5Struct}</span>`:
-`<span class="neutral">${m5Struct}</span>`;
+html(
+"m5Structure",
+market.m5.structure,
+market.m5.bull?"pass":"fail"
+);
 
-document.getElementById(
-"m5Atr"
-).innerText=
-m5Atr.toFixed(2)+" USD";
+document.getElementById("m5Atr")
+.innerText=market.m5.atr.toFixed(2)+" USD";
 
-const nearReaction=
-Math.min(
-Math.abs(currentPrice-sr5.support),
-Math.abs(currentPrice-sr5.resistance)
-)<=m5Atr*1.5;
+html(
+"m5Reaction",
+Math.abs(currentPrice-market.levels.support)
+<=market.m5.atr*1.2
+?"Support Reaction ✓"
+:"No clean reaction",
+Math.abs(currentPrice-market.levels.support)
+<=market.m5.atr*1.2?"pass":"neutral"
+);
 
-document.getElementById(
-"m5Reaction"
-).innerHTML=
-nearReaction?
-'<span class="pass">Reaction Zone ✓</span>':
-'<span class="neutral">Away from Zone</span>';
+let last=candles[candles.length-1];
+let c3=candles[candles.length-3];
 
-document.getElementById(
-"m5Fvg"
-).innerHTML=
-fvg==="BULLISH"?
-'<span class="pass">Bullish FVG ✓</span>':
-fvg==="BEARISH"?
-'<span class="fail">Bearish FVG</span>':
-'<span class="neutral">None</span>';
+let fvg=
+last.low>c3.high
+?"Bullish FVG ✓":
+last.high<c3.low
+?"Bearish FVG":
+"No clear FVG";
+
+html(
+"m5Fvg",
+fvg,
+fvg.includes("Bullish")?"pass":
+fvg.includes("Bearish")?"fail":"neutral"
+);
 
 
-/* LIQUIDITY */
+/* LEVELS */
 
-document.getElementById(
-"buyLiquidity"
-).innerText=
-buyLiquidity.toFixed(2);
+document.getElementById("h1Support")
+.innerText=market.levels.support.toFixed(2);
 
-document.getElementById(
-"sellLiquidity"
-).innerText=
-sellLiquidity.toFixed(2);
+document.getElementById("h1Resistance")
+.innerText=market.levels.resistance.toFixed(2);
 
-document.getElementById(
-"asianHigh"
-).innerText=
-asian.high.toFixed(2);
+document.getElementById("buyLiquidity")
+.innerText=market.levels.buyLiquidity.toFixed(2);
 
-document.getElementById(
-"asianLow"
-).innerText=
-asian.low.toFixed(2);
+document.getElementById("sellLiquidity")
+.innerText=market.levels.sellLiquidity.toFixed(2);
 
-document.getElementById(
-"liquiditySweep"
-).innerHTML=
-sweep==="BUY-SIDE"?
-'<span class="pass">Buy-Side Sweep</span>':
-sweep==="SELL-SIDE"?
-'<span class="fail">Sell-Side Sweep</span>':
-'<span class="neutral">No Sweep</span>';
+document.getElementById("asianHigh")
+.innerText=market.levels.asianHigh.toFixed(2);
+
+document.getElementById("asianLow")
+.innerText=market.levels.asianLow.toFixed(2);
 
 
 /* FILTERS */
 
-document.getElementById(
-"vwapStatus"
-).innerHTML=
-h1Trend==="BULLISH"?
-currentPrice>vwap?
-`<span class="pass">Above VWAP ✓</span>`:
-`<span class="fail">Below VWAP ✕</span>`:
-currentPrice<vwap?
-`<span class="pass">Below VWAP ✓</span>`:
-`<span class="fail">Above VWAP ✕</span>`;
-
-document.getElementById(
-"bbStatus"
-).innerHTML=
-bb?
-currentPrice>bb.mid?
-'<span class="pass">Mid → Upper</span>':
-'<span class="neutral">Lower → Mid</span>':
-"--";
-
-document.getElementById(
-"snrStatus"
-).innerHTML=
-nearSupport||nearResistance?
-'<span class="pass">Near S/R ✓</span>':
-'<span class="neutral">Away from S/R</span>';
-
-document.getElementById(
-"sessionQuality"
-).innerHTML=
-getSessionQuality();
-
-document.getElementById(
-"volatilityStatus"
-).innerHTML=
-volatility==="NORMAL"?
-'<span class="pass">NORMAL ✓</span>':
-volatility==="HIGH"?
-'<span class="fail">HIGH ⚠</span>':
-'<span class="neutral">LOW</span>';
-
-
-/* SCORE */
-
-document.getElementById(
-"scoreH1"
-).innerText=
-`${h1Score}/20`;
-
-document.getElementById(
-"scoreM15"
-).innerText=
-`${m15Score}/20`;
-
-document.getElementById(
-"scoreM5"
-).innerText=
-`${m5Score}/20`;
-
-document.getElementById(
-"scoreLiquidity"
-).innerText=
-`${liquidityScore}/20`;
-
-document.getElementById(
-"scoreRisk"
-).innerText=
-`${riskScore}/20`;
-
-document.getElementById(
-"confluenceScore"
-).innerText=
-total+"%";
-
-document.getElementById(
-"qualityNumber"
-).innerText=
-total;
-
-document.getElementById(
-"confidenceVal"
-).innerText=
-total+"/100";
-
-document.getElementById(
-"qualityFill"
-).style.width=
-total+"%";
-
-
-setFilter(
-"dotTrend",
-"filterTrend",
-h1Score>=16
+html(
+"vwapStatus",
+currentPrice>vwap
+?"Above VWAP ✓"
+:"Below VWAP",
+currentPrice>vwap?"pass":"fail"
 );
 
-setFilter(
-"dotMomentum",
-"filterMomentum",
-m15Score>=15
+let mid=sma(
+candles.map(x=>x.close),
+20
 );
 
-setFilter(
-"dotTrigger",
-"filterTrigger",
-m5Score>=15
+let sd=std(
+candles.map(x=>x.close),
+20
 );
 
-setFilter(
-"dotLiquidity",
-"filterLiquidity",
-liquidityScore>=15
+let upper=mid+sd*2;
+let lower=mid-sd*2;
+
+html(
+"bbStatus",
+currentPrice>mid
+?"Mid → Upper"
+:"Mid → Lower",
+currentPrice>mid?"pass":"fail"
 );
 
-setFilter(
-"dotRisk",
-"filterRisk",
-riskScore>=15
+let nearS=
+Math.abs(currentPrice-market.levels.support)
+<=market.m5.atr*1.2;
+
+let nearR=
+Math.abs(currentPrice-market.levels.resistance)
+<=market.m5.atr*1.2;
+
+html(
+"snrStatus",
+nearS?"Near Support ✓":
+nearR?"Near Resistance":
+"Between levels",
+nearS||nearR?"pass":"neutral"
+);
+
+html(
+"sessionQuality",
+new Date().getHours()>=8
+?"Good ✓"
+:"Quiet",
+new Date().getHours()>=8?"pass":"neutral"
+);
+
+html(
+"volatilityStatus",
+volatility,
+volatility==="NORMAL"?"pass":
+volatility==="HIGH"?"fail":"neutral"
 );
 
 
-updateSignalUI(
-signal,
-total
+/* LIQUIDITY */
+
+html(
+"liquiditySweep",
+currentPrice>market.levels.asianHigh
+?"Buy-Side Sweep ✓":
+currentPrice<market.levels.asianLow
+?"Sell-Side Sweep ✓":
+"No confirmed sweep",
+currentPrice>market.levels.asianHigh||
+currentPrice<market.levels.asianLow
+?"pass":"neutral"
 );
 
-generateTradePlan(
-signal,
-h1SR,
-m5Atr
-);
 
-}
+/* SCORES */
 
-
-/* =========================================================
-FILTER UI
-========================================================= */
-
-function setFilter(dot,text,good){
-
-const d=
-document.getElementById(dot);
-
-const t=
-document.getElementById(text);
-
-d.className=
-"filter-dot "+
-(
-good?
-"dot-good":
-"dot-bad"
-);
-
-t.innerText=
-good?
-"PASS":
-"FAIL";
-
-t.className=
-good?
-"pass":
-"fail";
-}
+document.getElementById("scoreH1").innerText=h1+"/20";
+document.getElementById("scoreM15").innerText=m15+"/20";
+document.getElementById("scoreM5").innerText=m5+"/20";
+document.getElementById("scoreLiquidity").innerText=liq+"/20";
+document.getElementById("scoreRisk").innerText=risk+"/20";
 
 
-function getSessionQuality(){
-
-const now=new Date();
-
-const hour=
-parseInt(
-new Intl.DateTimeFormat(
-"en-GB",
-{
-timeZone:"Asia/Kuala_Lumpur",
-hour:"2-digit",
-hour12:false
-}
-).format(now)
-);
-
-if(
-(hour>=15&&hour<24)||
-(hour>=20||hour<5)
-)
-return '<span class="pass">GOOD ✓</span>';
-
-if(hour>=8&&hour<17)
-return '<span class="neutral">MODERATE</span>';
-
-return '<span class="neutral">QUIET</span>';
-
-}
+setFilter("dotTrend","filterTrend",h1>=16);
+setFilter("dotMomentum","filterMomentum",m15>=15);
+setFilter("dotTrigger","filterTrigger",m5>=15);
+setFilter("dotLiquidity","filterLiquidity",liq>=14);
+setFilter("dotRisk","filterRisk",risk>=14);
 
 
-/* =========================================================
-SIGNAL UI
-========================================================= */
+document.getElementById("signalReason")
+.innerText=signal;
 
-function updateSignalUI(signal,score){
+let reasons=[
+[
+market.h1.bull,
+"H1 structure menentukan arah utama"
+],
+[
+market.m15.ema20>market.m15.ema50,
+"M15 EMA 20 > EMA 50"
+],
+[
+market.m15.rsi>=50,
+"M15 momentum menyokong arah"
+],
+[
+market.m15.macd?.bull,
+"M15 MACD bullish"
+],
+[
+market.m15.adx?.value>=20,
+"ADX menunjukkan trend mempunyai strength"
+],
+[
+market.m5.bull,
+"M5 structure memberi trigger"
+],
+[
+currentPrice>vwap,
+"Price berada di atas VWAP"
+],
+[
+nearS||nearR,
+"Price berada dekat kawasan S/R"
+]
+];
 
-const badge=
-document.getElementById(
-"masterSignalBadge"
-);
+document.getElementById("reasonList").innerHTML=
+reasons.map(x=>
+`<div class="reason ${x[0]?"good":"bad"}">
+${x[0]?"✓":"✕"} ${x[1]}
+</div>`
+).join("");
 
-badge.className=
-"signal-badge";
-
-if(signal==="BUY"){
-
-badge.innerText="🟢 BUY";
-badge.classList.add("sig-buy");
-
-}else if(signal==="SELL"){
-
-badge.innerText="🔴 SELL";
-badge.classList.add("sig-sell");
-
-}else{
-
-badge.innerText="⏳ WAIT";
-badge.classList.add("sig-wait");
-
-}
-
-document.getElementById(
-"signalReason"
-).innerText=
-signal;
-
-const reasons=
-document.getElementById(
-"reasonList"
-);
-
-reasons.innerHTML="";
-
-const list=[];
-
-if(liveData){
-
-const m15=
-liveData.candles.m15;
-
-const m5=
-liveData.candles.m5;
-
-const h1=
-liveData.candles.h1;
-
-const h1C=closes(h1);
-const m15C=closes(m15);
-
-const h1ema=ema(h1C,200);
-const e20=ema(m15C,20);
-const e50=ema(m15C,50);
-const rr=rsi(m15C,14);
-
-list.push([
-currentPrice>h1ema,
-"H1 price vs EMA 200"
-]);
-
-list.push([
-e20>e50,
-"M15 EMA 20 / 50"
-]);
-
-list.push([
-rr>=50&&rr<=68,
-"M15 RSI healthy momentum"
-]);
-
-list.push([
-adx(m15,14)>=25,
-"M15 ADX trend strength"
-]);
-
-list.push([
-structure(m5,10).includes(
-currentPrice>e20?"↑":"↓"
-),
-"M5 structure alignment"
-]);
-
-}
-
-list.forEach(
-item=>{
-
-const div=
-document.createElement("div");
-
-div.className=
-"reason "+
-(
-item[0]?
-"good":
-"bad"
-);
-
-div.innerText=
-(item[0]?"✓ ":"✕ ")+
-item[1];
-
-reasons.appendChild(div);
-
-}
-);
-
-if(!list.length){
-
-reasons.innerHTML=
-'<div class="reason">Waiting for live data...</div>';
-
-}
+generateTradePlan(signal);
 
 if(signal!==lastSignal){
 
 addHistory(
 signal,
 currentPrice,
-score
+total
 );
 
 lastSignal=signal;
-
 }
 
 }
 
 
-/* =========================================================
-TRADE PLAN
-========================================================= */
+/* =========================
+   FILTER DOT
+========================= */
 
-function generateTradePlan(
-signal,
-sr,
-atrVal
-){
+function setFilter(dot,text,good){
+
+let d=document.getElementById(dot);
+let t=document.getElementById(text);
+
+d.className="filter-dot "+
+(good?"dot-good":"dot-bad");
+
+t.innerText=good?"PASS":"FAIL";
+t.className=good?"pass":"fail";
+}
+
+
+/* =========================
+   TRADE PLAN
+========================= */
+
+function generateTradePlan(signal){
 
 if(signal==="WAIT"){
 
-document.getElementById(
-"execEntry"
-).innerText=
-"Tunggu confirmation";
+document.getElementById("execEntry")
+.innerText="Tunggu confirmation";
 
-document.getElementById(
-"execDirection"
-).innerText="WAIT";
+document.getElementById("execDirection")
+.innerText="WAIT";
 
-document.getElementById(
-"execSL"
-).innerText="--";
+["execSL","execTP1","execTP2","execTP3"]
+.forEach(id=>
+document.getElementById(id).innerText="--"
+);
 
-document.getElementById(
-"execTP1"
-).innerText="--";
-
-document.getElementById(
-"execTP2"
-).innerText="--";
-
-document.getElementById(
-"execTP3"
-).innerText="--";
-
-document.getElementById(
-"execRR"
-).innerText="N/A";
+document.getElementById("execRR")
+.innerText="N/A";
 
 return;
-
 }
 
-const entry=currentPrice;
+let atr=market.m5.atr;
 
+let entry=currentPrice;
 let sl,tp1,tp2,tp3;
 
 if(signal==="BUY"){
 
-const structuralSL=
-sr.support-atrVal*.35;
-
 sl=Math.min(
-structuralSL,
-entry-atrVal*1.2
+market.levels.support-atr*.25,
+entry-atr*1.15
 );
 
-const risk=
-entry-sl;
+let risk=entry-sl;
 
-tp1=
-entry+risk*1.5;
-
-tp2=
-entry+risk*2.5;
-
-tp3=
-entry+risk*4;
-
-}else{
-
-const structuralSL=
-sr.resistance+atrVal*.35;
-
-sl=Math.max(
-structuralSL,
-entry+atrVal*1.2
-);
-
-const risk=
-sl-entry;
-
-tp1=
-entry-risk*1.5;
-
-tp2=
-entry-risk*2.5;
-
-tp3=
-entry-risk*4;
+tp1=entry+risk*1.5;
+tp2=entry+risk*2.5;
+tp3=entry+risk*4;
 
 }
+else{
 
-document.getElementById(
-"execEntry"
-).innerText=
-(entry-atrVal*.15).toFixed(2)+
+sl=Math.max(
+market.levels.resistance+atr*.25,
+entry+atr*1.15
+);
+
+let risk=sl-entry;
+
+tp1=entry-risk*1.5;
+tp2=entry-risk*2.5;
+tp3=entry-risk*4;
+}
+
+document.getElementById("execEntry")
+.innerText=
+(entry-atr*.25).toFixed(2)+
 " – "+
-(entry+atrVal*.15).toFixed(2);
+(entry+atr*.25).toFixed(2);
 
-document.getElementById(
-"execDirection"
-).innerText=
-signal;
+document.getElementById("execDirection")
+.innerText=signal;
 
-document.getElementById(
-"execSL"
-).innerText=
-sl.toFixed(2);
+document.getElementById("execSL")
+.innerText=sl.toFixed(2);
 
-document.getElementById(
-"execTP1"
-).innerText=
-tp1.toFixed(2);
+document.getElementById("execTP1")
+.innerText=tp1.toFixed(2);
 
-document.getElementById(
-"execTP2"
-).innerText=
-tp2.toFixed(2);
+document.getElementById("execTP2")
+.innerText=tp2.toFixed(2);
 
-document.getElementById(
-"execTP3"
-).innerText=
-tp3.toFixed(2);
+document.getElementById("execTP3")
+.innerText=tp3.toFixed(2);
 
-document.getElementById(
-"execRR"
-).innerText=
-"1 : 4.0 max";
+document.getElementById("execRR")
+.innerText="1 : 4.0 max";
 
-document.getElementById(
-"riskEntry"
-).value=
-entry.toFixed(2);
+document.getElementById("riskEntry")
+.value=entry.toFixed(2);
 
-document.getElementById(
-"riskSL"
-).value=
-sl.toFixed(2);
+document.getElementById("riskSL")
+.value=sl.toFixed(2);
 
 updateRiskCalculator();
 
 }
 
 
-/* =========================================================
-RISK
-========================================================= */
+/* =========================
+   RISK
+========================= */
 
 function updateRiskCalculator(){
 
-const balance=
-num(
-document.getElementById(
-"accountBalance"
-).value
+let balance=num(
+document.getElementById("accountBalance").value
 )||0;
 
-const riskPercent=
-num(
-document.getElementById(
-"riskPercent"
-).value
+let rp=num(
+document.getElementById("riskPercent").value
 )||0;
 
-const entry=
-num(
-document.getElementById(
-"riskEntry"
-).value
+let entry=num(
+document.getElementById("riskEntry").value
 )||0;
 
-const sl=
-num(
-document.getElementById(
-"riskSL"
-).value
+let sl=num(
+document.getElementById("riskSL").value
 )||0;
 
-const maxRisk=
-balance*riskPercent/100;
+let maxRisk=balance*rp/100;
 
-const distance=
-Math.abs(entry-sl);
+let distance=Math.abs(entry-sl);
 
-let lot=0;
+let lot=distance>0
+?maxRisk/(distance*100)
+:0;
 
-if(distance>0){
+lot=Math.floor(lot*100)/100;
 
-lot=
-maxRisk/
-(distance*100);
+document.getElementById("maxRisk")
+.innerText="$"+maxRisk.toFixed(2);
 
-}
+document.getElementById("slDistance")
+.innerText=distance.toFixed(2);
 
-lot=
-Math.floor(lot*100)/100;
-
-document.getElementById(
-"maxRisk"
-).innerText=
-"$"+maxRisk.toFixed(2);
-
-document.getElementById(
-"slDistance"
-).innerText=
-distance.toFixed(2);
-
-document.getElementById(
-"suggestedLot"
-).innerText=
-Math.max(.01,lot).toFixed(2);
-
+document.getElementById("suggestedLot")
+.innerText=Math.max(.01,lot).toFixed(2);
 }
 
 
-/* =========================================================
-HISTORY
-========================================================= */
+/* =========================
+   HISTORY
+========================= */
 
-function addHistory(
-signal,
-price,
-score
-){
+function addHistory(signal,price,score){
 
-const time=
-new Date().toLocaleTimeString(
+let now=new Date();
+
+let time=now.toLocaleTimeString(
 "en-MY",
 {
 hour:"2-digit",
@@ -3034,17 +2383,13 @@ minute:"2-digit"
 );
 
 history.unshift({
-
 time,
 signal,
-price:
-price.toFixed(2),
+price:price.toFixed(2),
 score
-
 });
 
-history=
-history.slice(0,30);
+history=history.slice(0,30);
 
 localStorage.setItem(
 "xauSignalHistory",
@@ -3052,187 +2397,115 @@ JSON.stringify(history)
 );
 
 renderHistory();
-
 }
-
 
 function renderHistory(){
 
-const list=
-document.getElementById(
-"historyList"
-);
+let list=document.getElementById("historyList");
 
 list.innerHTML="";
 
-history.forEach(
-item=>{
+history.forEach(item=>{
 
-const row=
-document.createElement("div");
+let row=document.createElement("div");
 
-row.className=
-"history-row";
+row.className="history-row";
 
-let cls=
+let cls=item.signal==="BUY"
+?"history-buy":
+item.signal==="SELL"
+?"history-sell":
 "history-wait";
 
-if(item.signal==="BUY")
-cls="history-buy";
-
-if(item.signal==="SELL")
-cls="history-sell";
-
 row.innerHTML=`
-
 <span>${item.time}</span>
-
-<strong class="${cls}">
-${item.signal}
-</strong>
-
+<strong class="${cls}">${item.signal}</strong>
 <span>${item.price}</span>
-
 <strong>${item.score}</strong>
-
 `;
 
 list.appendChild(row);
-
-}
-);
-
+});
 }
 
 
-/* =========================================================
-MARKET STATUS
-========================================================= */
+/* =========================
+   MARKET
+========================= */
 
 function updateMarketStatus(){
 
-const day=
-new Date().getDay();
+let day=new Date().getDay();
+let closed=day===0||day===6;
 
-const weekend=
-day===0||day===6;
+let e=document.getElementById("marketStatus");
 
-const el=
-document.getElementById(
-"marketStatus"
-);
-
-if(weekend){
-
-el.innerText="CLOSED";
-el.className="status-value fail";
-
-}else{
-
-el.innerText="OPEN";
-el.className="status-value pass";
-
-}
-
+e.innerText=closed?"CLOSED":"OPEN";
+e.className=
+"status-value "+(closed?"fail":"pass");
 }
 
 
-/* =========================================================
-NEWS
-========================================================= */
+/* =========================
+   NEWS
+========================= */
 
 function newsFilter(){
 
-document.getElementById(
-"newsStatus"
-).innerText=
-"✓ NEWS FILTER MANUAL — SEMAK CALENDAR SEBELUM ENTRY";
+document.getElementById("newsStatus")
+.innerText="✓ MANUAL NEWS CHECK";
 
-document.getElementById(
-"newsTradingStatus"
-).innerText=
-"ALLOWED";
-
+document.getElementById("newsTradingStatus")
+.innerText="ALLOWED";
 }
 
 
-/* =========================================================
-INPUTS
-========================================================= */
+/* =========================
+   INPUTS
+========================= */
 
 [
 "accountBalance",
 "riskPercent",
 "riskEntry",
 "riskSL"
-].forEach(
-id=>{
+].forEach(id=>{
 
-document.getElementById(
-id
-).addEventListener(
+document.getElementById(id)
+.addEventListener(
 "input",
 updateRiskCalculator
 );
 
-}
-);
+});
 
 
-/* =========================================================
-START
-========================================================= */
+/* =========================
+   START
+========================= */
 
 window.addEventListener(
 "load",
 ()=>{
 
 updateSessions();
-
 updateMarketStatus();
-
 newsFilter();
-
 renderHistory();
-
 updateRiskCalculator();
-
 fetchLiveGold();
 
 }
 );
 
 
-/*
-=========================================================
-IMPORTANT
+/* =========================
+   INTERVALS
+========================= */
 
-3 API calls setiap refresh:
-5M
-15M
-1H
-
-Refresh setiap 30 saat
-= sekitar 6 calls/minute
-
-Lebih selamat daripada 4 timeframe.
-=========================================================
-*/
-
-setInterval(
-fetchLiveGold,
-30000
-);
-
-setInterval(
-updateSessions,
-1000
-);
-
-setInterval(
-updateMarketStatus,
-10000
-);
+setInterval(fetchLiveGold,30000);
+setInterval(updateSessions,1000);
+setInterval(updateMarketStatus,10000);
 
 </script>
 
