@@ -2047,85 +2047,98 @@ button.disabled=false;
 
 async function enableNotifications(){
 
-initAudio();
+    initAudio();
 
-if(!("Notification" in window)){
+    if(!("Notification" in window)){
 
-alert(
-"Browser ini tidak menyokong Web Notification."
-);
+        alert(
+            "Browser ini tidak menyokong Web Notification."
+        );
 
-return;
+        return;
+    }
 
-}
+    if(Notification.permission === "granted"){
 
-if(Notification.permission==="granted"){
+        updateNotificationStatus();
 
-try{
+        await setupPushNotifications();
 
-new Notification(
-"🟢 XAU/USD Pro Sniper",
-{
-body:"Notification sudah aktif.",
-icon:"/icon.png"
-}
-);
+        try{
 
-}catch(e){}
+            new Notification(
+                "🟢 XAU/USD Pro Sniper",
+                {
+                    body:
+                        "Notification sudah aktif.",
+                    icon:
+                        "/icon.png"
+                }
+            );
 
-updateNotificationStatus();
-return;
+        }catch(e){}
 
-}
+        return;
+    }
 
-if(Notification.permission==="denied"){
+    if(Notification.permission === "denied"){
 
-alert(
-"Notification telah BLOCKED oleh browser."
-);
+        alert(
+            "⚠️ Notification telah BLOCKED oleh browser."
+        );
 
-return;
+        return;
+    }
 
-}
+    try{
 
-try{
+        const permission =
+            await Notification.requestPermission();
 
-const permission=
-await Notification.requestPermission();
+        updateNotificationStatus();
 
-updateNotificationStatus();
+        if(permission === "granted"){
 
-if(permission==="granted"){
+            alert(
+                "✅ Notification berjaya diaktifkan."
+            );
 
-alert(
-"✅ Notification berjaya diaktifkan."
-);
+            await setupPushNotifications();
 
-try{
+            try{
 
-new Notification(
-"🟢 XAU/USD Pro Sniper",
-{
-body:"Signal alert sekarang aktif.",
-icon:"/icon.png"
-}
-);
+                new Notification(
+                    "🟢 XAU/USD Pro Sniper",
+                    {
+                        body:
+                            "Signal alert sekarang aktif.",
+                        icon:
+                            "/icon.png"
+                    }
+                );
 
-}catch(e){}
+            }catch(e){}
 
-}/* Enable Web Push */
+        }else{
 
-setupPushNotifications();
+            alert(
+                "⚠️ Notification tidak dibenarkan."
+            );
 
-}
+        }
 
-}catch(e){
+    }catch(e){
 
-alert(
-"Notification tidak dapat diaktifkan."
-);
+        console.error(
+            "Notification error:",
+            e
+        );
 
-}
+        alert(
+            "❌ Notification tidak dapat diaktifkan."
+        );
+
+    }
 
 }
 
