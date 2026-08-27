@@ -1,10 +1,16 @@
 import webpush from "web-push";
+import { Redis } from "@upstash/redis";
 
 webpush.setVapidDetails(
   process.env.VAPID_SUBJECT,
   process.env.VAPID_PUBLIC_KEY,
   process.env.VAPID_PRIVATE_KEY
 );
+
+const redis = new Redis({
+  url: process.env.KV_REST_API_URL,
+  token: process.env.KV_REST_API_TOKEN
+});
 
 export default async function handler(req, res) {
 
@@ -24,14 +30,14 @@ export default async function handler(req, res) {
       });
     }
 
-    /*
-     * Temporary:
-     * verify subscription only.
-     */
+    await redis.set(
+      "xau_push_subscription",
+      JSON.stringify(subscription)
+    );
 
     return res.status(200).json({
       success: true,
-      message: "Push subscription received"
+      message: "Push subscription saved"
     });
 
   } catch (error) {
@@ -39,8 +45,9 @@ export default async function handler(req, res) {
     console.error(error);
 
     return res.status(500).json({
-      error: "Push subscription failed"
+      error: "Failed to save push subscription"
     });
 
   }
+
 }
