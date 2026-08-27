@@ -9,13 +9,17 @@ export default async function handler(req, res) {
     }
 
     const url =
-      `https://api.twelvedata.com/time_series` +
-      `?symbol=XAU/USD` +
-      `&interval=5min` +
-      `&outputsize=3000` +
-      `&apikey=${API_KEY}`;
+      "https://api.twelvedata.com/time_series" +
+      "?symbol=XAU/USD" +
+      "&interval=5min" +
+      "&outputsize=3000" +
+      "&order=ASC" +
+      "&apikey=" + encodeURIComponent(API_KEY);
 
-    const response = await fetch(url);
+    const response = await fetch(url, {
+      cache: "no-store"
+    });
+
     const data = await response.json();
 
     if (!response.ok || data.status === "error") {
@@ -24,14 +28,55 @@ export default async function handler(req, res) {
       });
     }
 
+    if (!Array.isArray(data.values) || data.values.length === 0) {
+      return res.status(502).json({
+        error: "Twelve Data tidak pulangkan candle XAU/USD"
+      });
+    }
+
+    const values = data.values
+      .map(c => ({
+        datetime: c.datetime,
+        open: Number(c.open),
+        high: Number(c.high),
+        low: Number(c.low),
+        close: Number(c.close),
+        volume: Number(c.volume) || 0
+      }))
+      .filter(c =>
+        c.datetime &&
+        Number.isFinite(c.open) &&
+        Number.isFinite(c.high) &&
+        Number.isFinite(c.low) &&
+        Number.isFinite(c.close)
+      )
+      .sort(
+        (a, b) =>
+          new Date(a.datetime) - new Date(b.datetime)
+      );
+
+    if (!values.length) {
+      return res.status(502).json({
+        error: "Candle XAU/USD tidak valid"
+      });
+    }
+
+    res.setHeader(
+      "Cache-Control",
+      "no-store, max-age=0, must-revalidate"
+    );
+
     return res.status(200).json({
       symbol: "XAU/USD",
       interval: "5min",
       updated: new Date().toISOString(),
-      values: data.values || []
+      count: values.length,
+      values
     });
 
   } catch (error) {
+    console.error("XAU API ERROR:", error);
+
     return res.status(500).json({
       error: "Server error",
       message: error.message
