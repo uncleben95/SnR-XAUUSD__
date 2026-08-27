@@ -4,6 +4,13 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#0f172a">
+<link rel="manifest" href="/manifest.json">
+<link rel="apple-touch-icon" href="/icon.png">
+
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="XAU Sniper">
 <title>XAU/USD Pro Sniper Dashboard V3.1</title>
 
 <style>
@@ -4091,6 +4098,39 @@ updateNotificationStatus,
 5000
 );
 
+</script>
+<script>
+/* =========================================================
+PWA / SERVICE WORKER
+========================================================= */
+
+if ("serviceWorker" in navigator) {
+
+    window.addEventListener("load", () => {
+
+        navigator.serviceWorker.register("/sw.js", {
+            scope: "/"
+        })
+        .then(registration => {
+
+            console.log(
+                "XAU Sniper Service Worker registered:",
+                registration.scope
+            );
+
+        })
+        .catch(error => {
+
+            console.error(
+                "XAU Sniper Service Worker registration failed:",
+                error
+            );
+
+        });
+
+    });
+
+}
 </script>
 
 </body>
