@@ -208,7 +208,18 @@ color:#a87900
 border:2px solid var(--border);
 padding:13px;
 text-align:center;
-margin-bottom:10px
+margin-bottom:10px;
+transition:.25s
+}
+
+.master-card.signal-buy-active{
+border-color:#22c55e;
+box-shadow:0 0 0 3px rgba(34,197,94,.12),var(--shadow)
+}
+
+.master-card.signal-sell-active{
+border-color:#ef4444;
+box-shadow:0 0 0 3px rgba(239,68,68,.12),var(--shadow)
 }
 
 .price-label{
@@ -330,64 +341,52 @@ background:var(--blue);
 color:#fff;
 border-radius:6px;
 padding:7px 12px;
-font-weight:bold;
-cursor:pointer
+font-weight:bold
 }
 
-/* NOTIFICATION */
+/* ALERT */
 
-.notification-box{
-background:var(--card);
-border:1px solid var(--border);
+.alert-box{
+display:none;
+margin-bottom:10px;
+padding:12px;
 border-radius:10px;
-box-shadow:var(--shadow);
-padding:10px;
-margin-bottom:10px
-}
-
-.notification-header{
-display:flex;
-justify-content:space-between;
-align-items:center;
-gap:8px
-}
-
-.notification-title{
-font-size:.78rem;
+text-align:center;
 font-weight:bold;
-color:var(--blue)
+animation:pulseAlert 1s infinite alternate
 }
 
-.notification-status{
-font-size:.65rem;
-font-weight:bold;
-color:var(--red)
+.alert-box.buy{
+display:block;
+background:var(--green-bg);
+color:var(--green);
+border:2px solid #22c55e
 }
 
-.notification-status.enabled{
-color:var(--green)
+.alert-box.sell{
+display:block;
+background:var(--red-bg);
+color:var(--red);
+border:2px solid #ef4444
 }
 
-.notification-actions{
-display:flex;
-gap:6px;
-margin-top:7px
+.alert-box.wait{
+display:none
 }
 
-.notify-btn{
-border:1px solid var(--border);
-background:var(--sub);
-border-radius:6px;
-padding:7px 10px;
-font-size:.68rem;
-font-weight:bold;
-cursor:pointer
+.alert-title{
+font-size:1rem
 }
 
-.notify-btn.primary{
-background:var(--blue);
-border-color:var(--blue);
-color:#fff
+.alert-detail{
+font-size:.7rem;
+margin-top:3px;
+font-weight:normal
+}
+
+@keyframes pulseAlert{
+from{transform:scale(1)}
+to{transform:scale(1.015)}
 }
 
 /* EXECUTION */
@@ -715,40 +714,6 @@ NEW YORK
 </div>
 </div>
 
-<!-- NOTIFICATION -->
-
-<div class="notification-box">
-
-<div class="notification-header">
-
-<div class="notification-title">
-🔔 SIGNAL ALERT
-</div>
-
-<div id="notificationStatus" class="notification-status">
-● NOT ENABLED
-</div>
-
-</div>
-
-<div class="notification-actions">
-
-<button
-class="notify-btn primary"
-onclick="enableNotifications()">
-ENABLE ALERT
-</button>
-
-<button
-class="notify-btn"
-onclick="testNotification()">
-TEST
-</button>
-
-</div>
-
-</div>
-
 <!-- LIVE CHART -->
 
 <div class="chart-card">
@@ -777,9 +742,21 @@ XAU/USD • LIVE 5M
 
 </div>
 
+<!-- ALERT -->
+
+<div id="signalAlert" class="alert-box">
+
+<div id="alertTitle" class="alert-title">
+</div>
+
+<div id="alertDetail" class="alert-detail">
+</div>
+
+</div>
+
 <!-- MASTER -->
 
-<div class="master-card">
+<div id="masterCard" class="master-card">
 
 <div class="price-label">
 XAU/USD MARKET PRICE
@@ -1334,7 +1311,6 @@ let previousPrice=null;
 let candles=[];
 let lastSignal="";
 let lastEngineSignal="";
-
 let history=JSON.parse(
 localStorage.getItem("xauSignalHistory")||"[]"
 );
@@ -1348,225 +1324,205 @@ levels:{}
 
 
 /* =========================================================
-   NOTIFICATION ENGINE
+   ALERT SYSTEM
 ========================================================= */
 
-let notificationEnabled=false;
+let audioContext=null;
+let audioReady=false;
 
-let lastNotifiedSignal=
-localStorage.getItem("xauLastNotifiedSignal")||"";
-
-let lastNotificationTime=
-parseInt(
-localStorage.getItem("xauLastNotificationTime")||"0"
-);
-
-const NOTIFICATION_COOLDOWN=5*60*1000;
-
-
-/* Update notification UI */
-
-function updateNotificationUI(){
-
-const status=
-document.getElementById(
-"notificationStatus"
-);
-
-if(
-"Notification" in window &&
-Notification.permission==="granted"
-){
-
-notificationEnabled=true;
-
-status.innerText=
-"● ALERT ENABLED";
-
-status.className=
-"notification-status enabled";
-
-}else{
-
-notificationEnabled=false;
-
-status.innerText=
-"● NOT ENABLED";
-
-status.className=
-"notification-status";
-
-}
-
-}
-
-
-/* Request browser permission */
-
-async function enableNotifications(){
-
-if(!("Notification" in window)){
-
-alert(
-"Browser ini tidak support notification."
-);
-
-return;
-
-}
+function initAudio(){
 
 try{
 
-const permission=
-await Notification.requestPermission();
+if(!audioContext){
 
-if(permission==="granted"){
-
-notificationEnabled=true;
-
-updateNotificationUI();
-
-sendSignalNotification(
-"WAIT",
-currentPrice,
-0,
-true
-);
-
-}else{
-
-notificationEnabled=false;
-
-updateNotificationUI();
-
-alert(
-"Notification belum dibenarkan. Enable notification untuk website ini."
-);
+audioContext=
+new(
+window.AudioContext||
+window.webkitAudioContext
+)();
 
 }
 
-}catch(error){
+if(audioContext.state==="suspended"){
+audioContext.resume();
+}
 
-console.error(error);
+audioReady=true;
+
+}catch(e){
+
+console.log("Audio tidak tersedia");
 
 }
 
 }
-
-
-/* Sound */
 
 function playAlertSound(signal){
 
+if(!audioReady)
+return;
+
 try{
 
-const AudioContext=
-window.AudioContext||
-window.webkitAudioContext;
+const ctx=audioContext;
 
-if(!AudioContext)return;
+const now=ctx.currentTime;
 
-const audio=
-new AudioContext();
+const osc=ctx.createOscillator();
+const gain=ctx.createGain();
 
-const oscillator=
-audio.createOscillator();
+osc.connect(gain);
+gain.connect(ctx.destination);
 
-const gain=
-audio.createGain();
+osc.type="sine";
 
-oscillator.connect(gain);
+if(signal==="BUY"){
 
-gain.connect(audio.destination);
+osc.frequency.setValueAtTime(
+880,
+now
+);
 
-oscillator.type="sine";
+osc.frequency.setValueAtTime(
+1174,
+now+0.12
+);
 
-oscillator.frequency.value=
-signal==="BUY"
-?880
-:660;
+}else{
+
+osc.frequency.setValueAtTime(
+520,
+now
+);
+
+osc.frequency.setValueAtTime(
+330,
+now+0.12
+);
+
+}
 
 gain.gain.setValueAtTime(
 0.0001,
-audio.currentTime
+now
 );
 
 gain.gain.exponentialRampToValueAtTime(
-0.18,
-audio.currentTime+0.03
+0.25,
+now+0.03
 );
 
 gain.gain.exponentialRampToValueAtTime(
 0.0001,
-audio.currentTime+0.5
+now+0.35
 );
 
-oscillator.start();
+osc.start(now);
+osc.stop(now+0.4);
 
-oscillator.stop(
-audio.currentTime+0.5
-);
+}catch(e){
 
-}catch(error){
-
-console.log(
-"Audio alert blocked:",
-error
-);
+console.log("Alert sound error",e);
 
 }
 
 }
 
-
-/* Actual signal notification */
-
-function sendSignalNotification(
+function showSignalAlert(
 signal,
-price,
 score,
-force=false
+price
+){
+
+const box=
+document.getElementById(
+"signalAlert"
+);
+
+const title=
+document.getElementById(
+"alertTitle"
+);
+
+const detail=
+document.getElementById(
+"alertDetail"
+);
+
+const master=
+document.getElementById(
+"masterCard"
+);
+
+box.className="alert-box";
+
+master.classList.remove(
+"signal-buy-active",
+"signal-sell-active"
+);
+
+if(signal==="BUY"){
+
+box.classList.add("buy");
+
+title.innerText=
+"🟢 NEW BUY SIGNAL";
+
+detail.innerText=
+`XAU/USD ${price.toFixed(2)} • Score ${score}/100`;
+
+master.classList.add(
+"signal-buy-active"
+);
+
+playAlertSound("BUY");
+
+sendBrowserNotification(
+"🟢 XAU/USD BUY",
+`Price ${price.toFixed(2)} • Score ${score}/100`
+);
+
+}
+
+else if(signal==="SELL"){
+
+box.classList.add("sell");
+
+title.innerText=
+"🔴 NEW SELL SIGNAL";
+
+detail.innerText=
+`XAU/USD ${price.toFixed(2)} • Score ${score}/100`;
+
+master.classList.add(
+"signal-sell-active"
+);
+
+playAlertSound("SELL");
+
+sendBrowserNotification(
+"🔴 XAU/USD SELL",
+`Price ${price.toFixed(2)} • Score ${score}/100`
+);
+
+}
+
+}
+
+function sendBrowserNotification(
+title,
+body
 ){
 
 if(
-!notificationEnabled ||
-!("Notification" in window) ||
-Notification.permission!=="granted"
-)return;
+!("Notification" in window)
+)
+return;
 
 if(
-signal!=="BUY" &&
-signal!=="SELL"
-)return;
-
-const now=
-Date.now();
-
-const cooldownPassed=
-now-lastNotificationTime>
-NOTIFICATION_COOLDOWN;
-
-const newSignal=
-signal!==lastNotifiedSignal;
-
-if(
-!force &&
-!newSignal &&
-!cooldownPassed
-)return;
-
-const icon=
-signal==="BUY"
-?"🟢"
-:"🔴";
-
-const title=
-`${icon} XAU/USD ${signal}`;
-
-const body=
-`${signal} signal detected\n`+
-`Price: ${price.toFixed(2)}\n`+
-`Score: ${score}/100`;
+Notification.permission==="granted"
+){
 
 try{
 
@@ -1574,49 +1530,26 @@ new Notification(
 title,
 {
 body,
-tag:"xau-pro-sniper",
-requireInteraction:true
+icon:"/icon.png"
 }
 );
 
-playAlertSound(signal);
-
-lastNotifiedSignal=signal;
-
-lastNotificationTime=now;
-
-localStorage.setItem(
-"xauLastNotifiedSignal",
-signal
-);
-
-localStorage.setItem(
-"xauLastNotificationTime",
-String(now)
-);
-
-}catch(error){
-
-console.error(
-"Notification error:",
-error
-);
+}catch(e){}
 
 }
 
 }
 
+function enableNotifications(){
 
-/* Test button */
-
-function testNotification(){
+initAudio();
 
 if(
 !("Notification" in window)
 ){
 
 alert(
-"Browser ini tidak support notification."
+"Browser ini tidak menyokong notification. Alert dalam dashboard + bunyi masih boleh digunakan."
 );
 
 return;
@@ -1624,27 +1557,35 @@ return;
 }
 
 if(
-Notification.permission!=="granted"
+Notification.permission==="granted"
 ){
 
-enableNotifications();
+alert(
+"Notification sudah aktif."
+);
 
 return;
 
 }
 
-notificationEnabled=true;
+Notification.requestPermission()
+.then(permission=>{
 
-new Notification(
-"🔔 XAU/USD Pro Sniper",
-{
-body:
-"Test notification berjaya. Alert BUY/SELL sudah aktif.",
-tag:"xau-test"
-}
+if(permission==="granted"){
+
+alert(
+"Notification berjaya diaktifkan."
 );
 
-playAlertSound("BUY");
+}else{
+
+alert(
+"Browser notification tidak dibenarkan. Dashboard alert dan bunyi masih digunakan."
+);
+
+}
+
+});
 
 }
 
@@ -1658,17 +1599,20 @@ return parseFloat(v);
 }
 
 function avg(arr){
+
 if(!arr.length)return 0;
 
 return arr.reduce(
 (a,b)=>a+b,
 0
 )/arr.length;
+
 }
 
 function ema(values,period){
 
-if(values.length<period)return null;
+if(values.length<period)
+return null;
 
 let k=2/(period+1);
 
@@ -1694,7 +1638,8 @@ return e;
 
 function sma(values,period){
 
-if(values.length<period)return null;
+if(values.length<period)
+return null;
 
 return avg(
 values.slice(-period)
@@ -1704,7 +1649,8 @@ values.slice(-period)
 
 function std(values,period){
 
-if(values.length<period)return null;
+if(values.length<period)
+return null;
 
 let a=
 values.slice(-period);
@@ -1713,15 +1659,18 @@ let m=avg(a);
 
 return Math.sqrt(
 avg(
-a.map(
-x=>(x-m)**2
+a.map(x=>
+(x-m)**2
 )
 )
 );
 
 }
 
-function rsi(values,period=14){
+function rsi(
+values,
+period=14
+){
 
 if(values.length<period+1)
 return null;
@@ -1736,7 +1685,8 @@ i++
 ){
 
 let d=
-values[i]-values[i-1];
+values[i]-
+values[i-1];
 
 if(d>0)
 gains+=d;
@@ -1757,12 +1707,13 @@ return 100-
 
 }
 
-function atr(data,period=14){
+function atr(
+data,
+period=14
+){
 
-if(
-data.length<
-period+1
-)return null;
+if(data.length<period+1)
+return null;
 
 let trs=[];
 
@@ -1797,11 +1748,15 @@ function macd(values){
 if(values.length<35)
 return null;
 
-let fast=
-ema(values,12);
+let fast=ema(
+values,
+12
+);
 
-let slow=
-ema(values,26);
+let slow=ema(
+values,
+26
+);
 
 if(
 fast===null||
@@ -1848,7 +1803,6 @@ ema(series,9);
 return{
 
 line:macdLine,
-
 signal,
 
 bull:
@@ -1859,7 +1813,10 @@ macdLine>signal
 
 }
 
-function adx(data,period=14){
+function adx(
+data,
+period=14
+){
 
 if(
 data.length<
@@ -1897,33 +1854,27 @@ let up=h-ph;
 let down=pl-l;
 
 plus.push(
-up>down&&up>0
-?up
-:0
+up>down&&up>0?
+up:
+0
 );
 
 minus.push(
-down>up&&down>0
-?down
-:0
+down>up&&down>0?
+down:
+0
 );
 
 }
 
 let tr=
-avg(
-trs.slice(-period)
-);
+avg(trs.slice(-period));
 
 let p=
-avg(
-plus.slice(-period)
-);
+avg(plus.slice(-period));
 
 let m=
-avg(
-minus.slice(-period)
-);
+avg(minus.slice(-period));
 
 if(!tr)
 return null;
@@ -1954,7 +1905,10 @@ bull:pdi>mdi
    RESAMPLE
 ========================================================= */
 
-function aggregate(data,minutes){
+function aggregate(
+data,
+minutes
+){
 
 let out=[];
 let buckets={};
@@ -1981,13 +1935,9 @@ new Date(key)
 .toISOString(),
 
 open:c.open,
-
 high:c.high,
-
 low:c.low,
-
 close:c.close,
-
 volume:c.volume||0
 
 };
@@ -2017,13 +1967,9 @@ c.volume||0;
 });
 
 Object.keys(buckets)
-.sort(
-(a,b)=>a-b
-)
-.forEach(
-k=>out.push(
-buckets[k]
-)
+.sort((a,b)=>a-b)
+.forEach(k=>
+out.push(buckets[k])
 );
 
 return out;
@@ -2071,9 +2017,7 @@ throw new Error(
 const data=
 await response.json();
 
-if(
-!data.values?.length
-)
+if(!data.values?.length)
 throw new Error(
 "Tiada candle"
 );
@@ -2082,27 +2026,22 @@ const raw=
 data.values.reverse();
 
 candles=
-raw.map(
-x=>({
+raw.map(x=>({
 
 time:
 x.datetime||
 x.time,
 
 open:num(x.open),
-
 high:num(x.high),
-
 low:num(x.low),
-
 close:num(x.close),
 
 volume:
 num(x.volume)||0
 
-})
-).filter(
-x=>isFinite(x.close)
+})).filter(x=>
+isFinite(x.close)
 );
 
 if(!candles.length)
@@ -2158,7 +2097,8 @@ drawChart();
 
 runEngine();
 
-}catch(e){
+}
+catch(e){
 
 console.error(e);
 
@@ -2222,8 +2162,11 @@ dpr,
 0
 );
 
-const width=rect.width;
-const height=rect.height;
+const width=
+rect.width;
+
+const height=
+rect.height;
 
 ctx.clearRect(
 0,
@@ -2248,7 +2191,7 @@ let min=
 Math.min(...lows);
 
 let padding=
-(max-min)*0.12;
+(max-min)*.12;
 
 if(padding===0)
 padding=1;
@@ -2329,7 +2272,6 @@ data.forEach(
 (c,i)=>{
 
 let px=x(i);
-
 let py=y(c.close);
 
 if(i===0)
@@ -2337,13 +2279,11 @@ ctx.moveTo(px,py);
 else
 ctx.lineTo(px,py);
 
-});
+}
+);
 
-ctx.strokeStyle=
-"#fbbf24";
-
+ctx.strokeStyle="#fbbf24";
 ctx.lineWidth=2;
-
 ctx.stroke();
 
 
@@ -2508,12 +2448,14 @@ date.getFullYear();
 
 let start=
 getLastSunday(
-y,2
+y,
+2
 );
 
 let end=
 getLastSunday(
-y,9
+y,
+9
 );
 
 let m=
@@ -2525,16 +2467,10 @@ date.getDate();
 if(m>2&&m<9)
 return true;
 
-if(
-m===2&&
-d>=start
-)
+if(m===2&&d>=start)
 return true;
 
-if(
-m===9&&
-d<end
-)
+if(m===9&&d<end)
 return true;
 
 return false;
@@ -2548,12 +2484,16 @@ date.getFullYear();
 
 let start=
 getNthSunday(
-y,2,2
+y,
+2,
+2
 );
 
 let end=
 getNthSunday(
-y,10,1
+y,
+10,
+1
 );
 
 let m=
@@ -2562,22 +2502,13 @@ date.getMonth();
 let d=
 date.getDate();
 
-if(
-m>2&&
-m<10
-)
+if(m>2&&m<10)
 return true;
 
-if(
-m===2&&
-d>=start
-)
+if(m===2&&d>=start)
 return true;
 
-if(
-m===10&&
-d<end
-)
+if(m===10&&d<end)
 return true;
 
 return false;
@@ -2632,9 +2563,7 @@ ny
 let s=[];
 
 if(asia)s.push("ASIA");
-
 if(london)s.push("LONDON");
-
 if(ny)s.push("NEW YORK");
 
 document.getElementById(
@@ -2747,41 +2676,55 @@ h1.map(x=>x.close);
 
 market.m5={
 
-ema20:ema(c5,20),
+ema20:
+ema(c5,20),
 
-ema50:ema(c5,50),
+ema50:
+ema(c5,50),
 
-rsi:rsi(c5),
+rsi:
+rsi(c5),
 
-atr:atr(m5),
+atr:
+atr(m5),
 
-macd:macd(c5)
+macd:
+macd(c5)
 
 };
 
 market.m15={
 
-ema20:ema(c15,20),
+ema20:
+ema(c15,20),
 
-ema50:ema(c15,50),
+ema50:
+ema(c15,50),
 
-rsi:rsi(c15),
+rsi:
+rsi(c15),
 
-atr:atr(m15),
+atr:
+atr(m15),
 
-adx:adx(m15),
+adx:
+adx(m15),
 
-macd:macd(c15)
+macd:
+macd(c15)
 
 };
 
 market.h1={
 
-ema200:ema(c1,200),
+ema200:
+ema(c1,200),
 
-ema50:ema(c1,50),
+ema50:
+ema(c1,50),
 
-atr:atr(h1)
+atr:
+atr(h1)
 
 };
 
@@ -2792,12 +2735,16 @@ m5.slice(-look);
 
 let high5=
 Math.max(
-...recent5.map(x=>x.high)
+...recent5.map(
+x=>x.high
+)
 );
 
 let low5=
 Math.min(
-...recent5.map(x=>x.low)
+...recent5.map(
+x=>x.low
+)
 );
 
 let recent15=
@@ -2805,12 +2752,16 @@ m15.slice(-30);
 
 let high15=
 Math.max(
-...recent15.map(x=>x.high)
+...recent15.map(
+x=>x.high
+)
 );
 
 let low15=
 Math.min(
-...recent15.map(x=>x.low)
+...recent15.map(
+x=>x.low
+)
 );
 
 market.levels={
@@ -2903,8 +2854,7 @@ start.setHours(
 );
 
 let asia=
-candles.filter(
-c=>{
+candles.filter(c=>{
 
 let d=
 new Date(c.time);
@@ -3032,7 +2982,8 @@ bearVotes++;
 
 if(
 h1.ema200 &&
-currentPrice>h1.ema200
+currentPrice>
+h1.ema200
 ){
 
 scoreH1+=6;
@@ -3077,9 +3028,7 @@ bearVotes++;
 
 }
 
-if(
-m15.macd?.bull
-){
+if(m15.macd?.bull){
 
 scoreM15+=4;
 bullVotes++;
@@ -3114,7 +3063,8 @@ bearVotes++;
 
 if(
 m5.ema20 &&
-currentPrice>m5.ema20
+currentPrice>
+m5.ema20
 ){
 
 scoreM5+=5;
@@ -3147,12 +3097,14 @@ bullVotes++;
 
 let distSupport=
 Math.abs(
-currentPrice-l.support
+currentPrice-
+l.support
 );
 
 let distResistance=
 Math.abs(
-l.resistance-currentPrice
+l.resistance-
+currentPrice
 );
 
 let nearSupport=
@@ -3319,9 +3271,7 @@ scoreLiq+
 scoreRisk;
 
 
-/* =====================================================
-   STRICT SIGNAL
-===================================================== */
+/* STRICT SIGNAL */
 
 let signal="WAIT";
 
@@ -3351,7 +3301,6 @@ signal="SELL";
 
 }
 
-
 updateUI(
 signal,
 total,
@@ -3363,38 +3312,6 @@ scoreRisk,
 vwap,
 volatility
 );
-
-
-/* =====================================================
-   SIGNAL NOTIFICATION
-===================================================== */
-
-sendSignalNotification(
-signal,
-currentPrice,
-total
-);
-
-
-/*
- History only records actual signal changes.
-*/
-
-if(
-signal!=="WAIT" &&
-signal!==lastEngineSignal
-){
-
-addHistory(
-signal,
-currentPrice,
-total
-);
-
-lastEngineSignal=
-signal;
-
-}
 
 }
 
@@ -3446,6 +3363,7 @@ badge.classList.add(
 );
 
 }
+
 else if(signal==="SELL"){
 
 badge.innerText=
@@ -3456,6 +3374,7 @@ badge.classList.add(
 );
 
 }
+
 else{
 
 badge.innerText=
@@ -3911,8 +3830,7 @@ nearS||nearR,
 document.getElementById(
 "reasonList"
 ).innerHTML=
-reasons.map(
-x=>
+reasons.map(x=>
 `
 <div class="reason ${x[0]?"good":"bad"}">
 ${x[0]?"✓":"✕"} ${x[1]}
@@ -3922,6 +3840,33 @@ ${x[0]?"✓":"✕"} ${x[1]}
 
 
 generateTradePlan(signal);
+
+
+/* =====================================================
+   NEW SIGNAL ALERT
+===================================================== */
+
+if(
+signal!=="WAIT" &&
+signal!==lastEngineSignal
+){
+
+addHistory(
+signal,
+currentPrice,
+total
+);
+
+showSignalAlert(
+signal,
+total,
+currentPrice
+);
+
+lastEngineSignal=
+signal;
+
+}
 
 }
 
@@ -3988,8 +3933,7 @@ document.getElementById(
 "execTP1",
 "execTP2",
 "execTP3"
-].forEach(
-id=>
+].forEach(id=>
 document.getElementById(id)
 .innerText="--"
 );
@@ -4038,7 +3982,9 @@ tp3=
 entry+
 risk*4;
 
-}else{
+}
+
+else{
 
 sl=Math.max(
 market.levels.resistance+
@@ -4238,7 +4184,9 @@ history.slice(
 
 localStorage.setItem(
 "xauSignalHistory",
-JSON.stringify(history)
+JSON.stringify(
+history
+)
 );
 
 renderHistory();
@@ -4355,8 +4303,7 @@ document.getElementById(
 "riskPercent",
 "riskEntry",
 "riskSL"
-].forEach(
-id=>{
+].forEach(id=>{
 
 document.getElementById(id)
 .addEventListener(
@@ -4365,6 +4312,32 @@ updateRiskCalculator
 );
 
 });
+
+
+/* =========================================================
+   USER INTERACTION
+========================================================= */
+
+/*
+   Mobile Safari / iPhone perlukan user interaction
+   untuk unlock audio.
+*/
+
+document.addEventListener(
+"click",
+initAudio,
+{
+once:true
+}
+);
+
+document.addEventListener(
+"touchstart",
+initAudio,
+{
+once:true
+}
+);
 
 
 /* =========================================================
@@ -4396,8 +4369,6 @@ newsFilter();
 renderHistory();
 
 updateRiskCalculator();
-
-updateNotificationUI();
 
 fetchLiveGold();
 
