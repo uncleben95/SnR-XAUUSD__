@@ -1,35 +1,86 @@
-const CACHE_NAME = "xau-sniper-v3.1";
+const CACHE_NAME = "xau-sniper-v3-1";
 
-const FILES_TO_CACHE = [
-  "./",
-  "./index.html",
-  "./manifest.json",
-  "./ikon.png"
+const APP_SHELL = [
+    "/",
+    "/index.html",
+    "/manifest.json",
+    "/icon.png"
 ];
 
 self.addEventListener("install", event => {
-  event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then(cache => cache.addAll(FILES_TO_CACHE))
-      .then(() => self.skipWaiting())
-  );
+
+    event.waitUntil(
+
+        caches.open(CACHE_NAME)
+            .then(cache => cache.addAll(APP_SHELL))
+            .then(() => self.skipWaiting())
+
+    );
+
 });
 
 self.addEventListener("activate", event => {
-  event.waitUntil(
-    caches.keys().then(keys =>
-      Promise.all(
-        keys
-          .filter(key => key !== CACHE_NAME)
-          .map(key => caches.delete(key))
-      )
-    ).then(() => self.clients.claim())
-  );
+
+    event.waitUntil(
+
+        caches.keys()
+            .then(keys =>
+                Promise.all(
+                    keys
+                        .filter(key => key !== CACHE_NAME)
+                        .map(key => caches.delete(key))
+                )
+            )
+            .then(() => self.clients.claim())
+
+    );
+
 });
 
 self.addEventListener("fetch", event => {
-  event.respondWith(
-    caches.match(event.request)
-      .then(cached => cached || fetch(event.request))
-  );
+
+    const request = event.request;
+
+    /*
+     * API jangan cache.
+     * Kita nak harga XAU/USD sentiasa fresh.
+     */
+
+    if (
+        request.url.includes("/api/xau")
+    ) {
+        return;
+    }
+
+    event.respondWith(
+
+        fetch(request)
+            .then(response => {
+
+                if (
+                    response &&
+                    response.status === 200 &&
+                    response.type !== "opaque"
+                ) {
+
+                    const copy = response.clone();
+
+                    caches.open(CACHE_NAME)
+                        .then(cache => {
+                            cache.put(request, copy);
+                        });
+
+                }
+
+                return response;
+
+            })
+            .catch(() => {
+
+                return caches.match(request);
+
+            })
+
+    );
+
 });
