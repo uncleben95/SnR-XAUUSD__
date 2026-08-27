@@ -1,129 +1,66 @@
 export default async function handler(req, res) {
-
   try {
-
-    const API_KEY =
-      process.env.TWELVE_DATA_API_KEY;
+    const API_KEY = process.env.TWELVE_DATA_API_KEY;
 
     if (!API_KEY) {
       return res.status(500).json({
-        error:
-          "TWELVE_DATA_API_KEY belum diset dalam Vercel"
+        error: "TWELVE_DATA_API_KEY belum diset dalam Vercel"
       });
     }
 
-    /*
-      Pilih timeframe melalui:
-      /api/xau?interval=5min
-      /api/xau?interval=15min
-      /api/xau?interval=1h
+    const base = "https://api.twelvedata.com/time_series";
 
-      Default = 5min
-    */
+    async function getData(interval, outputsize) {
+      const url =
+        `${base}?symbol=XAU/USD` +
+        `&interval=${interval}` +
+        `&outputsize=${outputsize}` +
+        `&apikey=${API_KEY}`;
 
-    const requestedInterval =
-      req.query?.interval || "5min";
+      const response = await fetch(url);
+      const data = await response.json();
 
-    const allowedIntervals = [
-      "5min",
-      "15min",
-      "1h"
-    ];
+      if (!response.ok || data.status === "error") {
+        throw new Error(
+          `${interval}: ${data.message || "Twelve Data API error"}`
+        );
+      }
 
-    const interval =
-      allowedIntervals.includes(
-        requestedInterval
-      )
-        ? requestedInterval
-        : "5min";
-
-    const url =
-      `https://api.twelvedata.com/time_series` +
-      `?symbol=XAU/USD` +
-      `&interval=${interval}` +
-      `&outputsize=200` +
-      `&apikey=${API_KEY}`;
-
-    const response =
-      await fetch(url);
-
-    const data =
-      await response.json();
-
-    if (
-      !response.ok ||
-      data.status === "error"
-    ) {
-
-      return res.status(502).json({
-
-        error:
-          data.message ||
-          "Twelve Data API error",
-
-        interval
-
-      });
-
+      return data.values || [];
     }
 
-    const values =
-      data.values || [];
+    // 3 API calls sahaja setiap refresh
+    const [m5, m15, h1] = await Promise.all([
+      getData("5min", 300),
+      getData("15min", 300),
+      getData("1h", 300)
+    ]);
 
-    if (!values.length) {
-
-      return res.status(502).json({
-
-        error:
-          "Twelve Data tidak pulangkan candle",
-
-        interval
-
-      });
-
+    if (!m5.length || !m15.length || !h1.length) {
+      throw new Error("Data candle tidak lengkap");
     }
-
-    const latest =
-      values[0];
-
-    const price =
-      parseFloat(latest.close);
 
     return res.status(200).json({
-
       symbol: "XAU/USD",
+      updated: new Date().toISOString(),
 
-      interval,
+      current: {
+        price: parseFloat(m5[0].close)
+      },
 
-      price,
-
-      updated:
-        new Date().toISOString(),
-
-      candleUpdated:
-        latest.datetime,
-
-      values
-
+      candles: {
+        m5,
+        m15,
+        h1
+      }
     });
 
   } catch (error) {
-
-    console.error(
-      "XAU API ERROR:",
-      error
-    );
+    console.error(error);
 
     return res.status(500).json({
-
-      error:
-        "Server error",
-
-      message:
-        error.message
-
+      error: "Server error",
+      message: error.message
     });
-
   }
-
 }
