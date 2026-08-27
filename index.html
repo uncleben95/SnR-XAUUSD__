@@ -1801,8 +1801,8 @@ async function setupPushNotifications() {
         !("PushManager" in window) ||
         !("Notification" in window)
     ) {
-        console.log("Push notification not supported");
-        return;
+        alert("❌ Push notification tidak disokong.");
+        return false;
     }
 
     try {
@@ -1814,14 +1814,19 @@ async function setupPushNotifications() {
             await fetch("/api/push-config");
 
         if (!configResponse.ok) {
-            throw new Error("Push config unavailable");
+            throw new Error(
+                "push-config HTTP " +
+                configResponse.status
+            );
         }
 
         const config =
             await configResponse.json();
 
         if (!config.publicKey) {
-            throw new Error("VAPID public key missing");
+            throw new Error(
+                "VAPID public key missing"
+            );
         }
 
         let subscription =
@@ -1861,14 +1866,25 @@ async function setupPushNotifications() {
                 }
             );
 
+        const saveText =
+            await saveResponse.text();
+
         if (!saveResponse.ok) {
             throw new Error(
-                "Failed to save subscription"
+                "push-subscribe HTTP " +
+                saveResponse.status +
+                ": " +
+                saveText
             );
         }
 
         console.log(
-            "✅ Push subscription active"
+            "✅ Push subscription active",
+            saveText
+        );
+
+        alert(
+            "✅ Push subscription berjaya disimpan!"
         );
 
         return true;
@@ -1878,6 +1894,11 @@ async function setupPushNotifications() {
         console.error(
             "Push setup error:",
             error
+        );
+
+        alert(
+            "❌ Push setup gagal:\n\n" +
+            error.message
         );
 
         return false;
