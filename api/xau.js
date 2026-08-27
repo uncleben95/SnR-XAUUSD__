@@ -6,72 +6,85 @@ export default async function handler(req, res) {
       process.env.TWELVE_DATA_API_KEY;
 
     if (!API_KEY) {
-
       return res.status(500).json({
         error:
           "TWELVE_DATA_API_KEY belum diset dalam Vercel"
       });
-
     }
 
-    async function getCandles(interval) {
+    /*
+      Pilih timeframe melalui:
+      /api/xau?interval=5min
+      /api/xau?interval=15min
+      /api/xau?interval=1h
 
-      const url =
-        `https://api.twelvedata.com/time_series` +
-        `?symbol=XAU/USD` +
-        `&interval=${interval}` +
-        `&outputsize=200` +
-        `&apikey=${API_KEY}`;
+      Default = 5min
+    */
 
-      const response =
-        await fetch(url);
+    const requestedInterval =
+      req.query?.interval || "5min";
 
-      const data =
-        await response.json();
+    const allowedIntervals = [
+      "5min",
+      "15min",
+      "1h"
+    ];
 
-      if (
-        !response.ok ||
-        data.status === "error"
-      ) {
+    const interval =
+      allowedIntervals.includes(
+        requestedInterval
+      )
+        ? requestedInterval
+        : "5min";
 
-        throw new Error(
-          data.message ||
-          `Twelve Data error (${interval})`
-        );
+    const url =
+      `https://api.twelvedata.com/time_series` +
+      `?symbol=XAU/USD` +
+      `&interval=${interval}` +
+      `&outputsize=200` +
+      `&apikey=${API_KEY}`;
 
-      }
+    const response =
+      await fetch(url);
 
-      return data.values || [];
-
-    }
-
-    const [
-      m5,
-      m15,
-      h1
-    ] = await Promise.all([
-
-      getCandles("5min"),
-      getCandles("15min"),
-      getCandles("1h")
-
-    ]);
+    const data =
+      await response.json();
 
     if (
-      !m5.length ||
-      !m15.length ||
-      !h1.length
+      !response.ok ||
+      data.status === "error"
     ) {
 
       return res.status(502).json({
+
         error:
-          "Data candle tidak lengkap daripada Twelve Data"
+          data.message ||
+          "Twelve Data API error",
+
+        interval
+
+      });
+
+    }
+
+    const values =
+      data.values || [];
+
+    if (!values.length) {
+
+      return res.status(502).json({
+
+        error:
+          "Twelve Data tidak pulangkan candle",
+
+        interval
+
       });
 
     }
 
     const latest =
-      m5[0];
+      values[0];
 
     const price =
       parseFloat(latest.close);
@@ -80,14 +93,17 @@ export default async function handler(req, res) {
 
       symbol: "XAU/USD",
 
+      interval,
+
       price,
 
       updated:
         new Date().toISOString(),
 
-      m5,
-      m15,
-      h1
+      candleUpdated:
+        latest.datetime,
+
+      values
 
     });
 
@@ -100,7 +116,8 @@ export default async function handler(req, res) {
 
     return res.status(500).json({
 
-      error: "Server error",
+      error:
+        "Server error",
 
       message:
         error.message
