@@ -8,566 +8,523 @@
 
 <style>
 :root {
-    --bg: #f4f6f9;
-    --card: #ffffff;
-    --sub: #f8fafc;
-    --text: #24292e;
-    --muted: #6b7280;
-    --border: #e1e5ea;
-
-    --blue: #2563eb;
-
-    --green: #16803c;
-    --green-bg: #dcfce7;
-
-    --red: #dc2626;
-    --red-bg: #fee2e2;
-
-    --yellow: #a16207;
-    --yellow-bg: #fef3c7;
-
-    --purple: #7c3aed;
-    --purple-bg: #f3e8ff;
-
-    --shadow: 0 3px 12px rgba(0,0,0,.05);
+    --bg:#f4f6f9;
+    --card:#fff;
+    --sub:#f8fafc;
+    --text:#24292e;
+    --muted:#6b7280;
+    --border:#e1e5ea;
+    --blue:#2563eb;
+    --green:#16803c;
+    --green-bg:#dcfce7;
+    --red:#dc2626;
+    --red-bg:#fee2e2;
+    --yellow:#a16207;
+    --purple:#7c3aed;
+    --purple-bg:#f3e8ff;
+    --shadow:0 3px 12px rgba(0,0,0,.05);
 }
 
-* {
-    box-sizing: border-box;
-}
+*{box-sizing:border-box}
 
-body {
-    margin: 0;
-    padding: 12px;
-    background: var(--bg);
-    color: var(--text);
-    font-family: Arial, Helvetica, sans-serif;
+body{
+    margin:0;
+    padding:12px;
+    background:var(--bg);
+    color:var(--text);
+    font-family:Arial,Helvetica,sans-serif
 }
 
-.container {
-    width: 100%;
-    max-width: 1100px;
-    margin: auto;
+.container{
+    width:100%;
+    max-width:1100px;
+    margin:auto
 }
-
-/* ================= HEADER ================= */
 
-header {
-    text-align: center;
-    margin-bottom: 12px;
+header{
+    text-align:center;
+    margin-bottom:12px
 }
 
-header h1 {
-    margin: 0;
-    color: #a87900;
-    font-size: 1.45rem;
+header h1{
+    margin:0;
+    color:#a87900;
+    font-size:1.45rem
 }
 
-header p {
-    margin: 5px 0 0;
-    color: var(--muted);
-    font-size: .78rem;
+header p{
+    margin:5px 0 0;
+    color:var(--muted);
+    font-size:.78rem
 }
 
-/* ================= STATUS ================= */
-
-.status-bar {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 8px;
-    margin-bottom: 12px;
+.status-bar{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:8px;
+    margin-bottom:12px
 }
 
-.status-item {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 9px;
-    padding: 9px;
-    text-align: center;
-    box-shadow: var(--shadow);
+.status-item{
+    background:var(--card);
+    border:1px solid var(--border);
+    border-radius:9px;
+    padding:9px;
+    text-align:center;
+    box-shadow:var(--shadow)
 }
 
-.status-label {
-    color: var(--muted);
-    font-size: .68rem;
-    text-transform: uppercase;
+.status-label{
+    color:var(--muted);
+    font-size:.68rem;
+    text-transform:uppercase
 }
 
-.status-value {
-    margin-top: 3px;
-    font-size: .88rem;
-    font-weight: bold;
+.status-value{
+    margin-top:3px;
+    font-size:.88rem;
+    font-weight:bold
 }
 
-/* ================= SESSION ================= */
-
-.sessions-bar {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 10px;
-    margin-bottom: 12px;
-    box-shadow: var(--shadow);
+.sessions-bar{
+    background:var(--card);
+    border:1px solid var(--border);
+    border-radius:10px;
+    padding:10px;
+    margin-bottom:12px;
+    box-shadow:var(--shadow)
 }
 
-.sessions-header {
-    display: flex;
-    justify-content: space-between;
-    margin-bottom: 8px;
-    font-size: .75rem;
-    color: var(--muted);
-    font-weight: bold;
+.sessions-header{
+    display:flex;
+    justify-content:space-between;
+    margin-bottom:8px;
+    font-size:.75rem;
+    color:var(--muted);
+    font-weight:bold
 }
 
-.sessions-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 8px;
+.sessions-grid{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:8px
 }
 
-.session-pill {
-    padding: 9px 5px;
-    text-align: center;
-    background: var(--sub);
-    border: 1px solid var(--border);
-    border-radius: 7px;
-    font-size: .76rem;
-    font-weight: bold;
-    color: #666;
+.session-pill{
+    padding:9px 5px;
+    text-align:center;
+    background:var(--sub);
+    border:1px solid var(--border);
+    border-radius:7px;
+    font-size:.76rem;
+    font-weight:bold;
+    color:#666
 }
 
-.session-pill.active {
-    background: var(--green-bg);
-    border-color: #22c55e;
-    color: var(--green);
-    box-shadow: 0 0 8px rgba(34,197,94,.15);
+.session-pill.active{
+    background:var(--green-bg);
+    border-color:#22c55e;
+    color:var(--green)
 }
 
-.session-time {
-    margin-top: 3px;
-    font-size: .65rem;
-    font-weight: normal;
-    color: var(--muted);
+.session-time{
+    margin-top:3px;
+    font-size:.65rem;
+    font-weight:normal;
+    color:var(--muted)
 }
-
-/* ================= MASTER SIGNAL ================= */
 
-.master-card {
-    background: var(--card);
-    border: 2px solid var(--border);
-    border-radius: 13px;
-    padding: 15px;
-    text-align: center;
-    margin-bottom: 12px;
-    box-shadow: var(--shadow);
+.master-card{
+    background:var(--card);
+    border:2px solid var(--border);
+    border-radius:13px;
+    padding:15px;
+    text-align:center;
+    margin-bottom:12px;
+    box-shadow:var(--shadow)
 }
 
-.price-label {
-    font-size: .72rem;
-    text-transform: uppercase;
-    font-weight: bold;
-    color: var(--muted);
+.price-label{
+    font-size:.72rem;
+    text-transform:uppercase;
+    font-weight:bold;
+    color:var(--muted)
 }
 
-.price-display {
-    margin: 4px 0;
-    font-size: 2rem;
-    font-weight: 800;
-    color: #a87900;
+.price-display{
+    margin:4px 0;
+    font-size:2rem;
+    font-weight:800;
+    color:#a87900
 }
 
-.price-source {
-    font-size: .65rem;
-    color: var(--muted);
+.price-source{
+    font-size:.65rem;
+    color:var(--muted)
 }
 
-.signal-badge {
-    display: inline-block;
-    padding: 6px 22px;
-    border-radius: 8px;
-    margin: 8px 0;
-    font-size: 1.25rem;
-    font-weight: 800;
+.api-status{
+    display:inline-block;
+    margin-top:5px;
+    padding:4px 8px;
+    border-radius:5px;
+    font-size:.65rem;
+    font-weight:bold;
+    background:var(--green-bg);
+    color:var(--green)
 }
 
-.sig-buy {
-    color: var(--green);
-    background: var(--green-bg);
-    border: 1px solid #22c55e;
+.api-error{
+    background:var(--red-bg);
+    color:var(--red)
 }
 
-.sig-sell {
-    color: var(--red);
-    background: var(--red-bg);
-    border: 1px solid #ef4444;
+.signal-badge{
+    display:inline-block;
+    padding:6px 22px;
+    border-radius:8px;
+    margin:8px 0;
+    font-size:1.25rem;
+    font-weight:800
 }
 
-.sig-wait {
-    color: var(--purple);
-    background: var(--purple-bg);
-    border: 1px solid #a78bfa;
+.sig-buy{
+    color:var(--green);
+    background:var(--green-bg);
+    border:1px solid #22c55e
 }
 
-.confidence {
-    font-size: .9rem;
-    color: var(--muted);
+.sig-sell{
+    color:var(--red);
+    background:var(--red-bg);
+    border:1px solid #ef4444
 }
 
-.confidence strong {
-    color: var(--text);
+.sig-wait{
+    color:var(--purple);
+    background:var(--purple-bg);
+    border:1px solid #a78bfa
 }
 
-/* ================= PRICE INPUT ================= */
-
-.price-input-box {
-    background: var(--sub);
-    border: 1px dashed var(--blue);
-    border-radius: 9px;
-    padding: 10px;
-    margin-top: 10px;
+.confidence{
+    font-size:.9rem;
+    color:var(--muted)
 }
 
-.price-input-box label {
-    display: block;
-    font-size: .72rem;
-    font-weight: bold;
-    margin-bottom: 5px;
+.confidence strong{
+    color:var(--text)
 }
 
-.price-input-row {
-    display: flex;
-    gap: 7px;
+.price-input-box{
+    background:var(--sub);
+    border:1px dashed var(--blue);
+    border-radius:9px;
+    padding:10px;
+    margin-top:10px
 }
 
-.price-input {
-    width: 100%;
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    padding: 8px;
-    font-size: .9rem;
+.price-input-box label{
+    display:block;
+    font-size:.72rem;
+    font-weight:bold;
+    margin-bottom:5px
 }
 
-.update-btn {
-    border: none;
-    background: var(--blue);
-    color: white;
-    border-radius: 6px;
-    padding: 8px 14px;
-    font-weight: bold;
+.price-input-row{
+    display:flex;
+    gap:7px
 }
-
-/* ================= GRID ================= */
 
-.grid {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 10px;
-    margin-bottom: 10px;
+.price-input{
+    width:100%;
+    border:1px solid var(--border);
+    border-radius:6px;
+    padding:8px;
+    font-size:.9rem
 }
 
-.card {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 12px;
-    box-shadow: var(--shadow);
+.update-btn{
+    border:none;
+    background:var(--blue);
+    color:#fff;
+    border-radius:6px;
+    padding:8px 14px;
+    font-weight:bold
 }
 
-.card h3 {
-    margin: 0 0 8px;
-    padding-bottom: 7px;
-    border-bottom: 2px solid var(--border);
-    color: var(--blue);
-    font-size: .9rem;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+.grid{
+    display:grid;
+    grid-template-columns:1fr;
+    gap:10px;
+    margin-bottom:10px
 }
 
-.metric {
-    display: flex;
-    justify-content: space-between;
-    gap: 10px;
-    padding: 6px 0;
-    border-bottom: 1px solid #f0f2f5;
-    font-size: .82rem;
+.card{
+    background:var(--card);
+    border:1px solid var(--border);
+    border-radius:10px;
+    padding:12px;
+    box-shadow:var(--shadow)
 }
 
-.metric:last-child {
-    border-bottom: none;
+.card h3{
+    margin:0 0 8px;
+    padding-bottom:7px;
+    border-bottom:2px solid var(--border);
+    color:var(--blue);
+    font-size:.9rem;
+    display:flex;
+    justify-content:space-between;
+    align-items:center
 }
 
-.pass {
-    color: var(--green);
-    font-weight: bold;
+.metric{
+    display:flex;
+    justify-content:space-between;
+    gap:10px;
+    padding:6px 0;
+    border-bottom:1px solid #f0f2f5;
+    font-size:.82rem
 }
 
-.fail {
-    color: var(--red);
-    font-weight: bold;
+.metric:last-child{
+    border-bottom:none
 }
 
-.neutral {
-    color: var(--yellow);
-    font-weight: bold;
+.pass{
+    color:var(--green);
+    font-weight:bold
 }
 
-/* ================= EXECUTION ================= */
-
-.execution {
-    background: var(--sub);
-    border: 1px dashed var(--blue);
-    border-radius: 10px;
-    padding: 12px;
-    margin-bottom: 10px;
+.fail{
+    color:var(--red);
+    font-weight:bold
 }
 
-.execution h3 {
-    margin: 0 0 8px;
-    color: var(--blue);
-    font-size: .92rem;
+.neutral{
+    color:var(--yellow);
+    font-weight:bold
 }
 
-.exec-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 7px;
+.execution{
+    background:var(--sub);
+    border:1px dashed var(--blue);
+    border-radius:10px;
+    padding:12px;
+    margin-bottom:10px
 }
 
-.exec-item {
-    background: white;
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    padding: 8px;
-    font-size: .78rem;
+.execution h3{
+    margin:0 0 8px;
+    color:var(--blue);
+    font-size:.92rem
 }
 
-.exec-item.full {
-    grid-column: span 2;
+.exec-grid{
+    display:grid;
+    grid-template-columns:repeat(2,1fr);
+    gap:7px
 }
 
-.exec-value {
-    display: block;
-    margin-top: 3px;
-    font-weight: 800;
-    font-size: .92rem;
+.exec-item{
+    background:#fff;
+    border:1px solid var(--border);
+    border-radius:6px;
+    padding:8px;
+    font-size:.78rem
 }
 
-/* ================= QUALITY ================= */
-
-.quality-bar {
-    width: 100%;
-    height: 10px;
-    background: #e5e7eb;
-    border-radius: 20px;
-    overflow: hidden;
-    margin: 7px 0;
+.exec-item.full{
+    grid-column:span 2
 }
 
-.quality-fill {
-    height: 100%;
-    width: 0%;
-    transition: width .3s;
-    background: var(--green);
+.exec-value{
+    display:block;
+    margin-top:3px;
+    font-weight:800;
+    font-size:.92rem
 }
 
-.quality-number {
-    text-align: center;
-    font-size: 1.4rem;
-    font-weight: 800;
+.quality-bar{
+    width:100%;
+    height:10px;
+    background:#e5e7eb;
+    border-radius:20px;
+    overflow:hidden;
+    margin:7px 0
 }
-
-/* ================= REASONS ================= */
 
-.reason {
-    padding: 6px 8px;
-    margin-bottom: 5px;
-    border-radius: 6px;
-    background: var(--sub);
-    font-size: .78rem;
+.quality-fill{
+    height:100%;
+    width:0%;
+    transition:width .3s;
+    background:var(--green)
 }
 
-.reason.good {
-    color: var(--green);
+.quality-number{
+    text-align:center;
+    font-size:1.4rem;
+    font-weight:800
 }
 
-.reason.bad {
-    color: var(--red);
+.reason{
+    padding:6px 8px;
+    margin-bottom:5px;
+    border-radius:6px;
+    background:var(--sub);
+    font-size:.78rem
 }
 
-/* ================= LIQUIDITY ================= */
+.reason.good{color:var(--green)}
+.reason.bad{color:var(--red)}
 
-.liquidity-box {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 8px;
+.liquidity-box{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:8px
 }
 
-.liq {
-    padding: 9px;
-    border-radius: 7px;
-    background: var(--sub);
-    border: 1px solid var(--border);
-    text-align: center;
+.liq{
+    padding:9px;
+    border-radius:7px;
+    background:var(--sub);
+    border:1px solid var(--border);
+    text-align:center
 }
 
-.liq small {
-    display: block;
-    color: var(--muted);
-    font-size: .65rem;
+.liq small{
+    display:block;
+    color:var(--muted);
+    font-size:.65rem
 }
 
-.liq strong {
-    display: block;
-    margin-top: 3px;
+.liq strong{
+    display:block;
+    margin-top:3px
 }
 
-/* ================= RISK ================= */
-
-.risk-inputs {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 7px;
+.risk-inputs{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:7px
 }
 
-.risk-inputs label {
-    font-size: .68rem;
-    color: var(--muted);
+.risk-inputs label{
+    font-size:.68rem;
+    color:var(--muted)
 }
 
-.risk-inputs input {
-    width: 100%;
-    margin-top: 3px;
-    padding: 7px;
-    border: 1px solid var(--border);
-    border-radius: 5px;
+.risk-inputs input{
+    width:100%;
+    margin-top:3px;
+    padding:7px;
+    border:1px solid var(--border);
+    border-radius:5px
 }
 
-/* ================= NEWS ================= */
-
-.news-safe {
-    padding: 10px;
-    border-radius: 7px;
-    background: var(--green-bg);
-    color: var(--green);
-    font-weight: bold;
-    font-size: .8rem;
+.news-safe{
+    padding:10px;
+    border-radius:7px;
+    background:var(--green-bg);
+    color:var(--green);
+    font-weight:bold;
+    font-size:.8rem
 }
 
-.news-warning {
-    padding: 10px;
-    border-radius: 7px;
-    background: var(--red-bg);
-    color: var(--red);
-    font-weight: bold;
-    font-size: .8rem;
+.news-warning{
+    padding:10px;
+    border-radius:7px;
+    background:var(--red-bg);
+    color:var(--red);
+    font-weight:bold;
+    font-size:.8rem
 }
-
-/* ================= HISTORY ================= */
 
-.history {
-    max-height: 210px;
-    overflow-y: auto;
+.history{
+    max-height:210px;
+    overflow-y:auto
 }
 
-.history-row {
-    display: grid;
-    grid-template-columns: 55px 65px 1fr 60px;
-    gap: 5px;
-    padding: 7px 2px;
-    border-bottom: 1px solid #eee;
-    font-size: .72rem;
-    align-items: center;
+.history-row{
+    display:grid;
+    grid-template-columns:55px 65px 1fr 60px;
+    gap:5px;
+    padding:7px 2px;
+    border-bottom:1px solid #eee;
+    font-size:.72rem;
+    align-items:center
 }
 
-.history-buy {
-    color: var(--green);
-    font-weight: bold;
+.history-buy{
+    color:var(--green);
+    font-weight:bold
 }
 
-.history-sell {
-    color: var(--red);
-    font-weight: bold;
+.history-sell{
+    color:var(--red);
+    font-weight:bold
 }
 
-.history-wait {
-    color: var(--purple);
-    font-weight: bold;
+.history-wait{
+    color:var(--purple);
+    font-weight:bold
 }
 
-/* ================= TRADINGVIEW ================= */
-
-.chart-box {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 10px;
-    box-shadow: var(--shadow);
+.chart-box{
+    background:var(--card);
+    border:1px solid var(--border);
+    border-radius:10px;
+    padding:10px;
+    box-shadow:var(--shadow)
 }
 
-.chart-box h3 {
-    margin: 0 0 8px;
-    font-size: .9rem;
-    color: var(--blue);
+.chart-box h3{
+    margin:0 0 8px;
+    font-size:.9rem;
+    color:var(--blue)
 }
 
-.tradingview-widget-container {
-    width: 100%;
-    height: 600px;
+.tradingview-widget-container{
+    width:100%;
+    height:600px
 }
 
-.tradingview-widget-container__widget {
-    width: 100%;
-    height: 100%;
+.tradingview-widget-container__widget{
+    width:100%;
+    height:100%
 }
 
-/* ================= FOOTER ================= */
-
-.footer {
-    text-align: center;
-    color: var(--muted);
-    font-size: .65rem;
-    padding: 15px 0 5px;
+.footer{
+    text-align:center;
+    color:var(--muted);
+    font-size:.65rem;
+    padding:15px 0 5px
 }
 
-/* ================= DESKTOP ================= */
+@media(min-width:760px){
+    .grid{
+        grid-template-columns:1fr 1fr
+    }
+}
 
-@media (min-width: 760px) {
+@media(max-width:500px){
+    body{padding:8px}
 
-    .grid {
-        grid-template-columns: 1fr 1fr;
+    .status-bar{
+        grid-template-columns:repeat(2,1fr)
     }
 
-}
-
-/* ================= MOBILE ================= */
-
-@media (max-width: 500px) {
-
-    body {
-        padding: 8px;
+    .sessions-grid{
+        grid-template-columns:1fr
     }
 
-    .status-bar {
-        grid-template-columns: repeat(2, 1fr);
+    .price-display{
+        font-size:1.7rem
     }
 
-    .sessions-grid {
-        grid-template-columns: 1fr;
+    .tradingview-widget-container{
+        height:520px
     }
-
-    .price-display {
-        font-size: 1.7rem;
-    }
-
-    .tradingview-widget-container {
-        height: 520px;
-    }
-
-    .exec-grid {
-        grid-template-columns: 1fr 1fr;
-    }
-
 }
 </style>
 </head>
@@ -581,9 +538,6 @@ header p {
     <p>H1 Bias → M15 Confirmation → M5 Trigger → Dynamic Risk Engine</p>
 </header>
 
-
-<!-- ================= STATUS ================= -->
-
 <div class="status-bar">
 
     <div class="status-item">
@@ -593,139 +547,83 @@ header p {
 
     <div class="status-item">
         <div class="status-label">Market</div>
-        <div id="marketStatus" class="status-value pass">
-            OPEN
-        </div>
+        <div id="marketStatus" class="status-value pass">OPEN</div>
     </div>
 
     <div class="status-item">
         <div class="status-label">Session</div>
-        <div id="activeSession" class="status-value">
-            --
-        </div>
+        <div id="activeSession" class="status-value">--</div>
     </div>
 
     <div class="status-item">
         <div class="status-label">MYT</div>
-        <div id="systemClock" class="status-value">
-            --:--:--
-        </div>
+        <div id="systemClock" class="status-value">--:--:--</div>
     </div>
 
 </div>
 
-
-<!-- ================= SESSIONS ================= -->
-
 <div class="sessions-bar">
 
     <div class="sessions-header">
-
-        <span>
-            TRADING SESSION — MALAYSIA TIME
-        </span>
-
-        <span id="sessionStatus">
-            --
-        </span>
-
+        <span>TRADING SESSION — MALAYSIA TIME</span>
+        <span id="sessionStatus">--</span>
     </div>
 
     <div class="sessions-grid">
 
         <div id="sessionAsian" class="session-pill">
-
             ASIA
-
-            <div class="session-time">
-                08:00 – 17:00
-            </div>
-
+            <div class="session-time">08:00 – 17:00</div>
         </div>
-
 
         <div id="sessionLondon" class="session-pill">
-
             LONDON
-
-            <div
-                id="londonTime"
-                class="session-time">
-                --
-            </div>
-
+            <div id="londonTime" class="session-time">--</div>
         </div>
 
-
         <div id="sessionNY" class="session-pill">
-
             NEW YORK
-
-            <div
-                id="nyTime"
-                class="session-time">
-                --
-            </div>
-
+            <div id="nyTime" class="session-time">--</div>
         </div>
 
     </div>
 
 </div>
 
-
-<!-- ================= MASTER SIGNAL ================= -->
-
 <div class="master-card">
 
-    <div class="price-label">
-        XAU/USD MARKET PRICE
+    <div class="price-label">XAU/USD MARKET PRICE</div>
+
+    <div id="livePrice" class="price-display">
+        Loading...
     </div>
 
-    <div
-        id="livePrice"
-        class="price-display">
-        4609.00
+    <div id="priceSource" class="price-source">
+        Connecting to Twelve Data...
     </div>
 
-    <div class="price-source">
-        TradingView Live Chart
+    <div id="apiStatus" class="api-status">
+        ● API CONNECTING
     </div>
 
+    <br>
 
-    <div
-        id="masterSignalBadge"
-        class="signal-badge sig-wait">
+    <div id="masterSignalBadge" class="signal-badge sig-wait">
         ⏳ WAIT
     </div>
 
-
     <div class="confidence">
-
         Entry Quality:
-
-        <strong id="confidenceVal">
-            0/100
-        </strong>
-
+        <strong id="confidenceVal">0/100</strong>
     </div>
-
 
     <div class="quality-bar">
-
-        <div
-            id="qualityFill"
-            class="quality-fill">
-        </div>
-
+        <div id="qualityFill" class="quality-fill"></div>
     </div>
-
 
     <div class="price-input-box">
 
-        <label>
-            LIVE PRICE / CURRENT PRICE
-        </label>
+        <label>MANUAL PRICE — BACKUP ONLY</label>
 
         <div class="price-input-row">
 
@@ -734,7 +632,7 @@ header p {
                 class="price-input"
                 type="number"
                 step="0.01"
-                value="4609.00">
+                placeholder="Contoh 4609.00">
 
             <button
                 class="update-btn"
@@ -748,416 +646,169 @@ header p {
 
 </div>
 
-
-<!-- ================= EXECUTION ================= -->
-
 <div class="execution">
 
-    <h3>
-        🎯 DYNAMIC TRADE PLAN
-    </h3>
+    <h3>🎯 DYNAMIC TRADE PLAN</h3>
 
     <div class="exec-grid">
 
         <div class="exec-item">
-
             Entry Zone
-
-            <span
-                id="execEntry"
-                class="exec-value">
-                --
-            </span>
-
+            <span id="execEntry" class="exec-value">--</span>
         </div>
 
-
         <div class="exec-item">
-
             Direction
-
-            <span
-                id="execDirection"
-                class="exec-value">
-                --
-            </span>
-
+            <span id="execDirection" class="exec-value">--</span>
         </div>
 
-
         <div class="exec-item">
-
             Stop Loss
-
-            <span
-                id="execSL"
-                class="exec-value fail">
-                --
-            </span>
-
+            <span id="execSL" class="exec-value fail">--</span>
         </div>
 
-
         <div class="exec-item">
-
             TP1
-
-            <span
-                id="execTP1"
-                class="exec-value pass">
-                --
-            </span>
-
+            <span id="execTP1" class="exec-value pass">--</span>
         </div>
 
-
         <div class="exec-item">
-
             TP2
-
-            <span
-                id="execTP2"
-                class="exec-value pass">
-                --
-            </span>
-
+            <span id="execTP2" class="exec-value pass">--</span>
         </div>
-
 
         <div class="exec-item">
-
             TP3
-
-            <span
-                id="execTP3"
-                class="exec-value pass">
-                --
-            </span>
-
+            <span id="execTP3" class="exec-value pass">--</span>
         </div>
-
 
         <div class="exec-item full">
-
             Risk : Reward
-
-            <span
-                id="execRR"
-                class="exec-value">
-                --
-            </span>
-
+            <span id="execRR" class="exec-value">--</span>
         </div>
 
     </div>
 
 </div>
 
+<div class="grid">
 
-<!-- ================= H1 / M15 ================= -->
+<div class="card">
+
+    <h3>H1 — CORE STRUCTURE <span>BIAS</span></h3>
+
+    <div class="metric">
+        <span>Major Trend</span>
+        <strong id="h1Trend">--</strong>
+    </div>
+
+    <div class="metric">
+        <span>EMA 200</span>
+        <strong id="h1Ema">--</strong>
+    </div>
+
+    <div class="metric">
+        <span>Structure</span>
+        <strong id="h1Structure">--</strong>
+    </div>
+
+    <div class="metric">
+        <span>Major Support</span>
+        <strong id="h1Support">--</strong>
+    </div>
+
+    <div class="metric">
+        <span>Major Resistance</span>
+        <strong id="h1Resistance">--</strong>
+    </div>
+
+</div>
+
+<div class="card">
+
+    <h3>M15 — CONFIRMATION <span>FILTER</span></h3>
+
+    <div class="metric">
+        <span>EMA 20 / 50</span>
+        <strong id="m15Ema">--</strong>
+    </div>
+
+    <div class="metric">
+        <span>RSI 14</span>
+        <strong id="m15Rsi">--</strong>
+    </div>
+
+    <div class="metric">
+        <span>MACD</span>
+        <strong id="m15Macd">--</strong>
+    </div>
+
+    <div class="metric">
+        <span>ADX 14</span>
+        <strong id="m15Adx">--</strong>
+    </div>
+
+    <div class="metric">
+        <span>M15 Structure</span>
+        <strong id="m15Structure">--</strong>
+    </div>
+
+</div>
+
+</div>
 
 <div class="grid">
 
-
 <div class="card">
 
-    <h3>
-
-        H1 — CORE STRUCTURE
-
-        <span>
-            BIAS
-        </span>
-
-    </h3>
-
+    <h3>M5 — ENTRY TRIGGER <span>TRIGGER</span></h3>
 
     <div class="metric">
-
-        <span>
-            Major Trend
-        </span>
-
-        <strong id="h1Trend">
-            --
-        </strong>
-
+        <span>Momentum</span>
+        <strong id="m5Momentum">--</strong>
     </div>
 
-
     <div class="metric">
-
-        <span>
-            EMA 200
-        </span>
-
-        <strong id="h1Ema">
-            --
-        </strong>
-
+        <span>BOS / CHOCH</span>
+        <strong id="m5Structure">--</strong>
     </div>
 
-
     <div class="metric">
-
-        <span>
-            Structure
-        </span>
-
-        <strong id="h1Structure">
-            --
-        </strong>
-
+        <span>ATR 14</span>
+        <strong id="m5Atr">--</strong>
     </div>
 
-
     <div class="metric">
-
-        <span>
-            Major Support
-        </span>
-
-        <strong id="h1Support">
-            --
-        </strong>
-
-    </div>
-
-
-    <div class="metric">
-
-        <span>
-            Major Resistance
-        </span>
-
-        <strong id="h1Resistance">
-            --
-        </strong>
-
+        <span>Reaction Zone</span>
+        <strong id="m5Reaction">--</strong>
     </div>
 
 </div>
 
-
 <div class="card">
 
-    <h3>
-
-        M15 — CONFIRMATION
-
-        <span>
-            FILTER
-        </span>
-
-    </h3>
-
-
-    <div class="metric">
-
-        <span>
-            EMA 20 / 50
-        </span>
-
-        <strong id="m15Ema">
-            --
-        </strong>
-
-    </div>
-
-
-    <div class="metric">
-
-        <span>
-            RSI 14
-        </span>
-
-        <strong id="m15Rsi">
-            --
-        </strong>
-
-    </div>
-
-
-    <div class="metric">
-
-        <span>
-            MACD
-        </span>
-
-        <strong id="m15Macd">
-            --
-        </strong>
-
-    </div>
-
-
-    <div class="metric">
-
-        <span>
-            ADX 14
-        </span>
-
-        <strong id="m15Adx">
-            --
-        </strong>
-
-    </div>
-
-
-    <div class="metric">
-
-        <span>
-            M15 Structure
-        </span>
-
-        <strong id="m15Structure">
-            --
-        </strong>
-
-    </div>
-
-</div>
-
-</div>
-
-
-<!-- ================= M5 / LIQUIDITY ================= -->
-
-<div class="grid">
-
-
-<div class="card">
-
-    <h3>
-
-        M5 — ENTRY TRIGGER
-
-        <span>
-            TRIGGER
-        </span>
-
-    </h3>
-
-
-    <div class="metric">
-
-        <span>
-            Momentum
-        </span>
-
-        <strong id="m5Momentum">
-            --
-        </strong>
-
-    </div>
-
-
-    <div class="metric">
-
-        <span>
-            BOS / CHOCH
-        </span>
-
-        <strong id="m5Structure">
-            --
-        </strong>
-
-    </div>
-
-
-    <div class="metric">
-
-        <span>
-            ATR 14
-        </span>
-
-        <strong id="m5Atr">
-            --
-        </strong>
-
-    </div>
-
-
-    <div class="metric">
-
-        <span>
-            Reaction Zone
-        </span>
-
-        <strong id="m5Reaction">
-            --
-        </strong>
-
-    </div>
-
-</div>
-
-
-<div class="card">
-
-    <h3>
-
-        LIQUIDITY MAP
-
-        <span>
-            SMC
-        </span>
-
-    </h3>
-
+    <h3>LIQUIDITY MAP <span>SMC</span></h3>
 
     <div class="liquidity-box">
 
-
         <div class="liq">
-
-            <small>
-                Buy-Side Liquidity
-            </small>
-
-            <strong id="buyLiquidity">
-                --
-            </strong>
-
+            <small>Buy-Side Liquidity</small>
+            <strong id="buyLiquidity">--</strong>
         </div>
 
-
         <div class="liq">
-
-            <small>
-                Sell-Side Liquidity
-            </small>
-
-            <strong id="sellLiquidity">
-                --
-            </strong>
-
+            <small>Sell-Side Liquidity</small>
+            <strong id="sellLiquidity">--</strong>
         </div>
 
-
         <div class="liq">
-
-            <small>
-                Asian High
-            </small>
-
-            <strong id="asianHigh">
-                --
-            </strong>
-
+            <small>Asian High</small>
+            <strong id="asianHigh">--</strong>
         </div>
 
-
         <div class="liq">
-
-            <small>
-                Asian Low
-            </small>
-
-            <strong id="asianLow">
-                --
-            </strong>
-
+            <small>Asian Low</small>
+            <strong id="asianLow">--</strong>
         </div>
 
     </div>
@@ -1166,335 +817,137 @@ header p {
 
 </div>
 
-
-<!-- ================= WHY SIGNAL / QUALITY ================= -->
-
 <div class="grid">
-
 
 <div class="card">
 
     <h3>
-
         WHY THIS SIGNAL?
-
-        <span id="signalReason">
-            --
-        </span>
-
+        <span id="signalReason">--</span>
     </h3>
-
 
     <div id="reasonList"></div>
 
 </div>
 
-
 <div class="card">
 
-    <h3>
+    <h3>ENTRY QUALITY <span>0–100</span></h3>
 
-        ENTRY QUALITY
-
-        <span>
-            0–100
-        </span>
-
-    </h3>
-
-
-    <div
-        id="qualityNumber"
-        class="quality-number">
-        0
-    </div>
-
+    <div id="qualityNumber" class="quality-number">0</div>
 
     <div class="metric">
-
-        <span>
-            H1 Bias
-        </span>
-
-        <strong id="scoreH1">
-            0/20
-        </strong>
-
+        <span>H1 Bias</span>
+        <strong id="scoreH1">0/20</strong>
     </div>
 
-
     <div class="metric">
-
-        <span>
-            M15 Confirmation
-        </span>
-
-        <strong id="scoreM15">
-            0/20
-        </strong>
-
+        <span>M15 Confirmation</span>
+        <strong id="scoreM15">0/20</strong>
     </div>
 
-
     <div class="metric">
-
-        <span>
-            M5 Trigger
-        </span>
-
-        <strong id="scoreM5">
-            0/20
-        </strong>
-
+        <span>M5 Trigger</span>
+        <strong id="scoreM5">0/20</strong>
     </div>
 
-
     <div class="metric">
-
-        <span>
-            Liquidity / SNR
-        </span>
-
-        <strong id="scoreLiquidity">
-            0/20
-        </strong>
-
+        <span>Liquidity / SNR</span>
+        <strong id="scoreLiquidity">0/20</strong>
     </div>
 
-
     <div class="metric">
-
-        <span>
-            RR / Risk
-        </span>
-
-        <strong id="scoreRisk">
-            0/20
-        </strong>
-
+        <span>RR / Risk</span>
+        <strong id="scoreRisk">0/20</strong>
     </div>
 
 </div>
 
 </div>
-
-
-<!-- ================= NEWS / RISK ================= -->
 
 <div class="grid">
 
-
 <div class="card">
 
-    <h3>
+    <h3>NEWS FILTER <span>RISK CONTROL</span></h3>
 
-        NEWS FILTER
-
-        <span>
-            RISK CONTROL
-        </span>
-
-    </h3>
-
-
-    <div
-        id="newsStatus"
-        class="news-safe">
-
+    <div id="newsStatus" class="news-safe">
         ✓ NO BLOCKING NEWS DETECTED
-
     </div>
 
-
     <div class="metric">
-
-        <span>
-            News Buffer
-        </span>
-
-        <strong>
-            30 min
-        </strong>
-
+        <span>News Buffer</span>
+        <strong>30 min</strong>
     </div>
 
-
     <div class="metric">
-
-        <span>
-            Trading Status
-        </span>
-
-        <strong
-            id="newsTradingStatus"
-            class="pass">
+        <span>Trading Status</span>
+        <strong id="newsTradingStatus" class="pass">
             ALLOWED
         </strong>
-
     </div>
 
 </div>
 
-
 <div class="card">
 
-    <h3>
-
-        RISK CALCULATOR
-
-        <span>
-            POSITION SIZE
-        </span>
-
-    </h3>
-
+    <h3>RISK CALCULATOR <span>POSITION SIZE</span></h3>
 
     <div class="risk-inputs">
 
-
         <div>
-
-            <label>
-                ACCOUNT USD
-            </label>
-
-            <input
-                id="accountBalance"
-                type="number"
-                value="1100">
-
+            <label>ACCOUNT USD</label>
+            <input id="accountBalance" type="number" value="1100">
         </div>
 
-
         <div>
-
-            <label>
-                RISK %
-            </label>
-
-            <input
-                id="riskPercent"
-                type="number"
-                value="1"
-                step="0.1">
-
+            <label>RISK %</label>
+            <input id="riskPercent" type="number" value="1" step="0.1">
         </div>
 
-
         <div>
-
-            <label>
-                ENTRY
-            </label>
-
-            <input
-                id="riskEntry"
-                type="number"
-                value="4609"
-                step="0.01">
-
+            <label>ENTRY</label>
+            <input id="riskEntry" type="number" value="4609" step="0.01">
         </div>
 
-
         <div>
-
-            <label>
-                SL
-            </label>
-
-            <input
-                id="riskSL"
-                type="number"
-                value="4604"
-                step="0.01">
-
+            <label>SL</label>
+            <input id="riskSL" type="number" value="4604" step="0.01">
         </div>
 
     </div>
 
-
     <div class="metric">
-
-        <span>
-            Maximum Risk
-        </span>
-
-        <strong id="maxRisk">
-            $11.00
-        </strong>
-
+        <span>Maximum Risk</span>
+        <strong id="maxRisk">$11.00</strong>
     </div>
 
-
     <div class="metric">
-
-        <span>
-            SL Distance
-        </span>
-
-        <strong id="slDistance">
-            5.00
-        </strong>
-
+        <span>SL Distance</span>
+        <strong id="slDistance">5.00</strong>
     </div>
 
-
     <div class="metric">
-
-        <span>
-            Suggested Lot
-        </span>
-
-        <strong
-            id="suggestedLot"
-            class="pass">
-            0.02
-        </strong>
-
+        <span>Suggested Lot</span>
+        <strong id="suggestedLot" class="pass">0.02</strong>
     </div>
 
 </div>
 
 </div>
-
-
-<!-- ================= HISTORY ================= -->
 
 <div class="card">
 
-    <h3>
-
-        SIGNAL HISTORY
-
-        <span>
-            RECENT
-        </span>
-
-    </h3>
-
+    <h3>SIGNAL HISTORY <span>RECENT</span></h3>
 
     <div class="history">
 
         <div class="history-row">
-
-            <strong>
-                TIME
-            </strong>
-
-            <strong>
-                SIGNAL
-            </strong>
-
-            <strong>
-                PRICE
-            </strong>
-
-            <strong>
-                SCORE
-            </strong>
-
+            <strong>TIME</strong>
+            <strong>SIGNAL</strong>
+            <strong>PRICE</strong>
+            <strong>SCORE</strong>
         </div>
-
 
         <div id="historyList"></div>
 
@@ -1502,37 +955,24 @@ header p {
 
 </div>
 
-
 <br>
-
-
-<!-- ================= TRADINGVIEW ================= -->
 
 <div class="chart-box">
 
-    <h3>
-        📊 XAU/USD LIVE MARKET CHART
-    </h3>
+    <h3>📊 XAU/USD LIVE MARKET CHART</h3>
 
+    <div class="tradingview-widget-container">
 
-    <div
-        class="tradingview-widget-container">
-
-
-        <div
-            class="tradingview-widget-container__widget">
-        </div>
-
+        <div class="tradingview-widget-container__widget"></div>
 
         <script
             type="text/javascript"
             src="https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js"
             async>
-
         {
             "autosize": true,
             "symbol": "OANDA:XAUUSD",
-            "interval": "15",
+            "interval": "5",
             "timezone": "Asia/Kuala_Lumpur",
             "theme": "light",
             "style": "1",
@@ -1545,71 +985,212 @@ header p {
             "hide_volume": false,
             "support_host": "https://www.tradingview.com"
         }
-
         </script>
 
     </div>
 
 </div>
 
-
 <div class="footer">
-
     XAU/USD Pro Sniper Dashboard
     <br>
+    Price feed: Twelve Data API
+    <br>
     Risk management is informational only.
-
 </div>
 
 </div>
-
 
 <script>
 
 /* =========================================================
-   GLOBAL STATE
+   GLOBAL
 ========================================================= */
 
-let currentPrice = 4609.00;
+let currentPrice = 4609;
 
-let market = {
-
-    atr: 5.80,
-
-    h1Trend: "BULLISH",
-
-    h1Structure: "BOS ↑",
-
-    m15Trend: "BULLISH",
-
-    rsi: 57,
-
-    macd: "BULLISH",
-
-    adx: 29,
-
-    m5Momentum: "BULLISH",
-
-    m5Structure: "BOS ↑"
-
-};
-
+let previousPrice = null;
 
 let lastSignal = "";
 
 let history =
     JSON.parse(
-        localStorage.getItem(
-            "xauSignalHistory"
-        ) || "[]"
+        localStorage.getItem("xauSignalHistory") || "[]"
     );
+
+let market = {
+
+    atr:5.80,
+
+    h1Trend:"BULLISH",
+
+    h1Structure:"BOS ↑",
+
+    m15Trend:"BULLISH",
+
+    rsi:57,
+
+    macd:"BULLISH",
+
+    adx:29,
+
+    m5Momentum:"BULLISH",
+
+    m5Structure:"BOS ↑"
+
+};
 
 
 /* =========================================================
-   PRICE
+   LIVE XAU/USD API
 ========================================================= */
 
-function updateManualPrice() {
+async function fetchLiveGold(){
+
+    const apiStatus =
+        document.getElementById("apiStatus");
+
+    const priceSource =
+        document.getElementById("priceSource");
+
+    try{
+
+        apiStatus.innerText =
+            "● API CONNECTING";
+
+        apiStatus.className =
+            "api-status";
+
+        const response =
+            await fetch(
+                "/api/xau?ts=" +
+                Date.now(),
+                {
+                    cache:"no-store"
+                }
+            );
+
+        if(!response.ok){
+
+            throw new Error(
+                "HTTP " + response.status
+            );
+
+        }
+
+        const data =
+            await response.json();
+
+        if(
+            !data.values ||
+            !data.values.length
+        ){
+
+            throw new Error(
+                "Tiada data XAU/USD"
+            );
+
+        }
+
+        /*
+         Twelve Data biasanya susun
+         candle terbaru di index 0.
+        */
+
+        const latest =
+            data.values[0];
+
+        const newPrice =
+            parseFloat(latest.close);
+
+        if(
+            !isFinite(newPrice) ||
+            newPrice <= 0
+        ){
+
+            throw new Error(
+                "Harga tidak sah"
+            );
+
+        }
+
+        previousPrice =
+            currentPrice;
+
+        currentPrice =
+            newPrice;
+
+        document.getElementById(
+            "livePrice"
+        ).innerText =
+            currentPrice.toFixed(2);
+
+        document.getElementById(
+            "priceInput"
+        ).value =
+            currentPrice.toFixed(2);
+
+        document.getElementById(
+            "riskEntry"
+        ).value =
+            currentPrice.toFixed(2);
+
+        priceSource.innerText =
+            "Twelve Data • 5M Candle • " +
+            formatUpdateTime();
+
+        apiStatus.innerText =
+            "● LIVE API";
+
+        apiStatus.className =
+            "api-status";
+
+        runEngine();
+
+    }catch(error){
+
+        console.error(
+            "XAU API ERROR:",
+            error
+        );
+
+        apiStatus.innerText =
+            "● API ERROR";
+
+        apiStatus.className =
+            "api-status api-error";
+
+        priceSource.innerText =
+            "API gagal — harga terakhir digunakan";
+
+    }
+
+}
+
+
+/* =========================================================
+   UPDATE TIME
+========================================================= */
+
+function formatUpdateTime(){
+
+    return new Date().toLocaleTimeString(
+        "en-MY",
+        {
+            hour:"2-digit",
+            minute:"2-digit",
+            second:"2-digit"
+        }
+    );
+
+}
+
+
+/* =========================================================
+   MANUAL BACKUP
+========================================================= */
+
+function updateManualPrice(){
 
     const input =
         parseFloat(
@@ -1618,25 +1199,28 @@ function updateManualPrice() {
             ).value
         );
 
-
-    if (
+    if(
         !isNaN(input) &&
         input > 0
-    ) {
+    ){
 
-        currentPrice = input;
+        currentPrice =
+            input;
 
         document.getElementById(
             "livePrice"
         ).innerText =
             currentPrice.toFixed(2);
 
-
         document.getElementById(
             "riskEntry"
         ).value =
             currentPrice.toFixed(2);
 
+        document.getElementById(
+            "priceSource"
+        ).innerText =
+            "Manual backup price";
 
         runEngine();
 
@@ -1649,10 +1233,7 @@ function updateManualPrice() {
    SESSION
 ========================================================= */
 
-function getLastSunday(
-    year,
-    month
-) {
+function getLastSunday(year,month){
 
     const date =
         new Date(
@@ -1661,10 +1242,9 @@ function getLastSunday(
             0
         );
 
-
-    while (
+    while(
         date.getDay() !== 0
-    ) {
+    ){
 
         date.setDate(
             date.getDate() - 1
@@ -1672,16 +1252,12 @@ function getLastSunday(
 
     }
 
-
     return date.getDate();
+
 }
 
 
-function getNthSunday(
-    year,
-    month,
-    n
-) {
+function getNthSunday(year,month,n){
 
     const date =
         new Date(
@@ -1690,24 +1266,21 @@ function getNthSunday(
             1
         );
 
-
     let count = 0;
 
-
-    while (
+    while(
         date.getMonth() === month
-    ) {
+    ){
 
-        if (
+        if(
             date.getDay() === 0
-        ) {
+        ){
 
             count++;
 
-
-            if (
+            if(
                 count === n
-            ) {
+            ){
 
                 return date.getDate();
 
@@ -1715,25 +1288,21 @@ function getNthSunday(
 
         }
 
-
         date.setDate(
             date.getDate() + 1
         );
 
     }
 
-
     return null;
+
 }
 
 
-function isLondonDST(
-    date
-) {
+function isLondonDST(date){
 
     const year =
         date.getFullYear();
-
 
     const start =
         getLastSunday(
@@ -1741,63 +1310,42 @@ function isLondonDST(
             2
         );
 
-
     const end =
         getLastSunday(
             year,
             9
         );
 
-
     const month =
         date.getMonth();
-
 
     const day =
         date.getDate();
 
-
-    if (
+    if(
         month > 2 &&
         month < 9
-    ) {
+    ) return true;
 
-        return true;
-
-    }
-
-
-    if (
+    if(
         month === 2 &&
         day >= start
-    ) {
+    ) return true;
 
-        return true;
-
-    }
-
-
-    if (
+    if(
         month === 9 &&
         day < end
-    ) {
-
-        return true;
-
-    }
-
+    ) return true;
 
     return false;
+
 }
 
 
-function isNYDST(
-    date
-) {
+function isNYDST(date){
 
     const year =
         date.getFullYear();
-
 
     const start =
         getNthSunday(
@@ -1806,7 +1354,6 @@ function isNYDST(
             2
         );
 
-
     const end =
         getNthSunday(
             year,
@@ -1814,99 +1361,66 @@ function isNYDST(
             1
         );
 
-
     const month =
         date.getMonth();
-
 
     const day =
         date.getDate();
 
-
-    if (
+    if(
         month > 2 &&
         month < 10
-    ) {
+    ) return true;
 
-        return true;
-
-    }
-
-
-    if (
+    if(
         month === 2 &&
         day >= start
-    ) {
+    ) return true;
 
-        return true;
-
-    }
-
-
-    if (
+    if(
         month === 10 &&
         day < end
-    ) {
-
-        return true;
-
-    }
-
+    ) return true;
 
     return false;
+
 }
 
 
-function updateSessions() {
+function updateSessions(){
 
     const now =
         new Date();
 
-
     const hours =
         now.getHours();
-
 
     const minutes =
         now.getMinutes();
 
-
     const seconds =
         now.getSeconds();
-
 
     document.getElementById(
         "systemClock"
     ).innerText =
-
-        String(hours)
-            .padStart(2,"0")
-
-        + ":" +
-
-        String(minutes)
-            .padStart(2,"0")
-
-        + ":" +
-
-        String(seconds)
-            .padStart(2,"0");
-
+        String(hours).padStart(2,"0") +
+        ":" +
+        String(minutes).padStart(2,"0") +
+        ":" +
+        String(seconds).padStart(2,"0");
 
     const asian =
         hours >= 8 &&
         hours < 17;
 
-
     const london =
         hours >= 15 &&
         hours < 24;
 
-
     const ny =
         hours >= 20 ||
         hours < 5;
-
 
     document.getElementById(
         "sessionAsian"
@@ -1915,14 +1429,12 @@ function updateSessions() {
         asian
     );
 
-
     document.getElementById(
         "sessionLondon"
     ).classList.toggle(
         "active",
         london
     );
-
 
     document.getElementById(
         "sessionNY"
@@ -1931,53 +1443,36 @@ function updateSessions() {
         ny
     );
 
+    const sessions=[];
 
-    const sessions = [];
-
-
-    if (asian)
-        sessions.push("ASIA");
-
-
-    if (london)
-        sessions.push("LONDON");
-
-
-    if (ny)
-        sessions.push("NEW YORK");
-
+    if(asian) sessions.push("ASIA");
+    if(london) sessions.push("LONDON");
+    if(ny) sessions.push("NEW YORK");
 
     document.getElementById(
         "activeSession"
     ).innerText =
-
         sessions.length
             ? sessions.join(" + ")
             : "OFF";
 
-
     document.getElementById(
         "sessionStatus"
     ).innerText =
-
         sessions.length
             ? "● ACTIVE"
             : "QUIET";
 
-
     document.getElementById(
         "londonTime"
     ).innerText =
-
         isLondonDST(now)
             ? "15:00 – 00:00"
             : "16:00 – 01:00";
 
-
     document.getElementById(
         "nyTime"
     ).innerText =
-
         isNYDST(now)
             ? "20:00 – 05:00"
             : "21:00 – 06:00";
@@ -1989,92 +1484,72 @@ function updateSessions() {
    LEVELS
 ========================================================= */
 
-function calculateLevels() {
+function calculateLevels(){
 
     const atr =
         market.atr;
-
 
     const support =
         currentPrice -
         atr * 2.2;
 
-
     const resistance =
         currentPrice +
         atr * 2.2;
-
 
     const buyLiquidity =
         currentPrice +
         atr * 1.45;
 
-
     const sellLiquidity =
         currentPrice -
         atr * 1.45;
-
 
     const asianHigh =
         currentPrice +
         atr * .75;
 
-
     const asianLow =
         currentPrice -
         atr * .75;
-
 
     document.getElementById(
         "h1Support"
     ).innerText =
         support.toFixed(2);
 
-
     document.getElementById(
         "h1Resistance"
     ).innerText =
         resistance.toFixed(2);
-
 
     document.getElementById(
         "buyLiquidity"
     ).innerText =
         buyLiquidity.toFixed(2);
 
-
     document.getElementById(
         "sellLiquidity"
     ).innerText =
         sellLiquidity.toFixed(2);
-
 
     document.getElementById(
         "asianHigh"
     ).innerText =
         asianHigh.toFixed(2);
 
-
     document.getElementById(
         "asianLow"
     ).innerText =
         asianLow.toFixed(2);
 
-
     return {
-
         support,
-
         resistance,
-
         buyLiquidity,
-
         sellLiquidity,
-
         asianHigh,
-
         asianLow
-
     };
 
 }
@@ -2084,77 +1559,60 @@ function calculateLevels() {
    ENGINE
 ========================================================= */
 
-function runEngine() {
+function runEngine(){
 
     const levels =
         calculateLevels();
-
-
-    /* H1 */
 
     document.getElementById(
         "h1Trend"
     ).innerHTML =
         '<span class="pass">BULLISH ✓</span>';
 
-
     document.getElementById(
         "h1Ema"
     ).innerHTML =
         '<span class="pass">Above EMA 200 ✓</span>';
-
 
     document.getElementById(
         "h1Structure"
     ).innerHTML =
         '<span class="pass">BOS ↑</span>';
 
-
-    /* M15 */
-
     document.getElementById(
         "m15Ema"
     ).innerHTML =
         '<span class="pass">20 > 50 ✓</span>';
-
 
     document.getElementById(
         "m15Rsi"
     ).innerHTML =
         `<span class="pass">${market.rsi}</span>`;
 
-
     document.getElementById(
         "m15Macd"
     ).innerHTML =
         '<span class="pass">Bullish ✓</span>';
-
 
     document.getElementById(
         "m15Adx"
     ).innerHTML =
         `<span class="pass">${market.adx} Strong ✓</span>`;
 
-
     document.getElementById(
         "m15Structure"
     ).innerHTML =
         '<span class="pass">Higher High ✓</span>';
-
-
-    /* M5 */
 
     document.getElementById(
         "m5Momentum"
     ).innerHTML =
         '<span class="pass">Bullish Push ✓</span>';
 
-
     document.getElementById(
         "m5Structure"
     ).innerHTML =
         '<span class="pass">BOS ↑ ✓</span>';
-
 
     document.getElementById(
         "m5Atr"
@@ -2162,62 +1620,28 @@ function runEngine() {
         market.atr.toFixed(2) +
         " USD";
 
-
     document.getElementById(
         "m5Reaction"
     ).innerHTML =
         '<span class="pass">Support Reaction ✓</span>';
 
+    let h1Score=20;
+    let m15Score=19;
+    let m5Score=18;
+    let liquidityScore=17;
+    let riskScore=18;
 
-    /* SCORE */
+    if(market.rsi<45)
+        m15Score-=8;
 
-    let h1Score = 20;
+    if(market.rsi>70)
+        m15Score-=5;
 
-    let m15Score = 19;
+    if(market.adx<20)
+        m15Score-=6;
 
-    let m5Score = 18;
-
-    let liquidityScore = 17;
-
-    let riskScore = 18;
-
-
-    if (
-        market.rsi < 45
-    ) {
-
-        m15Score -= 8;
-
-    }
-
-
-    if (
-        market.rsi > 70
-    ) {
-
-        m15Score -= 5;
-
-    }
-
-
-    if (
-        market.adx < 20
-    ) {
-
-        m15Score -= 6;
-
-    }
-
-
-    if (
-        market.m5Momentum !==
-        "BULLISH"
-    ) {
-
-        m5Score -= 8;
-
-    }
-
+    if(market.m5Momentum!=="BULLISH")
+        m5Score-=8;
 
     const distanceToSupport =
         Math.abs(
@@ -2225,51 +1649,31 @@ function runEngine() {
             levels.support
         );
 
-
-    if (
+    if(
         distanceToSupport <
-        market.atr * 1.2
-    ) {
-
-        liquidityScore += 2;
-
-    }
-
+        market.atr*1.2
+    )
+        liquidityScore+=2;
 
     const total =
         Math.max(
             0,
             Math.min(
                 100,
-                h1Score +
-                m15Score +
-                m5Score +
-                liquidityScore +
+                h1Score+
+                m15Score+
+                m5Score+
+                liquidityScore+
                 riskScore
             )
         );
 
+    let signal="WAIT";
 
-    let signal =
-        "WAIT";
-
-
-    if (
-        total >= 75
-    ) {
-
-        signal =
-            "BUY";
-
-    } else if (
-        total <= 45
-    ) {
-
-        signal =
-            "SELL";
-
-    }
-
+    if(total>=75)
+        signal="BUY";
+    else if(total<=45)
+        signal="SELL";
 
     updateSignalUI(
         signal,
@@ -2277,39 +1681,30 @@ function runEngine() {
         levels
     );
 
-
     document.getElementById(
         "scoreH1"
     ).innerText =
         `${h1Score}/20`;
-
 
     document.getElementById(
         "scoreM15"
     ).innerText =
         `${m15Score}/20`;
 
-
     document.getElementById(
         "scoreM5"
     ).innerText =
         `${m5Score}/20`;
 
-
     document.getElementById(
         "scoreLiquidity"
     ).innerText =
-        `${Math.min(
-            liquidityScore,
-            20
-        )}/20`;
-
+        `${Math.min(liquidityScore,20)}/20`;
 
     document.getElementById(
         "scoreRisk"
     ).innerText =
         `${riskScore}/20`;
-
 
     updateRiskCalculator();
 
@@ -2324,50 +1719,40 @@ function updateSignalUI(
     signal,
     score,
     levels
-) {
+){
 
     const badge =
         document.getElementById(
             "masterSignalBadge"
         );
 
-
     const reasons =
         document.getElementById(
             "reasonList"
         );
 
-
     badge.className =
         "signal-badge";
 
+    if(signal==="BUY"){
 
-    if (
-        signal === "BUY"
-    ) {
-
-        badge.innerText =
-            "🟢 BUY";
+        badge.innerText="🟢 BUY";
 
         badge.classList.add(
             "sig-buy"
         );
 
-    } else if (
-        signal === "SELL"
-    ) {
+    }else if(signal==="SELL"){
 
-        badge.innerText =
-            "🔴 SELL";
+        badge.innerText="🔴 SELL";
 
         badge.classList.add(
             "sig-sell"
         );
 
-    } else {
+    }else{
 
-        badge.innerText =
-            "⏳ WAIT";
+        badge.innerText="⏳ WAIT";
 
         badge.classList.add(
             "sig-wait"
@@ -2375,64 +1760,51 @@ function updateSignalUI(
 
     }
 
-
     document.getElementById(
         "confidenceVal"
     ).innerText =
-        score + "/100";
-
+        score+"/100";
 
     document.getElementById(
         "qualityNumber"
     ).innerText =
         score;
 
-
     document.getElementById(
         "qualityFill"
     ).style.width =
-        score + "%";
-
+        score+"%";
 
     document.getElementById(
         "signalReason"
     ).innerText =
         signal;
 
+    reasons.innerHTML="";
 
-    reasons.innerHTML = "";
+    const reasonData=[
 
+        [true,"H1 bullish structure"],
 
-    const reasonData = [
-
-        [
-            true,
-            "H1 bullish structure"
-        ],
+        [true,"Price above major trend bias"],
 
         [
-            true,
-            "Price above major trend bias"
-        ],
-
-        [
-            market.rsi > 50,
+            market.rsi>50,
             "M15 RSI supports momentum"
         ],
 
         [
-            market.macd === "BULLISH",
+            market.macd==="BULLISH",
             "M15 MACD bullish"
         ],
 
         [
-            market.adx >= 25,
+            market.adx>=25,
             "ADX menunjukkan trend power"
         ],
 
         [
-            market.m5Momentum ===
-            "BULLISH",
+            market.m5Momentum==="BULLISH",
             "M5 momentum bullish"
         ],
 
@@ -2443,45 +1815,35 @@ function updateSignalUI(
 
     ];
 
-
     reasonData.forEach(
-        ([good, text]) => {
+        ([good,text])=>{
 
             const div =
                 document.createElement(
                     "div"
                 );
 
-
             div.className =
                 good
                     ? "reason good"
                     : "reason bad";
 
-
             div.innerText =
                 good
-                    ? "✓ " + text
-                    : "✕ " + text;
+                    ? "✓ "+text
+                    : "✕ "+text;
 
-
-            reasons.appendChild(
-                div
-            );
+            reasons.appendChild(div);
 
         }
     );
-
 
     generateTradePlan(
         signal,
         levels
     );
 
-
-    if (
-        signal !== lastSignal
-    ) {
+    if(signal!==lastSignal){
 
         addHistory(
             signal,
@@ -2489,9 +1851,7 @@ function updateSignalUI(
             score
         );
 
-
-        lastSignal =
-            signal;
+        lastSignal=signal;
 
     }
 
@@ -2505,195 +1865,135 @@ function updateSignalUI(
 function generateTradePlan(
     signal,
     levels
-) {
+){
 
     const atr =
         market.atr;
 
-
-    if (
-        signal === "WAIT"
-    ) {
+    if(signal==="WAIT"){
 
         document.getElementById(
             "execEntry"
         ).innerText =
             "Tunggu confirmation";
 
-
         document.getElementById(
             "execDirection"
         ).innerText =
             "WAIT";
 
-
         document.getElementById(
             "execSL"
-        ).innerText =
-            "--";
-
+        ).innerText="--";
 
         document.getElementById(
             "execTP1"
-        ).innerText =
-            "--";
-
+        ).innerText="--";
 
         document.getElementById(
             "execTP2"
-        ).innerText =
-            "--";
-
+        ).innerText="--";
 
         document.getElementById(
             "execTP3"
-        ).innerText =
-            "--";
-
+        ).innerText="--";
 
         document.getElementById(
             "execRR"
-        ).innerText =
-            "N/A";
-
+        ).innerText="N/A";
 
         return;
 
     }
 
+    const entry=currentPrice;
 
-    const entry =
-        currentPrice;
+    let sl,tp1,tp2,tp3;
 
-
-    let sl;
-
-    let tp1;
-
-    let tp2;
-
-    let tp3;
-
-
-    if (
-        signal === "BUY"
-    ) {
+    if(signal==="BUY"){
 
         sl =
             levels.support -
-            atr * .35;
-
+            atr*.35;
 
         const risk =
-            entry - sl;
-
+            entry-sl;
 
         tp1 =
-            entry +
-            risk * 1.5;
-
+            entry+risk*1.5;
 
         tp2 =
-            entry +
-            risk * 2.5;
-
+            entry+risk*2.5;
 
         tp3 =
-            entry +
-            risk * 4;
+            entry+risk*4;
 
-    } else {
+    }else{
 
         sl =
-            levels.resistance +
-            atr * .35;
-
+            levels.resistance+
+            atr*.35;
 
         const risk =
-            sl - entry;
-
+            sl-entry;
 
         tp1 =
-            entry -
-            risk * 1.5;
-
+            entry-risk*1.5;
 
         tp2 =
-            entry -
-            risk * 2.5;
-
+            entry-risk*2.5;
 
         tp3 =
-            entry -
-            risk * 4;
+            entry-risk*4;
 
     }
-
 
     document.getElementById(
         "execEntry"
     ).innerText =
-
-        (
-            entry - .8
-        ).toFixed(2)
-
-        +
-        " – "
-
-        +
-        (
-            entry + .8
-        ).toFixed(2);
-
+        (entry-.8).toFixed(2)+
+        " – "+
+        (entry+.8).toFixed(2);
 
     document.getElementById(
         "execDirection"
     ).innerText =
         signal;
 
-
     document.getElementById(
         "execSL"
     ).innerText =
         sl.toFixed(2);
-
 
     document.getElementById(
         "execTP1"
     ).innerText =
         tp1.toFixed(2);
 
-
     document.getElementById(
         "execTP2"
     ).innerText =
         tp2.toFixed(2);
-
 
     document.getElementById(
         "execTP3"
     ).innerText =
         tp3.toFixed(2);
 
-
     document.getElementById(
         "execRR"
     ).innerText =
         "1 : 4.0 max";
-
 
     document.getElementById(
         "riskEntry"
     ).value =
         entry.toFixed(2);
 
-
     document.getElementById(
         "riskSL"
     ).value =
         sl.toFixed(2);
-
 
     updateRiskCalculator();
 
@@ -2701,98 +2001,75 @@ function generateTradePlan(
 
 
 /* =========================================================
-   RISK CALCULATOR
+   RISK
 ========================================================= */
 
-function updateRiskCalculator() {
+function updateRiskCalculator(){
 
     const balance =
         parseFloat(
             document.getElementById(
                 "accountBalance"
             ).value
-        ) || 0;
-
+        )||0;
 
     const riskPercent =
         parseFloat(
             document.getElementById(
                 "riskPercent"
             ).value
-        ) || 0;
-
+        )||0;
 
     const entry =
         parseFloat(
             document.getElementById(
                 "riskEntry"
             ).value
-        ) || 0;
-
+        )||0;
 
     const sl =
         parseFloat(
             document.getElementById(
                 "riskSL"
             ).value
-        ) || 0;
-
+        )||0;
 
     const maxRisk =
-        balance *
-        (
-            riskPercent / 100
-        );
-
+        balance*
+        (riskPercent/100);
 
     const distance =
-        Math.abs(
-            entry - sl
-        );
+        Math.abs(entry-sl);
 
+    let lot=0;
 
-    let lot = 0;
-
-
-    if (
-        distance > 0
-    ) {
+    if(distance>0){
 
         lot =
-            maxRisk /
-            (
-                distance * 100
-            );
+            maxRisk/
+            (distance*100);
 
     }
 
-
     lot =
         Math.floor(
-            lot * 100
-        ) / 100;
-
+            lot*100
+        )/100;
 
     document.getElementById(
         "maxRisk"
     ).innerText =
-        "$" +
-        maxRisk.toFixed(2);
-
+        "$"+maxRisk.toFixed(2);
 
     document.getElementById(
         "slDistance"
     ).innerText =
         distance.toFixed(2);
 
-
     document.getElementById(
         "suggestedLot"
     ).innerText =
-        Math.max(
-            .01,
-            lot
-        ).toFixed(2);
+        Math.max(.01,lot).toFixed(2);
 
 }
 
@@ -2805,129 +2082,86 @@ function addHistory(
     signal,
     price,
     score
-) {
+){
 
     const now =
         new Date();
-
 
     const time =
         now.toLocaleTimeString(
             "en-MY",
             {
-                hour: "2-digit",
-                minute: "2-digit"
+                hour:"2-digit",
+                minute:"2-digit"
             }
         );
-
 
     history.unshift({
 
         time,
-
         signal,
-
-        price:
-            price.toFixed(2),
-
+        price:price.toFixed(2),
         score
 
     });
 
-
     history =
-        history.slice(
-            0,
-            30
-        );
-
+        history.slice(0,30);
 
     localStorage.setItem(
         "xauSignalHistory",
-        JSON.stringify(
-            history
-        )
+        JSON.stringify(history)
     );
-
 
     renderHistory();
 
 }
 
 
-function renderHistory() {
+function renderHistory(){
 
     const list =
         document.getElementById(
             "historyList"
         );
 
-
-    list.innerHTML = "";
-
+    list.innerHTML="";
 
     history.forEach(
-        item => {
+        item=>{
 
             const row =
                 document.createElement(
                     "div"
                 );
 
-
-            row.className =
+            row.className=
                 "history-row";
 
-
-            let signalClass =
+            let signalClass=
                 "history-wait";
 
+            if(item.signal==="BUY")
+                signalClass="history-buy";
 
-            if (
-                item.signal === "BUY"
-            ) {
+            if(item.signal==="SELL")
+                signalClass="history-sell";
 
-                signalClass =
-                    "history-buy";
+            row.innerHTML=`
 
-            }
+                <span>${item.time}</span>
 
-
-            if (
-                item.signal === "SELL"
-            ) {
-
-                signalClass =
-                    "history-sell";
-
-            }
-
-
-            row.innerHTML = `
-
-                <span>
-                    ${item.time}
-                </span>
-
-                <strong
-                    class="${signalClass}">
+                <strong class="${signalClass}">
                     ${item.signal}
                 </strong>
 
-                <span>
-                    ${item.price}
-                </span>
+                <span>${item.price}</span>
 
-                <strong>
-                    ${item.score}
-                </strong>
+                <strong>${item.score}</strong>
 
             `;
 
-
-            list.appendChild(
-                row
-            );
+            list.appendChild(row);
 
         }
     );
@@ -2939,105 +2173,76 @@ function renderHistory() {
    NEWS
 ========================================================= */
 
-function newsFilter() {
+function newsFilter(){
 
-    /*
-        Tambah news event sebenar
-        di sini apabila API/news feed
-        sudah disambungkan.
-    */
-
-    const newsEvents = [];
-
+    const newsEvents=[];
 
     const now =
         new Date();
 
-
-    let blocked =
-        false;
-
+    let blocked=false;
 
     newsEvents.forEach(
-        event => {
+        event=>{
 
             const eventDate =
                 new Date(
-                    event.date +
-                    "T" +
-                    event.time +
+                    event.date+
+                    "T"+
+                    event.time+
                     ":00"
                 );
 
-
             const difference =
                 Math.abs(
-                    now -
-                    eventDate
+                    now-eventDate
                 );
 
+            if(
+                difference<=
+                30*60*1000
+            ){
 
-            if (
-                difference <=
-                30 * 60 * 1000
-            ) {
-
-                blocked =
-                    true;
+                blocked=true;
 
             }
 
         }
     );
 
-
     const status =
         document.getElementById(
             "newsStatus"
         );
-
 
     const trading =
         document.getElementById(
             "newsTradingStatus"
         );
 
+    if(blocked){
 
-    if (
-        blocked
-    ) {
-
-        status.className =
+        status.className=
             "news-warning";
 
-
-        status.innerText =
+        status.innerText=
             "⚠ NEWS WINDOW — TRADE BLOCKED";
 
+        trading.innerText="BLOCKED";
 
-        trading.innerText =
-            "BLOCKED";
+        trading.className="fail";
 
+    }else{
 
-        trading.className =
-            "fail";
-
-    } else {
-
-        status.className =
+        status.className=
             "news-safe";
 
-
-        status.innerText =
+        status.innerText=
             "✓ NO BLOCKING NEWS DETECTED";
 
+        trading.innerText="ALLOWED";
 
-        trading.innerText =
-            "ALLOWED";
-
-
-        trading.className =
-            "pass";
+        trading.className="pass";
 
     }
 
@@ -3048,41 +2253,32 @@ function newsFilter() {
    MARKET STATUS
 ========================================================= */
 
-function updateMarketStatus() {
+function updateMarketStatus(){
 
     const day =
         new Date().getDay();
 
-
     const weekend =
-        day === 0 ||
-        day === 6;
-
+        day===0 ||
+        day===6;
 
     const element =
         document.getElementById(
             "marketStatus"
         );
 
+    if(weekend){
 
-    if (
-        weekend
-    ) {
+        element.innerText="CLOSED";
 
-        element.innerText =
-            "CLOSED";
-
-
-        element.className =
+        element.className=
             "status-value fail";
 
-    } else {
+    }else{
 
-        element.innerText =
-            "OPEN";
+        element.innerText="OPEN";
 
-
-        element.className =
+        element.className=
             "status-value pass";
 
     }
@@ -3091,7 +2287,7 @@ function updateMarketStatus() {
 
 
 /* =========================================================
-   RISK INPUT EVENTS
+   INPUTS
 ========================================================= */
 
 [
@@ -3101,7 +2297,7 @@ function updateMarketStatus() {
     "riskSL"
 
 ].forEach(
-    id => {
+    id=>{
 
         document.getElementById(
             id
@@ -3120,7 +2316,7 @@ function updateMarketStatus() {
 
 window.addEventListener(
     "load",
-    function() {
+    function(){
 
         updateSessions();
 
@@ -3132,21 +2328,35 @@ window.addEventListener(
 
         runEngine();
 
+        /*
+          Tarik harga API terus
+        */
+
+        fetchLiveGold();
+
     }
 );
 
+
+/*
+  Twelve Data endpoint kita gunakan
+  setiap 30 saat.
+*/
+
+setInterval(
+    fetchLiveGold,
+    30000
+);
 
 setInterval(
     updateSessions,
     1000
 );
 
-
 setInterval(
     updateMarketStatus,
     10000
 );
-
 
 setInterval(
     newsFilter,
