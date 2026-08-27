@@ -1,0 +1,1873 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>XAU/USD Pro Sniper Backtest</title>
+
+<style>
+:root{
+--bg:#f3f5f8;
+--card:#fff;
+--sub:#f8fafc;
+--text:#20252b;
+--muted:#737b87;
+--border:#e1e5ea;
+--blue:#2563eb;
+--green:#15803d;
+--green-bg:#dcfce7;
+--red:#dc2626;
+--red-bg:#fee2e2;
+--yellow:#a16207;
+--yellow-bg:#fef9c3;
+--purple:#7c3aed;
+}
+
+*{box-sizing:border-box}
+
+body{
+margin:0;
+padding:12px;
+background:var(--bg);
+color:var(--text);
+font-family:Arial,Helvetica,sans-serif
+}
+
+.container{
+max-width:1100px;
+margin:auto
+}
+
+header{
+text-align:center;
+margin-bottom:12px
+}
+
+h1{
+margin:0;
+font-size:1.35rem;
+color:#a87900
+}
+
+header p{
+margin:4px 0;
+font-size:.72rem;
+color:var(--muted)
+}
+
+.card{
+background:var(--card);
+border:1px solid var(--border);
+border-radius:10px;
+padding:12px;
+margin-bottom:10px;
+box-shadow:0 4px 16px rgba(0,0,0,.05)
+}
+
+button{
+border:0;
+border-radius:7px;
+padding:9px 14px;
+font-weight:bold;
+cursor:pointer;
+background:var(--blue);
+color:white
+}
+
+button:disabled{
+opacity:.6;
+cursor:not-allowed
+}
+
+.controls{
+display:flex;
+gap:8px;
+flex-wrap:wrap;
+align-items:center
+}
+
+.controls input{
+width:90px;
+padding:8px;
+border:1px solid var(--border);
+border-radius:6px
+}
+
+.status{
+margin-top:9px;
+font-size:.72rem;
+color:var(--muted)
+}
+
+.stats{
+display:grid;
+grid-template-columns:repeat(4,1fr);
+gap:7px
+}
+
+.stat{
+background:var(--sub);
+border:1px solid var(--border);
+border-radius:8px;
+padding:10px;
+text-align:center
+}
+
+.stat small{
+display:block;
+font-size:.6rem;
+color:var(--muted);
+text-transform:uppercase
+}
+
+.stat strong{
+display:block;
+margin-top:3px;
+font-size:1rem
+}
+
+.green{color:var(--green)}
+.red{color:var(--red)}
+.yellow{color:var(--yellow)}
+
+.table-wrap{
+overflow:auto;
+max-height:520px
+}
+
+table{
+width:100%;
+border-collapse:collapse;
+font-size:.68rem
+}
+
+th,td{
+padding:7px 5px;
+border-bottom:1px solid #eee;
+text-align:left;
+white-space:nowrap
+}
+
+th{
+position:sticky;
+top:0;
+background:#f8fafc;
+z-index:1
+}
+
+.buy{
+color:var(--green);
+font-weight:bold
+}
+
+.sell{
+color:var(--red);
+font-weight:bold
+}
+
+.win{
+color:var(--green);
+font-weight:bold
+}
+
+.loss{
+color:var(--red);
+font-weight:bold
+}
+
+.note{
+font-size:.68rem;
+line-height:1.5;
+color:var(--muted)
+}
+
+@media(max-width:650px){
+
+.stats{
+grid-template-columns:repeat(2,1fr)
+}
+
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<header>
+<h1>XAU/USD PRO SNIPER — BACKTEST</h1>
+<p>Replay engine menggunakan candle 5M daripada /api/xau</p>
+</header>
+
+<div class="card">
+
+<div class="controls">
+
+<label>
+Candles:
+<input id="maxCandles" type="number" value="3000" min="300" max="3000">
+</label>
+
+<label>
+TP:
+<input id="tpRR" type="number" value="2" step="0.5" min="0.5">
+R
+</label>
+
+<button id="runBtn" onclick="runBacktest()">
+RUN BACKTEST
+</button>
+
+</div>
+
+<div id="status" class="status">
+Ready.
+</div>
+
+</div>
+
+
+<div class="card">
+
+<h3>RESULT</h3>
+
+<div class="stats">
+
+<div class="stat">
+<small>Total Trades</small>
+<strong id="totalTrades">0</strong>
+</div>
+
+<div class="stat">
+<small>Win Rate</small>
+<strong id="winRate">0%</strong>
+</div>
+
+<div class="stat">
+<small>Wins</small>
+<strong id="wins" class="green">0</strong>
+</div>
+
+<div class="stat">
+<small>Losses</small>
+<strong id="losses" class="red">0</strong>
+</div>
+
+<div class="stat">
+<small>Net R</small>
+<strong id="netR">0R</strong>
+</div>
+
+<div class="stat">
+<small>Profit Factor</small>
+<strong id="profitFactor">0</strong>
+</div>
+
+<div class="stat">
+<small>Max Drawdown</small>
+<strong id="maxDD">0R</strong>
+</div>
+
+<div class="stat">
+<small>Max Loss Streak</small>
+<strong id="lossStreak">0</strong>
+</div>
+
+</div>
+
+</div>
+
+
+<div class="card">
+
+<h3>BUY / SELL</h3>
+
+<div class="stats">
+
+<div class="stat">
+<small>BUY</small>
+<strong id="buyTrades">0</strong>
+</div>
+
+<div class="stat">
+<small>BUY Win Rate</small>
+<strong id="buyWinRate">0%</strong>
+</div>
+
+<div class="stat">
+<small>SELL</small>
+<strong id="sellTrades">0</strong>
+</div>
+
+<div class="stat">
+<small>SELL Win Rate</small>
+<strong id="sellWinRate">0%</strong>
+</div>
+
+</div>
+
+</div>
+
+
+<div class="card">
+
+<h3>TRADE HISTORY</h3>
+
+<div class="table-wrap">
+
+<table>
+
+<thead>
+
+<tr>
+<th>#</th>
+<th>Time</th>
+<th>Signal</th>
+<th>Entry</th>
+<th>SL</th>
+<th>TP</th>
+<th>Result</th>
+<th>R</th>
+<th>Score</th>
+</tr>
+
+</thead>
+
+<tbody id="tradeList"></tbody>
+
+</table>
+
+</div>
+
+</div>
+
+
+<div class="card">
+
+<h3>ENGINE RULE</h3>
+
+<div class="note">
+
+BUY:
+Score ≥ 75 + H1 bullish + M15 EMA20 > EMA50 + M15 MACD bullish + bull votes > bear votes + 2.
+
+<br><br>
+
+SELL:
+Score ≥ 75 + H1 bearish + M15 EMA20 < EMA50 + M15 MACD bearish + bear votes > bull votes + 2.
+
+<br><br>
+
+SL menggunakan ATR 1.15x / S&R seperti engine dashboard. TP default = 2R.
+
+<br><br>
+
+⚠️ Backtest ini ialah historical simulation, bukan jaminan profit live. Spread, slippage, broker execution dan news impact tidak dimodelkan.
+
+</div>
+
+</div>
+
+</div>
+
+
+<script>
+
+/* =========================================================
+   GLOBAL
+========================================================= */
+
+let candles=[];
+let trades=[];
+
+
+/* =========================================================
+   HELPERS
+========================================================= */
+
+function avg(arr){
+
+if(!arr.length)return null;
+
+return arr.reduce(
+(a,b)=>a+b,
+0
+)/arr.length;
+
+}
+
+
+function ema(values,period){
+
+if(values.length<period)
+return null;
+
+let k=2/(period+1);
+
+let e=avg(
+values.slice(0,period)
+);
+
+for(
+let i=period;
+i<values.length;
+i++
+){
+
+e=
+values[i]*k+
+e*(1-k);
+
+}
+
+return e;
+
+}
+
+
+function sma(values,period){
+
+if(values.length<period)
+return null;
+
+return avg(
+values.slice(-period)
+);
+
+}
+
+
+function std(values,period){
+
+if(values.length<period)
+return null;
+
+let a=
+values.slice(-period);
+
+let m=avg(a);
+
+return Math.sqrt(
+avg(
+a.map(x=>
+(x-m)**2
+)
+)
+);
+
+}
+
+
+function rsi(values,period=14){
+
+if(values.length<period+1)
+return null;
+
+let gains=0;
+let losses=0;
+
+for(
+let i=values.length-period;
+i<values.length;
+i++
+){
+
+let d=
+values[i]-
+values[i-1];
+
+if(d>0)
+gains+=d;
+else
+losses-=d;
+
+}
+
+if(losses===0)
+return 100;
+
+let rs=
+(gains/period)/
+(losses/period);
+
+return 100-
+(100/(1+rs));
+
+}
+
+
+function atr(data,period=14){
+
+if(data.length<period+1)
+return null;
+
+let trs=[];
+
+for(
+let i=1;
+i<data.length;
+i++
+){
+
+let h=data[i].high;
+let l=data[i].low;
+let pc=data[i-1].close;
+
+trs.push(
+Math.max(
+h-l,
+Math.abs(h-pc),
+Math.abs(l-pc)
+)
+);
+
+}
+
+return avg(
+trs.slice(-period)
+);
+
+}
+
+
+function macd(values){
+
+if(values.length<35)
+return null;
+
+let fast=ema(values,12);
+let slow=ema(values,26);
+
+if(
+fast===null||
+slow===null
+)
+return null;
+
+let line=
+fast-slow;
+
+let series=[];
+
+for(
+let i=26;
+i<=values.length;
+i++
+){
+
+let slice=
+values.slice(0,i);
+
+let e12=ema(slice,12);
+let e26=ema(slice,26);
+
+if(
+e12!==null&&
+e26!==null
+){
+
+series.push(
+e12-e26
+);
+
+}
+
+}
+
+let signal=ema(series,9);
+
+return{
+
+line,
+signal,
+bull:
+signal!==null&&
+line>signal
+
+};
+
+}
+
+
+function adx(data,period=14){
+
+if(
+data.length<
+period*2+2
+)
+return null;
+
+let trs=[];
+let plus=[];
+let minus=[];
+
+for(
+let i=1;
+i<data.length;
+i++
+){
+
+let h=data[i].high;
+let l=data[i].low;
+
+let ph=data[i-1].high;
+let pl=data[i-1].low;
+
+let pc=data[i-1].close;
+
+trs.push(
+Math.max(
+h-l,
+Math.abs(h-pc),
+Math.abs(l-pc)
+)
+);
+
+let up=h-ph;
+let down=pl-l;
+
+plus.push(
+up>down&&up>0?up:0
+);
+
+minus.push(
+down>up&&down>0?down:0
+);
+
+}
+
+let tr=avg(
+trs.slice(-period)
+);
+
+let p=avg(
+plus.slice(-period)
+);
+
+let m=avg(
+minus.slice(-period)
+);
+
+if(!tr)return null;
+
+let pdi=100*p/tr;
+let mdi=100*m/tr;
+
+let dx=
+100*
+Math.abs(pdi-mdi)/
+(pdi+mdi||1);
+
+return{
+
+value:dx,
+bull:pdi>mdi
+
+};
+
+}
+
+
+/* =========================================================
+   RESAMPLE
+========================================================= */
+
+function aggregate(data,minutes){
+
+let out=[];
+let buckets={};
+
+data.forEach(c=>{
+
+let d=new Date(c.time);
+
+let ms=minutes*60000;
+
+let key=
+Math.floor(
+d.getTime()/ms
+)*ms;
+
+if(!buckets[key]){
+
+buckets[key]={
+
+time:
+new Date(key).toISOString(),
+
+open:c.open,
+high:c.high,
+low:c.low,
+close:c.close,
+volume:c.volume||0
+
+};
+
+}else{
+
+buckets[key].high=
+Math.max(
+buckets[key].high,
+c.high
+);
+
+buckets[key].low=
+Math.min(
+buckets[key].low,
+c.low
+);
+
+buckets[key].close=
+c.close;
+
+buckets[key].volume+=
+c.volume||0;
+
+}
+
+});
+
+Object.keys(buckets)
+.sort((a,b)=>a-b)
+.forEach(k=>
+out.push(buckets[k])
+);
+
+return out;
+
+}
+
+
+/* =========================================================
+   VWAP
+========================================================= */
+
+function calcVWAP(data){
+
+let totalPV=0;
+let totalV=0;
+
+data.slice(-288)
+.forEach(c=>{
+
+let typical=
+(
+c.high+
+c.low+
+c.close
+)/3;
+
+let v=c.volume||1;
+
+totalPV+=typical*v;
+totalV+=v;
+
+});
+
+return totalV?
+totalPV/totalV:
+null;
+
+}
+
+
+/* =========================================================
+   ENGINE
+========================================================= */
+
+function calculateSignal(data){
+
+if(data.length<300)
+return null;
+
+let m5=data;
+
+let m15=aggregate(
+data,
+15
+);
+
+let h1=aggregate(
+data,
+60
+);
+
+if(
+m15.length<55||
+h1.length<210
+)
+return null;
+
+let c5=
+m5.map(x=>x.close);
+
+let c15=
+m15.map(x=>x.close);
+
+let c1=
+h1.map(x=>x.close);
+
+let m5Data={
+
+ema20:ema(c5,20),
+ema50:ema(c5,50),
+rsi:rsi(c5),
+atr:atr(m5),
+macd:macd(c5)
+
+};
+
+let m15Data={
+
+ema20:ema(c15,20),
+ema50:ema(c15,50),
+rsi:rsi(c15),
+atr:atr(m15),
+adx:adx(m15),
+macd:macd(c15)
+
+};
+
+let h1Data={
+
+ema200:ema(c1,200),
+ema50:ema(c1,50),
+atr:atr(h1)
+
+};
+
+if(
+!m5Data.atr||
+!m15Data.rsi||
+!h1Data.ema200
+)
+return null;
+
+
+/* LEVELS */
+
+let recent5=
+m5.slice(-50);
+
+let recent15=
+m15.slice(-30);
+
+let high5=
+Math.max(
+...recent5.map(x=>x.high)
+);
+
+let low5=
+Math.min(
+...recent5.map(x=>x.low)
+);
+
+let high15=
+Math.max(
+...recent15.map(x=>x.high)
+);
+
+let low15=
+Math.min(
+...recent15.map(x=>x.low)
+);
+
+let levels={
+
+support:low15,
+resistance:high15,
+buyLiquidity:high5,
+sellLiquidity:low5
+
+};
+
+
+/* STRUCTURE */
+
+let last5=
+m5[m5.length-1];
+
+let prev5=
+m5[m5.length-2];
+
+let m5Bull=
+last5.close>prev5.close &&
+last5.high>=prev5.high;
+
+let last15=
+m15[m15.length-1];
+
+let old15=
+m15[m15.length-3];
+
+let m15Bull=
+last15.close>old15.close;
+
+let lastH1=
+h1[h1.length-1];
+
+let oldH1=
+h1[h1.length-4];
+
+let h1Bull=
+lastH1.close>oldH1.close &&
+(
+h1Data.ema200===null||
+lastH1.close>h1Data.ema200
+);
+
+
+/* SCORE */
+
+let scoreH1=0;
+let scoreM15=0;
+let scoreM5=0;
+let scoreLiq=0;
+let scoreRisk=0;
+
+let bullVotes=0;
+let bearVotes=0;
+
+
+/* H1 */
+
+if(h1Bull){
+
+scoreH1+=14;
+bullVotes++;
+
+}else{
+
+scoreH1+=6;
+bearVotes++;
+
+}
+
+let price=
+last5.close;
+
+if(
+h1Data.ema200 &&
+price>h1Data.ema200
+){
+
+scoreH1+=6;
+bullVotes++;
+
+}else{
+
+bearVotes++;
+
+}
+
+
+/* M15 */
+
+if(
+m15Data.ema20>
+m15Data.ema50
+){
+
+scoreM15+=7;
+bullVotes++;
+
+}else{
+
+bearVotes++;
+
+}
+
+if(
+m15Data.rsi>=50&&
+m15Data.rsi<=68
+){
+
+scoreM15+=6;
+bullVotes++;
+
+}else if(
+m15Data.rsi<45
+){
+
+bearVotes++;
+
+}
+
+if(m15Data.macd?.bull){
+
+scoreM15+=4;
+bullVotes++;
+
+}else{
+
+bearVotes++;
+
+}
+
+if(
+m15Data.adx?.value>=20
+){
+
+scoreM15+=3;
+
+}
+
+
+/* M5 */
+
+if(m5Bull){
+
+scoreM5+=8;
+bullVotes++;
+
+}else{
+
+bearVotes++;
+
+}
+
+if(
+m5Data.ema20 &&
+price>m5Data.ema20
+){
+
+scoreM5+=5;
+bullVotes++;
+
+}else{
+
+bearVotes++;
+
+}
+
+if(
+m5Data.rsi>=50&&
+m5Data.rsi<75
+){
+
+scoreM5+=4;
+
+}
+
+if(m5Data.macd?.bull){
+
+scoreM5+=3;
+bullVotes++;
+
+}
+
+
+/* LOCATION */
+
+let distSupport=
+Math.abs(
+price-levels.support
+);
+
+let distResistance=
+Math.abs(
+levels.resistance-price
+);
+
+let nearSupport=
+distSupport<=
+m5Data.atr*1.2;
+
+let nearResistance=
+distResistance<=
+m5Data.atr*1.2;
+
+if(nearSupport){
+
+scoreLiq+=8;
+bullVotes++;
+
+}
+
+if(nearResistance){
+
+scoreLiq+=8;
+bearVotes++;
+
+}
+
+
+/* FVG */
+
+let c3=
+candles[candles.length-3];
+
+let bullishFVG=
+last5.low>c3.high;
+
+let bearishFVG=
+last5.high<c3.low;
+
+if(bullishFVG){
+
+scoreM5+=3;
+bullVotes++;
+
+}
+
+if(bearishFVG){
+
+bearVotes++;
+
+}
+
+
+/* VWAP */
+
+let vwap=
+calcVWAP(m5);
+
+let aboveVWAP=
+price>vwap;
+
+if(aboveVWAP){
+
+scoreLiq+=2;
+bullVotes++;
+
+}else{
+
+bearVotes++;
+
+}
+
+
+/* VOLATILITY */
+
+let volatility="NORMAL";
+
+if(m5Data.atr>8)
+volatility="HIGH";
+
+if(m5Data.atr<2.5)
+volatility="LOW";
+
+if(volatility==="NORMAL")
+scoreRisk+=7;
+
+if(volatility==="HIGH")
+scoreRisk+=3;
+
+if(volatility==="LOW")
+scoreRisk+=4;
+
+
+/* SESSION */
+
+let d=new Date(last5.time);
+
+let hour=d.getHours();
+
+let active=
+(
+hour>=8&&hour<17
+)||
+(
+hour>=15&&hour<24
+)||
+(
+hour>=20||
+hour<5
+);
+
+if(active)
+scoreRisk+=7;
+else
+scoreRisk+=2;
+
+
+scoreH1=Math.min(20,scoreH1);
+scoreM15=Math.min(20,scoreM15);
+scoreM5=Math.min(20,scoreM5);
+scoreLiq=Math.min(20,scoreLiq);
+scoreRisk=Math.min(20,scoreRisk);
+
+let total=
+scoreH1+
+scoreM15+
+scoreM5+
+scoreLiq+
+scoreRisk;
+
+
+/* SIGNAL */
+
+let signal="WAIT";
+
+if(
+total>=75 &&
+bullVotes>=7 &&
+bullVotes>bearVotes+2 &&
+h1Bull &&
+m15Data.ema20>m15Data.ema50 &&
+m15Data.macd?.bull
+){
+
+signal="BUY";
+
+}
+
+if(
+total>=75 &&
+bearVotes>=7 &&
+bearVotes>bullVotes+2 &&
+!h1Bull &&
+m15Data.ema20<m15Data.ema50 &&
+!m15Data.macd?.bull
+){
+
+signal="SELL";
+
+}
+
+return{
+
+signal,
+score:total,
+price,
+atr:m5Data.atr,
+support:levels.support,
+resistance:levels.resistance,
+time:last5.time
+
+};
+
+}
+
+
+/* =========================================================
+   LOAD API
+========================================================= */
+
+async function loadCandles(){
+
+const response=
+await fetch(
+"/api/xau?ts="+Date.now(),
+{
+cache:"no-store"
+}
+);
+
+if(!response.ok)
+throw new Error(
+"API HTTP "+response.status
+);
+
+const data=
+await response.json();
+
+if(!data.values?.length)
+throw new Error(
+"Tiada data candle"
+);
+
+candles=
+data.values
+.reverse()
+.map(x=>({
+
+time:x.datetime||x.time,
+
+open:Number(x.open),
+high:Number(x.high),
+low:Number(x.low),
+close:Number(x.close),
+
+volume:Number(x.volume)||0
+
+}))
+.filter(x=>
+isFinite(x.close)
+);
+
+return candles;
+
+}
+
+
+/* =========================================================
+   SIMULATE TRADE
+========================================================= */
+
+function simulateTrade(
+signal,
+index,
+entry,
+atr,
+support,
+resistance,
+rr
+){
+
+let sl;
+
+if(signal==="BUY"){
+
+sl=Math.min(
+support-atr*.25,
+entry-atr*1.15
+);
+
+}else{
+
+sl=Math.max(
+resistance+atr*.25,
+entry+atr*1.15
+);
+
+}
+
+let risk=
+Math.abs(entry-sl);
+
+if(!risk)
+return null;
+
+let tp=
+signal==="BUY"
+?
+entry+risk*rr
+:
+entry-risk*rr;
+
+
+/*
+   Cari candle selepas signal.
+   Jika SL dan TP kena dalam candle yang sama,
+   kita anggap SL kena dahulu
+   (conservative assumption).
+*/
+
+for(
+let j=index+1;
+j<candles.length;
+j++
+){
+
+let c=candles[j];
+
+let hitSL=false;
+let hitTP=false;
+
+if(signal==="BUY"){
+
+hitSL=
+c.low<=sl;
+
+hitTP=
+c.high>=tp;
+
+}else{
+
+hitSL=
+c.high>=sl;
+
+hitTP=
+c.low<=tp;
+
+}
+
+if(hitSL&&hitTP){
+
+return{
+
+result:"LOSS",
+r:-1,
+exit:sl,
+exitTime:c.time,
+entry,
+sl,
+tp
+
+};
+
+}
+
+if(hitSL){
+
+return{
+
+result:"LOSS",
+r:-1,
+exit:sl,
+exitTime:c.time,
+entry,
+sl,
+tp
+
+};
+
+}
+
+if(hitTP){
+
+return{
+
+result:"WIN",
+r:rr,
+exit:tp,
+exitTime:c.time,
+entry,
+sl,
+tp
+
+};
+
+}
+
+}
+
+return{
+
+result:"OPEN",
+r:0,
+exit:null,
+exitTime:null,
+entry,
+sl,
+tp
+
+};
+
+}
+
+
+/* =========================================================
+   BACKTEST
+========================================================= */
+
+async function runBacktest(){
+
+const btn=
+document.getElementById(
+"runBtn"
+);
+
+const status=
+document.getElementById(
+"status"
+);
+
+btn.disabled=true;
+
+status.innerText=
+"Loading candle data...";
+
+try{
+
+await loadCandles();
+
+let max=
+Number(
+document.getElementById(
+"maxCandles"
+).value
+)||3000;
+
+candles=
+candles.slice(
+Math.max(
+0,
+candles.length-max
+)
+);
+
+let rr=
+Number(
+document.getElementById(
+"tpRR"
+).value
+)||2;
+
+trades=[];
+
+let lastTradeIndex=-999;
+
+for(
+let i=300;
+i<candles.length-20;
+i++
+){
+
+/*
+   Replay data sampai candle semasa.
+*/
+
+let slice=
+candles.slice(
+0,
+i+1
+);
+
+let result=
+calculateSignal(slice);
+
+if(!result)
+continue;
+
+if(
+result.signal==="WAIT"
+)
+continue;
+
+
+/*
+   Elak multiple trade pada signal
+   yang sama / overlap.
+*/
+
+if(
+i-lastTradeIndex<10
+)
+continue;
+
+let trade=
+simulateTrade(
+result.signal,
+i,
+result.price,
+result.atr,
+result.support,
+result.resistance,
+rr
+);
+
+if(!trade)
+continue;
+
+trade.signal=
+result.signal;
+
+trade.score=
+result.score;
+
+trade.time=
+result.time;
+
+trades.push(trade);
+
+lastTradeIndex=i;
+
+}
+
+
+/*
+   OPEN trades tidak dikira
+   sebagai win/loss.
+*/
+
+renderResults();
+
+status.innerText=
+`Backtest selesai • ${candles.length} candle • ${trades.length} trade`;
+
+}
+catch(e){
+
+console.error(e);
+
+status.innerText=
+"Backtest error: "+e.message;
+
+}
+finally{
+
+btn.disabled=false;
+
+}
+
+}
+
+
+/* =========================================================
+   RESULTS
+========================================================= */
+
+function renderResults(){
+
+let closed=
+trades.filter(
+t=>t.result!=="OPEN"
+);
+
+let wins=
+closed.filter(
+t=>t.result==="WIN"
+);
+
+let losses=
+closed.filter(
+t=>t.result==="LOSS"
+);
+
+let total=
+closed.length;
+
+let winRate=
+total?
+wins.length/total*100:
+0;
+
+let netR=
+closed.reduce(
+(a,t)=>a+t.r,
+0
+);
+
+let grossWin=
+wins.reduce(
+(a,t)=>a+t.r,
+0
+);
+
+let grossLoss=
+Math.abs(
+losses.reduce(
+(a,t)=>a+t.r,
+0
+)
+);
+
+let pf=
+grossLoss?
+grossWin/grossLoss:
+grossWin?Infinity:0;
+
+
+/* DD */
+
+let equity=0;
+let peak=0;
+let maxDD=0;
+
+closed.forEach(t=>{
+
+equity+=t.r;
+
+peak=
+Math.max(
+peak,
+equity
+);
+
+let dd=
+peak-equity;
+
+maxDD=
+Math.max(
+maxDD,
+dd
+);
+
+});
+
+
+/* LOSS STREAK */
+
+let currentLoss=0;
+let maxLoss=0;
+
+closed.forEach(t=>{
+
+if(t.result==="LOSS"){
+
+currentLoss++;
+
+maxLoss=
+Math.max(
+maxLoss,
+currentLoss
+);
+
+}else{
+
+currentLoss=0;
+
+}
+
+});
+
+
+/* BUY / SELL */
+
+let buys=
+closed.filter(
+t=>t.signal==="BUY"
+);
+
+let sells=
+closed.filter(
+t=>t.signal==="SELL"
+);
+
+let buyWins=
+buys.filter(
+t=>t.result==="WIN"
+);
+
+let sellWins=
+sells.filter(
+t=>t.result==="WIN"
+);
+
+
+document.getElementById(
+"totalTrades"
+).innerText=
+total;
+
+document.getElementById(
+"winRate"
+).innerText=
+winRate.toFixed(1)+"%";
+
+document.getElementById(
+"wins"
+).innerText=
+wins.length;
+
+document.getElementById(
+"losses"
+).innerText=
+losses.length;
+
+document.getElementById(
+"netR"
+).innerText=
+(netR>=0?"+":"")+
+netR.toFixed(2)+"R";
+
+document.getElementById(
+"profitFactor"
+).innerText=
+pf===Infinity?
+"∞":
+pf.toFixed(2);
+
+document.getElementById(
+"maxDD"
+).innerText=
+"-"+
+maxDD.toFixed(2)+"R";
+
+document.getElementById(
+"lossStreak"
+).innerText=
+maxLoss;
+
+document.getElementById(
+"buyTrades"
+).innerText=
+buys.length;
+
+document.getElementById(
+"buyWinRate"
+).innerText=
+buys.length?
+(
+buyWins.length/buys.length*100
+).toFixed(1)+"%":
+"0%";
+
+document.getElementById(
+"sellTrades"
+).innerText=
+sells.length;
+
+document.getElementById(
+"sellWinRate"
+).innerText=
+sells.length?
+(
+sellWins.length/sells.length*100
+).toFixed(1)+"%":
+"0%";
+
+
+/* TABLE */
+
+let list=
+document.getElementById(
+"tradeList"
+);
+
+list.innerHTML="";
+
+trades
+.slice()
+.reverse()
+.forEach(
+(t,i)=>{
+
+let row=
+document.createElement("tr");
+
+let signalClass=
+t.signal==="BUY"?
+"buy":
+"sell";
+
+let resultClass=
+t.result==="WIN"?
+"win":
+t.result==="LOSS"?
+"loss":
+"yellow";
+
+let time=
+new Date(t.time)
+.toLocaleString(
+"en-MY",
+{
+day:"2-digit",
+month:"2-digit",
+hour:"2-digit",
+minute:"2-digit"
+}
+);
+
+row.innerHTML=`
+
+<td>${trades.length-i}</td>
+
+<td>${time}</td>
+
+<td class="${signalClass}">
+${t.signal}
+</td>
+
+<td>${t.entry.toFixed(2)}</td>
+
+<td>${t.sl.toFixed(2)}</td>
+
+<td>${t.tp.toFixed(2)}</td>
+
+<td class="${resultClass}">
+${t.result}
+</td>
+
+<td>
+${t.r>0?"+":""}${t.r.toFixed(2)}
+</td>
+
+<td>${t.score}</td>
+
+`;
+
+list.appendChild(row);
+
+});
+
+}
+
+</script>
+
+</body>
+</html>
