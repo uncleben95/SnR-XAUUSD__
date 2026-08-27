@@ -3,18 +3,32 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>XAU/USD Pro Sniper Dashboard V2</title>
+<meta name="theme-color" content="#0f172a">
+<title>XAU/USD Pro Sniper Dashboard V3</title>
 
 <style>
 :root{
---bg:#f3f5f8;--card:#fff;--sub:#f8fafc;--text:#20252b;
---muted:#737b87;--border:#e1e5ea;--blue:#2563eb;
---green:#15803d;--green-bg:#dcfce7;--red:#dc2626;
---red-bg:#fee2e2;--yellow:#a16207;--purple:#7c3aed;
---purple-bg:#f3e8ff;--shadow:0 4px 16px rgba(0,0,0,.055)
+--bg:#eef2f6;
+--card:#fff;
+--sub:#f7f9fc;
+--text:#20252b;
+--muted:#737b87;
+--border:#e1e5ea;
+--blue:#2563eb;
+--green:#15803d;
+--green-bg:#dcfce7;
+--red:#dc2626;
+--red-bg:#fee2e2;
+--yellow:#a16207;
+--purple:#7c3aed;
+--purple-bg:#f3e8ff;
+--dark:#0f172a;
+--shadow:0 4px 16px rgba(0,0,0,.055)
 }
 
-*{box-sizing:border-box}
+*{
+box-sizing:border-box
+}
 
 body{
 margin:0;
@@ -30,6 +44,8 @@ max-width:1100px;
 margin:auto
 }
 
+/* HEADER */
+
 header{
 text-align:center;
 margin-bottom:10px
@@ -38,7 +54,8 @@ margin-bottom:10px
 header h1{
 margin:0;
 color:#a87900;
-font-size:1.35rem
+font-size:1.35rem;
+letter-spacing:.3px
 }
 
 header p{
@@ -47,6 +64,8 @@ color:var(--muted);
 font-size:.72rem
 }
 
+/* STATUS */
+
 .status-bar{
 display:grid;
 grid-template-columns:repeat(4,1fr);
@@ -54,7 +73,12 @@ gap:7px;
 margin-bottom:10px
 }
 
-.status-item,.sessions-bar,.master-card,.card,.chart-card,.notification-control{
+.status-item,
+.sessions-bar,
+.master-card,
+.card,
+.chart-card,
+.notification-control{
 background:var(--card);
 border:1px solid var(--border);
 border-radius:10px;
@@ -93,6 +117,8 @@ color:var(--yellow)!important;
 font-weight:bold
 }
 
+/* SESSION */
+
 .sessions-bar{
 padding:9px;
 margin-bottom:10px
@@ -121,13 +147,15 @@ border:1px solid var(--border);
 border-radius:7px;
 font-size:.72rem;
 font-weight:bold;
-color:#666
+color:#666;
+transition:.2s
 }
 
 .session-pill.active{
 background:var(--green-bg);
 border-color:#22c55e;
-color:var(--green)
+color:var(--green);
+box-shadow:0 0 0 2px rgba(34,197,94,.08)
 }
 
 .session-time{
@@ -136,6 +164,8 @@ font-size:.6rem;
 font-weight:normal;
 color:var(--muted)
 }
+
+/* CHART */
 
 .chart-card{
 padding:10px;
@@ -164,7 +194,7 @@ color:var(--green)
 .chart-wrap{
 position:relative;
 width:100%;
-height:260px;
+height:280px;
 background:#0f172a;
 border-radius:8px;
 overflow:hidden
@@ -182,11 +212,24 @@ right:7px;
 top:7px;
 padding:4px 7px;
 border-radius:5px;
-background:rgba(255,255,255,.9);
+background:rgba(255,255,255,.94);
 font-size:.7rem;
 font-weight:bold;
 color:#a87900
 }
+
+.chart-info{
+position:absolute;
+left:7px;
+bottom:7px;
+padding:4px 7px;
+border-radius:5px;
+background:rgba(15,23,42,.78);
+color:#cbd5e1;
+font-size:.58rem
+}
+
+/* NOTIFICATION */
 
 .notification-control{
 padding:9px;
@@ -232,6 +275,53 @@ background:var(--green)
 background:var(--red)
 }
 
+/* ALERT */
+
+.alert-box{
+display:none;
+margin-bottom:10px;
+padding:12px;
+border-radius:10px;
+text-align:center;
+font-weight:bold;
+animation:pulseAlert 1s infinite alternate
+}
+
+.alert-box.buy{
+display:block;
+background:var(--green-bg);
+color:var(--green);
+border:2px solid #22c55e
+}
+
+.alert-box.sell{
+display:block;
+background:var(--red-bg);
+color:var(--red);
+border:2px solid #ef4444
+}
+
+.alert-box.wait{
+display:none
+}
+
+.alert-title{
+font-size:1rem
+}
+
+.alert-detail{
+font-size:.7rem;
+margin-top:3px;
+font-weight:normal
+}
+
+@keyframes pulseAlert{
+from{transform:scale(1)}
+to{transform:scale(1.015)}
+}
+
+/* MASTER */
+
 .master-card{
 border:2px solid var(--border);
 padding:13px;
@@ -261,7 +351,8 @@ color:var(--muted)
 margin:3px 0;
 font-size:2rem;
 font-weight:800;
-color:#a87900
+color:#a87900;
+letter-spacing:.5px
 }
 
 .price-source{
@@ -337,6 +428,8 @@ transition:width .3s;
 background:var(--green)
 }
 
+/* PRICE INPUT */
+
 .price-input-box{
 background:var(--sub);
 border:1px dashed var(--blue);
@@ -371,51 +464,11 @@ background:var(--blue);
 color:#fff;
 border-radius:6px;
 padding:7px 12px;
-font-weight:bold
-}
-
-.alert-box{
-display:none;
-margin-bottom:10px;
-padding:12px;
-border-radius:10px;
-text-align:center;
 font-weight:bold;
-animation:pulseAlert 1s infinite alternate
+cursor:pointer
 }
 
-.alert-box.buy{
-display:block;
-background:var(--green-bg);
-color:var(--green);
-border:2px solid #22c55e
-}
-
-.alert-box.sell{
-display:block;
-background:var(--red-bg);
-color:var(--red);
-border:2px solid #ef4444
-}
-
-.alert-box.wait{
-display:none
-}
-
-.alert-title{
-font-size:1rem
-}
-
-.alert-detail{
-font-size:.7rem;
-margin-top:3px;
-font-weight:normal
-}
-
-@keyframes pulseAlert{
-from{transform:scale(1)}
-to{transform:scale(1.015)}
-}
+/* EXECUTION */
 
 .execution{
 background:var(--sub);
@@ -456,6 +509,8 @@ font-weight:800;
 font-size:.86rem
 }
 
+/* GRID */
+
 .grid{
 display:grid;
 grid-template-columns:1fr;
@@ -490,6 +545,8 @@ font-size:.75rem
 .metric:last-child{
 border-bottom:none
 }
+
+/* CONFLUENCE */
 
 .confluence{
 background:linear-gradient(135deg,#f8fafc,#eef2ff)
@@ -543,6 +600,8 @@ background:#ef4444
 background:#eab308
 }
 
+/* LIQUIDITY */
+
 .liquidity-box{
 display:grid;
 grid-template-columns:1fr 1fr;
@@ -568,6 +627,8 @@ display:block;
 margin-top:2px;
 font-size:.75rem
 }
+
+/* RISK */
 
 .risk-inputs{
 display:grid;
@@ -606,6 +667,8 @@ font-weight:bold;
 font-size:.72rem
 }
 
+/* HISTORY */
+
 .history{
 max-height:190px;
 overflow-y:auto
@@ -636,6 +699,8 @@ color:var(--purple);
 font-weight:bold
 }
 
+/* REASONS */
+
 .reason{
 padding:4px 0;
 font-size:.7rem
@@ -649,6 +714,8 @@ color:var(--green)
 color:var(--red)
 }
 
+/* FOOTER */
+
 .footer{
 text-align:center;
 color:var(--muted);
@@ -657,6 +724,7 @@ padding:12px 0 4px
 }
 
 @media(min-width:760px){
+
 .grid{
 grid-template-columns:1fr 1fr
 }
@@ -664,9 +732,11 @@ grid-template-columns:1fr 1fr
 .chart-wrap{
 height:330px
 }
+
 }
 
 @media(max-width:500px){
+
 body{
 padding:7px
 }
@@ -694,6 +764,7 @@ padding:8px
 .notification-button{
 padding:7px 9px
 }
+
 }
 </style>
 </head>
@@ -703,7 +774,7 @@ padding:7px 9px
 <div class="container">
 
 <header>
-<h1>XAU/USD PRO SNIPER V2</h1>
+<h1>XAU/USD PRO SNIPER V3</h1>
 <p>H1 Bias → M15 Confirmation → M5 Trigger → S/R + Liquidity → Dynamic Risk Engine</p>
 </header>
 
@@ -766,8 +837,15 @@ NEW YORK
 </div>
 
 <div class="chart-wrap">
+
 <canvas id="priceChart"></canvas>
+
 <div id="chartPrice" class="chart-price">--</div>
+
+<div class="chart-info">
+Live market feed • Last 60 candles
+</div>
+
 </div>
 
 </div>
@@ -776,6 +854,7 @@ NEW YORK
 
 <div class="notification-info">
 <div class="notification-title">🔔 SIGNAL ALERT SYSTEM</div>
+
 <div id="notificationStatus" class="notification-status">
 Notification belum diaktifkan
 </div>
@@ -791,13 +870,18 @@ onclick="enableNotifications()">
 </div>
 
 <div id="signalAlert" class="alert-box">
+
 <div id="alertTitle" class="alert-title"></div>
+
 <div id="alertDetail" class="alert-detail"></div>
+
 </div>
 
 <div id="masterCard" class="master-card">
 
-<div class="price-label">XAU/USD MARKET PRICE</div>
+<div class="price-label">
+XAU/USD MARKET PRICE
+</div>
 
 <div id="livePrice" class="price-display">
 Loading...
@@ -846,6 +930,7 @@ UPDATE
 </button>
 
 </div>
+
 </div>
 
 </div>
@@ -1082,7 +1167,7 @@ MARKET FILTERS
 
 <h3>
 SIGNAL CONFLUENCE
-<span>V2 FILTER</span>
+<span>V3 FILTER</span>
 </h3>
 
 <div id="confluenceScore" class="confluence-score">
@@ -1305,7 +1390,7 @@ SIGNAL HISTORY
 </div>
 
 <div class="footer">
-XAU/USD Pro Sniper Dashboard V2<br>
+XAU/USD Pro Sniper Dashboard V3<br>
 Price feed: Twelve Data API<br>
 Live technical engine • Informational only
 </div>
@@ -1315,7 +1400,7 @@ Live technical engine • Informational only
 <script>
 
 /* =========================================================
-   GLOBAL
+GLOBAL
 ========================================================= */
 
 let currentPrice=0;
@@ -1333,8 +1418,6 @@ h1:{},
 levels:{}
 };
 
-/* V2 STATE */
-
 let lastEngineSignal="WAIT";
 let lastSignalTime=0;
 let lastSignalPrice=0;
@@ -1344,7 +1427,7 @@ const MIN_SCORE=75;
 
 
 /* =========================================================
-   HELPERS
+HELPERS
 ========================================================= */
 
 function num(v){
@@ -1352,12 +1435,14 @@ return parseFloat(v);
 }
 
 function avg(arr){
+
 if(!arr.length)return 0;
 
 return arr.reduce(
 (a,b)=>a+b,
 0
 )/arr.length;
+
 }
 
 function ema(values,period){
@@ -1375,10 +1460,13 @@ let i=period;
 i<values.length;
 i++
 ){
+
 e=values[i]*k+e*(1-k);
+
 }
 
 return e;
+
 }
 
 function sma(values,period){
@@ -1388,6 +1476,7 @@ if(values.length<period)return null;
 return avg(
 values.slice(-period)
 );
+
 }
 
 function std(values,period){
@@ -1405,6 +1494,7 @@ x=>(x-m)**2
 )
 )
 );
+
 }
 
 function rsi(values,period=14){
@@ -1423,10 +1513,15 @@ i++
 let d=values[i]-values[i-1];
 
 if(d>0){
+
 gains+=d;
+
 }else{
+
 losses-=d;
+
 }
+
 }
 
 if(losses===0)return 100;
@@ -1436,6 +1531,7 @@ let rs=
 (losses/period);
 
 return 100-(100/(1+rs));
+
 }
 
 function atr(data,period=14){
@@ -1461,11 +1557,13 @@ Math.abs(h-pc),
 Math.abs(l-pc)
 )
 );
+
 }
 
 return avg(
 trs.slice(-period)
 );
+
 }
 
 function macd(values){
@@ -1499,8 +1597,11 @@ if(
 e12!==null&&
 e26!==null
 ){
+
 series.push(e12-e26);
+
 }
+
 }
 
 let signal=ema(series,9);
@@ -1512,6 +1613,7 @@ bull:
 signal!==null&&
 line>signal
 };
+
 }
 
 function adx(data,period=14){
@@ -1560,6 +1662,7 @@ down>up&&down>0?
 down:
 0
 );
+
 }
 
 let tr=avg(
@@ -1587,6 +1690,7 @@ return{
 value:dx,
 bull:pdi>mdi
 };
+
 }
 
 function aggregate(data,minutes){
@@ -1634,6 +1738,7 @@ buckets[key].close=c.close;
 
 buckets[key].volume+=
 c.volume||0;
+
 }
 
 });
@@ -1645,6 +1750,7 @@ k=>out.push(buckets[k])
 );
 
 return out;
+
 }
 
 function formatUpdateTime(){
@@ -1662,7 +1768,7 @@ second:"2-digit"
 
 
 /* =========================================================
-   SESSION
+SESSION
 ========================================================= */
 
 function getLastSunday(year,month){
@@ -1676,12 +1782,15 @@ month+1,
 while(
 d.getDay()!==0
 ){
+
 d.setDate(
 d.getDate()-1
 );
+
 }
 
 return d.getDate();
+
 }
 
 function getNthSunday(year,month,n){
@@ -1705,14 +1814,17 @@ count++;
 if(count===n){
 return d.getDate();
 }
+
 }
 
 d.setDate(
 d.getDate()+1
 );
+
 }
 
 return null;
+
 }
 
 function isLondonDST(date){
@@ -1735,6 +1847,7 @@ if(m===2&&d>=start)return true;
 if(m===9&&d<end)return true;
 
 return false;
+
 }
 
 function isNYDST(date){
@@ -1757,6 +1870,7 @@ if(m===2&&d>=start)return true;
 if(m===10&&d<end)return true;
 
 return false;
+
 }
 
 function updateSessions(){
@@ -1835,11 +1949,12 @@ document.getElementById(
 isNYDST(now)?
 "20:00 – 05:00":
 "21:00 – 06:00";
+
 }
 
 
 /* =========================================================
-   NOTIFICATION
+NOTIFICATION
 ========================================================= */
 
 let audioContext=null;
@@ -1862,7 +1977,9 @@ window.webkitAudioContext
 if(
 audioContext.state==="suspended"
 ){
+
 audioContext.resume();
+
 }
 
 audioReady=true;
@@ -1888,10 +2005,7 @@ const gain=
 ctx.createGain();
 
 osc.connect(gain);
-
-gain.connect(
-ctx.destination
-);
+gain.connect(ctx.destination);
 
 osc.type="sine";
 
@@ -1937,7 +2051,6 @@ now+.35
 );
 
 osc.start(now);
-
 osc.stop(now+.4);
 
 }catch(e){}
@@ -1971,6 +2084,7 @@ button.classList.add(
 button.disabled=true;
 
 return;
+
 }
 
 if(
@@ -1994,6 +2108,7 @@ button.classList.add(
 button.disabled=false;
 
 return;
+
 }
 
 if(
@@ -2017,6 +2132,7 @@ button.classList.add(
 button.disabled=false;
 
 return;
+
 }
 
 status.innerText=
@@ -2031,6 +2147,7 @@ button.classList.remove(
 );
 
 button.disabled=false;
+
 }
 
 async function enableNotifications(){
@@ -2044,6 +2161,7 @@ alert(
 );
 
 return;
+
 }
 
 if(
@@ -2066,6 +2184,7 @@ icon:"/icon.png"
 updateNotificationStatus();
 
 return;
+
 }
 
 if(
@@ -2077,6 +2196,7 @@ alert(
 );
 
 return;
+
 }
 
 try{
@@ -2150,7 +2270,7 @@ renotify:true
 
 
 /* =========================================================
-   LIVE API
+LIVE API
 ========================================================= */
 
 async function fetchLiveGold(){
@@ -2201,14 +2321,6 @@ throw new Error(
 );
 
 }
-
-
-/*
-IMPORTANT:
-API /api/xau sudah return data
-oldest → newest.
-Jadi JANGAN guna reverse() lagi.
-*/
 
 const raw=data.values;
 
@@ -2329,7 +2441,7 @@ document.getElementById(
 
 
 /* =========================================================
-   CHART
+CHART
 ========================================================= */
 
 function drawChart(){
@@ -2342,7 +2454,8 @@ document.getElementById(
 if(
 !canvas||
 candles.length<2
-)return;
+)
+return;
 
 const ctx=
 canvas.getContext("2d");
@@ -2438,6 +2551,8 @@ chartRight-chartLeft
 
 }
 
+/* GRID */
+
 ctx.strokeStyle=
 "rgba(255,255,255,.08)";
 
@@ -2472,6 +2587,8 @@ ctx.stroke();
 
 }
 
+/* PRICE LINE */
+
 ctx.beginPath();
 
 data.forEach(
@@ -2494,6 +2611,8 @@ ctx.strokeStyle=
 ctx.lineWidth=2;
 
 ctx.stroke();
+
+/* CURRENT LINE */
 
 let last=
 data[data.length-1];
@@ -2524,6 +2643,8 @@ ctx.stroke();
 
 ctx.setLineDash([]);
 
+/* CURRENT DOT */
+
 ctx.beginPath();
 
 ctx.arc(
@@ -2538,6 +2659,8 @@ ctx.fillStyle=
 "#fbbf24";
 
 ctx.fill();
+
+/* LABELS */
 
 ctx.fillStyle=
 "#cbd5e1";
@@ -2561,7 +2684,7 @@ chartBottom
 
 
 /* =========================================================
-   ANALYSIS V2
+ANALYSIS V2
 ========================================================= */
 
 function analyze(){
@@ -2809,6 +2932,7 @@ market.levels.asianLow=
 market.levels.support;
 
 return;
+
 }
 
 market.levels.asianHigh=
@@ -2825,7 +2949,7 @@ Math.min(
 
 
 /* =========================================================
-   VWAP
+VWAP
 ========================================================= */
 
 function calcVWAP(data){
@@ -2858,11 +2982,12 @@ totalV+=v;
 return totalV?
 totalPV/totalV:
 null;
+
 }
 
 
 /* =========================================================
-   LIQUIDITY / TRIGGER HELPERS
+LIQUIDITY
 ========================================================= */
 
 function getLocationScore(
@@ -2939,6 +3064,7 @@ return 0;
 }
 
 return 3;
+
 }
 
 function getFVG(){
@@ -2967,6 +3093,7 @@ last.high<c3.low
 return "BEAR";
 
 return "NONE";
+
 }
 
 function getRangePosition(){
@@ -2995,7 +3122,7 @@ rangeHigh-rangeLow
 
 
 /* =========================================================
-   SIGNAL ENGINE V2
+SIGNAL ENGINE
 ========================================================= */
 
 function runEngine(){
@@ -3542,7 +3669,7 @@ lastEngineSignal=
 
 
 /* =========================================================
-   UI
+UI
 ========================================================= */
 
 function html(
@@ -4103,7 +4230,7 @@ signal
 
 
 /* =========================================================
-   FILTER
+FILTER
 ========================================================= */
 
 function setFilter(
@@ -4135,11 +4262,12 @@ t.className=
 good?
 "pass":
 "fail";
+
 }
 
 
 /* =========================================================
-   TRADE PLAN V2
+TRADE PLAN
 ========================================================= */
 
 function generateTradePlan(
@@ -4165,9 +4293,11 @@ document.getElementById(
 "execTP3"
 ].forEach(
 id=>{
+
 document.getElementById(
 id
 ).innerText="--";
+
 }
 );
 
@@ -4177,6 +4307,7 @@ document.getElementById(
 "N/A";
 
 return;
+
 }
 
 let atrValue=
@@ -4304,7 +4435,7 @@ updateRiskCalculator();
 
 
 /* =========================================================
-   SIGNAL ALERT
+SIGNAL ALERT
 ========================================================= */
 
 function showSignalAlert(
@@ -4397,7 +4528,7 @@ sendBrowserNotification(
 
 
 /* =========================================================
-   RISK
+RISK
 ========================================================= */
 
 function updateRiskCalculator(){
@@ -4471,7 +4602,7 @@ lot
 
 
 /* =========================================================
-   HISTORY
+HISTORY
 ========================================================= */
 
 function addHistory(
@@ -4563,7 +4694,7 @@ list.appendChild(row);
 
 
 /* =========================================================
-   MARKET
+MARKET
 ========================================================= */
 
 function updateMarketStatus(){
@@ -4597,7 +4728,7 @@ closed?
 
 
 /* =========================================================
-   NEWS
+NEWS
 ========================================================= */
 
 function newsFilter(){
@@ -4616,7 +4747,7 @@ document.getElementById(
 
 
 /* =========================================================
-   MANUAL PRICE
+MANUAL PRICE
 ========================================================= */
 
 function updateManualPrice(){
@@ -4660,7 +4791,7 @@ runEngine();
 
 
 /* =========================================================
-   INPUTS
+INPUTS
 ========================================================= */
 
 [
@@ -4682,7 +4813,7 @@ updateRiskCalculator
 
 
 /* =========================================================
-   INTERACTION
+INTERACTION
 ========================================================= */
 
 document.addEventListener(
@@ -4704,7 +4835,7 @@ window.addEventListener(
 
 
 /* =========================================================
-   START
+START
 ========================================================= */
 
 window.addEventListener(
@@ -4730,7 +4861,7 @@ fetchLiveGold();
 
 
 /* =========================================================
-   INTERVALS
+INTERVALS
 ========================================================= */
 
 setInterval(
