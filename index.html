@@ -2200,43 +2200,111 @@ try{
 api.innerText="● API CONNECTING";
 api.className="api-status";
 
-const response=
-await fetch(
-"/api/xau?ts="+Date.now(),
+const url="/api/xau?ts="+Date.now();
+
+console.log("XAU FETCH:",url);
+
+const response=await fetch(
+url,
 {
-cache:"no-store"
+method:"GET",
+cache:"no-store",
+headers:{
+"Accept":"application/json"
+}
 }
 );
 
+console.log(
+"XAU RESPONSE:",
+response.status,
+response.statusText
+);
+
+const text=await response.text();
+
+console.log(
+"XAU RESPONSE SIZE:",
+text.length
+);
+
 if(!response.ok){
-throw new Error("HTTP "+response.status);
+
+throw new Error(
+"HTTP "+response.status+
+" — "+text.slice(0,300)
+);
+
 }
 
-const data=await response.json();
+let data;
 
-if(!data.values?.length){
-throw new Error("Tiada candle");
+try{
+
+data=JSON.parse(text);
+
+}catch(parseError){
+
+throw new Error(
+"JSON ERROR: "+parseError.message+
+" | RESPONSE: "+text.slice(0,300)
+);
+
+}
+
+console.log(
+"XAU DATA:",
+{
+ok:data.ok,
+count:data.count,
+lastPrice:data.lastPrice,
+values:data.values?.length
+}
+);
+
+if(data.ok===false){
+
+throw new Error(
+data.error||
+data.message||
+"Twelve Data API error"
+);
+
+}
+
+if(
+!Array.isArray(data.values)||
+!data.values.length
+){
+
+throw new Error(
+"Tiada candle diterima daripada /api/xau"
+);
+
 }
 
 const raw=data.values;
 
-candles=
-raw
+candles=raw
 .map(x=>({
 
 time:x.datetime||x.time,
+
 open:num(x.open),
 high:num(x.high),
 low:num(x.low),
 close:num(x.close),
+
 volume:num(x.volume)||0
 
 }))
 .filter(x=>
+
 isFinite(x.open)&&
 isFinite(x.high)&&
 isFinite(x.low)&&
 isFinite(x.close)
+
 )
 .sort(
 (a,b)=>
@@ -2244,56 +2312,130 @@ new Date(a.time)-new Date(b.time)
 );
 
 if(!candles.length){
-throw new Error("Candle invalid");
+
+throw new Error(
+"Semua candle gagal diproses"
+);
+
 }
 
 const latest=
 candles[candles.length-1];
 
+if(
+!latest||
+!isFinite(latest.close)
+){
+
+throw new Error(
+"Latest candle tidak mempunyai close price yang sah"
+);
+
+}
+
 previousPrice=currentPrice;
+
 currentPrice=latest.close;
 
-document.getElementById("livePrice").innerText=
+
+/* PRICE */
+
+document.getElementById(
+"livePrice"
+).innerText=
 currentPrice.toFixed(2);
 
-document.getElementById("priceInput").value=
+document.getElementById(
+"priceInput"
+).value=
 currentPrice.toFixed(2);
 
-document.getElementById("riskEntry").value=
+document.getElementById(
+"riskEntry"
+).value=
 currentPrice.toFixed(2);
 
-document.getElementById("chartPrice").innerText=
+document.getElementById(
+"chartPrice"
+).innerText=
 currentPrice.toFixed(2);
+
+
+/* STATUS */
 
 source.innerText=
-"Twelve Data • Live 5M Candle • "+
+"Twelve Data • Live 5M • "+
 formatUpdateTime();
 
-api.innerText="● LIVE API";
-api.className="api-status";
+api.innerText=
+"● LIVE API";
 
-document.getElementById("chartLive").innerText="● LIVE";
+api.className=
+"api-status";
+
+document.getElementById(
+"chartLive"
+).innerText=
+"● LIVE";
+
+
+/* CHART */
 
 drawChart();
+
+
+/* ENGINE */
+
+try{
+
 runEngine();
+
+}catch(engineError){
+
+console.error(
+"ENGINE ERROR:",
+engineError
+);
+
+source.innerText=
+"DATA LIVE • ENGINE ERROR";
+
+api.innerText=
+"● DATA LIVE / ENGINE ERROR";
+
+api.className=
+"api-status api-error";
+
+}
 
 }catch(e){
 
-console.error(e);
+console.error(
+"XAU LIVE FEED ERROR:",
+e
+);
 
-api.innerText="● API ERROR";
-api.className="api-status api-error";
+api.innerText=
+"● API ERROR";
+
+api.className=
+"api-status api-error";
 
 source.innerText=
-"API gagal — cuba lagi dalam 30 saat";
+"ERROR: "+
+(
+e?.message||
+"Unknown error"
+);
 
-document.getElementById("chartLive").innerText=
+document.getElementById(
+"chartLive"
+).innerText=
 "● OFFLINE";
 
 }
 
 }
-
 
 /* =========================================================
 CHART
