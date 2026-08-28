@@ -3100,437 +3100,623 @@ currentPrice-rangeLow
 
 
 /* =========================================================
-V3.1 SIGNAL ENGINE
+V4 SIGNAL ENGINE
+H1 BIAS → M15 CONFIRMATION → M5 TRIGGER
+STRUCTURE + MOMENTUM + LOCATION + RISK
 ========================================================= */
 
 function runEngine(){
 
-if(candles.length<100)return;
+    if(candles.length<100)return;
 
-analyze();
+    /* =========================================
+       REFRESH MARKET ANALYSIS
+    ========================================= */
 
-let m5=market.m5;
-let m15=market.m15;
-let h1=market.h1;
-let l=market.levels;
+    analyze();
 
-if(
-!m5.atr||
-!m15.rsi||
-!h1.ema200
-)return;
+    let m5=market.m5;
+    let m15=market.m15;
+    let h1=market.h1;
+    let l=market.levels;
 
-let vwap=calcVWAP(candles);
+    if(
+        !m5||
+        !m15||
+        !h1||
+        !m5.atr||
+        !m15.rsi||
+        !h1.ema200
+    ){
 
-let volatility="NORMAL";
+        return;
 
-if(m5.atr>8)
-volatility="HIGH";
-else if(m5.atr<2.5)
-volatility="LOW";
-
-
-/* =========================================
-DIRECTIONAL CONDITIONS
-========================================= */
-
-let h1Buy=
-h1.bull&&
-currentPrice>h1.ema200;
-
-let h1Sell=
-h1.bear&&
-currentPrice<h1.ema200;
+    }
 
 
-let m15Buy=
-m15.ema20>m15.ema50&&
-m15.rsi>=50&&
-m15.rsi<=70&&
-m15.macd?.bull&&
-m15.adx?.value>=20&&
-m15.bull;
+    /* =========================================
+       STRUCTURE DATA
+    ========================================= */
+
+    let h1Structure=
+        h1.structureData||{};
+
+    let m15Structure=
+        m15.structureData||{};
+
+    let m5Structure=
+        m5.structureData||{};
 
 
-let m15Sell=
-m15.ema20<m15.ema50&&
-m15.rsi>=30&&
-m15.rsi<50&&
-!m15.macd?.bull&&
-m15.adx?.value>=20&&
-m15.bear;
+    /* =========================================
+       VWAP
+    ========================================= */
+
+    let vwap=
+        calcVWAP(candles);
 
 
-let m5Buy=
-m5.bull&&
-m5.ema20>m5.ema50&&
-m5.rsi>=50&&
-m5.rsi<75;
+    /* =========================================
+       VOLATILITY
+    ========================================= */
+
+    let volatility="NORMAL";
+
+    if(m5.atr>=8){
+
+        volatility="HIGH";
+
+    }else if(m5.atr<2.5){
+
+        volatility="LOW";
+
+    }
 
 
-let m5Sell=
-m5.bear&&
-m5.ema20<m5.ema50&&
-m5.rsi>25&&
-m5.rsi<50;
+    /* =========================================
+       H1 DIRECTION
+    ========================================= */
+
+    let h1BullStructure=
+        h1.bull||
+        h1Structure.bias==="BULL";
+
+    let h1BearStructure=
+        h1.bear||
+        h1Structure.bias==="BEAR";
 
 
-/* =========================================
-SCORING
-========================================= */
-
-let scoreH1=0;
-let scoreM15=0;
-let scoreM5=0;
-let scoreLiq=0;
-let scoreRisk=0;
+    let h1Buy=
+        h1BullStructure&&
+        currentPrice>h1.ema200;
 
 
-/* H1 */
+    let h1Sell=
+        h1BearStructure&&
+        currentPrice<h1.ema200;
 
-if(h1Buy){
 
-scoreH1=20;
+    /* =========================================
+       M15 CONFIRMATION
+    ========================================= */
 
-}else if(h1Sell){
+    let m15TrendBuy=
+        m15.ema20>
+        m15.ema50;
 
-scoreH1=20;
+    let m15TrendSell=
+        m15.ema20<
+        m15.ema50;
 
-}else{
 
-scoreH1=6;
+    let m15MomentumBuy=
+        m15.rsi>=50&&
+        m15.rsi<=70&&
+        m15.macd?.bull&&
+        m15.adx?.value>=20;
+
+
+    let m15MomentumSell=
+        m15.rsi>=30&&
+        m15.rsi<50&&
+        !m15.macd?.bull&&
+        m15.adx?.value>=20;
+
+
+    let m15StructureBuy=
+        m15Structure.bias==="BULL"||
+        m15Structure.bos==="BULL"||
+        m15Structure.choch==="BULL";
+
+
+    let m15StructureSell=
+        m15Structure.bias==="BEAR"||
+        m15Structure.bos==="BEAR"||
+        m15Structure.choch==="BEAR";
+
+
+    let m15Buy=
+        m15TrendBuy&&
+        m15MomentumBuy&&
+        m15StructureBuy;
+
+
+    let m15Sell=
+        m15TrendSell&&
+        m15MomentumSell&&
+        m15StructureSell;
+
+
+    /* =========================================
+       M5 TRIGGER
+    ========================================= */
+
+    let m5TrendBuy=
+        m5.ema20>
+        m5.ema50;
+
+    let m5TrendSell=
+        m5.ema20<
+        m5.ema50;
+
+
+    let m5MomentumBuy=
+        m5.rsi>=50&&
+        m5.rsi<75;
+
+
+    let m5MomentumSell=
+        m5.rsi>25&&
+        m5.rsi<50;
+
+
+    let m5StructureBuy=
+        m5Structure.bias==="BULL"||
+        m5Structure.bos==="BULL"||
+        m5Structure.choch==="BULL";
+
+
+    let m5StructureSell=
+        m5Structure.bias==="BEAR"||
+        m5Structure.bos==="BEAR"||
+        m5Structure.choch==="BEAR";
+
+
+    let m5Buy=
+        m5TrendBuy&&
+        m5MomentumBuy&&
+        m5StructureBuy;
+
+
+    let m5Sell=
+        m5TrendSell&&
+        m5MomentumSell&&
+        m5StructureSell;
+
+
+    /* =========================================
+       LIQUIDITY / LOCATION
+    ========================================= */
+
+    let buyLocation=
+        getLocationScore(
+            "BUY",
+            m5.atr,
+            l
+        );
+
+    let sellLocation=
+        getLocationScore(
+            "SELL",
+            m5.atr,
+            l
+        );
+
+
+    let rangePosition=
+        getRangePosition();
+
+
+    let buyLocationValid=
+        buyLocation>=5&&
+        rangePosition<0.85;
+
+
+    let sellLocationValid=
+        sellLocation>=5&&
+        rangePosition>0.15;
+
+
+    /* =========================================
+       VWAP CONFIRMATION
+    ========================================= */
+
+    let vwapBuy=
+        !vwap||
+        currentPrice>vwap;
+
+
+    let vwapSell=
+        !vwap||
+        currentPrice<vwap;
+
+
+    /* =========================================
+       SCORE ENGINE
+    ========================================= */
+
+    let scoreH1=0;
+    let scoreM15=0;
+    let scoreM5=0;
+    let scoreLiq=0;
+    let scoreRisk=0;
+
+
+    /* =========================================
+       H1 SCORE
+    ========================================= */
+
+    if(h1Buy||h1Sell){
+
+        scoreH1=20;
+
+    }else{
+
+        scoreH1=5;
+
+    }
+
+
+    /* =========================================
+       M15 SCORE
+    ========================================= */
+
+    if(m15Buy||m15Sell){
+
+        scoreM15=20;
+
+    }else{
+
+        if(m15TrendBuy||m15TrendSell){
+
+            scoreM15+=7;
+
+        }
+
+        if(m15MomentumBuy||m15MomentumSell){
+
+            scoreM15+=7;
+
+        }
+
+        if(m15StructureBuy||m15StructureSell){
+
+            scoreM15+=6;
+
+        }
+
+    }
+
+
+    /* =========================================
+       M5 SCORE
+    ========================================= */
+
+    if(m5Buy||m5Sell){
+
+        scoreM5=20;
+
+    }else{
+
+        if(m5TrendBuy||m5TrendSell){
+
+            scoreM5+=7;
+
+        }
+
+        if(m5MomentumBuy||m5MomentumSell){
+
+            scoreM5+=6;
+
+        }
+
+        if(m5StructureBuy||m5StructureSell){
+
+            scoreM5+=7;
+
+        }
+
+    }
+
+
+    /* =========================================
+       LIQUIDITY SCORE
+    ========================================= */
+
+    let bestLocation=
+        Math.max(
+            buyLocation,
+            sellLocation
+        );
+
+
+    scoreLiq=
+        Math.min(
+            18,
+            bestLocation+2
+        );
+
+
+    if(
+        vwap&&
+        (
+            (h1Buy&&currentPrice>vwap)||
+            (h1Sell&&currentPrice<vwap)
+        )
+    ){
+
+        scoreLiq+=2;
+
+    }
+
+
+    scoreLiq=
+        Math.min(
+            20,
+            scoreLiq
+        );
+
+
+    /* =========================================
+       RISK SCORE
+    ========================================= */
+
+    if(volatility==="NORMAL"){
+
+        scoreRisk=12;
+
+    }else if(volatility==="LOW"){
+
+        scoreRisk=8;
+
+    }else{
+
+        scoreRisk=4;
+
+    }
+
+
+    let hour=
+        new Date().getHours();
+
+
+    let activeSession=
+        (
+            hour>=8&&
+            hour<17
+        )||
+        (
+            hour>=15&&
+            hour<24
+        )||
+        (
+            hour>=20||
+            hour<5
+        );
+
+
+    scoreRisk+=
+        activeSession?
+        8:
+        2;
+
+
+    scoreRisk=
+        Math.min(
+            20,
+            scoreRisk
+        );
+
+
+    /* =========================================
+       SCORE CAP
+    ========================================= */
+
+    scoreH1=
+        Math.min(
+            20,
+            scoreH1
+        );
+
+    scoreM15=
+        Math.min(
+            20,
+            scoreM15
+        );
+
+    scoreM5=
+        Math.min(
+            20,
+            scoreM5
+        );
+
+
+    let total=
+        scoreH1+
+        scoreM15+
+        scoreM5+
+        scoreLiq+
+        scoreRisk;
+
+
+    /* =========================================
+       HARD ALIGNMENT
+    ========================================= */
+
+    let buyAligned=
+        h1Buy&&
+        m15Buy&&
+        m5Buy;
+
+
+    let sellAligned=
+        h1Sell&&
+        m15Sell&&
+        m5Sell;
+
+
+    /* =========================================
+       CONFLICT DETECTION
+    ========================================= */
+
+    let conflicting=
+
+        (h1Buy&&m15Sell)||
+        (h1Sell&&m15Buy)||
+        (m15Buy&&m5Sell)||
+        (m15Sell&&m5Buy);
+
+
+    /* =========================================
+       FINAL VALIDATION
+    ========================================= */
+
+    let buyValid=
+
+        buyAligned&&
+        !conflicting&&
+        total>=MIN_SCORE&&
+        buyLocationValid&&
+        vwapBuy;
+
+
+    let sellValid=
+
+        sellAligned&&
+        !conflicting&&
+        total>=MIN_SCORE&&
+        sellLocationValid&&
+        vwapSell;
+
+
+    /* =========================================
+       FINAL SIGNAL
+    ========================================= */
+
+    let signal="WAIT";
+
+
+    if(
+        buyValid&&
+        !sellValid
+    ){
+
+        signal="BUY";
+
+    }else if(
+        sellValid&&
+        !buyValid
+    ){
+
+        signal="SELL";
+
+    }
+
+
+    /* =========================================
+       UPDATE UI
+    ========================================= */
+
+    updateUI(
+        signal,
+        total,
+        scoreH1,
+        scoreM15,
+        scoreM5,
+        scoreLiq,
+        scoreRisk,
+        vwap,
+        volatility,
+        h1Buy,
+        h1Sell,
+        m15Buy,
+        m15Sell,
+        m5Buy,
+        m5Sell,
+        conflicting
+    );
+
+
+    /* =========================================
+       SIGNAL ALERT
+       KEKALKAN ENGINE ANTI-SPAM
+    ========================================= */
+
+    if(signal!=="WAIT"){
+
+        let now=
+            Date.now();
+
+
+        let cooldownActive=
+            now-lastSignalTime<
+            SIGNAL_COOLDOWN;
+
+
+        let priceMovedEnough=
+            lastSignalPrice===0||
+            Math.abs(
+                currentPrice-
+                lastSignalPrice
+            )>=m5.atr*.75;
+
+
+        let setupChanged=
+            signal!==lastEngineSignal;
+
+
+        if(
+            !cooldownActive&&
+            priceMovedEnough&&
+            setupChanged
+        ){
+
+            addHistory(
+                signal,
+                currentPrice,
+                total
+            );
+
+
+            showSignalAlert(
+                signal,
+                total,
+                currentPrice
+            );
+
+
+            lastSignalTime=
+                now;
+
+
+            lastSignalPrice=
+                currentPrice;
+
+
+            lastEngineSignal=
+                signal;
+
+        }
+
+
+    }else{
+
+        lastEngineSignal=
+            "WAIT";
+
+    }
 
 }
-
-
-/* M15 */
-
-if(m15Buy){
-
-scoreM15=20;
-
-}else if(m15Sell){
-
-scoreM15=20;
-
-}else{
-
-if(
-m15.ema20&&
-m15.ema50&&
-(
-m15.ema20>m15.ema50||
-m15.ema20<m15.ema50
-)
-){
-
-scoreM15+=8;
-
-}
-
-if(
-m15.rsi>=45&&
-m15.rsi<=55
-){
-
-scoreM15+=4;
-
-}
-
-}
-
-
-/* M5 */
-
-if(m5Buy){
-
-scoreM5=20;
-
-}else if(m5Sell){
-
-scoreM5=20;
-
-}else{
-
-if(
-m5.ema20&&
-m5.ema50
-){
-
-if(
-m5.ema20>m5.ema50||
-m5.ema20<m5.ema50
-){
-
-scoreM5+=7;
-
-}
-
-}
-
-if(
-m5.bull||
-m5.bear
-){
-
-scoreM5+=6;
-
-}
-
-}
-
-
-/* LOCATION */
-
-let buyLocation=
-getLocationScore(
-"BUY",
-m5.atr,
-l
-);
-
-let sellLocation=
-getLocationScore(
-"SELL",
-m5.atr,
-l
-);
-
-let bestLocation=
-Math.max(
-buyLocation,
-sellLocation
-);
-
-scoreLiq=
-Math.min(
-20,
-bestLocation+6
-);
-
-
-/* VWAP */
-
-if(vwap){
-
-if(
-(h1Buy&&currentPrice>vwap)||
-(h1Sell&&currentPrice<vwap)
-){
-
-scoreLiq+=2;
-
-}
-
-}
-
-
-/* RISK */
-
-if(volatility==="NORMAL")
-scoreRisk+=10;
-
-else if(volatility==="LOW")
-scoreRisk+=6;
-
-else
-scoreRisk+=3;
-
-let hour=new Date().getHours();
-
-let active=
-(
-hour>=8&&hour<17
-)||
-(
-hour>=15&&hour<24
-)||
-(
-hour>=20||hour<5
-);
-
-scoreRisk+=active?10:3;
-
-
-/* CAP */
-
-scoreH1=Math.min(20,scoreH1);
-scoreM15=Math.min(20,scoreM15);
-scoreM5=Math.min(20,scoreM5);
-scoreLiq=Math.min(20,scoreLiq);
-scoreRisk=Math.min(20,scoreRisk);
-
-let total=
-scoreH1+
-scoreM15+
-scoreM5+
-scoreLiq+
-scoreRisk;
-
-
-/* =========================================
-STRICT ALIGNMENT
-========================================= */
-
-let rangePosition=
-getRangePosition();
-
-let buyLocationValid=
-buyLocation>=5;
-
-let sellLocationValid=
-sellLocation>=5;
-
-let buyNotOverextended=
-rangePosition<.85;
-
-let sellNotOverextended=
-rangePosition>.15;
-
-
-/*
-HARD ALIGNMENT
-
-H1 BUY
-+
-M15 BUY
-+
-M5 BUY
-=
-possible BUY
-*/
-
-let buyAligned=
-h1Buy&&
-m15Buy&&
-m5Buy;
-
-let sellAligned=
-h1Sell&&
-m15Sell&&
-m5Sell;
-
-
-/*
-NO CONFLICT
-*/
-
-let conflicting=
-(h1Buy&&m15Sell)||
-(h1Sell&&m15Buy)||
-(m15Buy&&m5Sell)||
-(m15Sell&&m5Buy);
-
-
-/*
-FINAL VALIDATION
-*/
-
-let buyValid=
-buyAligned&&
-!conflicting&&
-total>=MIN_SCORE&&
-buyLocationValid&&
-buyNotOverextended;
-
-let sellValid=
-sellAligned&&
-!conflicting&&
-total>=MIN_SCORE&&
-sellLocationValid&&
-sellNotOverextended;
-
-let signal="WAIT";
-
-if(buyValid&&!sellValid){
-
-signal="BUY";
-
-}else if(sellValid&&!buyValid){
-
-signal="SELL";
-
-}
-
-
-/* =========================================
-UI
-========================================= */
-
-updateUI(
-signal,
-total,
-scoreH1,
-scoreM15,
-scoreM5,
-scoreLiq,
-scoreRisk,
-vwap,
-volatility,
-h1Buy,
-h1Sell,
-m15Buy,
-m15Sell,
-m5Buy,
-m5Sell,
-conflicting
-);
-
-
-/* =========================================
-ALERT ENGINE
-========================================= */
-
-if(signal!=="WAIT"){
-
-let now=Date.now();
-
-let cooldownActive=
-now-lastSignalTime<
-SIGNAL_COOLDOWN;
-
-let priceMovedEnough=
-lastSignalPrice===0||
-Math.abs(
-currentPrice-lastSignalPrice
-)>=m5.atr*.75;
-
-let setupChanged=
-signal!==lastEngineSignal;
-
-if(
-!cooldownActive&&
-priceMovedEnough&&
-setupChanged
-){
-
-addHistory(
-signal,
-currentPrice,
-total
-);
-
-showSignalAlert(
-signal,
-total,
-currentPrice
-);
-
-lastSignalTime=now;
-lastSignalPrice=currentPrice;
-lastEngineSignal=signal;
-
-}
-
-}else{
-
-lastEngineSignal="WAIT";
-
-}
-
-}
-
-
 /* =========================================================
 UI
 ========================================================= */
