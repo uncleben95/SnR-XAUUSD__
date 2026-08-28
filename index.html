@@ -2773,545 +2773,354 @@ V3.1 SIGNAL ENGINE
 
 function runEngine(){
 
-    if(candles.length<100)return;
+if(candles.length<100)return;
 
-    analyze();
+analyze();
 
-    const m5=market.m5;
-    const m15=market.m15;
-    const h1=market.h1;
-    const l=market.levels;
+let m5=market.m5;
+let m15=market.m15;
+let h1=market.h1;
+let l=market.levels;
 
-    if(
-        !m5.atr ||
-        !m15.rsi ||
-        !h1.ema200
-    )return;
+if(
+!m5.atr||
+!m15.rsi||
+!h1.ema200
+)return;
 
-    const vwap=calcVWAP(candles);
+let vwap=calcVWAP(candles);
 
-    let volatility="NORMAL";
+let volatility="NORMAL";
 
-    if(m5.atr>8)
-        volatility="HIGH";
-    else if(m5.atr<2.5)
-        volatility="LOW";
+if(m5.atr>8)
+volatility="HIGH";
+else if(m5.atr<2.5)
+volatility="LOW";
 
-    /* =====================================================
-       H1 — MASTER BIAS
-    ===================================================== */
 
-    const h1Buy=
-        h1.bull &&
-        currentPrice>h1.ema200;
+/* =========================================
+DIRECTIONAL CONDITIONS
+========================================= */
 
-    const h1Sell=
-        h1.bear &&
-        currentPrice<h1.ema200;
+let h1Buy=
+h1.bull&&
+currentPrice>h1.ema200;
 
+let h1Sell=
+h1.bear&&
+currentPrice<h1.ema200;
 
-    /* =====================================================
-       M15 — CONFIRMATION
-       ADX >= 20 prevents entries in weak/ranging market
-    ===================================================== */
 
-    const m15Buy=
-        m15.ema20>m15.ema50 &&
-        m15.rsi>=50 &&
-        m15.rsi<=70 &&
-        m15.macd?.bull &&
-        m15.adx?.value>=20 &&
-        m15.bull;
+let m15Buy=
+m15.ema20>m15.ema50&&
+m15.rsi>=50&&
+m15.rsi<=70&&
+m15.macd?.bull&&
+m15.adx?.value>=20&&
+m15.bull;
 
-    const m15Sell=
-        m15.ema20<m15.ema50 &&
-        m15.rsi>=30 &&
-        m15.rsi<50 &&
-        !m15.macd?.bull &&
-        m15.adx?.value>=20 &&
-        m15.bear;
 
+let m15Sell=
+m15.ema20<m15.ema50&&
+m15.rsi>=30&&
+m15.rsi<50&&
+!m15.macd?.bull&&
+m15.adx?.value>=20&&
+m15.bear;
 
-    /* =====================================================
-       M5 — TRUE ENTRY TRIGGER
-    ===================================================== */
 
-    const nearSupport=
-        Math.abs(
-            currentPrice-l.support
-        )<=m5.atr*1.25;
+let m5Buy=
+m5.bull&&
+m5.ema20>m5.ema50&&
+m5.rsi>=50&&
+m5.rsi<75;
 
-    const nearResistance=
-        Math.abs(
-            currentPrice-l.resistance
-        )<=m5.atr*1.25;
 
-    const fvg=getFVG();
+let m5Sell=
+m5.bear&&
+m5.ema20<m5.ema50&&
+m5.rsi>25&&
+m5.rsi<50;
 
-    const bullishFVG=
-        fvg==="BULL";
 
-    const bearishFVG=
-        fvg==="BEAR";
+/* =========================================
+SCORING
+========================================= */
 
+let scoreH1=0;
+let scoreM15=0;
+let scoreM5=0;
+let scoreLiq=0;
+let scoreRisk=0;
 
-    /*
-     * M5 reaction must exist.
-     *
-     * BUY:
-     * - bullish structure
-     * - EMA20 > EMA50
-     * - RSI >= 50
-     * - AND either support reaction OR bullish FVG
-     */
 
-    const m5Buy=
-        m5.bull &&
-        m5.ema20>m5.ema50 &&
-        m5.rsi>=50 &&
-        m5.rsi<75 &&
-        (
-            nearSupport ||
-            bullishFVG
-        );
+/* H1 */
 
+if(h1Buy){
 
-    /*
-     * SELL:
-     * - bearish structure
-     * - EMA20 < EMA50
-     * - RSI < 50
-     * - AND either resistance reaction OR bearish FVG
-     */
+scoreH1=20;
 
-    const m5Sell=
-        m5.bear &&
-        m5.ema20<m5.ema50 &&
-        m5.rsi>25 &&
-        m5.rsi<50 &&
-        (
-            nearResistance ||
-            bearishFVG
-        );
+}else if(h1Sell){
 
+scoreH1=20;
 
-    /* =====================================================
-       LOCATION / LIQUIDITY
-    ===================================================== */
+}else{
 
-    const buyLocation=
-        getLocationScore(
-            "BUY",
-            m5.atr,
-            l
-        );
-
-    const sellLocation=
-        getLocationScore(
-            "SELL",
-            m5.atr,
-            l
-        );
-
-
-    const rangePosition=
-        getRangePosition();
-
-    const buyLocationValid=
-        buyLocation>=5;
-
-    const sellLocationValid=
-        sellLocation>=5;
-
-    const buyNotOverextended=
-        rangePosition<.85;
-
-    const sellNotOverextended=
-        rangePosition>.15;
-
-
-    /* =====================================================
-       RR FILTER
-       Proposed SL = 1.2 ATR
-       Target = nearest structural resistance/support
-    ===================================================== */
-
-    const buySL=
-        currentPrice-(m5.atr*1.2);
-
-    const buyTP=
-        l.resistance;
-
-    const sellSL=
-        currentPrice+(m5.atr*1.2);
-
-    const sellTP=
-        l.support;
-
-    const buyRisk=
-        currentPrice-buySL;
-
-    const buyReward=
-        buyTP-currentPrice;
-
-    const sellRisk=
-        sellSL-currentPrice;
-
-    const sellReward=
-        currentPrice-sellTP;
-
-    const buyRR=
-        buyRisk>0?
-        buyReward/buyRisk:
-        0;
-
-    const sellRR=
-        sellRisk>0?
-        sellReward/sellRisk:
-        0;
-
-    const buyRRValid=
-        buyRR>=2;
-
-    const sellRRValid=
-        sellRR>=2;
-
-
-    /* =====================================================
-       SCORING
-    ===================================================== */
-
-    let scoreH1=0;
-    let scoreM15=0;
-    let scoreM5=0;
-    let scoreLiq=0;
-    let scoreRisk=0;
-
-
-    /* H1 */
-
-    if(h1Buy||h1Sell)
-        scoreH1=20;
-    else
-        scoreH1=6;
-
-
-    /* M15 */
-
-    if(m15Buy||m15Sell){
-
-        scoreM15=20;
-
-    }else{
-
-        if(
-            m15.ema20 &&
-            m15.ema50
-        ){
-
-            if(
-                m15.ema20>m15.ema50 ||
-                m15.ema20<m15.ema50
-            ){
-                scoreM15+=8;
-            }
-        }
-
-        if(
-            m15.rsi>=45 &&
-            m15.rsi<=55
-        ){
-            scoreM15+=4;
-        }
-
-        if(
-            m15.adx &&
-            m15.adx.value>=15
-        ){
-            scoreM15+=4;
-        }
-    }
-
-
-    /* M5 */
-
-    if(m5Buy||m5Sell){
-
-        scoreM5=20;
-
-    }else{
-
-        if(
-            m5.ema20 &&
-            m5.ema50
-        ){
-
-            if(
-                m5.ema20>m5.ema50 ||
-                m5.ema20<m5.ema50
-            ){
-                scoreM5+=7;
-            }
-        }
-
-        if(
-            m5.bull ||
-            m5.bear
-        ){
-            scoreM5+=6;
-        }
-
-        if(
-            nearSupport ||
-            nearResistance
-        ){
-            scoreM5+=4;
-        }
-
-        if(
-            bullishFVG ||
-            bearishFVG
-        ){
-            scoreM5+=3;
-        }
-    }
-
-
-    /* LIQUIDITY / SNR */
-
-    const bestLocation=
-        Math.max(
-            buyLocation,
-            sellLocation
-        );
-
-    scoreLiq=
-        Math.min(
-            20,
-            bestLocation+6
-        );
-
-
-    if(vwap){
-
-        if(
-            (h1Buy&&currentPrice>vwap) ||
-            (h1Sell&&currentPrice<vwap)
-        ){
-            scoreLiq+=2;
-        }
-    }
-
-
-    /* RISK / RR */
-
-    if(volatility==="NORMAL")
-        scoreRisk+=10;
-
-    else if(volatility==="LOW")
-        scoreRisk+=6;
-
-    else
-        scoreRisk+=3;
-
-
-    const currentHour=
-        new Date().getHours();
-
-    const activeSession=
-        (
-            currentHour>=8 &&
-            currentHour<17
-        )||
-        (
-            currentHour>=15 &&
-            currentHour<24
-        )||
-        (
-            currentHour>=20 ||
-            currentHour<5
-        );
-
-
-    scoreRisk+=
-        activeSession?
-        10:
-        3;
-
-
-    /*
-     * Give full RR points only when structural RR
-     * is actually >= 2.
-     */
-
-    if(
-        (h1Buy&&buyRRValid) ||
-        (h1Sell&&sellRRValid)
-    ){
-        scoreRisk+=5;
-    }
-
-
-    scoreH1=
-        Math.min(20,scoreH1);
-
-    scoreM15=
-        Math.min(20,scoreM15);
-
-    scoreM5=
-        Math.min(20,scoreM5);
-
-    scoreLiq=
-        Math.min(20,scoreLiq);
-
-    scoreRisk=
-        Math.min(20,scoreRisk);
-
-
-    const total=
-        scoreH1+
-        scoreM15+
-        scoreM5+
-        scoreLiq+
-        scoreRisk;
-
-
-    /* =====================================================
-       CONFLICT DETECTION
-    ===================================================== */
-
-    const conflicting=
-        (h1Buy&&m15Sell)||
-        (h1Sell&&m15Buy)||
-        (m15Buy&&m5Sell)||
-        (m15Sell&&m5Buy);
-
-
-    /* =====================================================
-       FINAL TRIGGER
-       
-       IMPORTANT:
-       Score alone NEVER creates a signal.
-    ===================================================== */
-
-    const buyValid=
-        h1Buy &&
-        m15Buy &&
-        m5Buy &&
-        !conflicting &&
-        total>=75 &&
-        buyLocationValid &&
-        buyNotOverextended &&
-        buyRRValid;
-
-    const sellValid=
-        h1Sell &&
-        m15Sell &&
-        m5Sell &&
-        !conflicting &&
-        total>=75 &&
-        sellLocationValid &&
-        sellNotOverextended &&
-        sellRRValid;
-
-
-    let signal="WAIT";
-
-
-    if(
-        buyValid &&
-        !sellValid
-    ){
-
-        signal="BUY";
-
-    }else if(
-        sellValid &&
-        !buyValid
-    ){
-
-        signal="SELL";
-
-    }
-
-
-    /* =====================================================
-       UI
-    ===================================================== */
-
-    updateUI(
-        signal,
-        total,
-        scoreH1,
-        scoreM15,
-        scoreM5,
-        scoreLiq,
-        scoreRisk,
-        vwap,
-        volatility,
-        h1Buy,
-        h1Sell,
-        m15Buy,
-        m15Sell,
-        m5Buy,
-        m5Sell,
-        conflicting
-    );
-
-
-    /* =====================================================
-       ALERT ENGINE
-    ===================================================== */
-
-    if(signal!=="WAIT"){
-
-        const now=Date.now();
-
-        const cooldownActive=
-            now-lastSignalTime<
-            SIGNAL_COOLDOWN;
-
-        const priceMovedEnough=
-            lastSignalPrice===0||
-            Math.abs(
-                currentPrice-lastSignalPrice
-            )>=m5.atr*.75;
-
-        const setupChanged=
-            signal!==lastEngineSignal;
-
-
-        if(
-            !cooldownActive &&
-            priceMovedEnough &&
-            setupChanged
-        ){
-
-            addHistory(
-                signal,
-                currentPrice,
-                total
-            );
-
-            showSignalAlert(
-                signal,
-                total,
-                currentPrice
-            );
-
-            lastSignalTime=now;
-            lastSignalPrice=currentPrice;
-            lastEngineSignal=signal;
-
-        }
-
-    }else{
-
-        lastEngineSignal="WAIT";
-
-    }
+scoreH1=6;
 
 }
+
+
+/* M15 */
+
+if(m15Buy){
+
+scoreM15=20;
+
+}else if(m15Sell){
+
+scoreM15=20;
+
+}else{
+
+if(
+m15.ema20&&
+m15.ema50&&
+(
+m15.ema20>m15.ema50||
+m15.ema20<m15.ema50
+)
+){
+
+scoreM15+=8;
+
+}
+
+if(
+m15.rsi>=45&&
+m15.rsi<=55
+){
+
+scoreM15+=4;
+
+}
+
+}
+
+
+/* M5 */
+
+if(m5Buy){
+
+scoreM5=20;
+
+}else if(m5Sell){
+
+scoreM5=20;
+
+}else{
+
+if(
+m5.ema20&&
+m5.ema50
+){
+
+if(
+m5.ema20>m5.ema50||
+m5.ema20<m5.ema50
+){
+
+scoreM5+=7;
+
+}
+
+}
+
+if(
+m5.bull||
+m5.bear
+){
+
+scoreM5+=6;
+
+}
+
+}
+
+
+/* LOCATION */
+
+let buyLocation=
+getLocationScore(
+"BUY",
+m5.atr,
+l
+);
+
+let sellLocation=
+getLocationScore(
+"SELL",
+m5.atr,
+l
+);
+
+let bestLocation=
+Math.max(
+buyLocation,
+sellLocation
+);
+
+scoreLiq=
+Math.min(
+20,
+bestLocation+6
+);
+
+
+/* VWAP */
+
+if(vwap){
+
+if(
+(h1Buy&&currentPrice>vwap)||
+(h1Sell&&currentPrice<vwap)
+){
+
+scoreLiq+=2;
+
+}
+
+}
+
+
+/* RISK */
+
+if(volatility==="NORMAL")
+scoreRisk+=10;
+
+else if(volatility==="LOW")
+scoreRisk+=6;
+
+else
+scoreRisk+=3;
+
+let hour=new Date().getHours();
+
+let active=
+(
+hour>=8&&hour<17
+)||
+(
+hour>=15&&hour<24
+)||
+(
+hour>=20||hour<5
+);
+
+scoreRisk+=active?10:3;
+
+
+/* CAP */
+
+scoreH1=Math.min(20,scoreH1);
+scoreM15=Math.min(20,scoreM15);
+scoreM5=Math.min(20,scoreM5);
+scoreLiq=Math.min(20,scoreLiq);
+scoreRisk=Math.min(20,scoreRisk);
+
+let total=
+scoreH1+
+scoreM15+
+scoreM5+
+scoreLiq+
+scoreRisk;
+
+
+/* =========================================
+STRICT ALIGNMENT
+========================================= */
+
+let rangePosition=
+getRangePosition();
+
+let buyLocationValid=
+buyLocation>=5;
+
+let sellLocationValid=
+sellLocation>=5;
+
+let buyNotOverextended=
+rangePosition<.85;
+
+let sellNotOverextended=
+rangePosition>.15;
+
+
+/*
+HARD ALIGNMENT
+
+H1 BUY
++
+M15 BUY
++
+M5 BUY
+=
+possible BUY
+*/
+
+let buyAligned=
+h1Buy&&
+m15Buy&&
+m5Buy;
+
+let sellAligned=
+h1Sell&&
+m15Sell&&
+m5Sell;
+
+
+/*
+NO CONFLICT
+*/
+
+let conflicting=
+(h1Buy&&m15Sell)||
+(h1Sell&&m15Buy)||
+(m15Buy&&m5Sell)||
+(m15Sell&&m5Buy);
+
+
+/*
+FINAL VALIDATION
+*/
+
+let buyValid=
+buyAligned&&
+!conflicting&&
+total>=MIN_SCORE&&
+buyLocationValid&&
+buyNotOverextended;
+
+let sellValid=
+sellAligned&&
+!conflicting&&
+total>=MIN_SCORE&&
+sellLocationValid&&
+sellNotOverextended;
+
+let signal="WAIT";
+
+if(buyValid&&!sellValid){
+
+signal="BUY";
+
+}else if(sellValid&&!buyValid){
+
+signal="SELL";
+
+}
+
+
 /* =========================================
 UI
 ========================================= */
