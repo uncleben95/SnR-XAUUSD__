@@ -2193,6 +2193,44 @@ LIVE API
 ========================================================= */
 
 async function fetchLiveGold(){
+console.log("XAU TEST START");
+
+fetch("/api/xau?ts=" + Date.now(), {
+    cache: "no-store"
+})
+.then(r => r.json())
+.then(data => {
+
+    console.log("XAU TEST DATA", data);
+
+    if(data.ok && data.lastPrice){
+
+        const price =
+            Number(data.lastPrice).toFixed(2);
+
+        const el =
+            document.getElementById("livePrice");
+
+        if(el){
+            el.innerText = price;
+        }
+
+        console.log(
+            "🔥 LIVE PRICE UPDATED:",
+            price
+        );
+
+    }
+
+})
+.catch(error => {
+
+    console.error(
+        "🔥 XAU TEST ERROR:",
+        error
+    );
+
+});
 console.log("🔥 VERCEL VERSION TEST - 2026-08-28");
 console.log("🔥 fetchLiveGold() STARTED");
 
