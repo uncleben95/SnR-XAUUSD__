@@ -1849,55 +1849,22 @@ async function setupPushNotifications() {
         }
 
         const saveResponse =
-    await fetch(
-        "/api/push-subscribe",
-        {
-            method: "POST",
+            await fetch(
+                "/api/push-subscribe",
+                {
+                    method: "POST",
 
-            headers: {
-                "Content-Type":
-                    "application/json"
-            },
+                    headers: {
+                        "Content-Type":
+                            "application/json"
+                    },
 
-            body:
-                JSON.stringify(
-                    subscription
-                )
-        }
-    );
-
-const saveData = await saveResponse.json();
-
-console.log("PUSH SAVE:", saveData);
-
-if (!saveResponse.ok) {
-    throw new Error(
-        saveData.error || "Failed to save subscription"
-    );
-}
-
-alert("✅ Subscription berjaya disimpan ke server");
-
-console.log(
-    "✅ Push subscription active"
-);
-return true;
-
-} catch (error) {
-
-    console.error(
-        "Push setup error:",
-        error
-    );
-
-    alert(
-        "❌ Push setup gagal: " +
-        error.message
-    );
-
-    return false;
-}
-return true;
+                    body:
+                        JSON.stringify(
+                            subscription
+                        )
+                }
+            );
 
         const saveText =
             await saveResponse.text();
