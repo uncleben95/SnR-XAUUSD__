@@ -1345,9 +1345,38 @@ let currentPrice=0;
 let previousPrice=null;
 let candles=[];
 
-let history=JSON.parse(
-localStorage.getItem("xauSignalHistory")||"[]"
-);
+let history=[];
+
+try{
+
+    const savedHistory =
+        localStorage.getItem("xauSignalHistory");
+
+    history =
+        savedHistory
+            ? JSON.parse(savedHistory)
+            : [];
+
+    if(!Array.isArray(history)){
+        history=[];
+    }
+
+}catch(error){
+
+    console.warn(
+        "History cache rosak — reset.",
+        error
+    );
+
+    history=[];
+
+    try{
+        localStorage.removeItem(
+            "xauSignalHistory"
+        );
+    }catch(e){}
+
+}
 
 const market={
 m5:{},
