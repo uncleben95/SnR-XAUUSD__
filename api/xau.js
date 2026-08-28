@@ -1,10 +1,13 @@
 export default async function handler(req, res) {
+  const started = Date.now();
+
   try {
+    // =========================================================
+    // 1. CHECK API KEY
+    // =========================================================
+
     const API_KEY = process.env.TWELVE_DATA_API_KEY;
 
-    // ─────────────────────────────────────────────
-    // 1. CHECK API KEY
-    // ─────────────────────────────────────────────
     if (!API_KEY) {
       return res.status(500).json({
         ok: false,
@@ -12,66 +15,126 @@ export default async function handler(req, res) {
       });
     }
 
-    // ─────────────────────────────────────────────
-    // 2. TWELVE DATA
-    // 3000 x 5M candle
-    // Digunakan untuk membina M5 + M15 + H1
-    // secara local di frontend
-    // ─────────────────────────────────────────────
-    const url =
-      "https://api.twelvedata.com/time_series" +
-      "?symbol=XAU/USD" +
-      "&interval=5min" +
-      "&outputsize=3000" +
-      "&order=ASC" +
-      "&apikey=" + encodeURIComponent(API_KEY);
+    // =========================================================
+    // 2. TWELVE DATA REQUEST
+    // =========================================================
 
-    const response = await fetch(url, {
-      cache: "no-store"
-    });
+    const url = new URL(
+      "https://api.twelvedata.com/time_series"
+    );
 
+    url.searchParams.set("symbol", "XAU/USD");
+    url.searchParams.set("interval", "5min");
+    url.searchParams.set("outputsize", "3000");
+    url.searchParams.set("order", "ASC");
+    url.searchParams.set("apikey", API_KEY);
+
+    // Timeout supaya API tak tergantung terlalu lama
+    const controller = new AbortController();
+
+    const timeout = setTimeout(() => {
+      controller.abort();
+    }, 12000);
+
+    let response;
     let data;
 
     try {
-      data = await response.json();
-    } catch {
+      response = await fetch(url, {
+        method: "GET",
+        cache: "no-store",
+        signal: controller.signal,
+        headers: {
+          Accept: "application/json"
+        }
+      });
+
+      const text = await response.text();
+
+      // Pastikan response memang JSON
+      try {
+        data = JSON.parse(text);
+      } catch {
+        return res.status(502).json({
+          ok: false,
+          error: "Twelve Data pulangkan response bukan JSON"
+        });
+      }
+
+    } catch (error) {
+
+      if (error?.name === "AbortError") {
+        return res.status(504).json({
+          ok: false,
+          error: "Twelve Data timeout selepas 12 saat"
+        });
+      }
+
       return res.status(502).json({
         ok: false,
-        error: "Twelve Data pulangkan response yang bukan JSON"
+        error: "Gagal sambung ke Twelve Data",
+        message:
+          error?.message ||
+          "Unknown network error"
       });
+
+    } finally {
+
+      clearTimeout(timeout);
+
     }
 
-    // ─────────────────────────────────────────────
+    // =========================================================
     // 3. TWELVE DATA ERROR
-    // ─────────────────────────────────────────────
-    if (!response.ok || data.status === "error") {
+    // =========================================================
+
+    if (
+      !response.ok ||
+      data?.status === "error"
+    ) {
       return res.status(502).json({
         ok: false,
-        error: data.message || "Twelve Data API error",
-        code: data.code || response.status
+
+        error:
+          data?.message ||
+          "Twelve Data API error",
+
+        code:
+          data?.code ||
+          response.status
       });
     }
 
-    // ─────────────────────────────────────────────
-    // 4. CHECK CANDLE
-    // ─────────────────────────────────────────────
-    if (!Array.isArray(data.values) || data.values.length === 0) {
+    // =========================================================
+    // 4. CHECK CANDLE DATA
+    // =========================================================
+
+    if (
+      !Array.isArray(data?.values) ||
+      data.values.length === 0
+    ) {
       return res.status(502).json({
         ok: false,
-        error: "Twelve Data tidak pulangkan candle XAU/USD"
+        error:
+          "Twelve Data tidak pulangkan candle XAU/USD"
       });
     }
 
-    // ─────────────────────────────────────────────
+    // =========================================================
     // 5. NORMALIZE CANDLE
-    // ─────────────────────────────────────────────
+    // =========================================================
+
     const values = data.values
+
       .map(c => ({
         datetime: c.datetime,
 
         open: Number(c.open),
+
         high: Number(c.high),
+
         low: Number(c.low),
+
         close: Number(c.close),
 
         volume:
@@ -81,43 +144,73 @@ export default async function handler(req, res) {
             : 0
       }))
 
+      // -------------------------------------------------------
       // Buang candle rosak
+      // -------------------------------------------------------
+
       .filter(c =>
+
         c.datetime &&
+
         Number.isFinite(c.open) &&
+
         Number.isFinite(c.high) &&
+
         Number.isFinite(c.low) &&
+
         Number.isFinite(c.close) &&
 
         c.high >= c.low &&
+
         c.high >= c.open &&
+
         c.high >= c.close &&
+
         c.low <= c.open &&
+
         c.low <= c.close
+
       )
 
+      // -------------------------------------------------------
       // Pastikan oldest → newest
+      // -------------------------------------------------------
+
       .sort(
         (a, b) =>
           new Date(a.datetime).getTime() -
           new Date(b.datetime).getTime()
       );
 
-    if (!values.length) {
+    // =========================================================
+    // 6. CHECK MINIMUM DATA
+    // =========================================================
+
+    if (values.length < 250) {
+
       return res.status(502).json({
         ok: false,
-        error: "Candle XAU/USD tidak valid"
+
+        error:
+          "Candle XAU/USD tidak mencukupi",
+
+        count:
+          values.length
       });
+
     }
 
-    // ─────────────────────────────────────────────
-    // 6. LAST CANDLE
-    // ─────────────────────────────────────────────
-    const last = values[values.length - 1];
+    // =========================================================
+    // 7. LAST CANDLE
+    // =========================================================
 
-    // ─────────────────────────────────────────────
-    // 7. CACHE CONTROL
-    // ─────────────────────────────────────────────
+    const last =
+      values[values.length - 1];
+
+    // =========================================================
+    // 8. CACHE CONTROL
+    // =========================================================
+
     res.setHeader(
       "Cache-Control",
       "no-store, max-age=0, must-revalidate"
@@ -128,38 +221,58 @@ export default async function handler(req, res) {
       "application/json; charset=utf-8"
     );
 
-    // ─────────────────────────────────────────────
-    // 8. RESPONSE
-    // ─────────────────────────────────────────────
+    // =========================================================
+    // 9. RESPONSE
+    // =========================================================
+
     return res.status(200).json({
+
       ok: true,
 
-      symbol: "XAU/USD",
+      symbol:
+        "XAU/USD",
 
-      interval: "5min",
+      interval:
+        "5min",
 
-      updated: new Date().toISOString(),
+      updated:
+        new Date().toISOString(),
 
-      count: values.length,
+      responseMs:
+        Date.now() - started,
 
-      lastPrice: last.close,
+      count:
+        values.length,
 
-      lastCandleTime: last.datetime,
+      lastPrice:
+        last.close,
+
+      lastCandleTime:
+        last.datetime,
 
       values
+
     });
 
   } catch (error) {
 
-    console.error("XAU API ERROR:", error);
+    console.error(
+      "XAU API ERROR:",
+      error
+    );
 
     return res.status(500).json({
+
       ok: false,
-      error: "Server error",
+
+      error:
+        "Server error",
+
       message:
-        error && error.message
-          ? error.message
-          : "Unknown server error"
+        error?.message ||
+        "Unknown error"
+
     });
+
   }
 }
