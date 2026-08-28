@@ -2249,39 +2249,35 @@ async function fetchLiveGold(){
             );
         }
 
-        if (
-            !Array.isArray(data.values) ||
-            data.values.length === 0
-        ) {
+        const raw = data.values;
+
+        if (!Array.isArray(raw) || !raw.length) {
             throw new Error("No candle data");
         }
 
-        candles = data.values
-            .map(x => ({
-                time: x.datetime,
-                open: Number(x.open),
-                high: Number(x.high),
-                low: Number(x.low),
-                close: Number(x.close),
-                volume: Number(x.volume) || 0
-            }))
-            .filter(x =>
-                Number.isFinite(x.open) &&
-                Number.isFinite(x.high) &&
-                Number.isFinite(x.low) &&
-                Number.isFinite(x.close)
-            )
-            .sort(
-                (a,b) =>
-                    new Date(a.time) -
-                    new Date(b.time)
-            );
+        candles = raw.map(x => ({
+            time: x.datetime || x.time,
+            open: Number(x.open),
+            high: Number(x.high),
+            low: Number(x.low),
+            close: Number(x.close),
+            volume: Number(x.volume) || 0
+        })).filter(x =>
+            Number.isFinite(x.open) &&
+            Number.isFinite(x.high) &&
+            Number.isFinite(x.low) &&
+            Number.isFinite(x.close)
+        );
 
         if (!candles.length) {
-            throw new Error(
-                "Candle processing failed"
-            );
+            throw new Error("Candle processing failed");
         }
+
+        candles.sort(
+            (a,b) =>
+                new Date(a.time) -
+                new Date(b.time)
+        );
 
         const latest =
             candles[candles.length - 1];
@@ -2294,11 +2290,6 @@ async function fetchLiveGold(){
             currentPrice.toFixed(2);
 
         document.getElementById(
-            "chartPrice"
-        ).innerText =
-            currentPrice.toFixed(2);
-
-        document.getElementById(
             "priceInput"
         ).value =
             currentPrice.toFixed(2);
@@ -2306,6 +2297,11 @@ async function fetchLiveGold(){
         document.getElementById(
             "riskEntry"
         ).value =
+            currentPrice.toFixed(2);
+
+        document.getElementById(
+            "chartPrice"
+        ).innerText =
             currentPrice.toFixed(2);
 
         source.innerText =
@@ -2326,19 +2322,14 @@ async function fetchLiveGold(){
 
         try {
             runEngine();
-        } catch (error) {
-
+        } catch(engineError) {
             console.error(
                 "ENGINE ERROR:",
-                error
+                engineError
             );
-
-            api.innerText =
-                "● DATA LIVE";
-
         }
 
-    } catch (error) {
+    } catch(error) {
 
         console.error(
             "LIVE DATA ERROR:",
@@ -2353,9 +2344,7 @@ async function fetchLiveGold(){
 
         source.innerText =
             error.message;
-
     }
-
 }
 /* =========================================================
 CHART
