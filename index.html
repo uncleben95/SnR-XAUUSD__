@@ -2760,8 +2760,7 @@ let l=market.levels;
 
 if(
 !m5.atr||
-!m15.rsi||
-!h1.ema200
+!m15.rsi
 )return;
 
 let vwap=calcVWAP(candles);
@@ -2780,11 +2779,17 @@ DIRECTIONAL CONDITIONS
 
 let h1Buy=
 h1.bull&&
-currentPrice>h1.ema200;
+(
+  h1.ema200===null ||
+  currentPrice>h1.ema200
+);
 
 let h1Sell=
 h1.bear&&
-currentPrice<h1.ema200;
+(
+  h1.ema200===null ||
+  currentPrice<h1.ema200
+);
 
 
 let m15Buy=
