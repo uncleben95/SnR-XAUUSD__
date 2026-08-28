@@ -3572,41 +3572,65 @@ let conflicting=
 FINAL VALIDATION
 ========================================= */
 
-let buyValid=
-buyAligned&&
-!conflicting&&
-total>=MIN_SCORE&&
-buyLocationValid&&
-vwapBuy;
+let buyValid =
+    buyAligned &&
+    !conflicting &&
+    total >= MIN_SCORE &&
+    buyLocationValid &&
+    vwapBuy;
 
-
-let sellValid=
-sellAligned&&
-!conflicting&&
-total>=MIN_SCORE&&
-sellLocationValid&&
-vwapSell;
+let sellValid =
+    sellAligned &&
+    !conflicting &&
+    total >= MIN_SCORE &&
+    sellLocationValid &&
+    vwapSell;
 
 
 /* =========================================
 FINAL SIGNAL
 ========================================= */
 
-let signal="WAIT";
+let signal = "WAIT";
 
-if(
-buyValid&&
-!sellValid
-){
+/*
+HARD FILTER:
+BUY / SELL hanya sah apabila semua
+filter utama lulus.
+*/
 
-signal="BUY";
+if (buyValid && !sellValid) {
 
-}else if(
-sellValid&&
-!buyValid
-){
+    signal = "BUY";
 
-signal="SELL";
+} else if (sellValid && !buyValid) {
+
+    signal = "SELL";
+
+}
+
+
+/* =========================================
+SIGNAL DEBUG REASON
+========================================= */
+
+let signalReason = "";
+
+if (signal === "WAIT") {
+
+    if (buyAligned && !buyValid) {
+
+        signalReason = "BUY FILTER BLOCKED";
+
+    } else if (sellAligned && !sellValid) {
+
+        signalReason = "SELL FILTER BLOCKED";
+
+    } else {
+
+        signalReason = "NO VALID ALIGNMENT";
+
+    }
 
 }
 
