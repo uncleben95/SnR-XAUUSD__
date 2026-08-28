@@ -4812,6 +4812,243 @@ if ("serviceWorker" in navigator) {
 
 }
 </script>
+<script>
+(function(){
 
+const box=document.createElement("div");
+
+box.id="signalDiagnostic";
+
+box.innerHTML=`
+<style>
+
+#signalDiagnostic{
+    margin:16px 0;
+    padding:16px;
+    border-radius:14px;
+    background:rgba(20,20,25,.96);
+    border:1px solid rgba(255,255,255,.08);
+    font-family:inherit;
+}
+
+#signalDiagnostic .diag-title{
+    font-size:13px;
+    font-weight:700;
+    margin-bottom:12px;
+    letter-spacing:.5px;
+}
+
+#signalDiagnostic .diag-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:7px;
+}
+
+#signalDiagnostic .diag-row{
+    display:flex;
+    justify-content:space-between;
+    gap:10px;
+    padding:9px 10px;
+    border-radius:8px;
+    background:rgba(255,255,255,.045);
+    font-size:11px;
+}
+
+#signalDiagnostic .diag-row span{
+    opacity:.65;
+}
+
+#signalDiagnostic .diag-row strong{
+    text-align:right;
+}
+
+</style>
+
+<div class="diag-title">
+    🔎 SIGNAL DIAGNOSTIC
+</div>
+
+<div class="diag-grid">
+
+<div class="diag-row">
+<span>H1 BIAS</span>
+<strong id="debugH1">--</strong>
+</div>
+
+<div class="diag-row">
+<span>M15 BIAS</span>
+<strong id="debugM15">--</strong>
+</div>
+
+<div class="diag-row">
+<span>M5 BIAS</span>
+<strong id="debugM5">--</strong>
+</div>
+
+<div class="diag-row">
+<span>M5 BOS</span>
+<strong id="debugBOS">--</strong>
+</div>
+
+<div class="diag-row">
+<span>M5 CHOCH</span>
+<strong id="debugCHOCH">--</strong>
+</div>
+
+<div class="diag-row">
+<span>M5 EMA</span>
+<strong id="debugEMA">--</strong>
+</div>
+
+<div class="diag-row">
+<span>M5 RSI</span>
+<strong id="debugRSI">--</strong>
+</div>
+
+<div class="diag-row">
+<span>M15 MACD</span>
+<strong id="debugMACD">--</strong>
+</div>
+
+<div class="diag-row">
+<span>M15 ADX</span>
+<strong id="debugADX">--</strong>
+</div>
+
+<div class="diag-row">
+<span>H1 STRUCTURE</span>
+<strong id="debugH1Structure">--</strong>
+</div>
+
+<div class="diag-row">
+<span>M15 STRUCTURE</span>
+<strong id="debugM15Structure">--</strong>
+</div>
+
+<div class="diag-row">
+<span>M5 STRUCTURE</span>
+<strong id="debugM5Structure">--</strong>
+</div>
+
+</div>
+`;
+
+document.body.appendChild(box);
+
+
+/* =========================================================
+LIVE DIAGNOSTIC
+========================================================= */
+
+function updateDiagnostic(){
+
+try{
+
+let m5=window.market?.m5||{};
+let m15=window.market?.m15||{};
+let h1=window.market?.h1||{};
+
+let h1s=h1.structureData||{};
+let m15s=m15.structureData||{};
+let m5s=m5.structureData||{};
+
+
+document.getElementById("debugH1").innerText=
+h1.bull?
+"🟢 BULL":
+h1.bear?
+"🔴 BEAR":
+"⚪ RANGE";
+
+
+document.getElementById("debugM15").innerText=
+m15.bull?
+"🟢 BULL":
+m15.bear?
+"🔴 BEAR":
+"⚪ RANGE";
+
+
+document.getElementById("debugM5").innerText=
+m5.bull?
+"🟢 BULL":
+m5.bear?
+"🔴 BEAR":
+"⚪ RANGE";
+
+
+document.getElementById("debugBOS").innerText=
+m5s.bos||
+"NONE";
+
+
+document.getElementById("debugCHOCH").innerText=
+m5s.choch||
+"NONE";
+
+
+document.getElementById("debugEMA").innerText=
+m5.ema20&&m5.ema50?
+m5.ema20>m5.ema50?
+"🟢 BULL":
+"🔴 BEAR":
+"--";
+
+
+document.getElementById("debugRSI").innerText=
+m5.rsi?
+m5.rsi.toFixed(1):
+"--";
+
+
+document.getElementById("debugMACD").innerText=
+m15.macd?.bull?
+"🟢 BULL":
+"🔴 BEAR";
+
+
+document.getElementById("debugADX").innerText=
+m15.adx?.value?
+m15.adx.value.toFixed(1):
+"--";
+
+
+document.getElementById("debugH1Structure").innerText=
+h1s.bias||
+h1.structure||
+"NONE";
+
+
+document.getElementById("debugM15Structure").innerText=
+m15s.bias||
+m15.structure||
+"NONE";
+
+
+document.getElementById("debugM5Structure").innerText=
+m5s.bias||
+m5.structure||
+"NONE";
+
+
+}catch(e){
+
+console.error(
+"Signal Diagnostic:",
+e
+);
+
+}
+
+}
+
+
+setInterval(
+updateDiagnostic,
+1000
+);
+
+})();
+</script>
 </body>
 </html>
