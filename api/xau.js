@@ -14,8 +14,9 @@ export default async function handler(req, res) {
 
     // ─────────────────────────────────────────────
     // 2. TWELVE DATA
-    //    500 x 5M candle = lebih daripada cukup
-    //    untuk bina M15 + H1 secara local
+    // 3000 x 5M candle
+    // Digunakan untuk membina M5 + M15 + H1
+    // secara local di frontend
     // ─────────────────────────────────────────────
     const url =
       "https://api.twelvedata.com/time_series" +
