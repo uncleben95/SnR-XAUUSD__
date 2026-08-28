@@ -2751,6 +2751,8 @@ function runEngine(){
 
 if(candles.length<100)return;
 
+try{
+
 analyze();
 
 let m5=market.m5;
@@ -2759,9 +2761,40 @@ let h1=market.h1;
 let l=market.levels;
 
 if(
-!m5.atr||
-!m15.rsi
+!m5 ||
+!m15 ||
+!h1 ||
+!l
 )return;
+
+if(
+m5.atr==null ||
+m15.rsi==null ||
+m15.ema20==null ||
+m15.ema50==null ||
+m5.ema20==null ||
+m5.ema50==null
+){
+  console.warn("Indicator belum cukup:", {
+    candles:candles.length,
+    m5,
+    m15,
+    h1
+  });
+  return;
+}catch(error){
+
+console.error("ENGINE ERROR:",error);
+
+const api=document.getElementById("apiStatus");
+
+if(api){
+  api.innerText="● ENGINE ERROR";
+  api.className="api-status api-error";
+}
+
+}
+}
 
 let vwap=calcVWAP(candles);
 
