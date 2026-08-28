@@ -21,7 +21,7 @@ export default async function handler(req, res) {
       "https://api.twelvedata.com/time_series" +
       "?symbol=XAU/USD" +
       "&interval=5min" +
-      "&outputsize=500" +
+      "&outputsize=3000" +
       "&order=ASC" +
       "&apikey=" + encodeURIComponent(API_KEY);
 
