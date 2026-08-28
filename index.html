@@ -2222,44 +2222,75 @@ LIVE API
 ========================================================= */
 
 async function fetchLiveGold(){
-console.log("XAU TEST START");
 
-fetch("/api/xau?ts=" + Date.now(), {
-    cache: "no-store"
-})
-.then(r => r.json())
-.then(data => {
+    console.log("🔥 FETCH LIVE GOLD START");
 
-    console.log("XAU TEST DATA", data);
+    const api = document.getElementById("apiStatus");
+    const price = document.getElementById("livePrice");
+    const source = document.getElementById("priceSource");
 
-    if(data.ok && data.lastPrice){
+    try {
 
-        const price =
-            Number(data.lastPrice).toFixed(2);
+        api.innerText = "● FETCHING";
 
-        const el =
-            document.getElementById("livePrice");
+        const response = await fetch(
+            "/api/xau?ts=" + Date.now(),
+            {
+                cache: "no-store"
+            }
+        );
 
-        if(el){
-            el.innerText = price;
+        console.log("API HTTP:", response.status);
+
+        const data = await response.json();
+
+        console.log("API DATA:", data);
+
+        if(!data.ok){
+            throw new Error(data.error || "API returned false");
         }
 
+        const live = Number(data.lastPrice);
+
+        if(!Number.isFinite(live)){
+            throw new Error("Invalid lastPrice");
+        }
+
+        price.innerText = live.toFixed(2);
+
+        source.innerText =
+            "Twelve Data • LIVE";
+
+        api.innerText =
+            "● API LIVE";
+
+        api.className =
+            "api-status";
+
         console.log(
-            "🔥 LIVE PRICE UPDATED:",
-            price
+            "🔥 LIVE PRICE:",
+            live
         );
+
+    } catch(error) {
+
+        console.error(
+            "🔥 FETCH ERROR:",
+            error
+        );
+
+        api.innerText =
+            "● API ERROR";
+
+        api.className =
+            "api-status api-error";
+
+        source.innerText =
+            error.message;
 
     }
 
-})
-.catch(error => {
-
-    console.error(
-        "🔥 XAU TEST ERROR:",
-        error
-    );
-
-});
+}
 console.log("🔥 VERCEL VERSION TEST - 2026-08-28");
 console.log("🔥 fetchLiveGold() STARTED");
 
