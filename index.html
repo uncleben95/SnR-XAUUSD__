@@ -1795,7 +1795,6 @@ let audioReady=false;
 ========================================================= */
 
 async function setupPushNotifications() {
-
     if (
         !("serviceWorker" in navigator) ||
         !("PushManager" in window) ||
@@ -1806,97 +1805,50 @@ async function setupPushNotifications() {
     }
 
     try {
+        const registration = await navigator.serviceWorker.ready;
 
-        const registration =
-            await navigator.serviceWorker.ready;
-
-        const configResponse =
-            await fetch("/api/push-config");
-
+        const configResponse = await fetch("/api/push-config");
         if (!configResponse.ok) {
-            throw new Error(
-                "push-config HTTP " +
-                configResponse.status
-            );
+            throw new Error("push-config HTTP " + configResponse.status);
         }
 
-        const config =
-            await configResponse.json();
-
+        const config = await configResponse.json();
         if (!config.publicKey) {
-            throw new Error(
-                "VAPID public key missing"
-            );
+            throw new Error("VAPID public key missing");
         }
 
-        let subscription =
-            await registration.pushManager.getSubscription();
-
+        let subscription = await registration.pushManager.getSubscription();
         if (!subscription) {
-
-            subscription =
-                await registration.pushManager.subscribe({
-
-                    userVisibleOnly: true,
-
-                    applicationServerKey:
-                        urlBase64ToUint8Array(
-                            config.publicKey
-                        )
-
-                });
-
+            subscription = await registration.pushManager.subscribe({
+                userVisibleOnly: true,
+                applicationServerKey: urlBase64ToUint8Array(config.publicKey)
+            });
         }
 
-        const saveResponse =
-    await fetch(
-        "/api/push-subscribe",
-        {
+        const saveResponse = await fetch("/api/push-subscribe", {
             method: "POST",
-
             headers: {
-                "Content-Type":
-                    "application/json"
+                "Content-Type": "application/json"
             },
+            body: JSON.stringify(subscription)
+        });
 
-            body:
-                JSON.stringify(
-                    subscription
-                )
+        const saveData = await saveResponse.json();
+        if (!saveResponse.ok) {
+            throw new Error(saveData.error || "Failed to save subscription");
         }
-    );
 
-const saveData = await saveResponse.json();
+        alert("✅ Push subscription berjaya disimpan!");
+        console.log("✅ Push subscription active");
+        return true;
 
-console.log("PUSH SAVE:", saveData);
-
-if (!saveResponse.ok) {
-    throw new Error(
-        saveData.error || "Failed to save subscription"
-    );
+    } catch (error) {
+        console.error("Push setup error:", error);
+        alert("❌ Push setup gagal: " + error.message);
+        return false;
+    }
 }
 
-alert("✅ Subscription berjaya disimpan ke server");
-
-console.log(
-    "✅ Push subscription active"
-);
-return true;
-
-} catch (error) {
-
-    console.error(
-        "Push setup error:",
-        error
-    );
-
-    alert(
-        "❌ Push setup gagal: " +
-        error.message
-    );
-
-    return false;
-}
 return true;
 
         const saveText =
