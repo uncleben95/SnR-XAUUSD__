@@ -2223,59 +2223,125 @@ LIVE API
 
 async function fetchLiveGold(){
 
-    console.log("🔥 FETCH LIVE GOLD START");
-
     const api = document.getElementById("apiStatus");
-    const price = document.getElementById("livePrice");
     const source = document.getElementById("priceSource");
 
     try {
 
-        api.innerText = "● FETCHING";
+        api.innerText = "● CONNECTING";
+        api.className = "api-status";
 
         const response = await fetch(
             "/api/xau?ts=" + Date.now(),
             {
+                method: "GET",
                 cache: "no-store"
             }
         );
 
-        console.log("API HTTP:", response.status);
-
         const data = await response.json();
 
-        console.log("API DATA:", data);
+        console.log("XAU API:", data);
 
-        if(!data.ok){
-            throw new Error(data.error || "API returned false");
+        if (!response.ok || !data.ok) {
+            throw new Error(
+                data.error || "API request failed"
+            );
         }
 
-        const live = Number(data.lastPrice);
-
-        if(!Number.isFinite(live)){
-            throw new Error("Invalid lastPrice");
+        if (
+            !Array.isArray(data.values) ||
+            data.values.length === 0
+        ) {
+            throw new Error("No candle data");
         }
 
-        price.innerText = live.toFixed(2);
+        candles = data.values
+            .map(x => ({
+                time: x.datetime,
+                open: Number(x.open),
+                high: Number(x.high),
+                low: Number(x.low),
+                close: Number(x.close),
+                volume: Number(x.volume) || 0
+            }))
+            .filter(x =>
+                Number.isFinite(x.open) &&
+                Number.isFinite(x.high) &&
+                Number.isFinite(x.low) &&
+                Number.isFinite(x.close)
+            )
+            .sort(
+                (a,b) =>
+                    new Date(a.time) -
+                    new Date(b.time)
+            );
+
+        if (!candles.length) {
+            throw new Error(
+                "Candle processing failed"
+            );
+        }
+
+        const latest =
+            candles[candles.length - 1];
+
+        currentPrice = latest.close;
+
+        document.getElementById(
+            "livePrice"
+        ).innerText =
+            currentPrice.toFixed(2);
+
+        document.getElementById(
+            "chartPrice"
+        ).innerText =
+            currentPrice.toFixed(2);
+
+        document.getElementById(
+            "priceInput"
+        ).value =
+            currentPrice.toFixed(2);
+
+        document.getElementById(
+            "riskEntry"
+        ).value =
+            currentPrice.toFixed(2);
 
         source.innerText =
-            "Twelve Data • LIVE";
+            "Twelve Data • Live 5M";
 
         api.innerText =
-            "● API LIVE";
+            "● LIVE API";
 
         api.className =
             "api-status";
 
-        console.log(
-            "🔥 LIVE PRICE:",
-            live
-        );
+        document.getElementById(
+            "chartLive"
+        ).innerText =
+            "● LIVE";
 
-    } catch(error) {
+        drawChart();
+
+        try {
+            runEngine();
+        } catch (error) {
+
+            console.error(
+                "ENGINE ERROR:",
+                error
+            );
+
+            api.innerText =
+                "● DATA LIVE";
+
+        }
+
+    } catch (error) {
 
         console.error(
-            "🔥 FETCH ERROR:",
+            "LIVE DATA ERROR:",
             error
         );
 
@@ -2291,254 +2357,6 @@ async function fetchLiveGold(){
     }
 
 }
-console.log("🔥 VERCEL VERSION TEST - 2026-08-28");
-console.log("🔥 fetchLiveGold() STARTED");
-
-const api=document.getElementById("apiStatus");
-const source=document.getElementById("priceSource");
-
-try{
-
-api.innerText="● API CONNECTING";
-api.className="api-status";
-
-const url="/api/xau?ts="+Date.now();
-
-console.log("XAU FETCH:",url);
-
-const response=await fetch(
-url,
-{
-method:"GET",
-cache:"no-store",
-headers:{
-"Accept":"application/json"
-}
-}
-);
-
-console.log(
-"XAU RESPONSE:",
-response.status,
-response.statusText
-);
-
-const text=await response.text();
-
-console.log(
-"XAU RESPONSE SIZE:",
-text.length
-);
-
-if(!response.ok){
-
-throw new Error(
-"HTTP "+response.status+
-" — "+text.slice(0,300)
-);
-
-}
-
-let data;
-
-try{
-
-data=JSON.parse(text);
-
-}catch(parseError){
-
-throw new Error(
-"JSON ERROR: "+parseError.message+
-" | RESPONSE: "+text.slice(0,300)
-);
-
-}
-
-console.log(
-"XAU DATA:",
-{
-ok:data.ok,
-count:data.count,
-lastPrice:data.lastPrice,
-values:data.values?.length
-}
-);
-
-if(data.ok===false){
-
-throw new Error(
-data.error||
-data.message||
-"Twelve Data API error"
-);
-
-}
-
-if(
-!Array.isArray(data.values)||
-!data.values.length
-){
-
-throw new Error(
-"Tiada candle diterima daripada /api/xau"
-);
-
-}
-
-const raw=data.values;
-
-candles=raw
-.map(x=>({
-
-time:x.datetime||x.time,
-
-open:num(x.open),
-high:num(x.high),
-low:num(x.low),
-close:num(x.close),
-
-volume:num(x.volume)||0
-
-}))
-.filter(x=>
-
-isFinite(x.open)&&
-isFinite(x.high)&&
-isFinite(x.low)&&
-isFinite(x.close)
-
-)
-.sort(
-(a,b)=>
-new Date(a.time)-new Date(b.time)
-);
-
-if(!candles.length){
-
-throw new Error(
-"Semua candle gagal diproses"
-);
-
-}
-
-const latest=
-candles[candles.length-1];
-
-if(
-!latest||
-!isFinite(latest.close)
-){
-
-throw new Error(
-"Latest candle tidak mempunyai close price yang sah"
-);
-
-}
-
-previousPrice=currentPrice;
-
-currentPrice=latest.close;
-
-
-/* PRICE */
-
-document.getElementById(
-"livePrice"
-).innerText=
-currentPrice.toFixed(2);
-
-document.getElementById(
-"priceInput"
-).value=
-currentPrice.toFixed(2);
-
-document.getElementById(
-"riskEntry"
-).value=
-currentPrice.toFixed(2);
-
-document.getElementById(
-"chartPrice"
-).innerText=
-currentPrice.toFixed(2);
-
-
-/* STATUS */
-
-source.innerText=
-"Twelve Data • Live 5M • "+
-formatUpdateTime();
-
-api.innerText=
-"● LIVE API";
-
-api.className=
-"api-status";
-
-document.getElementById(
-"chartLive"
-).innerText=
-"● LIVE";
-
-
-/* CHART */
-
-drawChart();
-
-
-/* ENGINE */
-
-try{
-
-runEngine();
-
-}catch(engineError){
-
-console.error(
-"ENGINE ERROR:",
-engineError
-);
-
-source.innerText=
-"DATA LIVE • ENGINE ERROR";
-
-api.innerText=
-"● DATA LIVE / ENGINE ERROR";
-
-api.className=
-"api-status api-error";
-
-}
-
-}catch(e){
-
-console.error(
-"XAU LIVE FEED ERROR:",
-e
-);
-
-api.innerText=
-"● API ERROR";
-
-api.className=
-"api-status api-error";
-
-source.innerText=
-"ERROR: "+
-(
-e?.message||
-"Unknown error"
-);
-
-document.getElementById(
-"chartLive"
-).innerText=
-"● OFFLINE";
-
-}
-
-}
-
 /* =========================================================
 CHART
 ========================================================= */
