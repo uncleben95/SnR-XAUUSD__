@@ -1,4 +1,4 @@
-const CACHE_NAME = "xau-sniper-v3-1";
+const CACHE_NAME = "xau-sniper-v3-2";
 
 const APP_SHELL = [
     "/",
@@ -7,15 +7,78 @@ const APP_SHELL = [
     "/icon.png"
 ];
 
-self.addEventListener("install", event => {
+self.addEventListener("fetch", event => {
 
-    event.waitUntil(
+    const request = event.request;
 
-        caches.open(CACHE_NAME)
-            .then(cache => cache.addAll(APP_SHELL))
-            .then(() => self.skipWaiting())
+    /*
+     * API XAU/USD — jangan cache
+     */
+    if (
+        request.url.includes("/api/xau")
+    ) {
+        return;
+    }
+
+    /*
+     * HTML utama — sentiasa ambil versi terbaru
+     */
+    if (
+        request.mode === "navigate" ||
+        request.url.endsWith("/") ||
+        request.url.endsWith("/index.html")
+    ) {
+
+        event.respondWith(
+            fetch(request, {
+                cache: "no-store"
+            })
+        );
+
+        return;
+    }
+
+    /*
+     * Asset lain
+     */
+    event.respondWith(
+
+        fetch(request)
+            .then(response => {
+
+                if (
+                    response &&
+                    response.status === 200 &&
+                    response.type !== "opaque"
+                ) {
+
+                    const copy =
+                        response.clone();
+
+                    caches.open(CACHE_NAME)
+                        .then(cache => {
+
+                            cache.put(
+                                request,
+                                copy
+                            );
+
+                        });
+
+                }
+
+                return response;
+
+            })
+            .catch(() => {
+
+                return caches.match(request);
+
+            })
 
     );
+
+});
 
 });
 
