@@ -4448,7 +4448,7 @@ updateRiskCalculator();
 SIGNAL ALERT
 ========================================================= */
 
-function showSignalAlert(
+async function showSignalAlert(
 signal,
 score,
 price
@@ -4466,6 +4466,9 @@ master.classList.remove(
 "signal-sell-active"
 );
 
+let pushTitle="";
+let pushBody="";
+
 if(signal==="BUY"){
 
 box.classList.add("buy");
@@ -4480,11 +4483,15 @@ master.classList.add(
 "signal-buy-active"
 );
 
+pushTitle="🟢 XAU/USD BUY";
+pushBody=
+`Price ${price.toFixed(2)} • Score ${score}/100`;
+
 playAlertSound("BUY");
 
 sendBrowserNotification(
-"🟢 XAU/USD BUY",
-`Price ${price.toFixed(2)} • Score ${score}/100`
+pushTitle,
+pushBody
 );
 
 }else if(signal==="SELL"){
@@ -4501,11 +4508,70 @@ master.classList.add(
 "signal-sell-active"
 );
 
+pushTitle="🔴 XAU/USD SELL";
+pushBody=
+`Price ${price.toFixed(2)} • Score ${score}/100`;
+
 playAlertSound("SELL");
 
 sendBrowserNotification(
-"🔴 XAU/USD SELL",
-`Price ${price.toFixed(2)} • Score ${score}/100`
+pushTitle,
+pushBody
+);
+
+}else{
+
+return;
+
+}
+
+
+/* =========================================
+SERVER PUSH
+========================================= */
+
+try{
+
+const response=await fetch(
+"/api/push-send",
+{
+method:"POST",
+headers:{
+"Content-Type":"application/json"
+},
+body:JSON.stringify({
+title:pushTitle,
+body:pushBody
+})
+}
+);
+
+const result=
+await response.json().catch(
+()=>({})
+);
+
+if(!response.ok){
+
+console.warn(
+"Push send failed:",
+result
+);
+
+}else{
+
+console.log(
+"✅ Server push sent",
+result
+);
+
+}
+
+}catch(error){
+
+console.warn(
+"Server push error:",
+error
 );
 
 }
