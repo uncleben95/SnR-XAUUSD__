@@ -4426,32 +4426,54 @@ updateNotificationStatus,
 </script>
 <script>
 /* =========================================================
-PWA / SERVICE WORKER
+DISABLE OLD SERVICE WORKER — DEBUG
 ========================================================= */
 
 if ("serviceWorker" in navigator) {
 
-    window.addEventListener("load", () => {
+    window.addEventListener("load", async () => {
 
-        navigator.serviceWorker.register("/sw.js", {
-            scope: "/"
-        })
-        .then(registration => {
+        try {
+
+            const registrations =
+                await navigator.serviceWorker.getRegistrations();
+
+            for (const registration of registrations) {
+
+                await registration.unregister();
+
+                console.log(
+                    "🧹 Old Service Worker removed"
+                );
+
+            }
+
+            const cacheNames =
+                await caches.keys();
+
+            for (const cacheName of cacheNames) {
+
+                await caches.delete(cacheName);
+
+                console.log(
+                    "🧹 Cache removed:",
+                    cacheName
+                );
+
+            }
 
             console.log(
-                "XAU Sniper Service Worker registered:",
-                registration.scope
+                "🔥 SERVICE WORKER DISABLED"
             );
 
-        })
-        .catch(error => {
+        } catch (error) {
 
             console.error(
-                "XAU Sniper Service Worker registration failed:",
+                "Service Worker cleanup error:",
                 error
             );
 
-        });
+        }
 
     });
 
