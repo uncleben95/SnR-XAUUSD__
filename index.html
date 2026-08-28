@@ -2546,66 +2546,398 @@ STRUCTURE
 
 function detectStructure(m5,m15,h1){
 
-let last=m5[m5.length-1];
-let prev=m5[m5.length-2];
+/* =========================================================
+   REAL SWING STRUCTURE ENGINE
+   HH / HL / LH / LL
+   BOS / CHOCH
+========================================================= */
 
-market.m5.bull=
-last.close>prev.close&&
-last.high>=prev.high;
+function getSwingPoints(data,left=2,right=2){
 
-market.m5.bear=
-last.close<prev.close&&
-last.low<=prev.low;
+    let highs=[];
+    let lows=[];
 
-market.m5.structure=
-market.m5.bull?
-"BOS ↑":
-market.m5.bear?
-"BOS ↓":
-"NEUTRAL";
+    if(!data || data.length < left+right+5){
+        return {highs,lows};
+    }
 
-let a=m15[m15.length-1];
-let b=m15[m15.length-3];
+    for(let i=left;i<data.length-right;i++){
 
-market.m15.bull=
-a.close>b.close;
+        let swingHigh=true;
+        let swingLow=true;
 
-market.m15.bear=
-a.close<b.close;
+        for(let j=1;j<=left;j++){
 
-market.m15.structure=
-market.m15.bull?
-"Higher High":
-market.m15.bear?
-"Lower High":
-"RANGE";
+            if(data[i].high<=data[i-j].high){
+                swingHigh=false;
+            }
 
-let h=h1[h1.length-1];
-let hp=h1[h1.length-4];
+            if(data[i].low>=data[i-j].low){
+                swingLow=false;
+            }
 
-market.h1.bull=
-h.close>hp.close&&
-(
-market.h1.ema200===null||
-h.close>market.h1.ema200
-);
+        }
 
-market.h1.bear=
-h.close<hp.close&&
-(
-market.h1.ema200===null||
-h.close<market.h1.ema200
-);
+        for(let j=1;j<=right;j++){
 
-market.h1.structure=
-market.h1.bull?
-"BOS ↑":
-market.h1.bear?
-"BOS ↓":
-"RANGE";
+            if(data[i].high<=data[i+j].high){
+                swingHigh=false;
+            }
+
+            if(data[i].low>=data[i+j].low){
+                swingLow=false;
+            }
+
+        }
+
+        if(swingHigh){
+
+            highs.push({
+                index:i,
+                price:data[i].high,
+                time:data[i].time
+            });
+
+        }
+
+        if(swingLow){
+
+            lows.push({
+                index:i,
+                price:data[i].low,
+                time:data[i].time
+            });
+
+        }
+
+    }
+
+    return {
+        highs,
+        lows
+    };
 
 }
 
+
+/* =========================================================
+   STRUCTURE ANALYZER
+========================================================= */
+
+function analyzeStructure(data){
+
+    let swings=getSwingPoints(data,2,2);
+
+    let highs=swings.highs;
+    let lows=swings.lows;
+
+    let hh=false;
+    let lh=false;
+    let hl=false;
+    let ll=false;
+
+    let lastHigh=null;
+    let previousHigh=null;
+
+    let lastLow=null;
+    let previousLow=null;
+
+
+    /* =========================================
+       HIGH STRUCTURE
+    ========================================= */
+
+    if(highs.length>=2){
+
+        lastHigh=
+            highs[highs.length-1];
+
+        previousHigh=
+            highs[highs.length-2];
+
+        hh=
+            lastHigh.price>
+            previousHigh.price;
+
+        lh=
+            lastHigh.price<
+            previousHigh.price;
+
+    }
+
+
+    /* =========================================
+       LOW STRUCTURE
+    ========================================= */
+
+    if(lows.length>=2){
+
+        lastLow=
+            lows[lows.length-1];
+
+        previousLow=
+            lows[lows.length-2];
+
+        hl=
+            lastLow.price>
+            previousLow.price;
+
+        ll=
+            lastLow.price<
+            previousLow.price;
+
+    }
+
+
+    /* =========================================
+       STRUCTURAL BIAS
+    ========================================= */
+
+    let bias="RANGE";
+
+    if(hh&&hl){
+
+        bias="BULL";
+
+    }
+
+    else if(lh&&ll){
+
+        bias="BEAR";
+
+    }
+
+
+    /* =========================================
+       LAST CLOSED CANDLE
+    ========================================= */
+
+    let last=
+        data[data.length-1];
+
+    let bos=null;
+    let choch=null;
+
+
+    /* =========================================
+       BULLISH BOS
+       Close breaks confirmed swing high
+    ========================================= */
+
+    if(
+        lastHigh &&
+        last.close>
+        lastHigh.price
+    ){
+
+        if(bias==="BULL"){
+
+            bos="BULL";
+
+        }
+
+        else if(bias==="BEAR"){
+
+            choch="BULL";
+
+        }
+
+        else{
+
+            bos="BULL";
+
+        }
+
+    }
+
+
+    /* =========================================
+       BEARISH BOS
+       Close breaks confirmed swing low
+    ========================================= */
+
+    if(
+        lastLow &&
+        last.close<
+        lastLow.price
+    ){
+
+        if(bias==="BEAR"){
+
+            bos="BEAR";
+
+        }
+
+        else if(bias==="BULL"){
+
+            choch="BEAR";
+
+        }
+
+        else{
+
+            bos="BEAR";
+
+        }
+
+    }
+
+
+    /* =========================================
+       STRUCTURE LABEL
+    ========================================= */
+
+    let label="RANGE";
+
+    if(bos==="BULL"){
+
+        label="BOS ↑";
+
+    }
+
+    else if(bos==="BEAR"){
+
+        label="BOS ↓";
+
+    }
+
+    else if(choch==="BULL"){
+
+        label="CHOCH ↑";
+
+    }
+
+    else if(choch==="BEAR"){
+
+        label="CHOCH ↓";
+
+    }
+
+    else if(bias==="BULL"){
+
+        label="HH / HL";
+
+    }
+
+    else if(bias==="BEAR"){
+
+        label="LH / LL";
+
+    }
+
+
+    return {
+
+        bias,
+        label,
+
+        hh,
+        hl,
+        lh,
+        ll,
+
+        bos,
+        choch,
+
+        lastHigh,
+        previousHigh,
+
+        lastLow,
+        previousLow,
+
+        highs,
+        lows
+
+    };
+
+}
+
+
+/* =========================================================
+   H1
+========================================================= */
+
+let h1Structure=
+    analyzeStructure(h1);
+
+market.h1.bull=
+    h1Structure.bias==="BULL"&&
+    (
+        market.h1.ema200===null||
+        h1[h1.length-1].close>
+        market.h1.ema200
+    );
+
+market.h1.bear=
+    h1Structure.bias==="BEAR"&&
+    (
+        market.h1.ema200===null||
+        h1[h1.length-1].close<
+        market.h1.ema200
+    );
+
+market.h1.structure=
+    h1Structure.label;
+
+market.h1.structureData=
+    h1Structure;
+
+
+/* =========================================================
+   M15
+========================================================= */
+
+let m15Structure=
+    analyzeStructure(m15);
+
+market.m15.bull=
+    m15Structure.bias==="BULL";
+
+market.m15.bear=
+    m15Structure.bias==="BEAR";
+
+market.m15.structure=
+    m15Structure.label;
+
+market.m15.structureData=
+    m15Structure;
+
+
+/* =========================================================
+   M5
+========================================================= */
+
+let m5Structure=
+    analyzeStructure(m5);
+
+market.m5.bull=
+    m5Structure.bias==="BULL";
+
+market.m5.bear=
+    m5Structure.bias==="BEAR";
+
+market.m5.structure=
+    m5Structure.label;
+
+market.m5.structureData=
+    m5Structure;
+
+
+/* =========================================================
+   STRUCTURE SUMMARY
+========================================================= */
+
+market.structure={
+
+    h1:h1Structure,
+
+    m15:m15Structure,
+
+    m5:m5Structure
+
+};
+
+}
 
 /* =========================================================
 ASIAN RANGE
