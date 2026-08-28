@@ -1,8 +1,6 @@
 <!DOCTYPE html>
 <html lang="ms">
 <head>
-<!-- VERCEL DEPLOY TEST 2026-08-28 -->
-   
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#0f172a">
@@ -1336,8 +1334,7 @@ Live technical engine • Informational only
 </div>
 
 <script>
-console.log("🔥 SCRIPT STARTED");
-document.getElementById("apiStatus").innerText = "● JS RUNNING";
+
 /* =========================================================
 GLOBAL
 ========================================================= */
@@ -1346,38 +1343,9 @@ let currentPrice=0;
 let previousPrice=null;
 let candles=[];
 
-let history=[];
-
-try{
-
-    const savedHistory =
-        localStorage.getItem("xauSignalHistory");
-
-    history =
-        savedHistory
-            ? JSON.parse(savedHistory)
-            : [];
-
-    if(!Array.isArray(history)){
-        history=[];
-    }
-
-}catch(error){
-
-    console.warn(
-        "History cache rosak — reset.",
-        error
-    );
-
-    history=[];
-
-    try{
-        localStorage.removeItem(
-            "xauSignalHistory"
-        );
-    }catch(e){}
-
-}
+let history=JSON.parse(
+localStorage.getItem("xauSignalHistory")||"[]"
+);
 
 const market={
 m5:{},
@@ -2224,129 +2192,109 @@ LIVE API
 
 async function fetchLiveGold(){
 
-    const api = document.getElementById("apiStatus");
-    const source = document.getElementById("priceSource");
+const api=document.getElementById("apiStatus");
+const source=document.getElementById("priceSource");
 
-    try {
+try{
 
-        api.innerText = "● CONNECTING";
-        api.className = "api-status";
+api.innerText="● API CONNECTING";
+api.className="api-status";
 
-        const response = await fetch(
-            "/api/xau?ts=" + Date.now(),
-            {
-                method: "GET",
-                cache: "no-store"
-            }
-        );
-
-        const data = await response.json();
-
-        console.log("XAU API:", data);
-
-        if (!response.ok || !data.ok) {
-            throw new Error(
-                data.error || "API request failed"
-            );
-        }
-
-        const raw = data.values;
-
-        if (!Array.isArray(raw) || !raw.length) {
-            throw new Error("No candle data");
-        }
-
-        candles = raw.map(x => ({
-            time: x.datetime || x.time,
-            open: Number(x.open),
-            high: Number(x.high),
-            low: Number(x.low),
-            close: Number(x.close),
-            volume: Number(x.volume) || 0
-        })).filter(x =>
-            Number.isFinite(x.open) &&
-            Number.isFinite(x.high) &&
-            Number.isFinite(x.low) &&
-            Number.isFinite(x.close)
-        );
-
-        if (!candles.length) {
-            throw new Error("Candle processing failed");
-        }
-
-        candles.sort(
-            (a,b) =>
-                new Date(a.time) -
-                new Date(b.time)
-        );
-
-        const latest =
-            candles[candles.length - 1];
-
-        currentPrice = latest.close;
-
-        document.getElementById(
-            "livePrice"
-        ).innerText =
-            currentPrice.toFixed(2);
-
-        document.getElementById(
-            "priceInput"
-        ).value =
-            currentPrice.toFixed(2);
-
-        document.getElementById(
-            "riskEntry"
-        ).value =
-            currentPrice.toFixed(2);
-
-        document.getElementById(
-            "chartPrice"
-        ).innerText =
-            currentPrice.toFixed(2);
-
-        source.innerText =
-            "Twelve Data • Live 5M";
-
-        api.innerText =
-            "● LIVE API";
-
-        api.className =
-            "api-status";
-
-        document.getElementById(
-            "chartLive"
-        ).innerText =
-            "● LIVE";
-
-        drawChart();
-
-        try {
-            runEngine();
-        } catch(engineError) {
-            console.error(
-                "ENGINE ERROR:",
-                engineError
-            );
-        }
-
-    } catch(error) {
-
-        console.error(
-            "LIVE DATA ERROR:",
-            error
-        );
-
-        api.innerText =
-            "● API ERROR";
-
-        api.className =
-            "api-status api-error";
-
-        source.innerText =
-            error.message;
-    }
+const response=
+await fetch(
+"/api/xau?ts="+Date.now(),
+{
+cache:"no-store"
 }
+);
+
+if(!response.ok){
+throw new Error("HTTP "+response.status);
+}
+
+const data=await response.json();
+
+if(!data.values?.length){
+throw new Error("Tiada candle");
+}
+
+const raw=data.values;
+
+candles=
+raw
+.map(x=>({
+
+time:x.datetime||x.time,
+open:num(x.open),
+high:num(x.high),
+low:num(x.low),
+close:num(x.close),
+volume:num(x.volume)||0
+
+}))
+.filter(x=>
+isFinite(x.open)&&
+isFinite(x.high)&&
+isFinite(x.low)&&
+isFinite(x.close)
+)
+.sort(
+(a,b)=>
+new Date(a.time)-new Date(b.time)
+);
+
+if(!candles.length){
+throw new Error("Candle invalid");
+}
+
+const latest=
+candles[candles.length-1];
+
+previousPrice=currentPrice;
+currentPrice=latest.close;
+
+document.getElementById("livePrice").innerText=
+currentPrice.toFixed(2);
+
+document.getElementById("priceInput").value=
+currentPrice.toFixed(2);
+
+document.getElementById("riskEntry").value=
+currentPrice.toFixed(2);
+
+document.getElementById("chartPrice").innerText=
+currentPrice.toFixed(2);
+
+source.innerText=
+"Twelve Data • Live 5M Candle • "+
+formatUpdateTime();
+
+api.innerText="● LIVE API";
+api.className="api-status";
+
+document.getElementById("chartLive").innerText="● LIVE";
+
+drawChart();
+runEngine();
+
+}catch(e){
+
+console.error(e);
+
+api.innerText="● API ERROR";
+api.className="api-status api-error";
+
+source.innerText=
+"API gagal — cuba lagi dalam 30 saat";
+
+document.getElementById("chartLive").innerText=
+"● OFFLINE";
+
+}
+
+}
+
+
 /* =========================================================
 CHART
 ========================================================= */
@@ -2803,8 +2751,6 @@ function runEngine(){
 
 if(candles.length<100)return;
 
-try{
-
 analyze();
 
 let m5=market.m5;
@@ -2813,21 +2759,10 @@ let h1=market.h1;
 let l=market.levels;
 
 if(
-  m5.atr==null ||
-  m15.rsi==null ||
-  m15.ema20==null ||
-  m15.ema50==null ||
-  m5.ema20==null ||
-  m5.ema50==null
-){
-  console.warn("Indicator belum cukup:", {
-    candles:candles.length,
-    m5,
-    m15,
-    h1
-  });
-  return;
-}
+!m5.atr||
+!m15.rsi||
+!h1.ema200
+)return;
 
 let vwap=calcVWAP(candles);
 
@@ -2845,17 +2780,11 @@ DIRECTIONAL CONDITIONS
 
 let h1Buy=
 h1.bull&&
-(
-  h1.ema200===null ||
-  currentPrice>h1.ema200
-);
+currentPrice>h1.ema200;
 
 let h1Sell=
 h1.bear&&
-(
-  h1.ema200===null ||
-  currentPrice<h1.ema200
-);
+currentPrice<h1.ema200;
 
 
 let m15Buy=
@@ -4332,54 +4261,32 @@ updateNotificationStatus,
 </script>
 <script>
 /* =========================================================
-DISABLE OLD SERVICE WORKER — DEBUG
+PWA / SERVICE WORKER
 ========================================================= */
 
 if ("serviceWorker" in navigator) {
 
-    window.addEventListener("load", async () => {
+    window.addEventListener("load", () => {
 
-        try {
-
-            const registrations =
-                await navigator.serviceWorker.getRegistrations();
-
-            for (const registration of registrations) {
-
-                await registration.unregister();
-
-                console.log(
-                    "🧹 Old Service Worker removed"
-                );
-
-            }
-
-            const cacheNames =
-                await caches.keys();
-
-            for (const cacheName of cacheNames) {
-
-                await caches.delete(cacheName);
-
-                console.log(
-                    "🧹 Cache removed:",
-                    cacheName
-                );
-
-            }
+        navigator.serviceWorker.register("/sw.js", {
+            scope: "/"
+        })
+        .then(registration => {
 
             console.log(
-                "🔥 SERVICE WORKER DISABLED"
+                "XAU Sniper Service Worker registered:",
+                registration.scope
             );
 
-        } catch (error) {
+        })
+        .catch(error => {
 
             console.error(
-                "Service Worker cleanup error:",
+                "XAU Sniper Service Worker registration failed:",
                 error
             );
 
-        }
+        });
 
     });
 
