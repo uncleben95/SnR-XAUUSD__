@@ -8,10 +8,6 @@ export default async function handler(req, res) {
       });
     }
 
-    // =====================================================
-    // XAUUSD 5M DATA
-    // =====================================================
-
     const url =
       `https://api.twelvedata.com/time_series` +
       `?symbol=XAU/USD` +
@@ -77,7 +73,9 @@ export default async function handler(req, res) {
       let value = avg(values.slice(0, period));
 
       for (let i = period; i < values.length; i++) {
-        value = values[i] * k + value * (1 - k);
+        value =
+          values[i] * k +
+          value * (1 - k);
       }
 
       return value;
@@ -94,7 +92,8 @@ export default async function handler(req, res) {
         i < values.length;
         i++
       ) {
-        const change = values[i] - values[i - 1];
+        const change =
+          values[i] - values[i - 1];
 
         if (change > 0) gain += change;
         if (change < 0) loss -= change;
@@ -136,7 +135,11 @@ export default async function handler(req, res) {
 
       const lines = [];
 
-      for (let i = 26; i <= values.length; i++) {
+      for (
+        let i = 26;
+        i <= values.length;
+        i++
+      ) {
         const slice = values.slice(0, i);
 
         const e12 = ema(slice, 12);
@@ -163,7 +166,9 @@ export default async function handler(req, res) {
     }
 
     function adx(data, period = 14) {
-      if (data.length < period * 2 + 2) return null;
+      if (data.length < period * 2 + 2) {
+        return null;
+      }
 
       const trs = [];
       const plusDM = [];
@@ -203,12 +208,17 @@ export default async function handler(req, res) {
 
       if (!tr) return null;
 
-      const plusDI = 100 * plus / tr;
-      const minusDI = 100 * minus / tr;
+      const plusDI =
+        100 * plus / tr;
+
+      const minusDI =
+        100 * minus / tr;
 
       const value =
         100 *
-        Math.abs(plusDI - minusDI) /
+        Math.abs(
+          plusDI - minusDI
+        ) /
         (plusDI + minusDI || 1);
 
       return {
@@ -224,13 +234,19 @@ export default async function handler(req, res) {
       const buckets = {};
 
       data.forEach(c => {
-        const time = new Date(c.time).getTime();
-        const size = minutes * 60 * 1000;
-        const key = Math.floor(time / size) * size;
+        const time =
+          new Date(c.time).getTime();
+
+        const size =
+          minutes * 60 * 1000;
+
+        const key =
+          Math.floor(time / size) * size;
 
         if (!buckets[key]) {
           buckets[key] = {
-            time: new Date(key).toISOString(),
+            time:
+              new Date(key).toISOString(),
             open: c.open,
             high: c.high,
             low: c.low,
@@ -239,18 +255,30 @@ export default async function handler(req, res) {
           };
         } else {
           buckets[key].high =
-            Math.max(buckets[key].high, c.high);
+            Math.max(
+              buckets[key].high,
+              c.high
+            );
 
           buckets[key].low =
-            Math.min(buckets[key].low, c.low);
+            Math.min(
+              buckets[key].low,
+              c.low
+            );
 
-          buckets[key].close = c.close;
-          buckets[key].volume += c.volume;
+          buckets[key].close =
+            c.close;
+
+          buckets[key].volume +=
+            c.volume;
         }
       });
 
       return Object.keys(buckets)
-        .sort((a, b) => Number(a) - Number(b))
+        .sort(
+          (a, b) =>
+            Number(a) - Number(b)
+        )
         .map(k => buckets[k]);
     }
 
@@ -258,8 +286,14 @@ export default async function handler(req, res) {
     // STRUCTURE
     // =====================================================
 
-    function structure(data, lookback = 40) {
-      if (data.length < lookback + 5) {
+    function structure(
+      data,
+      lookback = 30
+    ) {
+      if (
+        data.length <
+        lookback + 5
+      ) {
         return {
           high: null,
           low: null,
@@ -270,21 +304,37 @@ export default async function handler(req, res) {
         };
       }
 
-      const current = data.slice(-lookback);
-      const previous = data.slice(-lookback * 2, -lookback);
+      const current =
+        data.slice(-lookback);
 
-      const high = highest(current.map(c => c.high));
-      const low = lowest(current.map(c => c.low));
+      const previous =
+        data.slice(
+          -lookback * 2,
+          -lookback
+        );
 
-      const previousHigh = highest(
-        previous.map(c => c.high)
-      );
+      const high =
+        highest(
+          current.map(c => c.high)
+        );
 
-      const previousLow = lowest(
-        previous.map(c => c.low)
-      );
+      const low =
+        lowest(
+          current.map(c => c.low)
+        );
 
-      const last = data.at(-1);
+      const previousHigh =
+        highest(
+          previous.map(c => c.high)
+        );
+
+      const previousLow =
+        lowest(
+          previous.map(c => c.low)
+        );
+
+      const last =
+        data.at(-1);
 
       return {
         high,
@@ -293,84 +343,121 @@ export default async function handler(req, res) {
         previousLow,
 
         bullish:
-          high !== null &&
-          previousHigh !== null &&
-          high > previousHigh &&
-          last.close > previousHigh,
+          high >
+            previousHigh &&
+          last.close >
+            previousHigh,
 
         bearish:
-          low !== null &&
-          previousLow !== null &&
-          low < previousLow &&
-          last.close < previousLow
+          low <
+            previousLow &&
+          last.close <
+            previousLow
       };
     }
 
-    function detectBOS(data, lookback = 20) {
-      if (data.length < lookback + 3) {
+    function detectBOS(
+      data,
+      lookback = 20
+    ) {
+      if (
+        data.length <
+        lookback + 3
+      ) {
         return {
           bullish: false,
           bearish: false
         };
       }
 
-      const last = data.at(-1);
-      const previous = data.slice(-lookback - 1, -1);
+      const last =
+        data.at(-1);
 
-      const previousHigh = highest(
-        previous.map(c => c.high)
-      );
+      const previous =
+        data.slice(
+          -lookback - 1,
+          -1
+        );
 
-      const previousLow = lowest(
-        previous.map(c => c.low)
-      );
+      const previousHigh =
+        highest(
+          previous.map(c => c.high)
+        );
+
+      const previousLow =
+        lowest(
+          previous.map(c => c.low)
+        );
 
       return {
         bullish:
-          last.close > previousHigh,
+          last.close >
+          previousHigh,
 
         bearish:
-          last.close < previousLow
+          last.close <
+          previousLow
       };
     }
 
-    function detectCHOCH(data, lookback = 30) {
-      if (data.length < lookback * 2 + 5) {
+    function detectCHOCH(
+      data,
+      lookback = 25
+    ) {
+      if (
+        data.length <
+        lookback * 2 + 5
+      ) {
         return {
           bullish: false,
           bearish: false
         };
       }
 
-      const recent = data.slice(-lookback);
-      const old = data.slice(-lookback * 2, -lookback);
+      const recent =
+        data.slice(-lookback);
 
-      const recentHigh = highest(
-        recent.map(c => c.high)
-      );
+      const old =
+        data.slice(
+          -lookback * 2,
+          -lookback
+        );
 
-      const recentLow = lowest(
-        recent.map(c => c.low)
-      );
+      const recentHigh =
+        highest(
+          recent.map(c => c.high)
+        );
 
-      const oldHigh = highest(
-        old.map(c => c.high)
-      );
+      const recentLow =
+        lowest(
+          recent.map(c => c.low)
+        );
 
-      const oldLow = lowest(
-        old.map(c => c.low)
-      );
+      const oldHigh =
+        highest(
+          old.map(c => c.high)
+        );
 
-      const last = data.at(-1);
+      const oldLow =
+        lowest(
+          old.map(c => c.low)
+        );
+
+      const last =
+        data.at(-1);
 
       return {
         bullish:
-          recentHigh > oldHigh &&
-          last.close > oldHigh,
+          recentHigh >
+            oldHigh &&
+          last.close >
+            oldHigh,
 
         bearish:
-          recentLow < oldLow &&
-          last.close < oldLow
+          recentLow <
+            oldLow &&
+          last.close <
+            oldLow
       };
     }
 
@@ -379,40 +466,69 @@ export default async function handler(req, res) {
     // =====================================================
 
     const m5 = candles;
-    const m15 = aggregate(candles, 15);
-    const h1 = aggregate(candles, 60);
+    const m15 = aggregate(
+      candles,
+      15
+    );
+    const h1 = aggregate(
+      candles,
+      60
+    );
 
-    const c5 = m5.map(c => c.close);
-    const c15 = m15.map(c => c.close);
-    const c1 = h1.map(c => c.close);
+    const c5 =
+      m5.map(c => c.close);
 
-    const price = c5.at(-1);
+    const c15 =
+      m15.map(c => c.close);
+
+    const c1 =
+      h1.map(c => c.close);
+
+    const price =
+      c5.at(-1);
 
     // =====================================================
     // INDICATORS
     // =====================================================
 
-    const h1EMA200 = ema(c1, 200);
-    const h1EMA50 = ema(c1, 50);
-    const h1EMA20 = ema(c1, 20);
+    const h1EMA50 =
+      ema(c1, 50);
 
-    const m15EMA20 = ema(c15, 20);
-    const m15EMA50 = ema(c15, 50);
-    const m15EMA200 = ema(c15, 200);
+    const h1EMA200 =
+      ema(c1, 200);
 
-    const m15RSI = rsi(c15);
-    const m15MACD = macd(c15);
-    const m15ADX = adx(m15);
-    const m15ATR = atr(m15);
+    const m15EMA20 =
+      ema(c15, 20);
 
-    const m5EMA20 = ema(c5, 20);
-    const m5EMA50 = ema(c5, 50);
-    const m5RSI = rsi(c5);
-    const m5MACD = macd(c5);
-    const m5ATR = atr(m5);
+    const m15EMA50 =
+      ema(c15, 50);
+
+    const m15RSI =
+      rsi(c15);
+
+    const m15MACD =
+      macd(c15);
+
+    const m15ADX =
+      adx(m15);
+
+    const m15ATR =
+      atr(m15);
+
+    const m5EMA20 =
+      ema(c5, 20);
+
+    const m5EMA50 =
+      ema(c5, 50);
+
+    const m5RSI =
+      rsi(c5);
+
+    const m5ATR =
+      atr(m5);
 
     // =====================================================
-    // H1 DIRECTION
+    // H1 BIAS
     // =====================================================
 
     const h1Bull =
@@ -428,7 +544,7 @@ export default async function handler(req, res) {
       h1EMA50 < h1EMA200;
 
     // =====================================================
-    // M15 DIRECTION
+    // M15
     // =====================================================
 
     const m15Bull =
@@ -441,24 +557,6 @@ export default async function handler(req, res) {
       m15EMA50 !== null &&
       m15EMA20 < m15EMA50;
 
-    // =====================================================
-    // STRUCTURE
-    // =====================================================
-
-    const h1Structure = structure(h1, 25);
-    const m15Structure = structure(m15, 30);
-    const m5Structure = structure(m5, 36);
-
-    const m15BOS = detectBOS(m15, 20);
-    const m5BOS = detectBOS(m5, 20);
-
-    const m15CHOCH = detectCHOCH(m15, 20);
-    const m5CHOCH = detectCHOCH(m5, 25);
-
-    // =====================================================
-    // MOMENTUM
-    // =====================================================
-
     const m15MomentumBull =
       m15RSI !== null &&
       m15RSI >= 50 &&
@@ -469,100 +567,169 @@ export default async function handler(req, res) {
       m15RSI >= 30 &&
       m15RSI < 50;
 
-    const m5MomentumBull =
-      m5RSI !== null &&
-      m5RSI >= 50;
-
-    const m5MomentumBear =
-      m5RSI !== null &&
-      m5RSI < 50;
-
     // =====================================================
-    // LIQUIDITY LEVELS
+    // STRUCTURE
     // =====================================================
 
-    const recentHigh = highest(
-      m5.slice(-48).map(c => c.high)
-    );
+    const h1Structure =
+      structure(h1, 25);
 
-    const recentLow = lowest(
-      m5.slice(-48).map(c => c.low)
-    );
+    const m15Structure =
+      structure(m15, 30);
 
-    const oldHigh = highest(
-      m5.slice(-96, -48).map(c => c.high)
-    );
+    const m5Structure =
+      structure(m5, 36);
 
-    const oldLow = lowest(
-      m5.slice(-96, -48).map(c => c.low)
-    );
+    const m15BOS =
+      detectBOS(m15, 20);
 
-    // =====================================================
-    // ASIAN RANGE
-    // Uses UTC because Twelve Data timestamps are commonly
-    // returned in UTC-style datetime values.
-    // =====================================================
+    const m5BOS =
+      detectBOS(m5, 20);
 
-    const asianCandles = m5.filter(c => {
-      const d = new Date(c.time);
-      const hour = d.getUTCHours();
+    const m15CHOCH =
+      detectCHOCH(m15, 20);
 
-      return hour >= 0 && hour < 8;
-    });
-
-    const asianHigh = asianCandles.length
-      ? highest(asianCandles.map(c => c.high))
-      : recentHigh;
-
-    const asianLow = asianCandles.length
-      ? lowest(asianCandles.map(c => c.low))
-      : recentLow;
+    const m5CHOCH =
+      detectCHOCH(m5, 25);
 
     // =====================================================
-    // LIQUIDITY SWEEP / MANIPULATION
+    // M5
     // =====================================================
 
-    const last5 = m5.at(-1);
-    const prev5 = m5.at(-2);
-    const prev10 = m5.slice(-10, -1);
+    const last5 =
+      m5.at(-1);
 
-    const priorHigh = highest(
-      prev10.map(c => c.high)
-    );
+    const prev5 =
+      m5.at(-2);
 
-    const priorLow = lowest(
-      prev10.map(c => c.low)
-    );
+    const m5Bull =
+      m5EMA20 !== null &&
+      m5EMA50 !== null &&
+      m5EMA20 > m5EMA50;
 
-    const candleRange =
-      last5.high - last5.low;
+    const m5Bear =
+      m5EMA20 !== null &&
+      m5EMA50 !== null &&
+      m5EMA20 < m5EMA50;
+
+    // =====================================================
+    // LIQUIDITY
+    // =====================================================
+
+    const recentHigh =
+      highest(
+        m5
+          .slice(-48)
+          .map(c => c.high)
+      );
+
+    const recentLow =
+      lowest(
+        m5
+          .slice(-48)
+          .map(c => c.low)
+      );
+
+    const asianCandles =
+      m5.filter(c => {
+        const d =
+          new Date(c.time);
+
+        const hour =
+          d.getUTCHours();
+
+        return (
+          hour >= 0 &&
+          hour < 8
+        );
+      });
+
+    const asianHigh =
+      asianCandles.length
+        ? highest(
+            asianCandles.map(
+              c => c.high
+            )
+          )
+        : recentHigh;
+
+    const asianLow =
+      asianCandles.length
+        ? lowest(
+            asianCandles.map(
+              c => c.low
+            )
+          )
+        : recentLow;
+
+    // =====================================================
+    // SWEEP DETECTION
+    // =====================================================
+
+    const previousCandles =
+      m5.slice(-11, -1);
+
+    const priorHigh =
+      highest(
+        previousCandles.map(
+          c => c.high
+        )
+      );
+
+    const priorLow =
+      lowest(
+        previousCandles.map(
+          c => c.low
+        )
+      );
+
+    const range =
+      last5.high -
+      last5.low;
 
     const body =
-      Math.abs(last5.close - last5.open);
+      Math.abs(
+        last5.close -
+        last5.open
+      );
 
     const upperWick =
       last5.high -
-      Math.max(last5.open, last5.close);
+      Math.max(
+        last5.open,
+        last5.close
+      );
 
     const lowerWick =
-      Math.min(last5.open, last5.close) -
+      Math.min(
+        last5.open,
+        last5.close
+      ) -
       last5.low;
 
     const bearishSweep =
       (
-        last5.high > priorHigh ||
-        last5.high > asianHigh
+        last5.high >
+          priorHigh ||
+        last5.high >
+          asianHigh
       ) &&
-      last5.close < priorHigh &&
-      upperWick > body * 1.15;
+      last5.close <
+        priorHigh &&
+      upperWick >
+        body * 1.15;
 
     const bullishSweep =
       (
-        last5.low < priorLow ||
-        last5.low < asianLow
+        last5.low <
+          priorLow ||
+        last5.low <
+          asianLow
       ) &&
-      last5.close > priorLow &&
-      lowerWick > body * 1.15;
+      last5.close >
+        priorLow &&
+      lowerWick >
+        body * 1.15;
 
     // =====================================================
     // DISPLACEMENT
@@ -572,143 +739,144 @@ export default async function handler(req, res) {
       avg(
         m5
           .slice(-21, -1)
-          .map(c => c.high - c.low)
-      ) || candleRange;
+          .map(
+            c =>
+              c.high -
+              c.low
+          )
+      ) || range;
 
     const bullishDisplacement =
-      last5.close > last5.open &&
-      candleRange > averageRange * 1.25 &&
-      body / (candleRange || 1) > 0.55;
+      last5.close >
+        last5.open &&
+      range >
+        averageRange * 1.25 &&
+      body /
+        (range || 1) >
+        0.55;
 
     const bearishDisplacement =
-      last5.close < last5.open &&
-      candleRange > averageRange * 1.25 &&
-      body / (candleRange || 1) > 0.55;
+      last5.close <
+        last5.open &&
+      range >
+        averageRange * 1.25 &&
+      body /
+        (range || 1) >
+        0.55;
 
     // =====================================================
     // SUPPORT / RESISTANCE
     // =====================================================
 
-    const support = lowest(
-      m15.slice(-30).map(c => c.low)
-    );
+    const support =
+      lowest(
+        m15
+          .slice(-30)
+          .map(c => c.low)
+      );
 
-    const resistance = highest(
-      m15.slice(-30).map(c => c.high)
-    );
+    const resistance =
+      highest(
+        m15
+          .slice(-30)
+          .map(c => c.high)
+      );
 
-    const majorSupport = lowest(
-      m15.slice(-80).map(c => c.low)
-    );
+    const majorSupport =
+      lowest(
+        m15
+          .slice(-80)
+          .map(c => c.low)
+      );
 
-    const majorResistance = highest(
-      m15.slice(-80).map(c => c.high)
-    );
+    const majorResistance =
+      highest(
+        m15
+          .slice(-80)
+          .map(c => c.high)
+      );
 
     // =====================================================
-    // DISTANCE / ROOM TO RUN
+    // ROOM TO RUN
     // =====================================================
 
-    const atrValue = m15ATR || m5ATR || 1;
+    const atrValue =
+      m15ATR ||
+      m5ATR ||
+      1;
 
     const distanceToSupport =
-      price - support;
+      price -
+      support;
 
     const distanceToResistance =
-      resistance - price;
+      resistance -
+      price;
 
     const distanceToMajorSupport =
-      price - majorSupport;
+      price -
+      majorSupport;
 
     const distanceToMajorResistance =
-      majorResistance - price;
-
-    /*
-      We don't want to sell directly above support.
-      We don't want to buy directly below resistance.
-
-      1 ATR = danger zone
-      1.5 ATR = caution
-      2 ATR+ = good room
-    */
+      majorResistance -
+      price;
 
     const sellRoom =
-      distanceToSupport >= atrValue * 1.50;
+      distanceToSupport >=
+      atrValue * 1.50;
 
     const buyRoom =
-      distanceToResistance >= atrValue * 1.50;
+      distanceToResistance >=
+      atrValue * 1.50;
 
     const sellExcellentRoom =
-      distanceToMajorSupport >= atrValue * 2.50;
+      distanceToMajorSupport >=
+      atrValue * 2.50;
 
     const buyExcellentRoom =
-      distanceToMajorResistance >= atrValue * 2.50;
-
-    const nearSupport =
-      distanceToSupport <= atrValue * 1.0;
-
-    const nearResistance =
-      distanceToResistance <= atrValue * 1.0;
+      distanceToMajorResistance >=
+      atrValue * 2.50;
 
     // =====================================================
     // VWAP
     // =====================================================
 
-    const vwapData = m5.slice(-288);
+    const vwapData =
+      m5.slice(-288);
 
     let pv = 0;
     let volume = 0;
 
     vwapData.forEach(c => {
       const typical =
-        (c.high + c.low + c.close) / 3;
+        (
+          c.high +
+          c.low +
+          c.close
+        ) / 3;
 
-      const v = c.volume || 1;
+      const v =
+        c.volume || 1;
 
-      pv += typical * v;
+      pv +=
+        typical * v;
+
       volume += v;
     });
 
     const vwap =
-      volume > 0
+      volume
         ? pv / volume
         : price;
 
-    const aboveVWAP = price > vwap;
-    const belowVWAP = price < vwap;
+    const aboveVWAP =
+      price > vwap;
+
+    const belowVWAP =
+      price < vwap;
 
     // =====================================================
-    // FVG
-    // =====================================================
-
-    const c3 = m5.at(-3);
-
-    const bullishFVG =
-      c3 &&
-      last5.low > c3.high;
-
-    const bearishFVG =
-      c3 &&
-      last5.high < c3.low;
-
-    // =====================================================
-    // PULLBACK DETECTION
-    // =====================================================
-
-    const pullbackBull =
-      h1Bull &&
-      m15Bull &&
-      !m5Bull &&
-      price > m15EMA50;
-
-    const pullbackBear =
-      h1Bear &&
-      m15Bear &&
-      !m5Bear &&
-      price < m15EMA50;
-
-    // =====================================================
-    // REVERSAL ENGINE
+    // REVERSAL
     // =====================================================
 
     const bullishReversal =
@@ -724,7 +892,7 @@ export default async function handler(req, res) {
         m5BOS.bullish ||
         bullishDisplacement
       ) &&
-      price > vwap;
+      aboveVWAP;
 
     const bearishReversal =
       (
@@ -739,22 +907,22 @@ export default async function handler(req, res) {
         m5BOS.bearish ||
         bearishDisplacement
       ) &&
-      price < vwap;
+      belowVWAP;
 
     // =====================================================
-    // MANIPULATION ENGINE
+    // MANIPULATION
     // =====================================================
 
     const bullishManipulation =
       bullishSweep &&
-      !m5BOS.bearish;
+      !m5BOS.bullish;
 
     const bearishManipulation =
       bearishSweep &&
-      !m5BOS.bullish;
+      !m5BOS.bearish;
 
     // =====================================================
-    // CONTINUATION ENGINE
+    // CONTINUATION
     // =====================================================
 
     const bullishContinuation =
@@ -765,10 +933,7 @@ export default async function handler(req, res) {
         m5BOS.bullish ||
         bullishDisplacement
       ) &&
-      (
-        m15MomentumBull ||
-        m5MomentumBull
-      ) &&
+      m15MomentumBull &&
       !bearishManipulation;
 
     const bearishContinuation =
@@ -779,178 +944,232 @@ export default async function handler(req, res) {
         m5BOS.bearish ||
         bearishDisplacement
       ) &&
-      (
-        m15MomentumBear ||
-        m5MomentumBear
-      ) &&
+      m15MomentumBear &&
       !bullishManipulation;
 
     // =====================================================
-    // SCORE ENGINE
+    // SCORE
     // =====================================================
 
     let buyScore = 0;
     let sellScore = 0;
 
-    // H1 direction
     if (h1Bull) buyScore += 20;
     if (h1Bear) sellScore += 20;
 
-    // M15 trend
     if (m15Bull) buyScore += 15;
     if (m15Bear) sellScore += 15;
 
-    // M15 structure
-    if (m15Structure.bullish) buyScore += 10;
-    if (m15Structure.bearish) sellScore += 10;
+    if (m15Structure.bullish)
+      buyScore += 10;
 
-    // BOS
-    if (m15BOS.bullish) buyScore += 8;
-    if (m15BOS.bearish) sellScore += 8;
+    if (m15Structure.bearish)
+      sellScore += 10;
 
-    // Momentum
-    if (m15MomentumBull) buyScore += 7;
-    if (m15MomentumBear) sellScore += 7;
+    if (m15BOS.bullish)
+      buyScore += 8;
 
-    // MACD
-    if (m15MACD?.bullish) buyScore += 5;
-    if (m15MACD?.bearish) sellScore += 5;
+    if (m15BOS.bearish)
+      sellScore += 8;
 
-    // ADX
-    if (m15ADX?.value >= 20) {
-      if (m15ADX.bullish) buyScore += 5;
-      if (m15ADX.bearish) sellScore += 5;
-    }
+    if (m15MomentumBull)
+      buyScore += 7;
 
-    // M5
-    if (m5Bull) buyScore += 5;
-    if (m5Bear) sellScore += 5;
+    if (m15MomentumBear)
+      sellScore += 7;
 
-    // VWAP
-    if (aboveVWAP) buyScore += 5;
-    if (belowVWAP) sellScore += 5;
-
-    // Displacement
-    if (bullishDisplacement) buyScore += 5;
-    if (bearishDisplacement) sellScore += 5;
-
-    // =====================================================
-    // ROOM FILTER
-    // =====================================================
-
-    /*
-      Critical protection:
-      Don't give a directional trade if price has
-      insufficient space before opposing liquidity.
-    */
-
-    if (!buyRoom) {
-      buyScore -= 20;
-    }
-
-    if (!sellRoom) {
-      sellScore -= 20;
-    }
-
-    // Excellent room bonus
-    if (buyExcellentRoom) {
+    if (m15MACD?.bullish)
       buyScore += 5;
-    }
 
-    if (sellExcellentRoom) {
+    if (m15MACD?.bearish)
       sellScore += 5;
+
+    if (m15ADX?.value >= 20) {
+      if (m15ADX.bullish)
+        buyScore += 5;
+
+      if (m15ADX.bearish)
+        sellScore += 5;
     }
 
-    // =====================================================
-    // MANIPULATION PENALTY
-    // =====================================================
+    if (m5Bull)
+      buyScore += 5;
 
-    if (bullishManipulation) {
+    if (m5Bear)
+      sellScore += 5;
+
+    if (aboveVWAP)
+      buyScore += 5;
+
+    if (belowVWAP)
+      sellScore += 5;
+
+    if (bullishDisplacement)
+      buyScore += 5;
+
+    if (bearishDisplacement)
+      sellScore += 5;
+
+    // ROOM FILTER
+
+    if (!buyRoom)
       buyScore -= 20;
-    }
 
-    if (bearishManipulation) {
+    if (!sellRoom)
       sellScore -= 20;
-    }
 
-    buyScore = clamp(buyScore, 0, 100);
-    sellScore = clamp(sellScore, 0, 100);
+    if (buyExcellentRoom)
+      buyScore += 5;
+
+    if (sellExcellentRoom)
+      sellScore += 5;
+
+    // MANIPULATION PENALTY
+
+    if (bullishManipulation)
+      buyScore -= 20;
+
+    if (bearishManipulation)
+      sellScore -= 20;
+
+    buyScore =
+      clamp(
+        buyScore,
+        0,
+        100
+      );
+
+    sellScore =
+      clamp(
+        sellScore,
+        0,
+        100
+      );
 
     // =====================================================
-    // REGIME DETECTION
+    // REGIME
     // =====================================================
 
     let regime = "UNCLEAR";
-    let regimeDirection = "NEUTRAL";
+    let regimeDirection =
+      "NEUTRAL";
+
     let regimeConfidence = 0;
 
-    // Manipulation gets priority
+    // Manipulation first
+
     if (bearishManipulation) {
-      regime = "MANIPULATION";
-      regimeDirection = "BEARISH";
-      regimeConfidence = clamp(
-        70 +
-        (bearishSweep ? 10 : 0) +
-        (bearishDisplacement ? 10 : 0),
-        0,
-        95
-      );
-    } else if (bullishManipulation) {
-      regime = "MANIPULATION";
-      regimeDirection = "BULLISH";
-      regimeConfidence = clamp(
-        70 +
-        (bullishSweep ? 10 : 0) +
-        (bullishDisplacement ? 10 : 0),
-        0,
-        95
-      );
+      regime =
+        "MANIPULATION";
+
+      regimeDirection =
+        "BEARISH";
+
+      regimeConfidence =
+        clamp(
+          70 +
+          (bearishSweep ? 10 : 0) +
+          (bearishDisplacement ? 10 : 0),
+          0,
+          95
+        );
     }
 
-    // Reversal next
-    if (regime === "UNCLEAR" && bearishReversal) {
-      regime = "REVERSAL";
-      regimeDirection = "BEARISH";
-      regimeConfidence = clamp(
-        75 +
-        (m15CHOCH.bearish ? 8 : 0) +
-        (m5BOS.bearish ? 7 : 0),
-        0,
-        95
-      );
+    else if (bullishManipulation) {
+      regime =
+        "MANIPULATION";
+
+      regimeDirection =
+        "BULLISH";
+
+      regimeConfidence =
+        clamp(
+          70 +
+          (bullishSweep ? 10 : 0) +
+          (bullishDisplacement ? 10 : 0),
+          0,
+          95
+        );
     }
 
-    if (regime === "UNCLEAR" && bullishReversal) {
-      regime = "REVERSAL";
-      regimeDirection = "BULLISH";
-      regimeConfidence = clamp(
-        75 +
-        (m15CHOCH.bullish ? 8 : 0) +
-        (m5BOS.bullish ? 7 : 0),
-        0,
-        95
-      );
+    // Reversal
+
+    if (
+      regime === "UNCLEAR" &&
+      bearishReversal
+    ) {
+      regime =
+        "REVERSAL";
+
+      regimeDirection =
+        "BEARISH";
+
+      regimeConfidence =
+        clamp(
+          75 +
+          (m15CHOCH.bearish ? 8 : 0) +
+          (m5BOS.bearish ? 7 : 0),
+          0,
+          95
+        );
+    }
+
+    if (
+      regime === "UNCLEAR" &&
+      bullishReversal
+    ) {
+      regime =
+        "REVERSAL";
+
+      regimeDirection =
+        "BULLISH";
+
+      regimeConfidence =
+        clamp(
+          75 +
+          (m15CHOCH.bullish ? 8 : 0) +
+          (m5BOS.bullish ? 7 : 0),
+          0,
+          95
+        );
     }
 
     // Continuation
-    if (regime === "UNCLEAR" && bearishContinuation) {
-      regime = "CONTINUATION";
-      regimeDirection = "BEARISH";
-      regimeConfidence = clamp(
-        sellScore,
-        0,
-        95
-      );
+
+    if (
+      regime === "UNCLEAR" &&
+      bearishContinuation
+    ) {
+      regime =
+        "CONTINUATION";
+
+      regimeDirection =
+        "BEARISH";
+
+      regimeConfidence =
+        clamp(
+          sellScore,
+          0,
+          95
+        );
     }
 
-    if (regime === "UNCLEAR" && bullishContinuation) {
-      regime = "CONTINUATION";
-      regimeDirection = "BULLISH";
-      regimeConfidence = clamp(
-        buyScore,
-        0,
-        95
-      );
+    if (
+      regime === "UNCLEAR" &&
+      bullishContinuation
+    ) {
+      regime =
+        "CONTINUATION";
+
+      regimeDirection =
+        "BULLISH";
+
+      regimeConfidence =
+        clamp(
+          buyScore,
+          0,
+          95
+        );
     }
 
     // =====================================================
@@ -958,92 +1177,101 @@ export default async function handler(req, res) {
     // =====================================================
 
     let signal = "WAIT";
-    let score = Math.max(
-      buyScore,
-      sellScore
-    );
 
-    let reason = "No clear setup";
+    let reason =
+      "No clear setup";
 
-    // -----------------------------------------------------
+    let score =
+      Math.max(
+        buyScore,
+        sellScore
+      );
+
     // CONTINUATION
-    // -----------------------------------------------------
 
     if (
-      regime === "CONTINUATION" &&
-      regimeDirection === "BULLISH" &&
+      regime ===
+        "CONTINUATION" &&
+      regimeDirection ===
+        "BULLISH" &&
       buyScore >= 70 &&
       buyRoom
     ) {
       signal = "BUY";
-      reason = "Bullish continuation with room to run";
+
+      reason =
+        "Bullish continuation with room to run";
     }
 
     if (
-      regime === "CONTINUATION" &&
-      regimeDirection === "BEARISH" &&
+      regime ===
+        "CONTINUATION" &&
+      regimeDirection ===
+        "BEARISH" &&
       sellScore >= 70 &&
       sellRoom
     ) {
       signal = "SELL";
-      reason = "Bearish continuation with room to run";
+
+      reason =
+        "Bearish continuation with room to run";
     }
 
-    // -----------------------------------------------------
     // REVERSAL
-    // -----------------------------------------------------
 
     if (
-      regime === "REVERSAL" &&
-      regimeDirection === "BULLISH" &&
+      regime ===
+        "REVERSAL" &&
+      regimeDirection ===
+        "BULLISH" &&
       buyScore >= 65 &&
       buyRoom
     ) {
       signal = "BUY";
-      reason = "Confirmed bullish reversal";
+
+      reason =
+        "Confirmed bullish reversal";
     }
 
     if (
-      regime === "REVERSAL" &&
-      regimeDirection === "BEARISH" &&
+      regime ===
+        "REVERSAL" &&
+      regimeDirection ===
+        "BEARISH" &&
       sellScore >= 65 &&
       sellRoom
     ) {
       signal = "SELL";
-      reason = "Confirmed bearish reversal";
+
+      reason =
+        "Confirmed bearish reversal";
     }
 
-    // -----------------------------------------------------
     // MANIPULATION
-    // -----------------------------------------------------
 
-    /*
-      NEVER immediately enter in the direction of a sweep.
-
-      Example:
-      Price sweeps resistance -> don't BUY immediately.
-      Wait for confirmation of reversal.
-    */
-
-    if (regime === "MANIPULATION") {
+    if (
+      regime ===
+      "MANIPULATION"
+    ) {
       signal = "WAIT";
 
       reason =
-        regimeDirection === "BEARISH"
+        regimeDirection ===
+        "BEARISH"
           ? "Bearish liquidity manipulation detected - wait for confirmation"
           : "Bullish liquidity manipulation detected - wait for confirmation";
     }
 
-    // -----------------------------------------------------
-    // NO ROOM = WAIT
-    // -----------------------------------------------------
+    // NO ROOM
 
     if (
       signal === "BUY" &&
       !buyRoom
     ) {
       signal = "WAIT";
-      reason = "BUY rejected: insufficient room before resistance";
+
+      reason =
+        "BUY rejected: insufficient room before resistance";
     }
 
     if (
@@ -1051,7 +1279,9 @@ export default async function handler(req, res) {
       !sellRoom
     ) {
       signal = "WAIT";
-      reason = "SELL rejected: insufficient room before support";
+
+      reason =
+        "SELL rejected: insufficient room before support";
     }
 
     // =====================================================
@@ -1067,13 +1297,7 @@ export default async function handler(req, res) {
       tp2: null,
       tp3: null,
       risk: null,
-      rr: null,
-
-      management: {
-        tp1Action: null,
-        tp2Action: null,
-        runner: null
-      }
+      rr: null
     };
 
     if (
@@ -1082,58 +1306,41 @@ export default async function handler(req, res) {
     ) {
       const entry = price;
 
-      // ===================================================
       // BUY
-      // ===================================================
 
       if (signal === "BUY") {
-        const structureSL =
-          support -
-          atrValue * 0.30;
-
-        const atrSL =
-          entry -
-          m5ATR * 1.30;
-
         const sl =
           Math.min(
-            structureSL,
-            atrSL
+            support -
+              atrValue * 0.30,
+
+            entry -
+              m5ATR * 1.30
           );
 
         const risk =
           entry - sl;
 
-        /*
-          TP structure first.
-          If structure target is too close,
-          use ATR extension.
-        */
-
-        const structureTP1 =
-          resistance;
-
-        const atrTP1 =
-          entry +
-          risk * 1.50;
-
         const tp1 =
           Math.max(
-            structureTP1,
-            atrTP1
+            resistance,
+
+            entry +
+              risk * 1.5
           );
 
         const tp2 =
           Math.max(
             majorResistance,
+
             entry +
-            risk * 2.50
+              risk * 2.5
           );
 
         const tp3 =
           entry +
           Math.max(
-            risk * 4.0,
+            risk * 4,
             atrValue * 4.5
           );
 
@@ -1149,11 +1356,8 @@ export default async function handler(req, res) {
             m5ATR * 0.20,
 
           sl,
-
           tp1,
-
           tp2,
-
           tp3,
 
           risk,
@@ -1164,67 +1368,45 @@ export default async function handler(req, res) {
                 (tp3 - entry) /
                 risk
               ).toFixed(2)
-            ),
-
-          management: {
-            tp1Action:
-              "Take partial profit 25-30%",
-
-            tp2Action:
-              "Take another 25-30% and protect profit",
-
-            runner:
-              "Hold remaining position while H1/M15 structure remains bullish"
-          }
+            )
         };
       }
 
-      // ===================================================
       // SELL
-      // ===================================================
 
       if (signal === "SELL") {
-        const structureSL =
-          resistance +
-          atrValue * 0.30;
-
-        const atrSL =
-          entry +
-          m5ATR * 1.30;
-
         const sl =
           Math.max(
-            structureSL,
-            atrSL
+            resistance +
+              atrValue * 0.30,
+
+            entry +
+              m5ATR * 1.30
           );
 
         const risk =
           sl - entry;
 
-        const structureTP1 =
-          support;
-
-        const atrTP1 =
-          entry -
-          risk * 1.50;
-
         const tp1 =
           Math.min(
-            structureTP1,
-            atrTP1
+            support,
+
+            entry -
+              risk * 1.5
           );
 
         const tp2 =
           Math.min(
             majorSupport,
+
             entry -
-            risk * 2.50
+              risk * 2.5
           );
 
         const tp3 =
           entry -
           Math.max(
-            risk * 4.0,
+            risk * 4,
             atrValue * 4.5
           );
 
@@ -1240,11 +1422,8 @@ export default async function handler(req, res) {
             m5ATR * 0.20,
 
           sl,
-
           tp1,
-
           tp2,
-
           tp3,
 
           risk,
@@ -1255,45 +1434,17 @@ export default async function handler(req, res) {
                 (entry - tp3) /
                 risk
               ).toFixed(2)
-            ),
-
-          management: {
-            tp1Action:
-              "Take partial profit 25-30%",
-
-            tp2Action:
-              "Take another 25-30% and protect profit",
-
-            runner:
-              "Hold remaining position while H1/M15 structure remains bearish"
-          }
+            )
         };
       }
     }
-
-    // =====================================================
-    // HOLD / INVALIDATION
-    // =====================================================
-
-    const holdBias =
-      h1Bull && m15Bull
-        ? "BULLISH"
-        : h1Bear && m15Bear
-          ? "BEARISH"
-          : "NEUTRAL";
-
-    const invalidation =
-      holdBias === "BULLISH"
-        ? "M15 bearish structure break"
-        : holdBias === "BEARISH"
-          ? "M15 bullish structure break"
-          : "No active trend";
 
     // =====================================================
     // RESPONSE
     // =====================================================
 
     return res.status(200).json({
+
       symbol: "XAU/USD",
 
       price,
@@ -1301,53 +1452,11 @@ export default async function handler(req, res) {
       timestamp:
         new Date().toISOString(),
 
-      // ===================================================
-      // MAIN SIGNAL
-      // ===================================================
+      // OLD UI COMPATIBLE
 
       signal,
 
       score,
-
-      reason,
-
-      // ===================================================
-      // MARKET REGIME
-      // ===================================================
-
-      marketRegime: {
-        type: regime,
-        direction: regimeDirection,
-        confidence: regimeConfidence,
-
-        continuation: {
-          bullish: bullishContinuation,
-          bearish: bearishContinuation
-        },
-
-        reversal: {
-          bullish: bullishReversal,
-          bearish: bearishReversal
-        },
-
-        manipulation: {
-          bullish: bullishManipulation,
-          bearish: bearishManipulation
-        }
-      },
-
-      // ===================================================
-      // SCORES
-      // ===================================================
-
-      scores: {
-        buy: buyScore,
-        sell: sellScore
-      },
-
-      // ===================================================
-      // TREND
-      // ===================================================
 
       trend: {
         h1:
@@ -1365,20 +1474,96 @@ export default async function handler(req, res) {
               : "NEUTRAL",
 
         m5:
-          m5EMA20 !== null &&
-          m5EMA50 !== null &&
-          m5EMA20 > m5EMA50
+          m5Bull
             ? "BULLISH"
-            : m5EMA20 !== null &&
-              m5EMA50 !== null &&
-              m5EMA20 < m5EMA50
+            : m5Bear
               ? "BEARISH"
               : "NEUTRAL"
       },
 
-      // ===================================================
-      // STRUCTURE
-      // ===================================================
+      // NEW ENGINE
+
+      marketRegime: {
+        type: regime,
+
+        direction:
+          regimeDirection,
+
+        confidence:
+          regimeConfidence,
+
+        reason,
+
+        continuation: {
+          bullish:
+            bullishContinuation,
+
+          bearish:
+            bearishContinuation
+        },
+
+        reversal: {
+          bullish:
+            bullishReversal,
+
+          bearish:
+            bearishReversal
+        },
+
+        manipulation: {
+          bullish:
+            bullishManipulation,
+
+          bearish:
+            bearishManipulation
+        }
+      },
+
+      scores: {
+        buy: buyScore,
+        sell: sellScore
+      },
+
+      indicators: {
+        h1: {
+          ema50: h1EMA50,
+          ema200: h1EMA200
+        },
+
+        m15: {
+          ema20: m15EMA20,
+          ema50: m15EMA50,
+          rsi: m15RSI,
+          macd: m15MACD,
+          adx: m15ADX,
+          atr: m15ATR
+        },
+
+        m5: {
+          ema20: m5EMA20,
+          ema50: m5EMA50,
+          rsi: m5RSI,
+          atr: m5ATR
+        }
+      },
+
+      levels: {
+        support,
+        resistance,
+        majorSupport,
+        majorResistance,
+        asianHigh,
+        asianLow,
+        vwap
+      },
+
+      liquidity: {
+        recentHigh,
+        recentLow,
+
+        bullishSweep,
+        bearishSweep
+      },
 
       structure: {
         h1: h1Structure,
@@ -1396,122 +1581,30 @@ export default async function handler(req, res) {
         }
       },
 
-      // ===================================================
-      // INDICATORS
-      // ===================================================
-
-      indicators: {
-        h1: {
-          ema20: h1EMA20,
-          ema50: h1EMA50,
-          ema200: h1EMA200
-        },
-
-        m15: {
-          ema20: m15EMA20,
-          ema50: m15EMA50,
-          ema200: m15EMA200,
-          rsi: m15RSI,
-          macd: m15MACD,
-          adx: m15ADX,
-          atr: m15ATR
-        },
-
-        m5: {
-          ema20: m5EMA20,
-          ema50: m5EMA50,
-          rsi: m5RSI,
-          macd: m5MACD,
-          atr: m5ATR
-        }
-      },
-
-      // ===================================================
-      // LIQUIDITY
-      // ===================================================
-
-      liquidity: {
-        recentHigh,
-        recentLow,
-        oldHigh,
-        oldLow,
-        asianHigh,
-        asianLow,
-
-        sweep: {
-          bullish: bullishSweep,
-          bearish: bearishSweep
-        }
-      },
-
-      // ===================================================
-      // LEVELS
-      // ===================================================
-
-      levels: {
-        support,
-        resistance,
-        majorSupport,
-        majorResistance,
-        vwap
-      },
-
-      // ===================================================
-      // ROOM TO RUN
-      // ===================================================
-
       roomToRun: {
         buy: {
-          distanceToResistance,
-          distanceToMajorResistance,
           valid: buyRoom,
-          excellent: buyExcellentRoom
+          excellent:
+            buyExcellentRoom,
+          distanceToResistance,
+          distanceToMajorResistance
         },
 
         sell: {
-          distanceToSupport,
-          distanceToMajorSupport,
           valid: sellRoom,
-          excellent: sellExcellentRoom
+          excellent:
+            sellExcellentRoom,
+          distanceToSupport,
+          distanceToMajorSupport
         }
       },
-
-      // ===================================================
-      // PRICE ACTION
-      // ===================================================
 
       priceAction: {
         bullishDisplacement,
         bearishDisplacement,
-
-        bullishFVG,
-        bearishFVG,
-
-        pullbackBull,
-        pullbackBear,
-
-        nearSupport,
-        nearResistance,
-
         aboveVWAP,
         belowVWAP
       },
-
-      // ===================================================
-      // HOLD ENGINE
-      // ===================================================
-
-      holdEngine: {
-        bias: holdBias,
-        invalidation,
-
-        philosophy:
-          "Hold while higher-timeframe structure remains valid"
-      },
-
-      // ===================================================
-      // TRADE PLAN
-      // ===================================================
 
       trade
     });
@@ -1520,8 +1613,11 @@ export default async function handler(req, res) {
     console.error(error);
 
     return res.status(500).json({
-      error: "Analysis engine error",
-      message: error.message
+      error:
+        "Analysis engine error",
+
+      message:
+        error.message
     });
   }
 }
