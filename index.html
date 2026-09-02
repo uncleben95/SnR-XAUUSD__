@@ -3617,18 +3617,13 @@ let sellValid =
     vwapSell;
 
 
-/* =========================================
-FINAL SIGNAL
-========================================= */
+// =========================================================
+// FINAL SIGNAL
+// =========================================================
 
 let signal = "WAIT";
 
-/*
-HARD FILTER:
-BUY / SELL hanya sah apabila semua
-filter utama lulus.
-*/
-
+// FULL ALIGNMENT diberi priority
 if (buyValid && !sellValid) {
 
     signal = "BUY";
@@ -3637,6 +3632,15 @@ if (buyValid && !sellValid) {
 
     signal = "SELL";
 
+
+// SCALP — H1 tidak diperlukan
+} else if (scalpBuyValid && !scalpSellValid) {
+
+    signal = "SCALP BUY";
+
+} else if (scalpSellValid && !scalpBuyValid) {
+
+    signal = "SCALP SELL";
 }
 
 
