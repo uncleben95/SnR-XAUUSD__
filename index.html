@@ -3622,25 +3622,31 @@ let sellValid =
 // =========================================================
 
 let signal = "WAIT";
+let signalType = "NONE";
 
-// FULL ALIGNMENT diberi priority
+// FULL ALIGNMENT — H1 + M15 + M5
 if (buyValid && !sellValid) {
 
     signal = "BUY";
+    signalType = "FULL ALIGNMENT";
 
 } else if (sellValid && !buyValid) {
 
     signal = "SELL";
+    signalType = "FULL ALIGNMENT";
 
 
-// SCALP — H1 tidak diperlukan
+// SCALP — M15 + M5
+// H1 tidak diperlukan
 } else if (scalpBuyValid && !scalpSellValid) {
 
-    signal = "SCALP BUY";
+    signal = "BUY";
+    signalType = "SCALP";
 
 } else if (scalpSellValid && !scalpBuyValid) {
 
-    signal = "SCALP SELL";
+    signal = "SELL";
+    signalType = "SCALP";
 }
 
 
