@@ -3545,15 +3545,23 @@ scoreRisk;
 STRICT ALIGNMENT
 ========================================= */
 
-let buyAligned=
-h1Buy&&
-m15Buy&&
-m5Buy;
+let scalpBuy =
+    m15Buy &&
+    m5Buy;
 
-let sellAligned=
-h1Sell&&
-m15Sell&&
-m5Sell;
+let scalpSell =
+    m15Sell &&
+    m5Sell;
+
+
+// Full alignment
+let buyAligned =
+    h1Buy &&
+    scalpBuy;
+
+let sellAligned =
+    h1Sell &&
+    scalpSell;
 
 
 /* =========================================
@@ -3568,9 +3576,31 @@ let conflicting=
 (m15Sell&&m5Buy);
 
 
-/* =========================================
-FINAL VALIDATION
-========================================= */
+// =========================================================
+// SCALP VALIDATION
+// M15 CONFIRM + M5 TRIGGER
+// H1 TIDAK WAJIB
+// =========================================================
+
+let scalpBuyValid =
+    scalpBuy &&
+    !conflicting &&
+    total >= MIN_SCORE &&
+    buyLocationValid &&
+    vwapBuy;
+
+let scalpSellValid =
+    scalpSell &&
+    !conflicting &&
+    total >= MIN_SCORE &&
+    sellLocationValid &&
+    vwapSell;
+
+
+// =========================================================
+// FULL ALIGNMENT
+// H1 + M15 + M5
+// =========================================================
 
 let buyValid =
     buyAligned &&
