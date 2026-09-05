@@ -2318,7 +2318,166 @@ document.getElementById("chartLive").innerText=
 
 }
 
+    
+/* =========================================================
+SCALP ENGINE V3
+========================================================= */
 
+async function runScalpEngine(){
+
+    try{
+
+        const response = await fetch(
+            "/api/scalp?ts=" + Date.now(),
+            {
+                cache: "no-store"
+            }
+        );
+
+        if(!response.ok){
+            throw new Error(
+                "SCALP HTTP " + response.status
+            );
+        }
+
+        const data =
+            await response.json();
+
+        if(!data.ok){
+            throw new Error(
+                data.error ||
+                "Scalp engine error"
+            );
+        }
+
+        console.log(
+            "SCALP V3:",
+            data
+        );
+
+        /*
+         * Simpan untuk diagnostic/dashboard
+         */
+
+        window.scalp = data;
+
+        /*
+         * Kalau dashboard lama masih perlukan
+         * window.market, kita boleh sync kemudian.
+         */
+
+        updateScalpDashboard(data);
+
+    }catch(e){
+
+        console.error(
+            "Scalp Engine:",
+            e
+        );
+
+    }
+
+}
+
+
+/* =========================================================
+SCALP DASHBOARD
+========================================================= */
+
+function updateScalpDashboard(data){
+
+    const status =
+        data.status || "WAIT";
+
+    const signal =
+        data.signal || "WAIT";
+
+    const type =
+        data.signalType || "NONE";
+
+    const score =
+        Number(data.score || 0);
+
+    console.log(
+        `SCALP: ${status} ${signal} ${type} ${score}`
+    );
+
+    /*
+     * Cari element Master Signal
+     */
+
+    const master =
+        document.getElementById(
+            "masterSignal"
+        );
+
+    if(master){
+
+        let text =
+            "WAIT";
+
+        if(
+            status !== "WAIT" &&
+            signal !== "WAIT"
+        ){
+
+            text =
+                `${status} ${signal}`;
+
+        }
+
+        master.innerText =
+            text;
+
+    }
+
+    /*
+     * Score
+     */
+
+    const scoreEl =
+        document.getElementById(
+            "entryScore"
+        );
+
+    if(scoreEl){
+
+        scoreEl.innerText =
+            score + "/100";
+
+    }
+
+    /*
+     * Diagnostic baru
+     */
+
+    const scalpStatus =
+        document.getElementById(
+            "scalpStatus"
+        );
+
+    if(scalpStatus){
+
+        scalpStatus.innerText =
+            `${status} ${signal}`;
+
+    }
+
+    const scalpType =
+        document.getElementById(
+            "scalpType"
+        );
+
+    if(scalpType){
+
+        scalpType.innerText =
+            type;
+
+    }
+
+}
+
+    
 /* =========================================================
 CHART
 ========================================================= */
