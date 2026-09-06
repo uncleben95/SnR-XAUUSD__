@@ -1778,11 +1778,11 @@ export default async function handler(req, res) {
 
       price,
 
-      status,
+candles: m5.slice(-60),
 
-      signal,
-
-      signalType,
+status,
+signal,
+signalType,
 
       execution,
 
