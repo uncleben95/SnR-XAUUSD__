@@ -2304,6 +2304,15 @@ async function fetchLiveGold(){
 
         const data = await response.json();
 
+console.log("SCALP RAW RESPONSE:", data);
+alert(JSON.stringify(data));
+
+if(!data.ok){
+    throw new Error(
+        data.error || "Scalp API error"
+    );
+}
+
         if(!data.ok){
             throw new Error(
                 data.error || "Scalp API error"
