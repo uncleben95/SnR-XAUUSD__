@@ -2092,26 +2092,20 @@ button.disabled=false;
 
 async function enableNotifications(){
 
-    initAudio();
+    alert("BUTTON CLICKED");
+
+    console.log("ENABLE NOTIFICATIONS CLICKED");
 
     if(!("Notification" in window)){
 
-        alert(
-            "❌ Browser ini tidak menyokong notification."
-        );
-
+        alert("Notification API tak disokong.");
         return;
     }
 
-    if(Notification.permission === "denied"){
-
-        alert(
-            "⚠️ Notification telah BLOCKED oleh browser. " +
-            "Benarkan notification dalam Settings browser."
-        );
-
-        return;
-    }
+    alert(
+        "Permission sekarang: " +
+        Notification.permission
+    );
 
     try{
 
@@ -2122,48 +2116,37 @@ async function enableNotifications(){
 
             permission =
                 await Notification.requestPermission();
-
         }
 
-        updateNotificationStatus();
+        alert(
+            "Permission result: " +
+            permission
+        );
 
         if(permission !== "granted"){
-
-            alert(
-                "⚠️ Notification tidak dibenarkan."
-            );
-
             return;
         }
 
         const pushReady =
             await setupPushNotifications();
 
-        if(!pushReady){
-
-            return;
-        }
-
-        updateNotificationStatus();
-
-        console.log(
-            "🔔 XAU/USD PUSH NOTIFICATION ACTIVE"
+        alert(
+            "Push result: " +
+            pushReady
         );
 
     }catch(error){
 
         console.error(
-            "Notification enable error:",
+            "Notification error:",
             error
         );
 
         alert(
-            "❌ Notification gagal diaktifkan:\n\n" +
+            "ERROR:\n\n" +
             error.message
         );
-
     }
-
 }
 
 function sendBrowserNotification(title, body){
