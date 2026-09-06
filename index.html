@@ -2422,22 +2422,10 @@ function updateScalpDashboard(data){
     const m5Buy = Number(m5.buyScore || 0);
     const m5Sell = Number(m5.sellScore || 0);
 
-    /*
-     * IMPORTANT:
-     * Kalau final signal WAIT, data.score memang 0.
-     * Jadi dashboard guna score terbaik yang sedang developing.
-     */
+    const displayScore =
+        Number(data.score || 0) ||
+        Math.max(m15Buy,m15Sell,m5Buy,m5Sell);
 
-    let displayScore = Number(data.score || 0);
-
-    if(displayScore === 0){
-        displayScore = Math.max(
-            m15Buy,
-            m15Sell,
-            m5Buy,
-            m5Sell
-        );
-    }
 
     /* ===============================
        PRICE
@@ -2448,29 +2436,29 @@ function updateScalpDashboard(data){
         const price =
             Number(data.price).toFixed(2);
 
-        const livePrice =
-            document.getElementById("livePrice");
+        [
+            "livePrice",
+            "chartPrice"
+        ].forEach(id => {
 
-        if(livePrice)
-            livePrice.innerText = price;
+            const el =
+                document.getElementById(id);
 
-        const chartPrice =
-            document.getElementById("chartPrice");
+            if(el)
+                el.innerText = price;
+        });
 
-        if(chartPrice)
-            chartPrice.innerText = price;
+        [
+            "priceInput",
+            "riskEntry"
+        ].forEach(id => {
 
-        const priceInput =
-            document.getElementById("priceInput");
+            const el =
+                document.getElementById(id);
 
-        if(priceInput)
-            priceInput.value = price;
-
-        const riskEntry =
-            document.getElementById("riskEntry");
-
-        if(riskEntry)
-            riskEntry.value = price;
+            if(el)
+                el.value = price;
+        });
     }
 
 
@@ -2484,9 +2472,9 @@ function updateScalpDashboard(data){
     if(master){
 
         master.innerText =
-            signal === "WAIT"
-                ? "WAIT"
-                : `${status} ${signal}`;
+            signal !== "WAIT"
+                ? `${status} ${signal}`
+                : "WAIT";
 
         master.dataset.signal = signal;
         master.dataset.status = status;
@@ -2494,29 +2482,22 @@ function updateScalpDashboard(data){
 
 
     /* ===============================
-       CONFIDENCE
+       SCORE
     =============================== */
 
     const confidence =
         document.getElementById("confidenceVal");
 
-    if(confidence){
+    if(confidence)
         confidence.innerText =
             `${displayScore}%`;
-    }
-
-
-    /* ===============================
-       QUALITY
-    =============================== */
 
     const quality =
         document.getElementById("qualityNumber");
 
-    if(quality){
+    if(quality)
         quality.innerText =
             displayScore;
-    }
 
 
     /* ===============================
@@ -2527,6 +2508,7 @@ function updateScalpDashboard(data){
         document.getElementById("stageH1");
 
     if(stageH1){
+
         stageH1.innerText =
             h1.direction || "WAIT";
     }
@@ -2550,6 +2532,7 @@ function updateScalpDashboard(data){
 
     /* ===============================
        M5
+       READ ACTUAL V9 FIELDS
     =============================== */
 
     const stageM5 =
@@ -2557,10 +2540,36 @@ function updateScalpDashboard(data){
 
     if(stageM5){
 
+        let m5Display = "WAIT";
+
+        if(m5.buyTriggered === true){
+
+            m5Display =
+                `M5_ONLY BUY • ${m5Buy}`;
+
+        }else if(m5.sellTriggered === true){
+
+            m5Display =
+                `M5_ONLY SELL • ${m5Sell}`;
+
+        }else if(m5.trigger === "BUY"){
+
+            m5Display =
+                `BUY • ${m5Buy}`;
+
+        }else if(m5.trigger === "SELL"){
+
+            m5Display =
+                `SELL • ${m5Sell}`;
+
+        }else{
+
+            m5Display =
+                `WAIT • ${m5Buy}/${m5Sell}`;
+        }
+
         stageM5.innerText =
-            m5.trigger ||
-            m5.confirmation ||
-            "WAIT";
+            m5Display;
     }
 
 
@@ -2594,22 +2603,17 @@ function updateScalpDashboard(data){
                 ? data.reasons
                 : [];
 
-        if(reasons.length){
-
-            reasonList.innerHTML =
-                reasons.map(r =>
+        reasonList.innerHTML =
+            reasons.length
+                ? reasons.map(r =>
                     `<div>${r}</div>`
-                ).join("");
-
-        }else{
-
-            reasonList.innerHTML = `
-                <div>M15 BUY: ${m15Buy}</div>
-                <div>M15 SELL: ${m15Sell}</div>
-                <div>M5 BUY: ${m5Buy}</div>
-                <div>M5 SELL: ${m5Sell}</div>
-            `;
-        }
+                  ).join("")
+                : `
+                    <div>M15 BUY: ${m15Buy}</div>
+                    <div>M15 SELL: ${m15Sell}</div>
+                    <div>M5 BUY: ${m5Buy}</div>
+                    <div>M5 SELL: ${m5Sell}</div>
+                  `;
     }
 
 
@@ -2634,21 +2638,17 @@ function updateScalpDashboard(data){
     const scoreM15 =
         document.getElementById("scoreM15");
 
-    if(scoreM15){
-
+    if(scoreM15)
         scoreM15.innerText =
             `${m15Buy}/${m15Sell}`;
-    }
 
 
     const scoreM5 =
         document.getElementById("scoreM5");
 
-    if(scoreM5){
-
+    if(scoreM5)
         scoreM5.innerText =
             `${m5Buy}/${m5Sell}`;
-    }
 
 
     /* ===============================
@@ -2663,14 +2663,12 @@ function updateScalpDashboard(data){
         const sweep =
             m5.sweep || {};
 
-        if(sweep.bullish)
-            scoreLiquidity.innerText = "BUY";
-
-        else if(sweep.bearish)
-            scoreLiquidity.innerText = "SELL";
-
-        else
-            scoreLiquidity.innerText = "—";
+        scoreLiquidity.innerText =
+            sweep.bullish
+                ? "BUY"
+                : sweep.bearish
+                    ? "SELL"
+                    : "—";
     }
 
 
@@ -2686,27 +2684,23 @@ function updateScalpDashboard(data){
         const plan =
             data.tradePlan || {};
 
-        if(plan.rr){
-            scoreRisk.innerText =
-                `1:${plan.rr}`;
-        }else{
-            scoreRisk.innerText =
-                "—";
-        }
+        scoreRisk.innerText =
+            plan.rr
+                ? `1:${plan.rr}`
+                : "—";
     }
 
 
     /* ===============================
-       LIVE STATUS
+       LIVE
     =============================== */
 
     const chartLive =
         document.getElementById("chartLive");
 
-    if(chartLive){
+    if(chartLive)
         chartLive.innerText =
             "● LIVE";
-    }
 
 
     /* ===============================
@@ -2717,16 +2711,16 @@ function updateScalpDashboard(data){
 
 
     console.log(
-        "DASHBOARD UPDATED",
+        "DASHBOARD UPDATED:",
         {
-            price: data.price,
             status,
             signal,
-            m15Buy,
-            m15Sell,
+            type,
+            m5Trigger: m5.trigger,
+            m5BuyTriggered: m5.buyTriggered,
+            m5SellTriggered: m5.sellTriggered,
             m5Buy,
-            m5Sell,
-            displayScore
+            m5Sell
         }
     );
 }
