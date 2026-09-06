@@ -2721,37 +2721,6 @@ function updateScalpDashboard(data){
 }
 
     /* =====================================================
-       WEB PUSH ALERT
-       ENTRY / EARLY / M5_ONLY
-    ===================================================== */
-
-    if(
-        data.ok &&
-        signal !== "WAIT" &&
-        (
-            status === "ENTRY" ||
-            status === "EARLY" ||
-            status === "M5_ONLY"
-        )
-    ){
-
-        const title =
-            signal === "BUY"
-                ? "🟢 XAU/USD BUY"
-                : "🔴 XAU/USD SELL";
-
-        const body =
-            `${status} • ${type}\n` +
-            `Score: ${score}/100\n` +
-            `Price: ${Number(data.price).toFixed(2)}`;
-
-        sendBrowserNotification(
-            title,
-            body
-        );
-    }
-
-    /* =====================================================
        MASTER SIGNAL
     ===================================================== */
 
