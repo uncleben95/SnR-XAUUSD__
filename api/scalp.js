@@ -10,7 +10,7 @@ export default async function handler(req, res) {
     }
 
     // =====================================================
-    // SCALP V6 CONFIG
+    // V6 FINAL CONFIG
     // =====================================================
 
     const M15_CONFIRM_SCORE = 55;
@@ -22,12 +22,8 @@ export default async function handler(req, res) {
     const M5_TRIGGER_SCORE = 55;
     const M5_TRIGGER_GAP = 5;
 
-    // =====================================================
-    // M5 ONLY SCALPING
-    // M15 TIDAK PERLU CONFIRM
-    // =====================================================
-
-    const M5_ONLY_SCORE = 40;
+    // Pure M5 scalping
+    const M5_ONLY_SCORE = 50;
     const M5_ONLY_GAP = 10;
 
     // =====================================================
@@ -94,10 +90,6 @@ export default async function handler(req, res) {
     const clamp = (n, min, max) =>
       Math.max(min, Math.min(max, n));
 
-    // =====================================================
-    // EMA
-    // =====================================================
-
     function ema(values, period) {
       if (values.length < period) return null;
 
@@ -113,10 +105,6 @@ export default async function handler(req, res) {
 
       return value;
     }
-
-    // =====================================================
-    // RSI
-    // =====================================================
 
     function rsi(values, period = 14) {
       if (values.length < period + 1) {
@@ -150,10 +138,6 @@ export default async function handler(req, res) {
       return 100 - 100 / (1 + rs);
     }
 
-    // =====================================================
-    // ATR
-    // =====================================================
-
     function atr(data, period = 14) {
       if (data.length < period + 1) {
         return null;
@@ -177,10 +161,6 @@ export default async function handler(req, res) {
 
       return avg(trs.slice(-period));
     }
-
-    // =====================================================
-    // MACD
-    // =====================================================
 
     function macd(values) {
       if (values.length < 40) {
@@ -226,7 +206,7 @@ export default async function handler(req, res) {
     }
 
     // =====================================================
-    // AGGREGATE
+    // AGGREGATION
     // =====================================================
 
     function aggregate(data, minutes) {
@@ -242,8 +222,7 @@ export default async function handler(req, res) {
 
         if (!buckets[key]) {
           buckets[key] = {
-            time:
-              new Date(key).toISOString(),
+            time: new Date(key).toISOString(),
             open: c.open,
             high: c.high,
             low: c.low,
@@ -264,7 +243,6 @@ export default async function handler(req, res) {
             );
 
           buckets[key].close = c.close;
-
           buckets[key].volume += c.volume;
         }
       }
@@ -282,10 +260,7 @@ export default async function handler(req, res) {
     // =====================================================
 
     function structure(data, lookback = 20) {
-      if (
-        data.length <
-        lookback * 2
-      ) {
+      if (data.length < lookback * 2) {
         return {
           bullish: false,
           bearish: false,
@@ -346,10 +321,7 @@ export default async function handler(req, res) {
     // =====================================================
 
     function detectBOS(data, lookback = 10) {
-      if (
-        data.length <
-        lookback + 2
-      ) {
+      if (data.length < lookback + 2) {
         return {
           bullish: false,
           bearish: false
@@ -500,8 +472,7 @@ export default async function handler(req, res) {
       }
 
       const range =
-        c.high - c.low ||
-        0.00001;
+        c.high - c.low || 0.00001;
 
       const body =
         Math.abs(
@@ -526,14 +497,14 @@ export default async function handler(req, res) {
     }
 
     // =====================================================
-    // V6 MANIPULATION
+    // MANIPULATION
     // =====================================================
 
-    function detectManipulation(data, lookback = 12) {
-      if (
-        data.length <
-        lookback + 2
-      ) {
+    function detectManipulation(
+      data,
+      lookback = 12
+    ) {
+      if (data.length < lookback + 2) {
         return {
           bullish: false,
           bearish: false
@@ -582,19 +553,16 @@ export default async function handler(req, res) {
       const lowerRatio =
         lowerWick / range;
 
-      const bearish =
-        current.high > previousHigh &&
-        current.close < previousHigh &&
-        upperRatio >= 0.30;
-
-      const bullish =
-        current.low < previousLow &&
-        current.close > previousLow &&
-        lowerRatio >= 0.30;
-
       return {
-        bullish,
-        bearish
+        bullish:
+          current.low < previousLow &&
+          current.close > previousLow &&
+          lowerRatio >= 0.30,
+
+        bearish:
+          current.high > previousHigh &&
+          current.close < previousHigh &&
+          upperRatio >= 0.30
       };
     }
 
@@ -613,8 +581,8 @@ export default async function handler(req, res) {
     const price = c5.at(-1);
 
     // =====================================================
-    // H1 CONTEXT
-    // H1 TIDAK BLOCK ENTRY
+    // H1 CONTEXT ONLY
+    // NEVER BLOCK SCALP ENTRY
     // =====================================================
 
     const h1EMA50 = ema(c1, 50);
@@ -852,12 +820,16 @@ export default async function handler(req, res) {
         M15_CONFIRM_GAP;
 
     const m15BuyDeveloping =
+      !m15BuyConfirmed &&
+      !m15SellConfirmed &&
       m15Buy >= M15_DEVELOPING_SCORE &&
       m15Buy >=
         m15Sell +
         M15_DEVELOPING_GAP;
 
     const m15SellDeveloping =
+      !m15BuyConfirmed &&
+      !m15SellConfirmed &&
       m15Sell >= M15_DEVELOPING_SCORE &&
       m15Sell >=
         m15Buy +
@@ -1076,7 +1048,7 @@ export default async function handler(req, res) {
       );
     }
 
-    // Liquidity sweep
+    // Sweep
     if (m5Sweep.bullish) {
       m5Buy += 10;
       m5BuyReasons.push(
@@ -1125,18 +1097,18 @@ export default async function handler(req, res) {
     m5Sell = clamp(m5Sell, 0, 100);
 
     // =====================================================
-    // M5 NORMAL TRIGGER
+    // M5 TRIGGER
     // =====================================================
 
     const m5BuyTriggered =
       m5Buy >= M5_TRIGGER_SCORE &&
-      m5Buy >
+      m5Buy >=
         m5Sell +
         M5_TRIGGER_GAP;
 
     const m5SellTriggered =
       m5Sell >= M5_TRIGGER_SCORE &&
-      m5Sell >
+      m5Sell >=
         m5Buy +
         M5_TRIGGER_GAP;
 
@@ -1150,21 +1122,20 @@ export default async function handler(req, res) {
 
     // =====================================================
     // M5 ONLY
-    //
-    // M15 TIDAK PERLU CONFIRM
-    //
-    // Contoh:
-    // M5 BUY 50 vs SELL 30 = M5_ONLY BUY
-    // M5 SELL 45 vs BUY 25 = M5_ONLY SELL
+    // STRICT: SCORE + GAP + NO M5 TRIGGER
     // =====================================================
 
     const m5OnlyBuy =
+      !m5BuyTriggered &&
+      !m5SellTriggered &&
       m5Buy >= M5_ONLY_SCORE &&
       m5Buy >=
         m5Sell +
         M5_ONLY_GAP;
 
     const m5OnlySell =
+      !m5BuyTriggered &&
+      !m5SellTriggered &&
       m5Sell >= M5_ONLY_SCORE &&
       m5Sell >=
         m5Buy +
@@ -1184,7 +1155,6 @@ export default async function handler(req, res) {
 
     // =====================================================
     // 1. M15 CONFIRMED + M5 TRIGGER
-    // STRONG TREND ENTRY
     // =====================================================
 
     if (
@@ -1208,9 +1178,7 @@ export default async function handler(req, res) {
       reasons.push(
         "M5 bullish trigger"
       );
-    }
-
-    if (
+    } else if (
       m15SellConfirmed &&
       m5SellTriggered
     ) {
@@ -1302,55 +1270,7 @@ export default async function handler(req, res) {
     }
 
     // =====================================================
-    // 3. M5 ONLY
-    // PURE SCALPING
-    //
-    // INI SEKARANG DIBERI KEUTAMAAN
-    // SEBELUM M15 DEVELOPING.
-    // =====================================================
-
-    if (
-      status === "WAIT" &&
-      m5OnlyBuy
-    ) {
-      status = "M5_ONLY";
-      signal = "BUY";
-      signalType = "M5";
-      execution = "SCALP";
-
-      score = m5Buy;
-
-      reasons.push(
-        "M5 bullish scalping opportunity"
-      );
-
-      reasons.push(
-        "M15 confirmation not required"
-      );
-    }
-
-    if (
-      status === "WAIT" &&
-      m5OnlySell
-    ) {
-      status = "M5_ONLY";
-      signal = "SELL";
-      signalType = "M5";
-      execution = "SCALP";
-
-      score = m5Sell;
-
-      reasons.push(
-        "M5 bearish scalping opportunity"
-      );
-
-      reasons.push(
-        "M15 confirmation not required"
-      );
-    }
-
-    // =====================================================
-    // 4. M15 DEVELOPING + M5 TRIGGER
+    // 3. M15 DEVELOPING + M5 TRIGGER
     // =====================================================
 
     if (
@@ -1402,7 +1322,7 @@ export default async function handler(req, res) {
     }
 
     // =====================================================
-    // 5. EARLY REVERSAL
+    // 4. EARLY REVERSAL
     // =====================================================
 
     if (
@@ -1454,6 +1374,93 @@ export default async function handler(req, res) {
     }
 
     // =====================================================
+    // 5. PURE M5 SCALPING
+    // =====================================================
+
+    if (
+      status === "WAIT" &&
+      m5OnlyBuy
+    ) {
+      status = "M5_ONLY";
+      signal = "BUY";
+      signalType = "M5";
+      execution = "SCALP";
+
+      score = m5Buy;
+
+      reasons.push(
+        "M5 bullish scalping opportunity"
+      );
+
+      reasons.push(
+        "M15 confirmation not required"
+      );
+    }
+
+    if (
+      status === "WAIT" &&
+      m5OnlySell
+    ) {
+      status = "M5_ONLY";
+      signal = "SELL";
+      signalType = "M5";
+      execution = "SCALP";
+
+      score = m5Sell;
+
+      reasons.push(
+        "M5 bearish scalping opportunity"
+      );
+
+      reasons.push(
+        "M15 confirmation not required"
+      );
+    }
+
+    // =====================================================
+    // EXTRA SAFETY FILTER
+    // =====================================================
+    // Prevent weak/conflicting M5 signal
+    // Example:
+    // SELL score 40 + MACD bullish = WAIT
+
+    if (status === "M5_ONLY") {
+      if (
+        signal === "SELL" &&
+        m5MACD?.bullish
+      ) {
+        status = "WAIT";
+        signal = "WAIT";
+        signalType = "NONE";
+        execution = "WAIT";
+        score = 0;
+
+        reasons.length = 0;
+
+        reasons.push(
+          "M5 bearish score blocked by bullish MACD"
+        );
+      }
+
+      if (
+        signal === "BUY" &&
+        m5MACD?.bearish
+      ) {
+        status = "WAIT";
+        signal = "WAIT";
+        signalType = "NONE";
+        execution = "WAIT";
+        score = 0;
+
+        reasons.length = 0;
+
+        reasons.push(
+          "M5 bullish score blocked by bearish MACD"
+        );
+      }
+    }
+
+    // =====================================================
     // CONTEXT
     // =====================================================
 
@@ -1502,7 +1509,8 @@ export default async function handler(req, res) {
         status === "ENTRY" ||
         status === "M5_ONLY"
       ) &&
-      m5ATR !== null
+      m5ATR !== null &&
+      signal !== "WAIT"
     ) {
       entry = price;
 
@@ -1519,10 +1527,6 @@ export default async function handler(req, res) {
             .slice(-12)
             .map(c => c.high)
         );
-
-      // ===================================================
-      // BUY PLAN
-      // ===================================================
 
       if (signal === "BUY") {
         const atrStop =
@@ -1549,10 +1553,6 @@ export default async function handler(req, res) {
 
         rr = 2.5;
       }
-
-      // ===================================================
-      // SELL PLAN
-      // ===================================================
 
       if (signal === "SELL") {
         const atrStop =
@@ -1589,13 +1589,11 @@ export default async function handler(req, res) {
       ok: true,
 
       version:
-        "V6-M5-ONLY-MANIPULATION",
+        "V6-FINAL-M5-ONLY-MANIPULATION",
 
-      symbol:
-        "XAU/USD",
+      symbol: "XAU/USD",
 
-      mode:
-        "SCALP",
+      mode: "SCALP",
 
       price,
 
@@ -1614,21 +1612,14 @@ export default async function handler(req, res) {
       reasons,
 
       h1: {
-        direction:
-          h1Direction,
-
+        direction: h1Direction,
         context,
-
-        ema50:
-          h1EMA50,
-
-        ema200:
-          h1EMA200
+        ema50: h1EMA50,
+        ema200: h1EMA200
       },
 
       m15: {
-        direction:
-          m15Confirmation,
+        direction: m15Confirmation,
 
         confirmation:
           m15Confirmation,
@@ -1713,11 +1704,9 @@ export default async function handler(req, res) {
         sellTriggered:
           m5SellTriggered,
 
-        m5OnlyBuy:
-          m5OnlyBuy,
+        m5OnlyBuy,
 
-        m5OnlySell:
-          m5OnlySell,
+        m5OnlySell,
 
         ema9:
           m5EMA9,
@@ -1776,7 +1765,7 @@ export default async function handler(req, res) {
 
   } catch (error) {
     console.error(
-      "SCALP V6 ERROR:",
+      "SCALP V6 FINAL ERROR:",
       error
     );
 
@@ -1784,7 +1773,7 @@ export default async function handler(req, res) {
       ok: false,
       error:
         error.message ||
-        "SCALP V6 ENGINE ERROR"
+        "SCALP V6 FINAL ENGINE ERROR"
     });
   }
 }
