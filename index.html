@@ -4644,184 +4644,83 @@ updateRiskCalculator();
 
 
 /* =========================================================
-SCALP SIGNAL ALERT V3
+SIGNAL ALERT
 ========================================================= */
 
 async function showSignalAlert(
-    signal,
-    score,
-    price,
-    status="ENTRY",
-    signalType="NONE"
+signal,
+score,
+price
 ){
 
-    const box =
-        document.getElementById("signalAlert");
+const box=document.getElementById("signalAlert");
+const title=document.getElementById("alertTitle");
+const detail=document.getElementById("alertDetail");
+const master=document.getElementById("masterCard");
 
-    const title =
-        document.getElementById("alertTitle");
+box.className="alert-box";
 
-    const detail =
-        document.getElementById("alertDetail");
+master.classList.remove(
+"signal-buy-active",
+"signal-sell-active"
+);
 
-    const master =
-        document.getElementById("masterCard");
+let pushTitle="";
+let pushBody="";
 
-    if(!box || !title || !detail || !master){
-        return;
-    }
+if(signal==="BUY"){
 
-    box.className="alert-box";
+box.classList.add("buy");
 
-    master.classList.remove(
-        "signal-buy-active",
-        "signal-sell-active"
-    );
+title.innerText=
+"🟢 NEW VALID BUY SIGNAL";
 
-    /*
-     * WAIT = no alert
-     */
+detail.innerText=
+`XAU/USD ${price.toFixed(2)} • Score ${score}/100 • H1 → M15 → M5 ALIGNED`;
 
-    if(
-        !signal ||
-        signal==="WAIT" ||
-        status==="WAIT"
-    ){
-        return;
-    }
+master.classList.add(
+"signal-buy-active"
+);
 
-    const isBuy =
-        signal==="BUY";
+pushTitle="🟢 XAU/USD BUY";
+pushBody=
+`Price ${price.toFixed(2)} • Score ${score}/100`;
 
-    const isSell =
-        signal==="SELL";
+playAlertSound("BUY");
 
-    if(!isBuy && !isSell){
-        return;
-    }
+sendBrowserNotification(
+pushTitle,
+pushBody
+);
 
-    /*
-     * Status label
-     */
+}else if(signal==="SELL"){
 
-    let statusLabel =
-        status;
+box.classList.add("sell");
 
-    let emoji =
-        isBuy ? "🟢" : "🔴";
+title.innerText=
+"🔴 NEW VALID SELL SIGNAL";
 
-    /*
-     * Alert colour
-     */
+detail.innerText=
+`XAU/USD ${price.toFixed(2)} • Score ${score}/100 • H1 → M15 → M5 ALIGNED`;
 
-    box.classList.add(
-        isBuy ? "buy" : "sell"
-    );
+master.classList.add(
+"signal-sell-active"
+);
 
-    master.classList.add(
-        isBuy
-            ? "signal-buy-active"
-            : "signal-sell-active"
-    );
+pushTitle="🔴 XAU/USD SELL";
+pushBody=
+`Price ${price.toFixed(2)} • Score ${score}/100`;
 
-    /*
-     * Main title
-     */
+playAlertSound("SELL");
 
-    title.innerText =
-        `${emoji} ${statusLabel} ${signal}`;
+sendBrowserNotification(
+pushTitle,
+pushBody
+);
 
-    /*
-     * Detail
-     */
+}else{
 
-    detail.innerText =
-        `XAU/USD ${price.toFixed(2)} • ` +
-        `Score ${score}/100 • ` +
-        `${signalType}`;
-
-    /*
-     * Push content
-     */
-
-    const pushTitle =
-        `${emoji} XAU/USD ${statusLabel} ${signal}`;
-
-    const pushBody =
-        `Price ${price.toFixed(2)} • ` +
-        `Score ${score}/100 • ` +
-        `${signalType}`;
-
-    /*
-     * Sound
-     */
-
-    playAlertSound(
-        signal
-    );
-
-    /*
-     * Browser notification
-     */
-
-    sendBrowserNotification(
-        pushTitle,
-        pushBody
-    );
-
-    /*
-     * Server push
-     */
-
-    try{
-
-        const response =
-            await fetch(
-                "/api/push-send",
-                {
-                    method:"POST",
-                    headers:{
-                        "Content-Type":
-                            "application/json"
-                    },
-                    body:JSON.stringify({
-                        title:pushTitle,
-                        body:pushBody
-                    })
-                }
-            );
-
-        const result =
-            await response
-                .json()
-                .catch(
-                    ()=>({})
-                );
-
-        if(!response.ok){
-
-            console.warn(
-                "Push send failed:",
-                result
-            );
-
-        }else{
-
-            console.log(
-                "✅ Server push sent",
-                result
-            );
-
-        }
-
-    }catch(error){
-
-        console.warn(
-            "Server push error:",
-            error
-        );
-
-    }
+return;
 
 }
 
