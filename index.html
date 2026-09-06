@@ -2339,19 +2339,30 @@ if(
         document.getElementById("chartLive").innerText =
             "● LIVE";
 
-        /*
-         * Update chart
-         *
-         * Kalau candles lama masih wujud,
-         * chart akan terus menggunakan data tersebut.
-         */
+/* =========================================
+   LIVE M5 CHART
+========================================= */
 
-        if(
-            Array.isArray(candles) &&
-            candles.length
-        ){
-            drawChart();
-        }
+if(Array.isArray(data.candles) && data.candles.length){
+
+    candles = data.candles.slice(-60);
+
+    drawChart();
+
+}else{
+
+    console.warn(
+        "No candles returned by /api/scalp"
+    );
+
+    /*
+     * Kalau API hanya pulangkan price,
+     * jangan kosongkan candle lama.
+     */
+    if(Array.isArray(candles) && candles.length){
+        drawChart();
+    }
+}
 
         /*
          * Update dashboard
