@@ -2404,21 +2404,332 @@ SCALP DASHBOARD
 
 function updateScalpDashboard(data){
 
-    const status =
-        data.status || "WAIT";
+    if(!data) return;
 
-    const signal =
-        data.signal || "WAIT";
+    console.log("SCALP DATA RECEIVED:", data);
 
-    const type =
-        data.signalType || "NONE";
+    const status = data.status || "WAIT";
+    const signal = data.signal || "WAIT";
+    const type = data.signalType || "NONE";
 
-    const score =
-        Number(data.score || 0);
+    const h1 = data.h1 || {};
+    const m15 = data.m15 || {};
+    const m5 = data.m5 || {};
+
+    const m15Buy = Number(m15.buyScore || 0);
+    const m15Sell = Number(m15.sellScore || 0);
+
+    const m5Buy = Number(m5.buyScore || 0);
+    const m5Sell = Number(m5.sellScore || 0);
+
+    /*
+     * IMPORTANT:
+     * Kalau final signal WAIT, data.score memang 0.
+     * Jadi dashboard guna score terbaik yang sedang developing.
+     */
+
+    let displayScore = Number(data.score || 0);
+
+    if(displayScore === 0){
+        displayScore = Math.max(
+            m15Buy,
+            m15Sell,
+            m5Buy,
+            m5Sell
+        );
+    }
+
+    /* ===============================
+       PRICE
+    =============================== */
+
+    if(Number.isFinite(Number(data.price))){
+
+        const price =
+            Number(data.price).toFixed(2);
+
+        const livePrice =
+            document.getElementById("livePrice");
+
+        if(livePrice)
+            livePrice.innerText = price;
+
+        const chartPrice =
+            document.getElementById("chartPrice");
+
+        if(chartPrice)
+            chartPrice.innerText = price;
+
+        const priceInput =
+            document.getElementById("priceInput");
+
+        if(priceInput)
+            priceInput.value = price;
+
+        const riskEntry =
+            document.getElementById("riskEntry");
+
+        if(riskEntry)
+            riskEntry.value = price;
+    }
+
+
+    /* ===============================
+       MASTER SIGNAL
+    =============================== */
+
+    const master =
+        document.getElementById("masterSignalBadge");
+
+    if(master){
+
+        master.innerText =
+            signal === "WAIT"
+                ? "WAIT"
+                : `${status} ${signal}`;
+
+        master.dataset.signal = signal;
+        master.dataset.status = status;
+    }
+
+
+    /* ===============================
+       CONFIDENCE
+    =============================== */
+
+    const confidence =
+        document.getElementById("confidenceVal");
+
+    if(confidence){
+        confidence.innerText =
+            `${displayScore}%`;
+    }
+
+
+    /* ===============================
+       QUALITY
+    =============================== */
+
+    const quality =
+        document.getElementById("qualityNumber");
+
+    if(quality){
+        quality.innerText =
+            displayScore;
+    }
+
+
+    /* ===============================
+       H1
+    =============================== */
+
+    const stageH1 =
+        document.getElementById("stageH1");
+
+    if(stageH1){
+        stageH1.innerText =
+            h1.direction || "WAIT";
+    }
+
+
+    /* ===============================
+       M15
+    =============================== */
+
+    const stageM15 =
+        document.getElementById("stageM15");
+
+    if(stageM15){
+
+        stageM15.innerText =
+            m15.confirmation ||
+            m15.direction ||
+            "WAIT";
+    }
+
+
+    /* ===============================
+       M5
+    =============================== */
+
+    const stageM5 =
+        document.getElementById("stageM5");
+
+    if(stageM5){
+
+        stageM5.innerText =
+            m5.trigger ||
+            m5.confirmation ||
+            "WAIT";
+    }
+
+
+    /* ===============================
+       SIGNAL TYPE
+    =============================== */
+
+    const signalReason =
+        document.getElementById("signalReason");
+
+    if(signalReason){
+
+        signalReason.innerText =
+            type === "NONE"
+                ? "Waiting for setup"
+                : type;
+    }
+
+
+    /* ===============================
+       REASONS
+    =============================== */
+
+    const reasonList =
+        document.getElementById("reasonList");
+
+    if(reasonList){
+
+        const reasons =
+            Array.isArray(data.reasons)
+                ? data.reasons
+                : [];
+
+        if(reasons.length){
+
+            reasonList.innerHTML =
+                reasons.map(r =>
+                    `<div>${r}</div>`
+                ).join("");
+
+        }else{
+
+            reasonList.innerHTML = `
+                <div>M15 BUY: ${m15Buy}</div>
+                <div>M15 SELL: ${m15Sell}</div>
+                <div>M5 BUY: ${m5Buy}</div>
+                <div>M5 SELL: ${m5Sell}</div>
+            `;
+        }
+    }
+
+
+    /* ===============================
+       SCORE BREAKDOWN
+    =============================== */
+
+    const scoreH1 =
+        document.getElementById("scoreH1");
+
+    if(scoreH1){
+
+        scoreH1.innerText =
+            h1.direction === "BUY"
+                ? "BUY"
+                : h1.direction === "SELL"
+                    ? "SELL"
+                    : "WAIT";
+    }
+
+
+    const scoreM15 =
+        document.getElementById("scoreM15");
+
+    if(scoreM15){
+
+        scoreM15.innerText =
+            `${m15Buy}/${m15Sell}`;
+    }
+
+
+    const scoreM5 =
+        document.getElementById("scoreM5");
+
+    if(scoreM5){
+
+        scoreM5.innerText =
+            `${m5Buy}/${m5Sell}`;
+    }
+
+
+    /* ===============================
+       LIQUIDITY
+    =============================== */
+
+    const scoreLiquidity =
+        document.getElementById("scoreLiquidity");
+
+    if(scoreLiquidity){
+
+        const sweep =
+            m5.sweep || {};
+
+        if(sweep.bullish)
+            scoreLiquidity.innerText = "BUY";
+
+        else if(sweep.bearish)
+            scoreLiquidity.innerText = "SELL";
+
+        else
+            scoreLiquidity.innerText = "—";
+    }
+
+
+    /* ===============================
+       RISK
+    =============================== */
+
+    const scoreRisk =
+        document.getElementById("scoreRisk");
+
+    if(scoreRisk){
+
+        const plan =
+            data.tradePlan || {};
+
+        if(plan.rr){
+            scoreRisk.innerText =
+                `1:${plan.rr}`;
+        }else{
+            scoreRisk.innerText =
+                "—";
+        }
+    }
+
+
+    /* ===============================
+       LIVE STATUS
+    =============================== */
+
+    const chartLive =
+        document.getElementById("chartLive");
+
+    if(chartLive){
+        chartLive.innerText =
+            "● LIVE";
+    }
+
+
+    /* ===============================
+       SAVE
+    =============================== */
+
+    window.scalp = data;
+
 
     console.log(
-        `SCALP: ${status} ${signal} ${type} ${score}`
+        "DASHBOARD UPDATED",
+        {
+            price: data.price,
+            status,
+            signal,
+            m15Buy,
+            m15Sell,
+            m5Buy,
+            m5Sell,
+            displayScore
+        }
     );
+}
 
     /* =====================================================
        WEB PUSH ALERT
