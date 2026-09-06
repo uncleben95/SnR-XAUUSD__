@@ -2394,53 +2394,49 @@ if(Array.isArray(data.candles) && data.candles.length){
 
 
 /* =========================================================
-SCALP DASHBOARD
+   V10 SCALP DASHBOARD
 ========================================================= */
 
-function updateScalpDashboard(data){
+function updateScalpDashboard(data) {
 
-    if(!data) return;
+    if (!data) return;
 
-    console.log("SCALP DATA RECEIVED:", data);
+    console.log("V10 DASHBOARD:", data);
 
     const status = data.status || "WAIT";
     const signal = data.signal || "WAIT";
     const type = data.signalType || "NONE";
+    const score = Number(data.score || 0);
 
     const h1 = data.h1 || {};
     const m15 = data.m15 || {};
     const m5 = data.m5 || {};
+    const plan = data.tradePlan || {};
 
     const m15Buy = Number(m15.buyScore || 0);
     const m15Sell = Number(m15.sellScore || 0);
-
     const m5Buy = Number(m5.buyScore || 0);
     const m5Sell = Number(m5.sellScore || 0);
 
-    const displayScore =
-        Number(data.score || 0) ||
-        Math.max(m15Buy,m15Sell,m5Buy,m5Sell);
 
-
-    /* ===============================
+    /* =========================
        PRICE
-    =============================== */
+    ========================= */
 
-    if(Number.isFinite(Number(data.price))){
+    const price = Number(data.price);
 
-        const price =
-            Number(data.price).toFixed(2);
+    if (Number.isFinite(price)) {
+
+        const p = price.toFixed(2);
 
         [
             "livePrice",
             "chartPrice"
         ].forEach(id => {
 
-            const el =
-                document.getElementById(id);
+            const el = document.getElementById(id);
 
-            if(el)
-                el.innerText = price;
+            if (el) el.innerText = p;
         });
 
         [
@@ -2448,150 +2444,204 @@ function updateScalpDashboard(data){
             "riskEntry"
         ].forEach(id => {
 
-            const el =
-                document.getElementById(id);
+            const el = document.getElementById(id);
 
-            if(el)
-                el.value = price;
+            if (el) el.value = p;
         });
     }
 
 
-    /* ===============================
+    /* =========================
        MASTER SIGNAL
-    =============================== */
+    ========================= */
 
-    const master =
-        document.getElementById("masterSignalBadge");
+    [
+        "masterSignalBadge",
+        "masterSignal",
+        "topSignalStatus"
+    ].forEach(id => {
 
-    if(master){
+        const el = document.getElementById(id);
 
-        master.innerText =
+        if (!el) return;
+
+        const text =
             signal !== "WAIT"
                 ? `${status} ${signal}`
                 : "WAIT";
 
-        master.dataset.signal = signal;
-        master.dataset.status = status;
+        el.innerText = text;
+
+        el.dataset.signal = signal;
+        el.dataset.status = status;
+    });
+
+
+    /* =========================
+       SCORE
+    ========================= */
+
+    [
+        "confidenceVal",
+        "qualityNumber"
+    ].forEach(id => {
+
+        const el = document.getElementById(id);
+
+        if (!el) return;
+
+        el.innerText =
+            id === "confidenceVal"
+                ? `${score}%`
+                : score;
+    });
+
+
+    const entryScore =
+        document.getElementById("entryScore");
+
+    if (entryScore) {
+        entryScore.innerText =
+            `${score}/100`;
     }
 
 
-    /* ===============================
-       SCORE
-    =============================== */
-
-    const confidence =
-        document.getElementById("confidenceVal");
-
-    if(confidence)
-        confidence.innerText =
-            `${displayScore}%`;
-
-    const quality =
-        document.getElementById("qualityNumber");
-
-    if(quality)
-        quality.innerText =
-            displayScore;
-
-
-    /* ===============================
+    /* =========================
        H1
-    =============================== */
+    ========================= */
 
-    const stageH1 =
+    const h1El =
         document.getElementById("stageH1");
 
-    if(stageH1){
-
-        stageH1.innerText =
+    if (h1El) {
+        h1El.innerText =
             h1.direction || "WAIT";
     }
 
 
-    /* ===============================
-       M15
-    =============================== */
+    const scoreH1 =
+        document.getElementById("scoreH1");
 
-    const stageM15 =
+    if (scoreH1) {
+        scoreH1.innerText =
+            h1.direction || "WAIT";
+    }
+
+
+    /* =========================
+       M15
+    ========================= */
+
+    const m15El =
         document.getElementById("stageM15");
 
-    if(stageM15){
+    if (m15El) {
 
-        stageM15.innerText =
+        m15El.innerText =
             m15.confirmation ||
             m15.direction ||
             "WAIT";
     }
 
 
-    /* ===============================
-       M5
-       READ ACTUAL V9 FIELDS
-    =============================== */
+    const scoreM15 =
+        document.getElementById("scoreM15");
 
-    const stageM5 =
-        document.getElementById("stageM5");
+    if (scoreM15) {
 
-    if(stageM5){
-
-        let m5Display = "WAIT";
-
-        if(m5.buyTriggered === true){
-
-            m5Display =
-                `M5_ONLY BUY • ${m5Buy}`;
-
-        }else if(m5.sellTriggered === true){
-
-            m5Display =
-                `M5_ONLY SELL • ${m5Sell}`;
-
-        }else if(m5.trigger === "BUY"){
-
-            m5Display =
-                `BUY • ${m5Buy}`;
-
-        }else if(m5.trigger === "SELL"){
-
-            m5Display =
-                `SELL • ${m5Sell}`;
-
-        }else{
-
-            m5Display =
-                `WAIT • ${m5Buy}/${m5Sell}`;
-        }
-
-        stageM5.innerText =
-            m5Display;
+        scoreM15.innerText =
+            `${m15Buy}/${m15Sell}`;
     }
 
 
-    /* ===============================
+    /* =========================
+       M5
+    ========================= */
+
+    const m5El =
+        document.getElementById("stageM5");
+
+    if (m5El) {
+
+        let text = "WAIT";
+
+        if (m5.trigger === "BUY") {
+
+            text =
+                `BUY • ${m5Buy}`;
+
+        } else if (m5.trigger === "SELL") {
+
+            text =
+                `SELL • ${m5Sell}`;
+        }
+
+        m5El.innerText = text;
+    }
+
+
+    const scoreM5 =
+        document.getElementById("scoreM5");
+
+    if (scoreM5) {
+
+        scoreM5.innerText =
+            `${m5Buy}/${m5Sell}`;
+    }
+
+
+    /* =========================
        SIGNAL TYPE
-    =============================== */
+    ========================= */
 
     const signalReason =
         document.getElementById("signalReason");
 
-    if(signalReason){
+    if (signalReason) {
 
         signalReason.innerText =
-            type === "NONE"
-                ? "Waiting for setup"
-                : type;
+            type !== "NONE"
+                ? type
+                : "Waiting for setup";
     }
 
 
-    /* ===============================
+    /* =========================
+       SETUP TYPE
+    ========================= */
+
+    const scalpType =
+        document.getElementById("scalpType");
+
+    if (scalpType) {
+
+        scalpType.innerText =
+            data.setupType || type;
+    }
+
+
+    /* =========================
+       STATUS
+    ========================= */
+
+    const scalpStatus =
+        document.getElementById("scalpStatus");
+
+    if (scalpStatus) {
+
+        scalpStatus.innerText =
+            `${status} ${signal}`;
+    }
+
+
+    /* =========================
        REASONS
-    =============================== */
+    ========================= */
 
     const reasonList =
         document.getElementById("reasonList");
 
-    if(reasonList){
+    if (reasonList) {
 
         const reasons =
             Array.isArray(data.reasons)
@@ -2600,65 +2650,31 @@ function updateScalpDashboard(data){
 
         reasonList.innerHTML =
             reasons.length
-                ? reasons.map(r =>
-                    `<div>${r}</div>`
-                  ).join("")
+                ? reasons
+                    .map(r => `<div>${r}</div>`)
+                    .join("")
                 : `
                     <div>M15 BUY: ${m15Buy}</div>
                     <div>M15 SELL: ${m15Sell}</div>
                     <div>M5 BUY: ${m5Buy}</div>
                     <div>M5 SELL: ${m5Sell}</div>
-                  `;
+                `;
     }
 
 
-    /* ===============================
-       SCORE BREAKDOWN
-    =============================== */
-
-    const scoreH1 =
-        document.getElementById("scoreH1");
-
-    if(scoreH1){
-
-        scoreH1.innerText =
-            h1.direction === "BUY"
-                ? "BUY"
-                : h1.direction === "SELL"
-                    ? "SELL"
-                    : "WAIT";
-    }
-
-
-    const scoreM15 =
-        document.getElementById("scoreM15");
-
-    if(scoreM15)
-        scoreM15.innerText =
-            `${m15Buy}/${m15Sell}`;
-
-
-    const scoreM5 =
-        document.getElementById("scoreM5");
-
-    if(scoreM5)
-        scoreM5.innerText =
-            `${m5Buy}/${m5Sell}`;
-
-
-    /* ===============================
+    /* =========================
        LIQUIDITY
-    =============================== */
+    ========================= */
 
-    const scoreLiquidity =
+    const liquidity =
         document.getElementById("scoreLiquidity");
 
-    if(scoreLiquidity){
+    if (liquidity) {
 
         const sweep =
             m5.sweep || {};
 
-        scoreLiquidity.innerText =
+        liquidity.innerText =
             sweep.bullish
                 ? "BUY"
                 : sweep.bearish
@@ -2667,130 +2683,87 @@ function updateScalpDashboard(data){
     }
 
 
-    /* ===============================
-       RISK
-    =============================== */
+    /* =========================
+       RISK / RR
+    ========================= */
 
-    const scoreRisk =
+    const risk =
         document.getElementById("scoreRisk");
 
-    if(scoreRisk){
+    if (risk) {
 
-        const plan =
-            data.tradePlan || {};
-
-        scoreRisk.innerText =
+        risk.innerText =
             plan.rr
                 ? `1:${plan.rr}`
                 : "—";
     }
 
 
-    /* ===============================
-       LIVE
-    =============================== */
+    /* =========================
+       TRADE PLAN
+    ========================= */
 
-    const chartLive =
+    const tradeValues = {
+
+        tradeEntry: plan.entry,
+        tradeSL: plan.stopLoss,
+        tradeTP1: plan.tp1,
+        tradeTP2: plan.tp2
+    };
+
+    Object.entries(tradeValues).forEach(
+        ([id, value]) => {
+
+            const el =
+                document.getElementById(id);
+
+            if (
+                el &&
+                Number.isFinite(Number(value))
+            ) {
+
+                el.innerText =
+                    Number(value).toFixed(2);
+            }
+        }
+    );
+
+
+    /* =========================
+       LIVE
+    ========================= */
+
+    const live =
         document.getElementById("chartLive");
 
-    if(chartLive)
-        chartLive.innerText =
-            "● LIVE";
+    if (live) {
+        live.innerText = "● LIVE";
+    }
 
 
-    /* ===============================
+    /* =========================
        SAVE
-    =============================== */
+    ========================= */
 
     window.scalp = data;
 
-
     console.log(
-        "DASHBOARD UPDATED:",
+        "V10 DASHBOARD UPDATED",
         {
+            price,
             status,
             signal,
-            type,
-            m5Trigger: m5.trigger,
-            m5BuyTriggered: m5.buyTriggered,
-            m5SellTriggered: m5.sellTriggered,
-            m5Buy,
-            m5Sell
+            setup: data.setupType,
+            score,
+            h1: h1.direction,
+            m15: m15.confirmation,
+            m5: m5.trigger,
+            entry: plan.entry,
+            sl: plan.stopLoss,
+            tp1: plan.tp1,
+            tp2: plan.tp2
         }
     );
-}
-
-    /* =====================================================
-       MASTER SIGNAL
-    ===================================================== */
-
-    const master =
-        document.getElementById(
-            "masterSignal"
-        );
-
-    if(master){
-
-        let text = "WAIT";
-
-        if(
-            status !== "WAIT" &&
-            signal !== "WAIT"
-        ){
-
-            text =
-                `${status} ${signal}`;
-
-        }
-
-        master.innerText =
-            text;
-    }
-
-    /* =====================================================
-       SCORE
-    ===================================================== */
-
-    const scoreEl =
-        document.getElementById(
-            "entryScore"
-        );
-
-    if(scoreEl){
-
-        scoreEl.innerText =
-            score + "/100";
-
-    }
-
-    /* =====================================================
-       DIAGNOSTIC
-    ===================================================== */
-
-    const scalpStatus =
-        document.getElementById(
-            "scalpStatus"
-        );
-
-    if(scalpStatus){
-
-        scalpStatus.innerText =
-            `${status} ${signal}`;
-
-    }
-
-    const scalpType =
-        document.getElementById(
-            "scalpType"
-        );
-
-    if(scalpType){
-
-        scalpType.innerText =
-            type;
-
-    }
-
 }
 
     
