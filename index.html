@@ -2422,7 +2422,7 @@ function updateScalpDashboard(data){
 
     /* =====================================================
        WEB PUSH ALERT
-       Only ENTRY / M5_ONLY
+       ENTRY / EARLY / M5_ONLY
     ===================================================== */
 
     if(
@@ -2430,6 +2430,7 @@ function updateScalpDashboard(data){
         signal !== "WAIT" &&
         (
             status === "ENTRY" ||
+            status === "EARLY" ||
             status === "M5_ONLY"
         )
     ){
@@ -2448,12 +2449,11 @@ function updateScalpDashboard(data){
             title,
             body
         );
-
     }
 
-    /*
-     * Cari element Master Signal
-     */
+    /* =====================================================
+       MASTER SIGNAL
+    ===================================================== */
 
     const master =
         document.getElementById(
@@ -2476,12 +2476,11 @@ function updateScalpDashboard(data){
 
         master.innerText =
             text;
-
     }
 
-    /*
-     * Score
-     */
+    /* =====================================================
+       SCORE
+    ===================================================== */
 
     const scoreEl =
         document.getElementById(
@@ -2495,9 +2494,9 @@ function updateScalpDashboard(data){
 
     }
 
-    /*
-     * Diagnostic
-     */
+    /* =====================================================
+       DIAGNOSTIC
+    ===================================================== */
 
     const scalpStatus =
         document.getElementById(
