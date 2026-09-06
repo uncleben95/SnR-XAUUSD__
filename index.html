@@ -2404,94 +2404,229 @@ SCALP DASHBOARD
 
 function updateScalpDashboard(data){
 
-    console.log("DASHBOARD UPDATE:", data);
+    if(!data) return;
 
     const status = data.status || "WAIT";
     const signal = data.signal || "WAIT";
     const type = data.signalType || "NONE";
     const score = Number(data.score || 0);
 
-    // MASTER SIGNAL
-    const master = document.getElementById("masterSignal");
+    const h1 = data.h1 || {};
+    const m15 = data.m15 || {};
+    const m5 = data.m5 || {};
+
+    /* ===============================
+       MASTER SIGNAL
+    =============================== */
+
+    const master = document.getElementById("masterSignalBadge");
 
     if(master){
-        master.innerText =
-            signal === "WAIT"
-                ? "WAIT"
-                : `${status} ${signal}`;
-    }
 
-    // SCORE
-    const scoreEl = document.getElementById("entryScore");
-
-    if(scoreEl){
-        scoreEl.innerText = `${score}/100`;
-    }
-
-    // SCALP STATUS
-    const scalpStatus = document.getElementById("scalpStatus");
-
-    if(scalpStatus){
-        scalpStatus.innerText = `${status} ${signal}`;
-    }
-
-    // SIGNAL TYPE
-    const scalpType = document.getElementById("scalpType");
-
-    if(scalpType){
-        scalpType.innerText = type;
-    }
-
-    // ================================
-    // EXTRA: UPDATE COMMON DASHBOARD IDs
-    // ================================
-
-    const signalEls = [
-        "signal",
-        "masterSignalText",
-        "signalText",
-        "tradeSignal"
-    ];
-
-    signalEls.forEach(id => {
-
-        const el = document.getElementById(id);
-
-        if(el){
-            el.innerText =
-                signal === "WAIT"
-                    ? "WAIT"
-                    : `${status} ${signal}`;
+        if(signal === "WAIT"){
+            master.innerText = "WAIT";
+        }else{
+            master.innerText = `${status} ${signal}`;
         }
 
-    });
-
-    // ================================
-    // ENTRY / SL / TP
-    // ================================
-
-    if(data.tradePlan){
-
-        const plan = data.tradePlan;
-
-        const entry = document.getElementById("entryPrice");
-        const sl = document.getElementById("stopLoss");
-        const tp1 = document.getElementById("tp1");
-        const tp2 = document.getElementById("tp2");
-
-        if(entry && plan.entry != null)
-            entry.innerText = Number(plan.entry).toFixed(2);
-
-        if(sl && plan.stopLoss != null)
-            sl.innerText = Number(plan.stopLoss).toFixed(2);
-
-        if(tp1 && plan.tp1 != null)
-            tp1.innerText = Number(plan.tp1).toFixed(2);
-
-        if(tp2 && plan.tp2 != null)
-            tp2.innerText = Number(plan.tp2).toFixed(2);
+        master.dataset.signal = signal;
+        master.dataset.status = status;
     }
 
+
+    /* ===============================
+       CONFIDENCE
+    =============================== */
+
+    const confidence = document.getElementById("confidenceVal");
+
+    if(confidence){
+        confidence.innerText = `${score}%`;
+    }
+
+
+    /* ===============================
+       H1
+    =============================== */
+
+    const stageH1 = document.getElementById("stageH1");
+
+    if(stageH1){
+
+        stageH1.innerText =
+            h1.direction || "WAIT";
+
+    }
+
+
+    /* ===============================
+       M15
+    =============================== */
+
+    const stageM15 = document.getElementById("stageM15");
+
+    if(stageM15){
+
+        stageM15.innerText =
+            m15.confirmation ||
+            m15.direction ||
+            "WAIT";
+
+    }
+
+
+    /* ===============================
+       M5
+    =============================== */
+
+    const stageM5 = document.getElementById("stageM5");
+
+    if(stageM5){
+
+        stageM5.innerText =
+            m5.trigger ||
+            m5.confirmation ||
+            "WAIT";
+
+    }
+
+
+    /* ===============================
+       SIGNAL TYPE
+    =============================== */
+
+    const signalReason =
+        document.getElementById("signalReason");
+
+    if(signalReason){
+
+        signalReason.innerText =
+            type === "NONE"
+                ? "Waiting for setup"
+                : type;
+
+    }
+
+
+    /* ===============================
+       REASONS
+    =============================== */
+
+    const reasonList =
+        document.getElementById("reasonList");
+
+    if(reasonList){
+
+        const reasons =
+            Array.isArray(data.reasons)
+                ? data.reasons
+                : [];
+
+        reasonList.innerHTML =
+            reasons.length
+                ? reasons.map(r =>
+                    `<div>${r}</div>`
+                  ).join("")
+                : "<div>Waiting for confirmation</div>";
+
+    }
+
+
+    /* ===============================
+       QUALITY
+    =============================== */
+
+    const quality =
+        document.getElementById("qualityNumber");
+
+    if(quality){
+
+        quality.innerText =
+            score;
+
+    }
+
+
+    /* ===============================
+       SCORE BREAKDOWN
+    =============================== */
+
+    const scoreH1 =
+        document.getElementById("scoreH1");
+
+    if(scoreH1){
+
+        scoreH1.innerText =
+            h1.direction === signal
+                ? "✓"
+                : "—";
+
+    }
+
+
+    const scoreM15 =
+        document.getElementById("scoreM15");
+
+    if(scoreM15){
+
+        scoreM15.innerText =
+            m15.confirmation === signal
+                ? "✓"
+                : "—";
+
+    }
+
+
+    const scoreM5 =
+        document.getElementById("scoreM5");
+
+    if(scoreM5){
+
+        scoreM5.innerText =
+            m5.trigger === signal
+                ? "✓"
+                : "—";
+
+    }
+
+
+    /* ===============================
+       LIQUIDITY / RISK
+    =============================== */
+
+    const scoreLiquidity =
+        document.getElementById("scoreLiquidity");
+
+    if(scoreLiquidity){
+
+        scoreLiquidity.innerText = "—";
+
+    }
+
+
+    const scoreRisk =
+        document.getElementById("scoreRisk");
+
+    if(scoreRisk){
+
+        scoreRisk.innerText = "—";
+
+    }
+
+
+    /* ===============================
+       SAVE
+    =============================== */
+
+    window.scalp = data;
+
+    console.log(
+        "DASHBOARD SYNC:",
+        status,
+        signal,
+        type,
+        score
+    );
 }
 
     /* =====================================================
