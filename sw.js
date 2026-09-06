@@ -1,26 +1,14 @@
 const CACHE_NAME = "xau-sniper-clean-v2";
 
-/* ===============================
-   INSTALL
-=============================== */
-
 self.addEventListener("install", event => {
     self.skipWaiting();
 });
 
-
-/* ===============================
-   ACTIVATE
-=============================== */
-
 self.addEventListener("activate", event => {
-
     event.waitUntil(
         caches.keys().then(keys =>
             Promise.all(
-                keys
-                    .filter(key => key !== CACHE_NAME)
-                    .map(key => caches.delete(key))
+                keys.map(key => caches.delete(key))
             )
         )
     );
@@ -29,93 +17,74 @@ self.addEventListener("activate", event => {
 });
 
 
-/* ===============================
+/* =========================================================
    PUSH NOTIFICATION
-=============================== */
+========================================================= */
 
 self.addEventListener("push", event => {
 
     let data = {};
 
     try {
-
-        if (event.data) {
-            data = event.data.json();
-        }
-
-    } catch (error) {
-
-        console.error(
-            "Push JSON error:",
-            error
-        );
-
+        data = event.data
+            ? event.data.json()
+            : {};
+    } catch (e) {
         data = {
             title: "XAU/USD Pro Sniper",
             body: event.data
                 ? event.data.text()
                 : "New signal"
         };
-
     }
 
     const title =
         data.title ||
-        "🟡 XAU/USD Pro Sniper";
-
-    const body =
-        data.body ||
-        "New trading signal";
+        "🟢 XAU/USD Pro Sniper";
 
     const options = {
 
-        body: body,
+        body:
+            data.body ||
+            "New XAU/USD signal",
 
-        icon: data.icon ||
+        icon:
+            data.icon ||
             "/icon.png",
 
-        badge: data.icon ||
+        badge:
             "/icon.png",
 
         tag:
-            data.tag ||
             "xau-signal",
 
-        renotify: true,
-
-        requireInteraction: true,
+        renotify:
+            true,
 
         data: {
             url: "/"
         }
-
     };
 
     event.waitUntil(
-
         self.registration.showNotification(
             title,
             options
         )
-
     );
 
 });
 
 
-/* ===============================
+/* =========================================================
    NOTIFICATION CLICK
-=============================== */
+========================================================= */
 
 self.addEventListener(
     "notificationclick",
     event => {
 
         event.notification.close();
-
-        const url =
-            event.notification?.data?.url ||
-            "/";
 
         event.waitUntil(
 
@@ -124,9 +93,9 @@ self.addEventListener(
                 includeUncontrolled: true
             }).then(clientList => {
 
-                for (const client of clientList) {
+                for(const client of clientList){
 
-                    if ("focus" in client) {
+                    if("focus" in client){
 
                         return client.focus();
 
@@ -134,9 +103,9 @@ self.addEventListener(
 
                 }
 
-                if (clients.openWindow) {
+                if(clients.openWindow){
 
-                    return clients.openWindow(url);
+                    return clients.openWindow("/");
 
                 }
 
