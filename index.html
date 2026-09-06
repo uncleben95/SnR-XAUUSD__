@@ -2097,31 +2097,8 @@ async function enableNotifications(){
     if(!("Notification" in window)){
 
         alert(
-            "Browser ini tidak menyokong Web Notification."
+            "❌ Browser ini tidak menyokong notification."
         );
-
-        return;
-    }
-
-    if(Notification.permission === "granted"){
-
-        updateNotificationStatus();
-
-        await setupPushNotifications();
-
-        try{
-
-            new Notification(
-                "🟢 XAU/USD Pro Sniper",
-                {
-                    body:
-                        "Notification sudah aktif.",
-                    icon:
-                        "/icon.png"
-                }
-            );
-
-        }catch(e){}
 
         return;
     }
@@ -2129,7 +2106,8 @@ async function enableNotifications(){
     if(Notification.permission === "denied"){
 
         alert(
-            "⚠️ Notification telah BLOCKED oleh browser."
+            "⚠️ Notification telah BLOCKED oleh browser. " +
+            "Benarkan notification dalam Settings browser."
         );
 
         return;
@@ -2137,50 +2115,51 @@ async function enableNotifications(){
 
     try{
 
-        const permission =
-            await Notification.requestPermission();
+        let permission =
+            Notification.permission;
+
+        if(permission !== "granted"){
+
+            permission =
+                await Notification.requestPermission();
+
+        }
 
         updateNotificationStatus();
 
-        if(permission === "granted"){
-
-            alert(
-                "✅ Notification berjaya diaktifkan."
-            );
-
-            await setupPushNotifications();
-
-            try{
-
-                new Notification(
-                    "🟢 XAU/USD Pro Sniper",
-                    {
-                        body:
-                            "Signal alert sekarang aktif.",
-                        icon:
-                            "/icon.png"
-                    }
-                );
-
-            }catch(e){}
-
-        }else{
+        if(permission !== "granted"){
 
             alert(
                 "⚠️ Notification tidak dibenarkan."
             );
 
+            return;
         }
 
-    }catch(e){
+        const pushReady =
+            await setupPushNotifications();
+
+        if(!pushReady){
+
+            return;
+        }
+
+        updateNotificationStatus();
+
+        console.log(
+            "🔔 XAU/USD PUSH NOTIFICATION ACTIVE"
+        );
+
+    }catch(error){
 
         console.error(
-            "Notification error:",
-            e
+            "Notification enable error:",
+            error
         );
 
         alert(
-            "❌ Notification tidak dapat diaktifkan."
+            "❌ Notification gagal diaktifkan:\n\n" +
+            error.message
         );
 
     }
