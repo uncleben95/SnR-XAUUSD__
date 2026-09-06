@@ -2420,6 +2420,37 @@ function updateScalpDashboard(data){
         `SCALP: ${status} ${signal} ${type} ${score}`
     );
 
+    /* =====================================================
+       WEB PUSH ALERT
+       Only ENTRY / M5_ONLY
+    ===================================================== */
+
+    if(
+        data.ok &&
+        signal !== "WAIT" &&
+        (
+            status === "ENTRY" ||
+            status === "M5_ONLY"
+        )
+    ){
+
+        const title =
+            signal === "BUY"
+                ? "🟢 XAU/USD BUY"
+                : "🔴 XAU/USD SELL";
+
+        const body =
+            `${status} • ${type}\n` +
+            `Score: ${score}/100\n` +
+            `Price: ${Number(data.price).toFixed(2)}`;
+
+        sendBrowserNotification(
+            title,
+            body
+        );
+
+    }
+
     /*
      * Cari element Master Signal
      */
@@ -2431,8 +2462,7 @@ function updateScalpDashboard(data){
 
     if(master){
 
-        let text =
-            "WAIT";
+        let text = "WAIT";
 
         if(
             status !== "WAIT" &&
@@ -2466,7 +2496,7 @@ function updateScalpDashboard(data){
     }
 
     /*
-     * Diagnostic baru
+     * Diagnostic
      */
 
     const scalpStatus =
