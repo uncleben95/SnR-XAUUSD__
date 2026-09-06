@@ -6,8 +6,7 @@ export default async function handler(req, res) {
     // SECURITY
     // =====================================================
 
-    const cronSecret =
-      process.env.CRON_SECRET;
+    const cronSecret = process.env.CRON_SECRET;
 
     if (
       cronSecret &&
@@ -21,41 +20,79 @@ export default async function handler(req, res) {
     }
 
     // =====================================================
-    // CALL V10 SCALP ENGINE
+    // BASE URL
     // =====================================================
 
     const baseUrl =
       process.env.VERCEL_URL
         ? `https://${process.env.VERCEL_URL}`
-        : "http://localhost:3000";
+        : `http://localhost:${process.env.PORT || 3000}`;
 
-    const response =
-      await fetch(
-        `${baseUrl}/api/scalp`,
-        {
-          method: "GET",
-          cache: "no-store"
+    // =====================================================
+    // CALL /api/scalp
+    // =====================================================
+
+    const scalpResponse = await fetch(
+      `${baseUrl}/api/scalp?t=${Date.now()}`,
+      {
+        method: "GET",
+        cache: "no-store",
+        headers: {
+          "Cache-Control": "no-cache",
+          "Accept": "application/json"
         }
+      }
+    );
+
+    const scalpText =
+      await scalpResponse.text();
+
+    let data;
+
+    try {
+
+      data =
+        JSON.parse(scalpText);
+
+    } catch {
+
+      console.error(
+        "SCALP RETURNED NON-JSON:",
+        scalpText.slice(0, 500)
       );
 
-    if (!response.ok) {
-      throw new Error(
-        `SCALP HTTP ${response.status}`
-      );
+      return res.status(502).json({
+        ok: false,
+        error:
+          `SCALP returned non-JSON HTTP ${scalpResponse.status}`,
+        preview:
+          scalpText.slice(0, 200)
+      });
     }
 
-    const data =
-      await response.json();
+    if (!scalpResponse.ok) {
+
+      return res.status(502).json({
+        ok: false,
+        error:
+          `SCALP HTTP ${scalpResponse.status}`,
+        scalp: data
+      });
+    }
 
     if (!data.ok) {
-      throw new Error(
-        data.error ||
-        "SCALP ERROR"
-      );
+
+      return res.status(502).json({
+        ok: false,
+        error:
+          data.error ||
+          "SCALP ERROR",
+        scalp: data
+      });
     }
 
     // =====================================================
-    // ONLY SEND REAL ENTRY
+    // ONLY REAL ENTRY
     // =====================================================
 
     const isEntry =
@@ -68,21 +105,42 @@ export default async function handler(req, res) {
     if (!isEntry) {
 
       return res.status(200).json({
-        ok: true,
-        sent: false,
-        status: data.status,
-        signal: data.signal,
-        reason: "No ENTRY signal"
-      });
 
+        ok: true,
+
+        sent: false,
+
+        status:
+          data.status,
+
+        signal:
+          data.signal,
+
+        score:
+          data.score,
+
+        price:
+          data.price,
+
+        reason:
+          "No ENTRY signal",
+
+        timestamp:
+          new Date().toISOString()
+      });
     }
 
     // =====================================================
-    // PREVENT DUPLICATE ALERT
+    // DUPLICATE PROTECTION
     // =====================================================
 
     const signalKey =
-      `${data.signal}-${data.setupType}-${data.price}`;
+      [
+        data.signal,
+        data.setupType,
+        data.price,
+        data.timestamp
+      ].join("-");
 
     const lastSignal =
       globalThis.__LAST_XAU_CRON_SIGNAL__;
@@ -92,19 +150,23 @@ export default async function handler(req, res) {
     ) {
 
       return res.status(200).json({
-        ok: true,
-        sent: false,
-        duplicate: true,
-        signal: data.signal
-      });
 
+        ok: true,
+
+        sent: false,
+
+        duplicate: true,
+
+        signal:
+          data.signal,
+
+        price:
+          data.price
+      });
     }
 
-    globalThis.__LAST_XAU_CRON_SIGNAL__ =
-      signalKey;
-
     // =====================================================
-    // PUSH
+    // SEND PUSH
     // =====================================================
 
     const pushResponse =
@@ -115,34 +177,72 @@ export default async function handler(req, res) {
 
           headers: {
             "Content-Type":
+              "application/json",
+
+            "Accept":
               "application/json"
           },
 
-          body: JSON.stringify({
+          body:
+            JSON.stringify({
 
-            title:
-              `XAU/USD ${data.signal} 🚨`,
+              title:
+                `XAU/USD ${data.signal} 🚨`,
 
-            body:
-              `${data.setupType} • ` +
-              `Score ${data.score} • ` +
-              `Entry ${Number(data.price).toFixed(2)}`
-          })
+              body:
+                `${data.setupType} • ` +
+                `Score ${data.score} • ` +
+                `Entry ${Number(
+                  data.price
+                ).toFixed(2)}`
+            })
         }
       );
 
-    const pushData =
-      await pushResponse.json();
+    const pushText =
+      await pushResponse.text();
+
+    let pushData;
+
+    try {
+
+      pushData =
+        JSON.parse(pushText);
+
+    } catch {
+
+      return res.status(502).json({
+
+        ok: false,
+
+        error:
+          `PUSH returned non-JSON HTTP ${pushResponse.status}`,
+
+        preview:
+          pushText.slice(0, 200)
+      });
+    }
 
     if (!pushResponse.ok) {
 
       return res.status(502).json({
-        ok: false,
-        signal: data.signal,
-        push: pushData
-      });
 
+        ok: false,
+
+        signal:
+          data.signal,
+
+        push:
+          pushData
+      });
     }
+
+    // =====================================================
+    // SAVE LAST SIGNAL
+    // =====================================================
+
+    globalThis.__LAST_XAU_CRON_SIGNAL__ =
+      signalKey;
 
     // =====================================================
     // DONE
@@ -163,11 +263,23 @@ export default async function handler(req, res) {
       setupType:
         data.setupType,
 
+      signalType:
+        data.signalType,
+
+      execution:
+        data.execution,
+
       score:
         data.score,
 
+      context:
+        data.context,
+
       price:
         data.price,
+
+      tradePlan:
+        data.tradePlan,
 
       push:
         pushData,
