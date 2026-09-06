@@ -2216,119 +2216,16 @@ LIVE API
 
 async function fetchLiveGold(){
 
-const api=document.getElementById("apiStatus");
-const source=document.getElementById("priceSource");
-
-try{
-
-api.innerText="● API CONNECTING";
-api.className="api-status";
-
-const response=
-await fetch(
-"/api/xau?ts="+Date.now(),
-{
-cache:"no-store"
-}
-);
-
-if(!response.ok){
-throw new Error("HTTP "+response.status);
-}
-
-const data=await response.json();
-
-if(!data.values?.length){
-throw new Error("Tiada candle");
-}
-
-const raw=data.values;
-
-candles=
-raw
-.map(x=>({
-
-time:x.datetime||x.time,
-open:num(x.open),
-high:num(x.high),
-low:num(x.low),
-close:num(x.close),
-volume:num(x.volume)||0
-
-}))
-.filter(x=>
-isFinite(x.open)&&
-isFinite(x.high)&&
-isFinite(x.low)&&
-isFinite(x.close)
-)
-.sort(
-(a,b)=>
-new Date(a.time)-new Date(b.time)
-);
-
-if(!candles.length){
-throw new Error("Candle invalid");
-}
-
-const latest=
-candles[candles.length-1];
-
-previousPrice=currentPrice;
-currentPrice=latest.close;
-
-document.getElementById("livePrice").innerText=
-currentPrice.toFixed(2);
-
-document.getElementById("priceInput").value=
-currentPrice.toFixed(2);
-
-document.getElementById("riskEntry").value=
-currentPrice.toFixed(2);
-
-document.getElementById("chartPrice").innerText=
-currentPrice.toFixed(2);
-
-source.innerText=
-"Twelve Data • Live 5M Candle • "+
-formatUpdateTime();
-
-api.innerText="● LIVE API";
-api.className="api-status";
-
-document.getElementById("chartLive").innerText="● LIVE";
-
-drawChart();
-await runScalpEngine();
-
-}catch(e){
-
-console.error(e);
-
-api.innerText="● API ERROR";
-api.className="api-status api-error";
-
-source.innerText=
-"API gagal — cuba lagi dalam 30 saat";
-
-document.getElementById("chartLive").innerText=
-"● OFFLINE";
-
-}
-
-}
-
-    
-/* =========================================================
-SCALP ENGINE V3
-========================================================= */
-
-async function runScalpEngine(){
+    const api = document.getElementById("apiStatus");
+    const source = document.getElementById("priceSource");
 
     try{
 
+        api.innerText = "● SCALP CONNECTING";
+        api.className = "api-status";
+
         const response = await fetch(
-            "/api/scalp?ts=" + Date.now(),
+            "/api/scalp",
             {
                 cache: "no-store"
             }
@@ -2336,34 +2233,79 @@ async function runScalpEngine(){
 
         if(!response.ok){
             throw new Error(
-                "SCALP HTTP " + response.status
+                "HTTP " + response.status
             );
         }
 
-        const data =
-            await response.json();
+        const data = await response.json();
 
         if(!data.ok){
             throw new Error(
-                data.error ||
-                "Scalp engine error"
+                data.error || "Scalp API error"
             );
         }
 
-        console.log(
-            "SCALP V3:",
-            data
-        );
-
         /*
-         * Simpan untuk diagnostic/dashboard
+         * SCALP API sekarang menjadi
+         * single source untuk live engine.
          */
 
         window.scalp = data;
 
         /*
-         * Kalau dashboard lama masih perlukan
-         * window.market, kita boleh sync kemudian.
+         * Price
+         */
+
+        if(
+            Number.isFinite(Number(data.price))
+        ){
+
+            previousPrice = currentPrice;
+            currentPrice = Number(data.price);
+
+            document.getElementById("livePrice").innerText =
+                currentPrice.toFixed(2);
+
+            document.getElementById("priceInput").value =
+                currentPrice.toFixed(2);
+
+            document.getElementById("riskEntry").value =
+                currentPrice.toFixed(2);
+
+            document.getElementById("chartPrice").innerText =
+                currentPrice.toFixed(2);
+        }
+
+        /*
+         * API status
+         */
+
+        source.innerText =
+            "Twelve Data • M5 • " +
+            formatUpdateTime();
+
+        api.innerText = "● LIVE SCALP API";
+        api.className = "api-status";
+
+        document.getElementById("chartLive").innerText =
+            "● LIVE";
+
+        /*
+         * Update chart
+         *
+         * Kalau candles lama masih wujud,
+         * chart akan terus menggunakan data tersebut.
+         */
+
+        if(
+            Array.isArray(candles) &&
+            candles.length
+        ){
+            drawChart();
+        }
+
+        /*
+         * Update dashboard
          */
 
         updateScalpDashboard(data);
@@ -2371,10 +2313,21 @@ async function runScalpEngine(){
     }catch(e){
 
         console.error(
-            "Scalp Engine:",
+            "Live Scalp:",
             e
         );
 
+        api.innerText =
+            "● API ERROR";
+
+        api.className =
+            "api-status api-error";
+
+        source.innerText =
+            "Scalp API gagal — retry dalam 60 saat";
+
+        document.getElementById("chartLive").innerText =
+            "● OFFLINE";
     }
 
 }
