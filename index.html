@@ -5716,5 +5716,253 @@ updateDiagnostic,
 
 })();
 </script>
+    <script>
+/* =========================================================
+   FINAL LIVE SCALP BRIDGE
+   /api/scalp → DASHBOARD
+========================================================= */
+
+(function(){
+
+    async function liveScalp(){
+
+        const api =
+            document.getElementById("apiStatus");
+
+        const source =
+            document.getElementById("priceSource");
+
+        const live =
+            document.getElementById("chartLive");
+
+        try {
+
+            if(api){
+                api.innerText = "● CONNECTING";
+                api.className = "api-status";
+            }
+
+            const response = await fetch(
+                "/api/scalp?t=" + Date.now(),
+                {
+                    method: "GET",
+                    cache: "no-store",
+                    headers: {
+                        "Cache-Control": "no-cache"
+                    }
+                }
+            );
+
+            if(!response.ok){
+                throw new Error(
+                    "HTTP " + response.status
+                );
+            }
+
+            const data =
+                await response.json();
+
+            console.log(
+                "XAU SCALP LIVE:",
+                data
+            );
+
+            if(!data.ok){
+                throw new Error(
+                    data.error ||
+                    "SCALP API ERROR"
+                );
+            }
+
+            /* =========================
+               SAVE
+            ========================= */
+
+            window.scalp = data;
+            window.market = data;
+
+            /* =========================
+               PRICE
+            ========================= */
+
+            const price =
+                Number(data.price);
+
+            if(Number.isFinite(price)){
+
+                const p =
+                    price.toFixed(2);
+
+                const livePrice =
+                    document.getElementById(
+                        "livePrice"
+                    );
+
+                const chartPrice =
+                    document.getElementById(
+                        "chartPrice"
+                    );
+
+                const priceInput =
+                    document.getElementById(
+                        "priceInput"
+                    );
+
+                const riskEntry =
+                    document.getElementById(
+                        "riskEntry"
+                    );
+
+                if(livePrice)
+                    livePrice.innerText = p;
+
+                if(chartPrice)
+                    chartPrice.innerText = p;
+
+                if(priceInput)
+                    priceInput.value = p;
+
+                if(riskEntry)
+                    riskEntry.value = p;
+            }
+
+            /* =========================
+               DASHBOARD
+            ========================= */
+
+            if(
+                typeof updateScalpDashboard ===
+                "function"
+            ){
+                updateScalpDashboard(data);
+            }
+
+            /* =========================
+               API STATUS
+            ========================= */
+
+            if(api){
+
+                api.innerText =
+                    "● LIVE SCALP API";
+
+                api.className =
+                    "api-status";
+            }
+
+            if(source){
+
+                source.innerText =
+                    "Twelve Data • M5 • LIVE";
+            }
+
+            if(live){
+
+                live.innerText =
+                    "● LIVE";
+            }
+
+            /* =========================
+               TOP SIGNAL
+            ========================= */
+
+            const topSignal =
+                document.getElementById(
+                    "topSignalStatus"
+                );
+
+            if(topSignal){
+
+                topSignal.innerText =
+                    data.signal || "WAIT";
+
+                topSignal.className =
+                    "status-value " +
+                    (
+                        data.signal === "BUY"
+                            ? "pass"
+                            : data.signal === "SELL"
+                                ? "fail"
+                                : "neutral"
+                    );
+            }
+
+            /* =========================
+               MASTER
+            ========================= */
+
+            const master =
+                document.getElementById(
+                    "masterSignalBadge"
+                );
+
+            if(master){
+
+                master.innerText =
+                    data.signal === "WAIT"
+                        ? "WAIT"
+                        : `${data.status} ${data.signal}`;
+            }
+
+            /* =========================
+               CHART
+            ========================= */
+
+            if(
+                typeof drawChart ===
+                "function"
+            ){
+
+                try{
+                    drawChart();
+                }catch(chartError){
+                    console.warn(
+                        "Chart:",
+                        chartError
+                    );
+                }
+            }
+
+        }catch(error){
+
+            console.error(
+                "FINAL SCALP LIVE ERROR:",
+                error
+            );
+
+            if(api){
+
+                api.innerText =
+                    "● API ERROR";
+
+                api.className =
+                    "api-status api-error";
+            }
+
+            if(source){
+
+                source.innerText =
+                    "SCALP API ERROR";
+            }
+
+            if(live){
+
+                live.innerText =
+                    "● OFFLINE";
+            }
+        }
+    }
+
+    /* FIRST CALL — TERUS */
+    liveScalp();
+
+    /* REFRESH — 15 SECONDS */
+    setInterval(
+        liveScalp,
+        15000
+    );
+
+})();
+</script>
 </body>
 </html>
