@@ -2092,147 +2092,120 @@ button.disabled=false;
 
 async function enableNotifications(){
 
-    alert("BUTTON CLICKED");
-
-    console.log("ENABLE NOTIFICATIONS CLICKED");
+    initAudio();
 
     if(!("Notification" in window)){
 
-        alert("Notification API tak disokong.");
+        alert(
+            "Browser ini tidak menyokong Web Notification."
+        );
+
         return;
     }
 
-    alert(
-        "Permission sekarang: " +
-        Notification.permission
-    );
+    if(Notification.permission === "granted"){
+
+        updateNotificationStatus();
+
+        await setupPushNotifications();
+
+        try{
+
+            new Notification(
+                "🟢 XAU/USD Pro Sniper",
+                {
+                    body:
+                        "Notification sudah aktif.",
+                    icon:
+                        "/icon.png"
+                }
+            );
+
+        }catch(e){}
+
+        return;
+    }
+
+    if(Notification.permission === "denied"){
+
+        alert(
+            "⚠️ Notification telah BLOCKED oleh browser."
+        );
+
+        return;
+    }
 
     try{
 
-        let permission =
-            Notification.permission;
+        const permission =
+            await Notification.requestPermission();
 
-        if(permission !== "granted"){
+        updateNotificationStatus();
 
-            permission =
-                await Notification.requestPermission();
-        }
+        if(permission === "granted"){
 
-        alert(
-            "Permission result: " +
-            permission
-        );
+            alert(
+                "✅ Notification berjaya diaktifkan."
+            );
 
-        if(permission !== "granted"){
-            return;
-        }
-
-        const pushReady =
             await setupPushNotifications();
 
-        alert(
-            "Push result: " +
-            pushReady
-        );
+            try{
 
-    }catch(error){
+                new Notification(
+                    "🟢 XAU/USD Pro Sniper",
+                    {
+                        body:
+                            "Signal alert sekarang aktif.",
+                        icon:
+                            "/icon.png"
+                    }
+                );
 
-        console.error(
-            "Notification error:",
-            error
-        );
+            }catch(e){}
 
-        alert(
-            "ERROR:\n\n" +
-            error.message
-        );
-    }
-}
+        }else{
 
-function sendBrowserNotification(title, body){
+            alert(
+                "⚠️ Notification tidak dibenarkan."
+            );
 
-    if(!("Notification" in window)) return;
-
-    if(Notification.permission !== "granted") return;
-
-    /*
-     * =========================================
-     * ALERT PROTECTION
-     * Same signal = NO repeat notification
-     * New signal = notification
-     * =========================================
-     */
-
-    const signalKey =
-        window.scalp?.signal || "WAIT";
-
-    const statusKey =
-        window.scalp?.status || "WAIT";
-
-    const typeKey =
-        window.scalp?.signalType || "NONE";
-
-    /*
-     * Jangan alert WAIT
-     */
-
-    if(signalKey === "WAIT") return;
-
-    const currentKey =
-        `${statusKey}_${signalKey}_${typeKey}`;
-
-    const lastKey =
-        localStorage.getItem(
-            "xau_last_push_signal"
-        );
-
-    /*
-     * Signal yang sama:
-     * jangan spam setiap 60 saat
-     */
-
-    if(lastKey === currentKey){
-        console.log(
-            "PUSH BLOCKED — duplicate:",
-            currentKey
-        );
-        return;
-    }
-
-    /*
-     * Simpan signal terbaru
-     */
-
-    localStorage.setItem(
-        "xau_last_push_signal",
-        currentKey
-    );
-
-    try{
-
-        new Notification(
-            title,
-            {
-                body: body,
-                icon: "/icon.png",
-                tag: "xau-signal",
-                renotify: true
-            }
-        );
-
-        console.log(
-            "🔔 PUSH SENT:",
-            currentKey
-        );
+        }
 
     }catch(e){
 
         console.error(
-            "Push notification error:",
+            "Notification error:",
             e
         );
 
+        alert(
+            "❌ Notification tidak dapat diaktifkan."
+        );
+
     }
+
+}
+
+function sendBrowserNotification(title,body){
+
+if(!("Notification" in window))return;
+
+if(Notification.permission!=="granted")return;
+
+try{
+
+new Notification(
+title,
+{
+body,
+icon:"/icon.png",
+tag:"xau-signal",
+renotify:true
+}
+);
+
+}catch(e){}
 
 }
 
@@ -2243,16 +2216,119 @@ LIVE API
 
 async function fetchLiveGold(){
 
-    const api = document.getElementById("apiStatus");
-    const source = document.getElementById("priceSource");
+const api=document.getElementById("apiStatus");
+const source=document.getElementById("priceSource");
+
+try{
+
+api.innerText="● API CONNECTING";
+api.className="api-status";
+
+const response=
+await fetch(
+"/api/xau?ts="+Date.now(),
+{
+cache:"no-store"
+}
+);
+
+if(!response.ok){
+throw new Error("HTTP "+response.status);
+}
+
+const data=await response.json();
+
+if(!data.values?.length){
+throw new Error("Tiada candle");
+}
+
+const raw=data.values;
+
+candles=
+raw
+.map(x=>({
+
+time:x.datetime||x.time,
+open:num(x.open),
+high:num(x.high),
+low:num(x.low),
+close:num(x.close),
+volume:num(x.volume)||0
+
+}))
+.filter(x=>
+isFinite(x.open)&&
+isFinite(x.high)&&
+isFinite(x.low)&&
+isFinite(x.close)
+)
+.sort(
+(a,b)=>
+new Date(a.time)-new Date(b.time)
+);
+
+if(!candles.length){
+throw new Error("Candle invalid");
+}
+
+const latest=
+candles[candles.length-1];
+
+previousPrice=currentPrice;
+currentPrice=latest.close;
+
+document.getElementById("livePrice").innerText=
+currentPrice.toFixed(2);
+
+document.getElementById("priceInput").value=
+currentPrice.toFixed(2);
+
+document.getElementById("riskEntry").value=
+currentPrice.toFixed(2);
+
+document.getElementById("chartPrice").innerText=
+currentPrice.toFixed(2);
+
+source.innerText=
+"Twelve Data • Live 5M Candle • "+
+formatUpdateTime();
+
+api.innerText="● LIVE API";
+api.className="api-status";
+
+document.getElementById("chartLive").innerText="● LIVE";
+
+drawChart();
+await runScalpEngine();
+
+}catch(e){
+
+console.error(e);
+
+api.innerText="● API ERROR";
+api.className="api-status api-error";
+
+source.innerText=
+"API gagal — cuba lagi dalam 30 saat";
+
+document.getElementById("chartLive").innerText=
+"● OFFLINE";
+
+}
+
+}
+
+    
+/* =========================================================
+SCALP ENGINE V3
+========================================================= */
+
+async function runScalpEngine(){
 
     try{
 
-        api.innerText = "● SCALP CONNECTING";
-        api.className = "api-status";
-
         const response = await fetch(
-            "/api/scalp",
+            "/api/scalp?ts=" + Date.now(),
             {
                 cache: "no-store"
             }
@@ -2260,112 +2336,34 @@ async function fetchLiveGold(){
 
         if(!response.ok){
             throw new Error(
-                "HTTP " + response.status
+                "SCALP HTTP " + response.status
             );
         }
 
-        const data = await response.json();
+        const data =
+            await response.json();
 
-if(!data.ok){
-    throw new Error(
-        data.error || "Scalp API error"
-    );
-}
+        if(!data.ok){
+            throw new Error(
+                data.error ||
+                "Scalp engine error"
+            );
+        }
 
-/* =========================================
-   LIVE SCALP DASHBOARD
-========================================= */
-
-updateScalpDashboard(data);
-
-/* =========================================
-   LIVE SIGNAL PUSH ALERT
-   ENTRY + M5_ONLY sahaja
-========================================= */
-
-if(
-    data.status === "ENTRY" ||
-    data.status === "M5_ONLY"
-){
-
-    sendBrowserNotification(
-        `🚨 XAU/USD ${data.signal}`,
-        `${data.status} | ${data.signalType} | Score ${data.score}% | Entry ${data.tradePlan?.entry ?? data.price}`
-    );
-}
+        console.log(
+            "SCALP V3:",
+            data
+        );
 
         /*
-         * SCALP API sekarang menjadi
-         * single source untuk live engine.
+         * Simpan untuk diagnostic/dashboard
          */
 
         window.scalp = data;
 
         /*
-         * Price
-         */
-
-        if(
-            Number.isFinite(Number(data.price))
-        ){
-
-            previousPrice = currentPrice;
-            currentPrice = Number(data.price);
-
-            document.getElementById("livePrice").innerText =
-                currentPrice.toFixed(2);
-
-            document.getElementById("priceInput").value =
-                currentPrice.toFixed(2);
-
-            document.getElementById("riskEntry").value =
-                currentPrice.toFixed(2);
-
-            document.getElementById("chartPrice").innerText =
-                currentPrice.toFixed(2);
-        }
-
-        /*
-         * API status
-         */
-
-        source.innerText =
-            "Twelve Data • M5 • " +
-            formatUpdateTime();
-
-        api.innerText = "● LIVE SCALP API";
-        api.className = "api-status";
-
-        document.getElementById("chartLive").innerText =
-            "● LIVE";
-
-/* =========================================
-   LIVE M5 CHART
-========================================= */
-
-if(Array.isArray(data.candles) && data.candles.length){
-
-    candles = data.candles.slice(-60);
-
-    drawChart();
-
-}else{
-
-    console.warn(
-        "No candles returned by /api/scalp"
-    );
-
-    /*
-     * Kalau API hanya pulangkan price,
-     * jangan kosongkan candle lama.
-     */
-    if(Array.isArray(candles) && candles.length){
-        drawChart();
-    }
-}
-
-        /*
-         * Update dashboard
+         * Kalau dashboard lama masih perlukan
+         * window.market, kita boleh sync kemudian.
          */
 
         updateScalpDashboard(data);
@@ -2373,397 +2371,110 @@ if(Array.isArray(data.candles) && data.candles.length){
     }catch(e){
 
         console.error(
-            "Live Scalp:",
+            "Scalp Engine:",
             e
         );
 
-        api.innerText =
-            "● API ERROR";
-
-        api.className =
-            "api-status api-error";
-
-        source.innerText =
-            "Scalp API gagal — retry dalam 60 saat";
-
-        document.getElementById("chartLive").innerText =
-            "● OFFLINE";
     }
 
 }
 
 
 /* =========================================================
-   V10 SCALP DASHBOARD
+SCALP DASHBOARD
 ========================================================= */
 
-function updateScalpDashboard(data) {
+function updateScalpDashboard(data){
 
-    if (!data) return;
+    const status =
+        data.status || "WAIT";
 
-    console.log("V10 DASHBOARD:", data);
+    const signal =
+        data.signal || "WAIT";
 
-    const status = data.status || "WAIT";
-    const signal = data.signal || "WAIT";
-    const type = data.signalType || "NONE";
-    const score = Number(data.score || 0);
+    const type =
+        data.signalType || "NONE";
 
-    const h1 = data.h1 || {};
-    const m15 = data.m15 || {};
-    const m5 = data.m5 || {};
-    const plan = data.tradePlan || {};
+    const score =
+        Number(data.score || 0);
 
-    const m15Buy = Number(m15.buyScore || 0);
-    const m15Sell = Number(m15.sellScore || 0);
-    const m5Buy = Number(m5.buyScore || 0);
-    const m5Sell = Number(m5.sellScore || 0);
+    console.log(
+        `SCALP: ${status} ${signal} ${type} ${score}`
+    );
 
+    /*
+     * Cari element Master Signal
+     */
 
-    /* =========================
-       PRICE
-    ========================= */
+    const master =
+        document.getElementById(
+            "masterSignal"
+        );
 
-    const price = Number(data.price);
+    if(master){
 
-    if (Number.isFinite(price)) {
-
-        const p = price.toFixed(2);
-
-        [
-            "livePrice",
-            "chartPrice"
-        ].forEach(id => {
-
-            const el = document.getElementById(id);
-
-            if (el) el.innerText = p;
-        });
-
-        [
-            "priceInput",
-            "riskEntry"
-        ].forEach(id => {
-
-            const el = document.getElementById(id);
-
-            if (el) el.value = p;
-        });
-    }
-
-
-    /* =========================
-       MASTER SIGNAL
-    ========================= */
-
-    [
-        "masterSignalBadge",
-        "masterSignal",
-        "topSignalStatus"
-    ].forEach(id => {
-
-        const el = document.getElementById(id);
-
-        if (!el) return;
-
-        const text =
-            signal !== "WAIT"
-                ? `${status} ${signal}`
-                : "WAIT";
-
-        el.innerText = text;
-
-        el.dataset.signal = signal;
-        el.dataset.status = status;
-    });
-
-
-    /* =========================
-       SCORE
-    ========================= */
-
-    [
-        "confidenceVal",
-        "qualityNumber"
-    ].forEach(id => {
-
-        const el = document.getElementById(id);
-
-        if (!el) return;
-
-        el.innerText =
-            id === "confidenceVal"
-                ? `${score}%`
-                : score;
-    });
-
-
-    const entryScore =
-        document.getElementById("entryScore");
-
-    if (entryScore) {
-        entryScore.innerText =
-            `${score}/100`;
-    }
-
-
-    /* =========================
-       H1
-    ========================= */
-
-    const h1El =
-        document.getElementById("stageH1");
-
-    if (h1El) {
-        h1El.innerText =
-            h1.direction || "WAIT";
-    }
-
-
-    const scoreH1 =
-        document.getElementById("scoreH1");
-
-    if (scoreH1) {
-        scoreH1.innerText =
-            h1.direction || "WAIT";
-    }
-
-
-    /* =========================
-       M15
-    ========================= */
-
-    const m15El =
-        document.getElementById("stageM15");
-
-    if (m15El) {
-
-        m15El.innerText =
-            m15.confirmation ||
-            m15.direction ||
+        let text =
             "WAIT";
-    }
 
-
-    const scoreM15 =
-        document.getElementById("scoreM15");
-
-    if (scoreM15) {
-
-        scoreM15.innerText =
-            `${m15Buy}/${m15Sell}`;
-    }
-
-
-    /* =========================
-       M5
-    ========================= */
-
-    const m5El =
-        document.getElementById("stageM5");
-
-    if (m5El) {
-
-        let text = "WAIT";
-
-        if (m5.trigger === "BUY") {
+        if(
+            status !== "WAIT" &&
+            signal !== "WAIT"
+        ){
 
             text =
-                `BUY • ${m5Buy}`;
+                `${status} ${signal}`;
 
-        } else if (m5.trigger === "SELL") {
-
-            text =
-                `SELL • ${m5Sell}`;
         }
 
-        m5El.innerText = text;
+        master.innerText =
+            text;
+
     }
 
+    /*
+     * Score
+     */
 
-    const scoreM5 =
-        document.getElementById("scoreM5");
+    const scoreEl =
+        document.getElementById(
+            "entryScore"
+        );
 
-    if (scoreM5) {
+    if(scoreEl){
 
-        scoreM5.innerText =
-            `${m5Buy}/${m5Sell}`;
+        scoreEl.innerText =
+            score + "/100";
+
     }
 
-
-    /* =========================
-       SIGNAL TYPE
-    ========================= */
-
-    const signalReason =
-        document.getElementById("signalReason");
-
-    if (signalReason) {
-
-        signalReason.innerText =
-            type !== "NONE"
-                ? type
-                : "Waiting for setup";
-    }
-
-
-    /* =========================
-       SETUP TYPE
-    ========================= */
-
-    const scalpType =
-        document.getElementById("scalpType");
-
-    if (scalpType) {
-
-        scalpType.innerText =
-            data.setupType || type;
-    }
-
-
-    /* =========================
-       STATUS
-    ========================= */
+    /*
+     * Diagnostic baru
+     */
 
     const scalpStatus =
-        document.getElementById("scalpStatus");
+        document.getElementById(
+            "scalpStatus"
+        );
 
-    if (scalpStatus) {
+    if(scalpStatus){
 
         scalpStatus.innerText =
             `${status} ${signal}`;
+
     }
 
+    const scalpType =
+        document.getElementById(
+            "scalpType"
+        );
 
-    /* =========================
-       REASONS
-    ========================= */
+    if(scalpType){
 
-    const reasonList =
-        document.getElementById("reasonList");
+        scalpType.innerText =
+            type;
 
-    if (reasonList) {
-
-        const reasons =
-            Array.isArray(data.reasons)
-                ? data.reasons
-                : [];
-
-        reasonList.innerHTML =
-            reasons.length
-                ? reasons
-                    .map(r => `<div>${r}</div>`)
-                    .join("")
-                : `
-                    <div>M15 BUY: ${m15Buy}</div>
-                    <div>M15 SELL: ${m15Sell}</div>
-                    <div>M5 BUY: ${m5Buy}</div>
-                    <div>M5 SELL: ${m5Sell}</div>
-                `;
     }
 
-
-    /* =========================
-       LIQUIDITY
-    ========================= */
-
-    const liquidity =
-        document.getElementById("scoreLiquidity");
-
-    if (liquidity) {
-
-        const sweep =
-            m5.sweep || {};
-
-        liquidity.innerText =
-            sweep.bullish
-                ? "BUY"
-                : sweep.bearish
-                    ? "SELL"
-                    : "—";
-    }
-
-
-    /* =========================
-       RISK / RR
-    ========================= */
-
-    const risk =
-        document.getElementById("scoreRisk");
-
-    if (risk) {
-
-        risk.innerText =
-            plan.rr
-                ? `1:${plan.rr}`
-                : "—";
-    }
-
-
-    /* =========================
-       TRADE PLAN
-    ========================= */
-
-    const tradeValues = {
-
-        tradeEntry: plan.entry,
-        tradeSL: plan.stopLoss,
-        tradeTP1: plan.tp1,
-        tradeTP2: plan.tp2
-    };
-
-    Object.entries(tradeValues).forEach(
-        ([id, value]) => {
-
-            const el =
-                document.getElementById(id);
-
-            if (
-                el &&
-                Number.isFinite(Number(value))
-            ) {
-
-                el.innerText =
-                    Number(value).toFixed(2);
-            }
-        }
-    );
-
-
-    /* =========================
-       LIVE
-    ========================= */
-
-    const live =
-        document.getElementById("chartLive");
-
-    if (live) {
-        live.innerText = "● LIVE";
-    }
-
-
-    /* =========================
-       SAVE
-    ========================= */
-
-    window.scalp = data;
-
-    console.log(
-        "V10 DASHBOARD UPDATED",
-        {
-            price,
-            status,
-            signal,
-            setup: data.setupType,
-            score,
-            h1: h1.direction,
-            m15: m15.confirmation,
-            m5: m5.trigger,
-            entry: plan.entry,
-            sl: plan.stopLoss,
-            tp1: plan.tp1,
-            tp2: plan.tp2
-        }
-    );
 }
 
     
@@ -5644,254 +5355,6 @@ setInterval(
 updateDiagnostic,
 1000
 );
-
-})();
-</script>
-    <script>
-/* =========================================================
-   FINAL LIVE SCALP BRIDGE
-   /api/scalp → DASHBOARD
-========================================================= */
-
-(function(){
-
-    async function liveScalp(){
-
-        const api =
-            document.getElementById("apiStatus");
-
-        const source =
-            document.getElementById("priceSource");
-
-        const live =
-            document.getElementById("chartLive");
-
-        try {
-
-            if(api){
-                api.innerText = "● CONNECTING";
-                api.className = "api-status";
-            }
-
-            const response = await fetch(
-                "/api/scalp?t=" + Date.now(),
-                {
-                    method: "GET",
-                    cache: "no-store",
-                    headers: {
-                        "Cache-Control": "no-cache"
-                    }
-                }
-            );
-
-            if(!response.ok){
-                throw new Error(
-                    "HTTP " + response.status
-                );
-            }
-
-            const data =
-                await response.json();
-
-            console.log(
-                "XAU SCALP LIVE:",
-                data
-            );
-
-            if(!data.ok){
-                throw new Error(
-                    data.error ||
-                    "SCALP API ERROR"
-                );
-            }
-
-            /* =========================
-               SAVE
-            ========================= */
-
-            window.scalp = data;
-            window.market = data;
-
-            /* =========================
-               PRICE
-            ========================= */
-
-            const price =
-                Number(data.price);
-
-            if(Number.isFinite(price)){
-
-                const p =
-                    price.toFixed(2);
-
-                const livePrice =
-                    document.getElementById(
-                        "livePrice"
-                    );
-
-                const chartPrice =
-                    document.getElementById(
-                        "chartPrice"
-                    );
-
-                const priceInput =
-                    document.getElementById(
-                        "priceInput"
-                    );
-
-                const riskEntry =
-                    document.getElementById(
-                        "riskEntry"
-                    );
-
-                if(livePrice)
-                    livePrice.innerText = p;
-
-                if(chartPrice)
-                    chartPrice.innerText = p;
-
-                if(priceInput)
-                    priceInput.value = p;
-
-                if(riskEntry)
-                    riskEntry.value = p;
-            }
-
-            /* =========================
-               DASHBOARD
-            ========================= */
-
-            if(
-                typeof updateScalpDashboard ===
-                "function"
-            ){
-                updateScalpDashboard(data);
-            }
-
-            /* =========================
-               API STATUS
-            ========================= */
-
-            if(api){
-
-                api.innerText =
-                    "● LIVE SCALP API";
-
-                api.className =
-                    "api-status";
-            }
-
-            if(source){
-
-                source.innerText =
-                    "Twelve Data • M5 • LIVE";
-            }
-
-            if(live){
-
-                live.innerText =
-                    "● LIVE";
-            }
-
-            /* =========================
-               TOP SIGNAL
-            ========================= */
-
-            const topSignal =
-                document.getElementById(
-                    "topSignalStatus"
-                );
-
-            if(topSignal){
-
-                topSignal.innerText =
-                    data.signal || "WAIT";
-
-                topSignal.className =
-                    "status-value " +
-                    (
-                        data.signal === "BUY"
-                            ? "pass"
-                            : data.signal === "SELL"
-                                ? "fail"
-                                : "neutral"
-                    );
-            }
-
-            /* =========================
-               MASTER
-            ========================= */
-
-            const master =
-                document.getElementById(
-                    "masterSignalBadge"
-                );
-
-            if(master){
-
-                master.innerText =
-                    data.signal === "WAIT"
-                        ? "WAIT"
-                        : `${data.status} ${data.signal}`;
-            }
-
-            /* =========================
-               CHART
-            ========================= */
-
-            if(
-                typeof drawChart ===
-                "function"
-            ){
-
-                try{
-                    drawChart();
-                }catch(chartError){
-                    console.warn(
-                        "Chart:",
-                        chartError
-                    );
-                }
-            }
-
-        }catch(error){
-
-            console.error(
-                "FINAL SCALP LIVE ERROR:",
-                error
-            );
-
-            if(api){
-
-                api.innerText =
-                    "● API ERROR";
-
-                api.className =
-                    "api-status api-error";
-            }
-
-            if(source){
-
-                source.innerText =
-                    "SCALP API ERROR";
-            }
-
-            if(live){
-
-                live.innerText =
-                    "● OFFLINE";
-            }
-        }
-    }
-
-    /* FIRST CALL — TERUS */
-    liveScalp();
-
-    /* REFRESH — 15 SECONDS */
-    setInterval(
-        liveScalp,
-        15000
-    );
 
 })();
 </script>
