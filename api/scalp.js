@@ -21,6 +21,7 @@ export default async function handler(req, res) {
 
     const M15_EARLY_GAP = 10;
     const M15_ENTRY_GAP = 15;
+    const M5_TRIGGER_GAP = 5;
 
     // =====================================================
     // FETCH XAUUSD M5
@@ -91,8 +92,9 @@ export default async function handler(req, res) {
 
       const k = 2 / (period + 1);
 
-      let value =
-        avg(values.slice(0, period));
+      let value = avg(
+        values.slice(0, period)
+      );
 
       for (
         let i = period;
@@ -190,7 +192,9 @@ export default async function handler(req, res) {
           e12 !== null &&
           e26 !== null
         ) {
-          lines.push(e12 - e26);
+          lines.push(
+            e12 - e26
+          );
         }
       }
 
@@ -535,7 +539,9 @@ export default async function handler(req, res) {
           ratio >= 0.45,
 
         strength:
-          Math.round(ratio * 100)
+          Math.round(
+            ratio * 100
+          )
       };
     }
 
@@ -543,8 +549,7 @@ export default async function handler(req, res) {
     // DATA
     // =====================================================
 
-    const m5 =
-      candles;
+    const m5 = candles;
 
     const m15 =
       aggregate(
@@ -571,7 +576,8 @@ export default async function handler(req, res) {
       c5.at(-1);
 
     // =====================================================
-    // H1 CONTEXT
+    // H1 CONTEXT ONLY
+    // H1 DOES NOT BLOCK SCALP
     // =====================================================
 
     const h1EMA50 =
@@ -592,13 +598,13 @@ export default async function handler(req, res) {
         h1EMA50 > h1EMA200
       ) {
         h1Direction = "BUY";
-      }
-
-      if (
+      } else if (
         price < h1EMA200 &&
         h1EMA50 < h1EMA200
       ) {
         h1Direction = "SELL";
+      } else {
+        h1Direction = "RANGE";
       }
     }
 
@@ -658,6 +664,7 @@ export default async function handler(req, res) {
     const m15BuyReasons = [];
     const m15SellReasons = [];
 
+    // EMA 20 / 50
     if (
       m15EMA20 !== null &&
       m15EMA50 !== null
@@ -685,6 +692,7 @@ export default async function handler(req, res) {
       }
     }
 
+    // Price / EMA20
     if (
       m15EMA20 !== null
     ) {
@@ -882,33 +890,52 @@ export default async function handler(req, res) {
     // M15 CLASSIFICATION
     // =====================================================
 
+    const m15BuyConfirmed =
+      m15Buy >= M15_ENTRY_SCORE &&
+      m15Buy >=
+        m15Sell +
+          M15_ENTRY_GAP;
+
+    const m15SellConfirmed =
+      m15Sell >= M15_ENTRY_SCORE &&
+      m15Sell >=
+        m15Buy +
+          M15_ENTRY_GAP;
+
+    const m15BuyDeveloping =
+      m15Buy >= M15_EARLY_SCORE &&
+      m15Buy >=
+        m15Sell +
+          M15_EARLY_GAP;
+
+    const m15SellDeveloping =
+      m15Sell >= M15_EARLY_SCORE &&
+      m15Sell >=
+        m15Buy +
+          M15_EARLY_GAP;
+
     let m15Direction =
       "MIXED";
 
-    if (
-      m15Buy >=
-        M15_EARLY_SCORE &&
-      m15Buy >=
-        m15Sell +
-          M15_EARLY_GAP
-    ) {
+    if (m15BuyDeveloping) {
       m15Direction =
         "BUY";
     }
 
-    if (
-      m15Sell >=
-        M15_EARLY_SCORE &&
-      m15Sell >=
-        m15Buy +
-          M15_EARLY_GAP
-    ) {
+    if (m15SellDeveloping) {
       m15Direction =
         "SELL";
     }
 
+    const m15Confirmation =
+      m15BuyConfirmed
+        ? "BUY"
+        : m15SellConfirmed
+          ? "SELL"
+          : "WAIT";
+
     // =====================================================
-    // M15 REVERSAL DETECTION
+    // M15 REVERSAL
     // =====================================================
 
     let m15Reversal =
@@ -993,7 +1020,7 @@ export default async function handler(req, res) {
     const m5BuyReasons = [];
     const m5SellReasons = [];
 
-    // EMA 9/20
+    // EMA 9 / 20
     if (
       m5EMA9 !== null &&
       m5EMA20 !== null
@@ -1021,7 +1048,7 @@ export default async function handler(req, res) {
       }
     }
 
-    // EMA 20/50
+    // EMA 20 / 50
     if (
       m5EMA20 !== null &&
       m5EMA50 !== null
@@ -1220,25 +1247,27 @@ export default async function handler(req, res) {
     // M5 TRIGGER
     // =====================================================
 
+    const m5BuyTriggered =
+      m5Buy >= M5_TRIGGER_SCORE &&
+      m5Buy >=
+        m5Sell +
+          M5_TRIGGER_GAP;
+
+    const m5SellTriggered =
+      m5Sell >= M5_TRIGGER_SCORE &&
+      m5Sell >=
+        m5Buy +
+          M5_TRIGGER_GAP;
+
     let m5Trigger =
       "WAIT";
 
-    if (
-      m5Buy >=
-        M5_TRIGGER_SCORE &&
-      m5Buy >
-        m5Sell + 5
-    ) {
+    if (m5BuyTriggered) {
       m5Trigger =
         "BUY";
     }
 
-    if (
-      m5Sell >=
-        M5_TRIGGER_SCORE &&
-      m5Sell >
-        m5Buy + 5
-    ) {
+    if (m5SellTriggered) {
       m5Trigger =
         "SELL";
     }
@@ -1262,18 +1291,17 @@ export default async function handler(req, res) {
 
     // =====================================================
     // 1. CONFIRMED TREND ENTRY
+    //
+    // M15 CONFIRMATION
+    // +
+    // M5 TRIGGER
+    //
+    // H1 DOES NOT BLOCK
     // =====================================================
 
     if (
-      m15Direction === "BUY" &&
-      m15Buy >=
-        M15_ENTRY_SCORE &&
-      m15Buy >=
-        m15Sell +
-          M15_ENTRY_GAP &&
-      m5Trigger === "BUY" &&
-      m5Buy >=
-        M5_ENTRY_SCORE
+      m15BuyConfirmed &&
+      m5BuyTriggered
     ) {
       status =
         "ENTRY";
@@ -1286,8 +1314,7 @@ export default async function handler(req, res) {
 
       score =
         Math.round(
-          (m15Buy + m5Buy) /
-            2
+          (m15Buy + m5Buy) / 2
         );
 
       reasons.push(
@@ -1295,20 +1322,13 @@ export default async function handler(req, res) {
       );
 
       reasons.push(
-        "M5 confirmed bullish"
+        "M5 bullish trigger"
       );
     }
 
     if (
-      m15Direction === "SELL" &&
-      m15Sell >=
-        M15_ENTRY_SCORE &&
-      m15Sell >=
-        m15Buy +
-          M15_ENTRY_GAP &&
-      m5Trigger === "SELL" &&
-      m5Sell >=
-        M5_ENTRY_SCORE
+      m15SellConfirmed &&
+      m5SellTriggered
     ) {
       status =
         "ENTRY";
@@ -1321,8 +1341,7 @@ export default async function handler(req, res) {
 
       score =
         Math.round(
-          (m15Sell + m5Sell) /
-            2
+          (m15Sell + m5Sell) / 2
         );
 
       reasons.push(
@@ -1330,7 +1349,7 @@ export default async function handler(req, res) {
       );
 
       reasons.push(
-        "M5 confirmed bearish"
+        "M5 bearish trigger"
       );
     }
 
@@ -1341,9 +1360,8 @@ export default async function handler(req, res) {
     if (
       status === "WAIT" &&
       m15Reversal === "BUY" &&
-      m5Trigger === "BUY" &&
-      m5Buy >=
-        M5_ENTRY_SCORE &&
+      m5BuyTriggered &&
+      m5Buy >= M5_ENTRY_SCORE &&
       (
         m5BOS.bullish ||
         m5CHOCH.bullish
@@ -1360,8 +1378,7 @@ export default async function handler(req, res) {
 
       score =
         Math.round(
-          (m15Buy + m5Buy) /
-            2
+          (m15Buy + m5Buy) / 2
         );
 
       reasons.push(
@@ -1369,16 +1386,15 @@ export default async function handler(req, res) {
       );
 
       reasons.push(
-        "M5 structure confirmation"
+        "M5 bullish structure confirmation"
       );
     }
 
     if (
       status === "WAIT" &&
       m15Reversal === "SELL" &&
-      m5Trigger === "SELL" &&
-      m5Sell >=
-        M5_ENTRY_SCORE &&
+      m5SellTriggered &&
+      m5Sell >= M5_ENTRY_SCORE &&
       (
         m5BOS.bearish ||
         m5CHOCH.bearish
@@ -1395,8 +1411,7 @@ export default async function handler(req, res) {
 
       score =
         Math.round(
-          (m15Sell + m5Sell) /
-            2
+          (m15Sell + m5Sell) / 2
         );
 
       reasons.push(
@@ -1404,7 +1419,7 @@ export default async function handler(req, res) {
       );
 
       reasons.push(
-        "M5 structure confirmation"
+        "M5 bearish structure confirmation"
       );
     }
 
@@ -1414,10 +1429,8 @@ export default async function handler(req, res) {
 
     if (
       status === "WAIT" &&
-      m15Direction === "BUY" &&
-      m15Buy >=
-        M15_EARLY_SCORE &&
-      m5Trigger === "BUY"
+      m15BuyDeveloping &&
+      m5BuyTriggered
     ) {
       status =
         "EARLY";
@@ -1430,8 +1443,7 @@ export default async function handler(req, res) {
 
       score =
         Math.round(
-          (m15Buy + m5Buy) /
-            2
+          (m15Buy + m5Buy) / 2
         );
 
       reasons.push(
@@ -1445,10 +1457,8 @@ export default async function handler(req, res) {
 
     if (
       status === "WAIT" &&
-      m15Direction === "SELL" &&
-      m15Sell >=
-        M15_EARLY_SCORE &&
-      m5Trigger === "SELL"
+      m15SellDeveloping &&
+      m5SellTriggered
     ) {
       status =
         "EARLY";
@@ -1461,8 +1471,7 @@ export default async function handler(req, res) {
 
       score =
         Math.round(
-          (m15Sell + m5Sell) /
-            2
+          (m15Sell + m5Sell) / 2
         );
 
       reasons.push(
@@ -1481,7 +1490,7 @@ export default async function handler(req, res) {
     if (
       status === "WAIT" &&
       m15Reversal === "BUY" &&
-      m5Trigger === "BUY"
+      m5BuyTriggered
     ) {
       status =
         "EARLY";
@@ -1494,12 +1503,11 @@ export default async function handler(req, res) {
 
       score =
         Math.round(
-          (m15Buy + m5Buy) /
-            2
+          (m15Buy + m5Buy) / 2
         );
 
       reasons.push(
-        "M15 reversal developing"
+        "M15 bullish reversal developing"
       );
 
       reasons.push(
@@ -1510,7 +1518,7 @@ export default async function handler(req, res) {
     if (
       status === "WAIT" &&
       m15Reversal === "SELL" &&
-      m5Trigger === "SELL"
+      m5SellTriggered
     ) {
       status =
         "EARLY";
@@ -1523,12 +1531,11 @@ export default async function handler(req, res) {
 
       score =
         Math.round(
-          (m15Sell + m5Sell) /
-            2
+          (m15Sell + m5Sell) / 2
         );
 
       reasons.push(
-        "M15 reversal developing"
+        "M15 bearish reversal developing"
       );
 
       reasons.push(
@@ -1538,13 +1545,14 @@ export default async function handler(req, res) {
 
     // =====================================================
     // 5. M5 ONLY
+    //
+    // M15 BELUM CONFIRM
+    // M5 SUDAH TRIGGER
     // =====================================================
 
     if (
       status === "WAIT" &&
-      m5Trigger === "BUY" &&
-      m5Buy >=
-        M5_TRIGGER_SCORE
+      m5BuyTriggered
     ) {
       status =
         "M5_ONLY";
@@ -1569,9 +1577,7 @@ export default async function handler(req, res) {
 
     if (
       status === "WAIT" &&
-      m5Trigger === "SELL" &&
-      m5Sell >=
-        M5_TRIGGER_SCORE
+      m5SellTriggered
     ) {
       status =
         "M5_ONLY";
@@ -1596,6 +1602,7 @@ export default async function handler(req, res) {
 
     // =====================================================
     // CONTEXT
+    // H1 IS CONTEXT ONLY
     // =====================================================
 
     let context =
@@ -1631,6 +1638,28 @@ export default async function handler(req, res) {
     ) {
       context =
         "COUNTER_H1";
+    }
+
+    // =====================================================
+    // EXECUTION STATE
+    // =====================================================
+
+    let execution =
+      "WAIT";
+
+    if (status === "ENTRY") {
+      execution =
+        "READY";
+    }
+
+    if (status === "EARLY") {
+      execution =
+        "DEVELOPING";
+    }
+
+    if (status === "M5_ONLY") {
+      execution =
+        "SCALP_EARLY";
     }
 
     // =====================================================
@@ -1742,6 +1771,8 @@ export default async function handler(req, res) {
 
       signalType,
 
+      execution,
+
       score,
 
       context,
@@ -1752,12 +1783,21 @@ export default async function handler(req, res) {
         direction:
           h1Direction,
 
-        context
+        context,
+
+        ema50:
+          h1EMA50,
+
+        ema200:
+          h1EMA200
       },
 
       m15: {
         direction:
           m15Direction,
+
+        confirmation:
+          m15Confirmation,
 
         reversal:
           m15Reversal,
@@ -1767,6 +1807,18 @@ export default async function handler(req, res) {
 
         sellScore:
           m15Sell,
+
+        buyConfirmed:
+          m15BuyConfirmed,
+
+        sellConfirmed:
+          m15SellConfirmed,
+
+        buyDeveloping:
+          m15BuyDeveloping,
+
+        sellDeveloping:
+          m15SellDeveloping,
 
         ema20:
           m15EMA20,
@@ -1809,11 +1861,20 @@ export default async function handler(req, res) {
         trigger:
           m5Trigger,
 
+        confirmation:
+          m5Trigger,
+
         buyScore:
           m5Buy,
 
         sellScore:
           m5Sell,
+
+        buyTriggered:
+          m5BuyTriggered,
+
+        sellTriggered:
+          m5SellTriggered,
 
         ema9:
           m5EMA9,
@@ -1869,7 +1930,7 @@ export default async function handler(req, res) {
 
   } catch (error) {
     console.error(
-      "SCALP V3 ERROR:",
+      "SCALP V4 ERROR:",
       error
     );
 
