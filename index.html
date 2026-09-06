@@ -2187,90 +2187,25 @@ async function enableNotifications(){
 
 }
 
-function sendBrowserNotification(title, body){
+function sendBrowserNotification(title,body){
 
-    if(!("Notification" in window)) return;
+if(!("Notification" in window))return;
 
-    if(Notification.permission !== "granted") return;
+if(Notification.permission!=="granted")return;
 
-    /*
-     * =========================================
-     * ALERT PROTECTION
-     * Same signal = NO repeat notification
-     * New signal = notification
-     * =========================================
-     */
+try{
 
-    const signalKey =
-        window.scalp?.signal || "WAIT";
+new Notification(
+title,
+{
+body,
+icon:"/icon.png",
+tag:"xau-signal",
+renotify:true
+}
+);
 
-    const statusKey =
-        window.scalp?.status || "WAIT";
-
-    const typeKey =
-        window.scalp?.signalType || "NONE";
-
-    /*
-     * Jangan alert WAIT
-     */
-
-    if(signalKey === "WAIT") return;
-
-    const currentKey =
-        `${statusKey}_${signalKey}_${typeKey}`;
-
-    const lastKey =
-        localStorage.getItem(
-            "xau_last_push_signal"
-        );
-
-    /*
-     * Signal yang sama:
-     * jangan spam setiap 60 saat
-     */
-
-    if(lastKey === currentKey){
-        console.log(
-            "PUSH BLOCKED — duplicate:",
-            currentKey
-        );
-        return;
-    }
-
-    /*
-     * Simpan signal terbaru
-     */
-
-    localStorage.setItem(
-        "xau_last_push_signal",
-        currentKey
-    );
-
-    try{
-
-        new Notification(
-            title,
-            {
-                body: body,
-                icon: "/icon.png",
-                tag: "xau-signal",
-                renotify: true
-            }
-        );
-
-        console.log(
-            "🔔 PUSH SENT:",
-            currentKey
-        );
-
-    }catch(e){
-
-        console.error(
-            "Push notification error:",
-            e
-        );
-
-    }
+}catch(e){}
 
 }
 
@@ -2303,15 +2238,6 @@ async function fetchLiveGold(){
         }
 
         const data = await response.json();
-
-console.log("SCALP RAW RESPONSE:", data);
-alert(JSON.stringify(data));
-
-if(!data.ok){
-    throw new Error(
-        data.error || "Scalp API error"
-    );
-}
 
         if(!data.ok){
             throw new Error(
@@ -2413,265 +2339,25 @@ SCALP DASHBOARD
 
 function updateScalpDashboard(data){
 
-    if(!data) return;
+    const status =
+        data.status || "WAIT";
 
-    const status = data.status || "WAIT";
-    const signal = data.signal || "WAIT";
-    const type = data.signalType || "NONE";
-    const score = Number(data.score || 0);
+    const signal =
+        data.signal || "WAIT";
 
-    const h1 = data.h1 || {};
-    const m15 = data.m15 || {};
-    const m5 = data.m5 || {};
+    const type =
+        data.signalType || "NONE";
 
-    /* ===============================
-       MASTER SIGNAL
-    =============================== */
-
-    const master = document.getElementById("masterSignalBadge");
-
-    if(master){
-
-        if(signal === "WAIT"){
-            master.innerText = "WAIT";
-        }else{
-            master.innerText = `${status} ${signal}`;
-        }
-
-        master.dataset.signal = signal;
-        master.dataset.status = status;
-    }
-
-
-    /* ===============================
-       CONFIDENCE
-    =============================== */
-
-    const confidence = document.getElementById("confidenceVal");
-
-    if(confidence){
-        confidence.innerText = `${score}%`;
-    }
-
-
-    /* ===============================
-       H1
-    =============================== */
-
-    const stageH1 = document.getElementById("stageH1");
-
-    if(stageH1){
-
-        stageH1.innerText =
-            h1.direction || "WAIT";
-
-    }
-
-
-    /* ===============================
-       M15
-    =============================== */
-
-    const stageM15 = document.getElementById("stageM15");
-
-    if(stageM15){
-
-        stageM15.innerText =
-            m15.confirmation ||
-            m15.direction ||
-            "WAIT";
-
-    }
-
-
-    /* ===============================
-       M5
-    =============================== */
-
-    const stageM5 = document.getElementById("stageM5");
-
-    if(stageM5){
-
-        stageM5.innerText =
-            m5.trigger ||
-            m5.confirmation ||
-            "WAIT";
-
-    }
-
-
-    /* ===============================
-       SIGNAL TYPE
-    =============================== */
-
-    const signalReason =
-        document.getElementById("signalReason");
-
-    if(signalReason){
-
-        signalReason.innerText =
-            type === "NONE"
-                ? "Waiting for setup"
-                : type;
-
-    }
-
-
-    /* ===============================
-       REASONS
-    =============================== */
-
-    const reasonList =
-        document.getElementById("reasonList");
-
-    if(reasonList){
-
-        const reasons =
-            Array.isArray(data.reasons)
-                ? data.reasons
-                : [];
-
-        reasonList.innerHTML =
-            reasons.length
-                ? reasons.map(r =>
-                    `<div>${r}</div>`
-                  ).join("")
-                : "<div>Waiting for confirmation</div>";
-
-    }
-
-
-    /* ===============================
-       QUALITY
-    =============================== */
-
-    const quality =
-        document.getElementById("qualityNumber");
-
-    if(quality){
-
-        quality.innerText =
-            score;
-
-    }
-
-
-    /* ===============================
-       SCORE BREAKDOWN
-    =============================== */
-
-    const scoreH1 =
-        document.getElementById("scoreH1");
-
-    if(scoreH1){
-
-        scoreH1.innerText =
-            h1.direction === signal
-                ? "✓"
-                : "—";
-
-    }
-
-
-    const scoreM15 =
-        document.getElementById("scoreM15");
-
-    if(scoreM15){
-
-        scoreM15.innerText =
-            m15.confirmation === signal
-                ? "✓"
-                : "—";
-
-    }
-
-
-    const scoreM5 =
-        document.getElementById("scoreM5");
-
-    if(scoreM5){
-
-        scoreM5.innerText =
-            m5.trigger === signal
-                ? "✓"
-                : "—";
-
-    }
-
-
-    /* ===============================
-       LIQUIDITY / RISK
-    =============================== */
-
-    const scoreLiquidity =
-        document.getElementById("scoreLiquidity");
-
-    if(scoreLiquidity){
-
-        scoreLiquidity.innerText = "—";
-
-    }
-
-
-    const scoreRisk =
-        document.getElementById("scoreRisk");
-
-    if(scoreRisk){
-
-        scoreRisk.innerText = "—";
-
-    }
-
-
-    /* ===============================
-       SAVE
-    =============================== */
-
-    window.scalp = data;
+    const score =
+        Number(data.score || 0);
 
     console.log(
-        "DASHBOARD SYNC:",
-        status,
-        signal,
-        type,
-        score
+        `SCALP: ${status} ${signal} ${type} ${score}`
     );
 
-    /* =====================================================
-       WEB PUSH ALERT
-       ENTRY / EARLY / M5_ONLY
-    ===================================================== */
-
-    if(
-        data.ok &&
-        signal !== "WAIT" &&
-        (
-            status === "ENTRY" ||
-            status === "EARLY" ||
-            status === "M5_ONLY"
-        )
-    ){
-
-        const title =
-            signal === "BUY"
-                ? "🟢 XAU/USD BUY"
-                : "🔴 XAU/USD SELL";
-
-        const body =
-            `${status} • ${type}\n` +
-            `Score: ${score}/100\n` +
-            `Price: ${Number(data.price).toFixed(2)}`;
-
-        sendBrowserNotification(
-            title,
-            body
-        );
-    }
-}
-    
-    /* =====================================================
-       MASTER SIGNAL
-    ===================================================== */
+    /*
+     * Cari element Master Signal
+     */
 
     const master =
         document.getElementById(
@@ -2680,7 +2366,8 @@ function updateScalpDashboard(data){
 
     if(master){
 
-        let text = "WAIT";
+        let text =
+            "WAIT";
 
         if(
             status !== "WAIT" &&
@@ -2694,11 +2381,12 @@ function updateScalpDashboard(data){
 
         master.innerText =
             text;
+
     }
 
-    /* =====================================================
-       SCORE
-    ===================================================== */
+    /*
+     * Score
+     */
 
     const scoreEl =
         document.getElementById(
@@ -2712,9 +2400,9 @@ function updateScalpDashboard(data){
 
     }
 
-    /* =====================================================
-       DIAGNOSTIC
-    ===================================================== */
+    /*
+     * Diagnostic baru
+     */
 
     const scalpStatus =
         document.getElementById(
