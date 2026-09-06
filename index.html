@@ -2187,25 +2187,90 @@ async function enableNotifications(){
 
 }
 
-function sendBrowserNotification(title,body){
+function sendBrowserNotification(title, body){
 
-if(!("Notification" in window))return;
+    if(!("Notification" in window)) return;
 
-if(Notification.permission!=="granted")return;
+    if(Notification.permission !== "granted") return;
 
-try{
+    /*
+     * =========================================
+     * ALERT PROTECTION
+     * Same signal = NO repeat notification
+     * New signal = notification
+     * =========================================
+     */
 
-new Notification(
-title,
-{
-body,
-icon:"/icon.png",
-tag:"xau-signal",
-renotify:true
-}
-);
+    const signalKey =
+        window.scalp?.signal || "WAIT";
 
-}catch(e){}
+    const statusKey =
+        window.scalp?.status || "WAIT";
+
+    const typeKey =
+        window.scalp?.signalType || "NONE";
+
+    /*
+     * Jangan alert WAIT
+     */
+
+    if(signalKey === "WAIT") return;
+
+    const currentKey =
+        `${statusKey}_${signalKey}_${typeKey}`;
+
+    const lastKey =
+        localStorage.getItem(
+            "xau_last_push_signal"
+        );
+
+    /*
+     * Signal yang sama:
+     * jangan spam setiap 60 saat
+     */
+
+    if(lastKey === currentKey){
+        console.log(
+            "PUSH BLOCKED — duplicate:",
+            currentKey
+        );
+        return;
+    }
+
+    /*
+     * Simpan signal terbaru
+     */
+
+    localStorage.setItem(
+        "xau_last_push_signal",
+        currentKey
+    );
+
+    try{
+
+        new Notification(
+            title,
+            {
+                body: body,
+                icon: "/icon.png",
+                tag: "xau-signal",
+                renotify: true
+            }
+        );
+
+        console.log(
+            "🔔 PUSH SENT:",
+            currentKey
+        );
+
+    }catch(e){
+
+        console.error(
+            "Push notification error:",
+            e
+        );
+
+    }
 
 }
 
@@ -2216,119 +2281,16 @@ LIVE API
 
 async function fetchLiveGold(){
 
-const api=document.getElementById("apiStatus");
-const source=document.getElementById("priceSource");
-
-try{
-
-api.innerText="● API CONNECTING";
-api.className="api-status";
-
-const response=
-await fetch(
-"/api/xau?ts="+Date.now(),
-{
-cache:"no-store"
-}
-);
-
-if(!response.ok){
-throw new Error("HTTP "+response.status);
-}
-
-const data=await response.json();
-
-if(!data.values?.length){
-throw new Error("Tiada candle");
-}
-
-const raw=data.values;
-
-candles=
-raw
-.map(x=>({
-
-time:x.datetime||x.time,
-open:num(x.open),
-high:num(x.high),
-low:num(x.low),
-close:num(x.close),
-volume:num(x.volume)||0
-
-}))
-.filter(x=>
-isFinite(x.open)&&
-isFinite(x.high)&&
-isFinite(x.low)&&
-isFinite(x.close)
-)
-.sort(
-(a,b)=>
-new Date(a.time)-new Date(b.time)
-);
-
-if(!candles.length){
-throw new Error("Candle invalid");
-}
-
-const latest=
-candles[candles.length-1];
-
-previousPrice=currentPrice;
-currentPrice=latest.close;
-
-document.getElementById("livePrice").innerText=
-currentPrice.toFixed(2);
-
-document.getElementById("priceInput").value=
-currentPrice.toFixed(2);
-
-document.getElementById("riskEntry").value=
-currentPrice.toFixed(2);
-
-document.getElementById("chartPrice").innerText=
-currentPrice.toFixed(2);
-
-source.innerText=
-"Twelve Data • Live 5M Candle • "+
-formatUpdateTime();
-
-api.innerText="● LIVE API";
-api.className="api-status";
-
-document.getElementById("chartLive").innerText="● LIVE";
-
-drawChart();
-await runScalpEngine();
-
-}catch(e){
-
-console.error(e);
-
-api.innerText="● API ERROR";
-api.className="api-status api-error";
-
-source.innerText=
-"API gagal — cuba lagi dalam 30 saat";
-
-document.getElementById("chartLive").innerText=
-"● OFFLINE";
-
-}
-
-}
-
-    
-/* =========================================================
-SCALP ENGINE V3
-========================================================= */
-
-async function runScalpEngine(){
+    const api = document.getElementById("apiStatus");
+    const source = document.getElementById("priceSource");
 
     try{
 
+        api.innerText = "● SCALP CONNECTING";
+        api.className = "api-status";
+
         const response = await fetch(
-            "/api/scalp?ts=" + Date.now(),
+            "/api/scalp",
             {
                 cache: "no-store"
             }
@@ -2336,34 +2298,79 @@ async function runScalpEngine(){
 
         if(!response.ok){
             throw new Error(
-                "SCALP HTTP " + response.status
+                "HTTP " + response.status
             );
         }
 
-        const data =
-            await response.json();
+        const data = await response.json();
 
         if(!data.ok){
             throw new Error(
-                data.error ||
-                "Scalp engine error"
+                data.error || "Scalp API error"
             );
         }
 
-        console.log(
-            "SCALP V3:",
-            data
-        );
-
         /*
-         * Simpan untuk diagnostic/dashboard
+         * SCALP API sekarang menjadi
+         * single source untuk live engine.
          */
 
         window.scalp = data;
 
         /*
-         * Kalau dashboard lama masih perlukan
-         * window.market, kita boleh sync kemudian.
+         * Price
+         */
+
+        if(
+            Number.isFinite(Number(data.price))
+        ){
+
+            previousPrice = currentPrice;
+            currentPrice = Number(data.price);
+
+            document.getElementById("livePrice").innerText =
+                currentPrice.toFixed(2);
+
+            document.getElementById("priceInput").value =
+                currentPrice.toFixed(2);
+
+            document.getElementById("riskEntry").value =
+                currentPrice.toFixed(2);
+
+            document.getElementById("chartPrice").innerText =
+                currentPrice.toFixed(2);
+        }
+
+        /*
+         * API status
+         */
+
+        source.innerText =
+            "Twelve Data • M5 • " +
+            formatUpdateTime();
+
+        api.innerText = "● LIVE SCALP API";
+        api.className = "api-status";
+
+        document.getElementById("chartLive").innerText =
+            "● LIVE";
+
+        /*
+         * Update chart
+         *
+         * Kalau candles lama masih wujud,
+         * chart akan terus menggunakan data tersebut.
+         */
+
+        if(
+            Array.isArray(candles) &&
+            candles.length
+        ){
+            drawChart();
+        }
+
+        /*
+         * Update dashboard
          */
 
         updateScalpDashboard(data);
@@ -2371,10 +2378,21 @@ async function runScalpEngine(){
     }catch(e){
 
         console.error(
-            "Scalp Engine:",
+            "Live Scalp:",
             e
         );
 
+        api.innerText =
+            "● API ERROR";
+
+        api.className =
+            "api-status api-error";
+
+        source.innerText =
+            "Scalp API gagal — retry dalam 60 saat";
+
+        document.getElementById("chartLive").innerText =
+            "● OFFLINE";
     }
 
 }
@@ -2402,9 +2420,40 @@ function updateScalpDashboard(data){
         `SCALP: ${status} ${signal} ${type} ${score}`
     );
 
-    /*
-     * Cari element Master Signal
-     */
+    /* =====================================================
+       WEB PUSH ALERT
+       ENTRY / EARLY / M5_ONLY
+    ===================================================== */
+
+    if(
+        data.ok &&
+        signal !== "WAIT" &&
+        (
+            status === "ENTRY" ||
+            status === "EARLY" ||
+            status === "M5_ONLY"
+        )
+    ){
+
+        const title =
+            signal === "BUY"
+                ? "🟢 XAU/USD BUY"
+                : "🔴 XAU/USD SELL";
+
+        const body =
+            `${status} • ${type}\n` +
+            `Score: ${score}/100\n` +
+            `Price: ${Number(data.price).toFixed(2)}`;
+
+        sendBrowserNotification(
+            title,
+            body
+        );
+    }
+
+    /* =====================================================
+       MASTER SIGNAL
+    ===================================================== */
 
     const master =
         document.getElementById(
@@ -2413,8 +2462,7 @@ function updateScalpDashboard(data){
 
     if(master){
 
-        let text =
-            "WAIT";
+        let text = "WAIT";
 
         if(
             status !== "WAIT" &&
@@ -2428,12 +2476,11 @@ function updateScalpDashboard(data){
 
         master.innerText =
             text;
-
     }
 
-    /*
-     * Score
-     */
+    /* =====================================================
+       SCORE
+    ===================================================== */
 
     const scoreEl =
         document.getElementById(
@@ -2447,9 +2494,9 @@ function updateScalpDashboard(data){
 
     }
 
-    /*
-     * Diagnostic baru
-     */
+    /* =====================================================
+       DIAGNOSTIC
+    ===================================================== */
 
     const scalpStatus =
         document.getElementById(
@@ -5049,7 +5096,7 @@ INTERVALS
 
 setInterval(
 fetchLiveGold,
-30000
+60000
 );
 
 setInterval(
