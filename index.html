@@ -5459,48 +5459,5 @@ updateDiagnostic,
 
 })();
 </script>
-    <!-- =========================================================
-TEST NOTIFICATION
-========================================================= -->
-
-<button
-    id="testNotificationBtn"
-    onclick="testScalpNotification()"
-    style="
-        position:fixed;
-        bottom:20px;
-        right:20px;
-        z-index:99999;
-        padding:12px 16px;
-        border:0;
-        border-radius:12px;
-        font-weight:800;
-        background:#222;
-        color:#fff;
-        box-shadow:0 5px 20px rgba(0,0,0,.3);
-    "
->
-    🔔 TEST NOTIFICATION
-</button>
-
-<script>
-
-async function testScalpNotification(){
-
-    await showSignalAlert(
-        "SELL",
-        55,
-        4428.93,
-        "EARLY",
-        "TREND"
-    );
-
-    console.log(
-        "✅ Test notification triggered"
-    );
-
-}
-
-</script>
 </body>
 </html>
