@@ -16,10 +16,13 @@ export default async function handler(req, res) {
     const M15_CONFIRM_SCORE = 55;
     const M15_DEVELOPING_SCORE = 40;
 
-    const M5_TRIGGER_SCORE = 55;
+    // M5 lebih sensitif untuk SCALPING
+    const M5_TRIGGER_SCORE = 40;
 
     const M15_CONFIRM_GAP = 15;
     const M15_DEVELOPING_GAP = 10;
+
+    // M5 mesti lead sekurang-kurangnya 5 point
     const M5_TRIGGER_GAP = 5;
 
     // =====================================================
@@ -1074,7 +1077,7 @@ export default async function handler(req, res) {
 
     // =====================================================
     // 1. M15 CONFIRMED + M5 TRIGGER
-    // TREND / CONTINUATION
+    // TREND
     // =====================================================
 
     if (
@@ -1125,9 +1128,6 @@ export default async function handler(req, res) {
 
     // =====================================================
     // 2. REVERSAL
-    // MUST HAVE:
-    // M15 SWEEP + BOS/CHOCH
-    // M5 SAME DIRECTION
     // =====================================================
 
     if (
@@ -1302,6 +1302,8 @@ export default async function handler(req, res) {
     // =====================================================
     // 5. M5 ONLY
     // SCALPING OPPORTUNITY
+    //
+    // M15 TAK PERLU CONFIRM
     // =====================================================
 
     if (
@@ -1388,8 +1390,12 @@ export default async function handler(req, res) {
     let tp2 = null;
     let rr = null;
 
+    // Trade plan untuk ENTRY dan M5_ONLY
     if (
-      status === "ENTRY" &&
+      (
+        status === "ENTRY" ||
+        status === "M5_ONLY"
+      ) &&
       m5ATR !== null
     ) {
       entry = price;
@@ -1494,7 +1500,8 @@ export default async function handler(req, res) {
       },
 
       m15: {
-        direction: m15Direction,
+        direction:
+          m15Direction,
 
         confirmation:
           m15Confirmation,
@@ -1630,7 +1637,7 @@ export default async function handler(req, res) {
 
   } catch (error) {
     console.error(
-      "SCALP V4 ERROR:",
+      "SCALP V5 ERROR:",
       error
     );
 
@@ -1638,7 +1645,7 @@ export default async function handler(req, res) {
       ok: false,
       error:
         error.message ||
-        "SCALP V4 ENGINE ERROR"
+        "SCALP V5 ENGINE ERROR"
     });
   }
 }
