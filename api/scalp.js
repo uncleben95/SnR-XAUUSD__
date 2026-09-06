@@ -5,32 +5,27 @@ export default async function handler(req, res) {
     if (!API_KEY) {
       return res.status(500).json({
         ok: false,
-        version: "V5-M5-ONLY",
         error: "TWELVE_DATA_API_KEY belum diset"
       });
     }
 
     // =====================================================
-    // VERSION
-    // =====================================================
-
-    const VERSION = "V5-M5-ONLY";
-
-    // =====================================================
-    // CONFIG
+    // SCALP V6 CONFIG
     // =====================================================
 
     const M15_CONFIRM_SCORE = 55;
+    const M15_CONFIRM_GAP = 15;
+
     const M15_DEVELOPING_SCORE = 40;
+    const M15_DEVELOPING_GAP = 10;
 
     const M5_TRIGGER_SCORE = 55;
-
-    const M15_CONFIRM_GAP = 15;
-    const M15_DEVELOPING_GAP = 10;
     const M5_TRIGGER_GAP = 5;
 
-    // M5 ONLY minimum quality
-    const M5_ONLY_MIN_SCORE = 55;
+    // M5 ONLY:
+    // lower threshold because this is specifically for scalping
+    const M5_ONLY_SCORE = 50;
+    const M5_ONLY_GAP = 10;
 
     // =====================================================
     // FETCH XAU/USD M5
@@ -49,7 +44,6 @@ export default async function handler(req, res) {
     if (!response.ok || data.status === "error") {
       return res.status(502).json({
         ok: false,
-        version: VERSION,
         error: data.message || "Twelve Data API error"
       });
     }
@@ -74,7 +68,6 @@ export default async function handler(req, res) {
     if (candles.length < 250) {
       return res.status(422).json({
         ok: false,
-        version: VERSION,
         error: "Candle tidak mencukupi",
         count: candles.length
       });
@@ -98,19 +91,12 @@ export default async function handler(req, res) {
     const clamp = (n, min, max) =>
       Math.max(min, Math.min(max, n));
 
-    // =====================================================
-    // EMA
-    // =====================================================
-
     function ema(values, period) {
-      if (values.length < period) {
-        return null;
-      }
+      if (values.length < period) return null;
 
       const k = 2 / (period + 1);
 
-      let value =
-        avg(values.slice(0, period));
+      let value = avg(values.slice(0, period));
 
       for (let i = period; i < values.length; i++) {
         value =
@@ -120,10 +106,6 @@ export default async function handler(req, res) {
 
       return value;
     }
-
-    // =====================================================
-    // RSI
-    // =====================================================
 
     function rsi(values, period = 14) {
       if (values.length < period + 1) {
@@ -148,9 +130,7 @@ export default async function handler(req, res) {
         }
       }
 
-      if (loss === 0) {
-        return 100;
-      }
+      if (loss === 0) return 100;
 
       const rs =
         (gain / period) /
@@ -158,10 +138,6 @@ export default async function handler(req, res) {
 
       return 100 - 100 / (1 + rs);
     }
-
-    // =====================================================
-    // ATR
-    // =====================================================
 
     function atr(data, period = 14) {
       if (data.length < period + 1) {
@@ -184,14 +160,8 @@ export default async function handler(req, res) {
         );
       }
 
-      return avg(
-        trs.slice(-period)
-      );
+      return avg(trs.slice(-period));
     }
-
-    // =====================================================
-    // MACD
-    // =====================================================
 
     function macd(values) {
       if (values.length < 40) {
@@ -205,14 +175,10 @@ export default async function handler(req, res) {
         i <= values.length;
         i++
       ) {
-        const slice =
-          values.slice(0, i);
+        const slice = values.slice(0, i);
 
-        const e12 =
-          ema(slice, 12);
-
-        const e26 =
-          ema(slice, 26);
+        const e12 = ema(slice, 12);
+        const e26 = ema(slice, 26);
 
         if (
           e12 !== null &&
@@ -222,11 +188,8 @@ export default async function handler(req, res) {
         }
       }
 
-      const line =
-        lines.at(-1);
-
-      const signal =
-        ema(lines, 9);
+      const line = lines.at(-1);
+      const signal = ema(lines, 9);
 
       if (
         line === undefined ||
@@ -249,16 +212,14 @@ export default async function handler(req, res) {
 
     function aggregate(data, minutes) {
       const buckets = {};
-      const size =
-        minutes * 60 * 1000;
+      const size = minutes * 60 * 1000;
 
       for (const c of data) {
         const timestamp =
           new Date(c.time).getTime();
 
         const key =
-          Math.floor(timestamp / size) *
-          size;
+          Math.floor(timestamp / size) * size;
 
         if (!buckets[key]) {
           buckets[key] = {
@@ -283,11 +244,9 @@ export default async function handler(req, res) {
               c.low
             );
 
-          buckets[key].close =
-            c.close;
+          buckets[key].close = c.close;
 
-          buckets[key].volume +=
-            c.volume;
+          buckets[key].volume += c.volume;
         }
       }
 
@@ -303,10 +262,7 @@ export default async function handler(req, res) {
     // STRUCTURE
     // =====================================================
 
-    function structure(
-      data,
-      lookback = 20
-    ) {
+    function structure(data, lookback = 20) {
       if (
         data.length <
         lookback * 2
@@ -350,8 +306,7 @@ export default async function handler(req, res) {
           previous.map(c => c.low)
         );
 
-      const last =
-        data.at(-1);
+      const last = data.at(-1);
 
       return {
         bullish:
@@ -371,10 +326,7 @@ export default async function handler(req, res) {
     // BOS
     // =====================================================
 
-    function detectBOS(
-      data,
-      lookback = 10
-    ) {
+    function detectBOS(data, lookback = 10) {
       if (
         data.length <
         lookback + 2
@@ -385,8 +337,7 @@ export default async function handler(req, res) {
         };
       }
 
-      const last =
-        data.at(-1);
+      const last = data.at(-1);
 
       const previous =
         data.slice(
@@ -417,10 +368,7 @@ export default async function handler(req, res) {
     // CHOCH
     // =====================================================
 
-    function detectCHOCH(
-      data,
-      lookback = 8
-    ) {
+    function detectCHOCH(data, lookback = 8) {
       if (
         data.length <
         lookback * 2 + 2
@@ -460,8 +408,7 @@ export default async function handler(req, res) {
           previous.map(c => c.low)
         );
 
-      const last =
-        data.at(-1);
+      const last = data.at(-1);
 
       return {
         bullish:
@@ -478,10 +425,7 @@ export default async function handler(req, res) {
     // LIQUIDITY SWEEP
     // =====================================================
 
-    function liquiditySweep(
-      data,
-      lookback = 10
-    ) {
+    function liquiditySweep(data, lookback = 10) {
       if (
         data.length <
         lookback + 2
@@ -492,8 +436,7 @@ export default async function handler(req, res) {
         };
       }
 
-      const current =
-        data.at(-1);
+      const current = data.at(-1);
 
       const previous =
         data.slice(
@@ -527,8 +470,7 @@ export default async function handler(req, res) {
     // =====================================================
 
     function candleMomentum(data) {
-      const c =
-        data.at(-1);
+      const c = data.at(-1);
 
       if (!c) {
         return {
@@ -560,9 +502,81 @@ export default async function handler(req, res) {
           ratio >= 0.45,
 
         strength:
-          Math.round(
-            ratio * 100
-          )
+          Math.round(ratio * 100)
+      };
+    }
+
+    // =====================================================
+    // V6 MANIPULATION DETECTOR
+    // =====================================================
+
+    function detectManipulation(data, lookback = 12) {
+      if (data.length < lookback + 2) {
+        return {
+          bullish: false,
+          bearish: false
+        };
+      }
+
+      const current = data.at(-1);
+
+      const previous =
+        data.slice(
+          -lookback - 1,
+          -1
+        );
+
+      const previousHigh =
+        highest(
+          previous.map(c => c.high)
+        );
+
+      const previousLow =
+        lowest(
+          previous.map(c => c.low)
+        );
+
+      const range =
+        current.high - current.low ||
+        0.00001;
+
+      const upperWick =
+        current.high -
+        Math.max(
+          current.open,
+          current.close
+        );
+
+      const lowerWick =
+        Math.min(
+          current.open,
+          current.close
+        ) -
+        current.low;
+
+      const upperRatio =
+        upperWick / range;
+
+      const lowerRatio =
+        lowerWick / range;
+
+      // Buy-side liquidity taken,
+      // price rejected back down
+      const bearish =
+        current.high > previousHigh &&
+        current.close < previousHigh &&
+        upperRatio >= 0.30;
+
+      // Sell-side liquidity taken,
+      // price rejected back up
+      const bullish =
+        current.low < previousLow &&
+        current.close > previousLow &&
+        lowerRatio >= 0.30;
+
+      return {
+        bullish,
+        bearish
       };
     }
 
@@ -570,46 +584,25 @@ export default async function handler(req, res) {
     // DATA
     // =====================================================
 
-    const m5 =
-      candles;
+    const m5 = candles;
+    const m15 = aggregate(candles, 15);
+    const h1 = aggregate(candles, 60);
 
-    const m15 =
-      aggregate(
-        candles,
-        15
-      );
+    const c5 = m5.map(c => c.close);
+    const c15 = m15.map(c => c.close);
+    const c1 = h1.map(c => c.close);
 
-    const h1 =
-      aggregate(
-        candles,
-        60
-      );
-
-    const c5 =
-      m5.map(c => c.close);
-
-    const c15 =
-      m15.map(c => c.close);
-
-    const c1 =
-      h1.map(c => c.close);
-
-    const price =
-      c5.at(-1);
+    const price = c5.at(-1);
 
     // =====================================================
     // H1 CONTEXT
-    // H1 NEVER BLOCKS ENTRY
+    // NEVER BLOCK ENTRY
     // =====================================================
 
-    const h1EMA50 =
-      ema(c1, 50);
+    const h1EMA50 = ema(c1, 50);
+    const h1EMA200 = ema(c1, 200);
 
-    const h1EMA200 =
-      ema(c1, 200);
-
-    let h1Direction =
-      "WAIT";
+    let h1Direction = "WAIT";
 
     if (
       h1EMA50 !== null &&
@@ -619,14 +612,12 @@ export default async function handler(req, res) {
         price > h1EMA200 &&
         h1EMA50 > h1EMA200
       ) {
-        h1Direction =
-          "BUY";
+        h1Direction = "BUY";
       } else if (
         price < h1EMA200 &&
         h1EMA50 < h1EMA200
       ) {
-        h1Direction =
-          "SELL";
+        h1Direction = "SELL";
       }
     }
 
@@ -634,52 +625,32 @@ export default async function handler(req, res) {
     // M15 INDICATORS
     // =====================================================
 
-    const m15EMA20 =
-      ema(c15, 20);
-
-    const m15EMA50 =
-      ema(c15, 50);
-
-    const m15RSI =
-      rsi(c15);
-
-    const m15MACD =
-      macd(c15);
-
-    const m15ATR =
-      atr(m15);
+    const m15EMA20 = ema(c15, 20);
+    const m15EMA50 = ema(c15, 50);
+    const m15RSI = rsi(c15);
+    const m15MACD = macd(c15);
+    const m15ATR = atr(m15);
 
     const m15Structure =
-      structure(
-        m15,
-        20
-      );
+      structure(m15, 20);
 
     const m15BOS =
-      detectBOS(
-        m15,
-        12
-      );
+      detectBOS(m15, 12);
 
     const m15CHOCH =
-      detectCHOCH(
-        m15,
-        10
-      );
+      detectCHOCH(m15, 10);
 
     const m15Sweep =
-      liquiditySweep(
-        m15,
-        12
-      );
+      liquiditySweep(m15, 12);
+
+    const m15Manipulation =
+      detectManipulation(m15, 12);
 
     const m15Momentum =
-      candleMomentum(
-        m15
-      );
+      candleMomentum(m15);
 
     // =====================================================
-    // M15 SCORING
+    // M15 SCORE
     // =====================================================
 
     let m15Buy = 0;
@@ -693,69 +664,38 @@ export default async function handler(req, res) {
       m15EMA20 !== null &&
       m15EMA50 !== null
     ) {
-      if (
-        m15EMA20 >
-        m15EMA50
-      ) {
+      if (m15EMA20 > m15EMA50) {
         m15Buy += 20;
-
-        m15BuyReasons.push(
-          "EMA20 > EMA50"
-        );
+        m15BuyReasons.push("EMA20 > EMA50");
       }
 
-      if (
-        m15EMA20 <
-        m15EMA50
-      ) {
+      if (m15EMA20 < m15EMA50) {
         m15Sell += 20;
-
-        m15SellReasons.push(
-          "EMA20 < EMA50"
-        );
+        m15SellReasons.push("EMA20 < EMA50");
       }
     }
 
-    // PRICE / EMA20
-    if (
-      m15EMA20 !== null
-    ) {
-      if (
-        price >
-        m15EMA20
-      ) {
+    // Price / EMA20
+    if (m15EMA20 !== null) {
+      if (price > m15EMA20) {
         m15Buy += 10;
-
-        m15BuyReasons.push(
-          "Price above EMA20"
-        );
+        m15BuyReasons.push("Price above EMA20");
       }
 
-      if (
-        price <
-        m15EMA20
-      ) {
+      if (price < m15EMA20) {
         m15Sell += 10;
-
-        m15SellReasons.push(
-          "Price below EMA20"
-        );
+        m15SellReasons.push("Price below EMA20");
       }
     }
 
     // RSI
-    if (
-      m15RSI !== null
-    ) {
+    if (m15RSI !== null) {
       if (
         m15RSI >= 50 &&
         m15RSI <= 72
       ) {
         m15Buy += 10;
-
-        m15BuyReasons.push(
-          "RSI bullish"
-        );
+        m15BuyReasons.push("RSI bullish");
       }
 
       if (
@@ -763,221 +703,149 @@ export default async function handler(req, res) {
         m15RSI < 50
       ) {
         m15Sell += 10;
-
-        m15SellReasons.push(
-          "RSI bearish"
-        );
+        m15SellReasons.push("RSI bearish");
       }
     }
 
     // MACD
-    if (
-      m15MACD?.bullish
-    ) {
+    if (m15MACD?.bullish) {
       m15Buy += 15;
-
-      m15BuyReasons.push(
-        "MACD bullish"
-      );
+      m15BuyReasons.push("MACD bullish");
     }
 
-    if (
-      m15MACD?.bearish
-    ) {
+    if (m15MACD?.bearish) {
       m15Sell += 15;
-
-      m15SellReasons.push(
-        "MACD bearish"
-      );
+      m15SellReasons.push("MACD bearish");
     }
 
-    // STRUCTURE
-    if (
-      m15Structure.bullish
-    ) {
+    // Structure
+    if (m15Structure.bullish) {
       m15Buy += 15;
-
-      m15BuyReasons.push(
-        "Bullish structure"
-      );
+      m15BuyReasons.push("Bullish structure");
     }
 
-    if (
-      m15Structure.bearish
-    ) {
+    if (m15Structure.bearish) {
       m15Sell += 15;
-
-      m15SellReasons.push(
-        "Bearish structure"
-      );
+      m15SellReasons.push("Bearish structure");
     }
 
     // BOS
-    if (
-      m15BOS.bullish
-    ) {
+    if (m15BOS.bullish) {
       m15Buy += 15;
-
-      m15BuyReasons.push(
-        "Bullish BOS"
-      );
+      m15BuyReasons.push("Bullish BOS");
     }
 
-    if (
-      m15BOS.bearish
-    ) {
+    if (m15BOS.bearish) {
       m15Sell += 15;
-
-      m15SellReasons.push(
-        "Bearish BOS"
-      );
+      m15SellReasons.push("Bearish BOS");
     }
 
     // CHOCH
-    if (
-      m15CHOCH.bullish
-    ) {
+    if (m15CHOCH.bullish) {
       m15Buy += 10;
-
-      m15BuyReasons.push(
-        "Bullish CHOCH"
-      );
+      m15BuyReasons.push("Bullish CHOCH");
     }
 
-    if (
-      m15CHOCH.bearish
-    ) {
+    if (m15CHOCH.bearish) {
       m15Sell += 10;
-
-      m15SellReasons.push(
-        "Bearish CHOCH"
-      );
+      m15SellReasons.push("Bearish CHOCH");
     }
 
-    // LIQUIDITY
-    if (
-      m15Sweep.bullish
-    ) {
+    // Sweep
+    if (m15Sweep.bullish) {
       m15Buy += 10;
-
       m15BuyReasons.push(
         "Sell-side liquidity sweep"
       );
     }
 
-    if (
-      m15Sweep.bearish
-    ) {
+    if (m15Sweep.bearish) {
       m15Sell += 10;
-
       m15SellReasons.push(
         "Buy-side liquidity sweep"
       );
     }
 
-    // MOMENTUM
-    if (
-      m15Momentum.bullish
-    ) {
-      m15Buy += 5;
-
+    // Manipulation
+    if (m15Manipulation.bullish) {
+      m15Buy += 10;
       m15BuyReasons.push(
-        "Bullish momentum"
+        "Bullish manipulation rejection"
       );
     }
 
-    if (
-      m15Momentum.bearish
-    ) {
-      m15Sell += 5;
-
+    if (m15Manipulation.bearish) {
+      m15Sell += 10;
       m15SellReasons.push(
-        "Bearish momentum"
+        "Bearish manipulation rejection"
       );
     }
 
-    m15Buy =
-      clamp(
-        m15Buy,
-        0,
-        100
-      );
+    // Momentum
+    if (m15Momentum.bullish) {
+      m15Buy += 5;
+      m15BuyReasons.push("Bullish momentum");
+    }
 
-    m15Sell =
-      clamp(
-        m15Sell,
-        0,
-        100
-      );
+    if (m15Momentum.bearish) {
+      m15Sell += 5;
+      m15SellReasons.push("Bearish momentum");
+    }
+
+    m15Buy = clamp(m15Buy, 0, 100);
+    m15Sell = clamp(m15Sell, 0, 100);
 
     // =====================================================
     // M15 CONFIRMATION
     // =====================================================
 
     const m15BuyConfirmed =
-      m15Buy >=
-        M15_CONFIRM_SCORE &&
+      m15Buy >= M15_CONFIRM_SCORE &&
       m15Buy >=
         m15Sell +
         M15_CONFIRM_GAP;
 
     const m15SellConfirmed =
-      m15Sell >=
-        M15_CONFIRM_SCORE &&
+      m15Sell >= M15_CONFIRM_SCORE &&
       m15Sell >=
         m15Buy +
         M15_CONFIRM_GAP;
 
     const m15BuyDeveloping =
-      !m15BuyConfirmed &&
-      m15Buy >=
-        M15_DEVELOPING_SCORE &&
+      m15Buy >= M15_DEVELOPING_SCORE &&
       m15Buy >=
         m15Sell +
         M15_DEVELOPING_GAP;
 
     const m15SellDeveloping =
-      !m15SellConfirmed &&
-      m15Sell >=
-        M15_DEVELOPING_SCORE &&
+      m15Sell >= M15_DEVELOPING_SCORE &&
       m15Sell >=
         m15Buy +
         M15_DEVELOPING_GAP;
 
-    let m15Confirmation =
-      "WAIT";
+    let m15Confirmation = "WAIT";
 
-    if (
-      m15BuyConfirmed
-    ) {
-      m15Confirmation =
-        "BUY";
-    } else if (
-      m15SellConfirmed
-    ) {
-      m15Confirmation =
-        "SELL";
-    } else if (
-      m15BuyDeveloping
-    ) {
-      m15Confirmation =
-        "BUY";
-    } else if (
-      m15SellDeveloping
-    ) {
-      m15Confirmation =
-        "SELL";
+    if (m15BuyConfirmed) {
+      m15Confirmation = "BUY";
+    } else if (m15SellConfirmed) {
+      m15Confirmation = "SELL";
+    } else if (m15BuyDeveloping) {
+      m15Confirmation = "BUY";
+    } else if (m15SellDeveloping) {
+      m15Confirmation = "SELL";
     }
 
     // =====================================================
     // M15 REVERSAL
     // =====================================================
 
-    let m15Reversal =
-      "NONE";
+    let m15Reversal = "NONE";
 
     const m15BullishReversal =
-      m15Sweep.bullish &&
+      (
+        m15Sweep.bullish ||
+        m15Manipulation.bullish
+      ) &&
       (
         m15BOS.bullish ||
         m15CHOCH.bullish
@@ -987,7 +855,10 @@ export default async function handler(req, res) {
       m15RSI >= 45;
 
     const m15BearishReversal =
-      m15Sweep.bearish &&
+      (
+        m15Sweep.bearish ||
+        m15Manipulation.bearish
+      ) &&
       (
         m15BOS.bearish ||
         m15CHOCH.bearish
@@ -996,94 +867,44 @@ export default async function handler(req, res) {
       m15RSI !== null &&
       m15RSI <= 55;
 
-    if (
-      m15BullishReversal
-    ) {
-      m15Reversal =
-        "BUY";
-    } else if (
-      m15BearishReversal
-    ) {
-      m15Reversal =
-        "SELL";
-    }
-
-    // =====================================================
-    // MANIPULATION DETECTION
-    // =====================================================
-
-    let m15Manipulation =
-      "NONE";
-
-    if (
-      m15Sweep.bullish &&
-      !m15BullishReversal
-    ) {
-      m15Manipulation =
-        "BULLISH_SWEEP";
-    }
-
-    if (
-      m15Sweep.bearish &&
-      !m15BearishReversal
-    ) {
-      m15Manipulation =
-        "BEARISH_SWEEP";
+    if (m15BullishReversal) {
+      m15Reversal = "BUY";
+    } else if (m15BearishReversal) {
+      m15Reversal = "SELL";
     }
 
     // =====================================================
     // M5 INDICATORS
     // =====================================================
 
-    const m5EMA9 =
-      ema(c5, 9);
+    const m5EMA9 = ema(c5, 9);
+    const m5EMA20 = ema(c5, 20);
+    const m5EMA50 = ema(c5, 50);
 
-    const m5EMA20 =
-      ema(c5, 20);
-
-    const m5EMA50 =
-      ema(c5, 50);
-
-    const m5RSI =
-      rsi(c5);
-
-    const m5MACD =
-      macd(c5);
-
-    const m5ATR =
-      atr(m5);
+    const m5RSI = rsi(c5);
+    const m5MACD = macd(c5);
+    const m5ATR = atr(m5);
 
     const m5Structure =
-      structure(
-        m5,
-        24
-      );
+      structure(m5, 24);
 
     const m5BOS =
-      detectBOS(
-        m5,
-        10
-      );
+      detectBOS(m5, 10);
 
     const m5CHOCH =
-      detectCHOCH(
-        m5,
-        8
-      );
+      detectCHOCH(m5, 8);
 
     const m5Sweep =
-      liquiditySweep(
-        m5,
-        10
-      );
+      liquiditySweep(m5, 10);
+
+    const m5Manipulation =
+      detectManipulation(m5, 10);
 
     const m5Momentum =
-      candleMomentum(
-        m5
-      );
+      candleMomentum(m5);
 
     // =====================================================
-    // M5 SCORING
+    // M5 SCORE
     // =====================================================
 
     let m5Buy = 0;
@@ -1092,75 +913,46 @@ export default async function handler(req, res) {
     const m5BuyReasons = [];
     const m5SellReasons = [];
 
-    // EMA 9 / 20
+    // EMA9 / EMA20
     if (
       m5EMA9 !== null &&
       m5EMA20 !== null
     ) {
-      if (
-        m5EMA9 >
-        m5EMA20
-      ) {
+      if (m5EMA9 > m5EMA20) {
         m5Buy += 15;
-
-        m5BuyReasons.push(
-          "EMA9 > EMA20"
-        );
+        m5BuyReasons.push("EMA9 > EMA20");
       }
 
-      if (
-        m5EMA9 <
-        m5EMA20
-      ) {
+      if (m5EMA9 < m5EMA20) {
         m5Sell += 15;
-
-        m5SellReasons.push(
-          "EMA9 < EMA20"
-        );
+        m5SellReasons.push("EMA9 < EMA20");
       }
     }
 
-    // EMA 20 / 50
+    // EMA20 / EMA50
     if (
       m5EMA20 !== null &&
       m5EMA50 !== null
     ) {
-      if (
-        m5EMA20 >
-        m5EMA50
-      ) {
+      if (m5EMA20 > m5EMA50) {
         m5Buy += 15;
-
-        m5BuyReasons.push(
-          "EMA20 > EMA50"
-        );
+        m5BuyReasons.push("EMA20 > EMA50");
       }
 
-      if (
-        m5EMA20 <
-        m5EMA50
-      ) {
+      if (m5EMA20 < m5EMA50) {
         m5Sell += 15;
-
-        m5SellReasons.push(
-          "EMA20 < EMA50"
-        );
+        m5SellReasons.push("EMA20 < EMA50");
       }
     }
 
     // RSI
-    if (
-      m5RSI !== null
-    ) {
+    if (m5RSI !== null) {
       if (
         m5RSI >= 50 &&
         m5RSI <= 75
       ) {
         m5Buy += 10;
-
-        m5BuyReasons.push(
-          "RSI bullish"
-        );
+        m5BuyReasons.push("RSI bullish");
       }
 
       if (
@@ -1168,204 +960,147 @@ export default async function handler(req, res) {
         m5RSI < 50
       ) {
         m5Sell += 10;
-
-        m5SellReasons.push(
-          "RSI bearish"
-        );
+        m5SellReasons.push("RSI bearish");
       }
     }
 
     // MACD
-    if (
-      m5MACD?.bullish
-    ) {
+    if (m5MACD?.bullish) {
       m5Buy += 15;
-
-      m5BuyReasons.push(
-        "MACD bullish"
-      );
+      m5BuyReasons.push("MACD bullish");
     }
 
-    if (
-      m5MACD?.bearish
-    ) {
+    if (m5MACD?.bearish) {
       m5Sell += 15;
-
-      m5SellReasons.push(
-        "MACD bearish"
-      );
+      m5SellReasons.push("MACD bearish");
     }
 
-    // STRUCTURE
-    if (
-      m5Structure.bullish
-    ) {
+    // Structure
+    if (m5Structure.bullish) {
       m5Buy += 10;
-
-      m5BuyReasons.push(
-        "Bullish structure"
-      );
+      m5BuyReasons.push("Bullish structure");
     }
 
-    if (
-      m5Structure.bearish
-    ) {
+    if (m5Structure.bearish) {
       m5Sell += 10;
-
-      m5SellReasons.push(
-        "Bearish structure"
-      );
+      m5SellReasons.push("Bearish structure");
     }
 
     // BOS
-    if (
-      m5BOS.bullish
-    ) {
+    if (m5BOS.bullish) {
       m5Buy += 15;
-
-      m5BuyReasons.push(
-        "Bullish BOS"
-      );
+      m5BuyReasons.push("Bullish BOS");
     }
 
-    if (
-      m5BOS.bearish
-    ) {
+    if (m5BOS.bearish) {
       m5Sell += 15;
-
-      m5SellReasons.push(
-        "Bearish BOS"
-      );
+      m5SellReasons.push("Bearish BOS");
     }
 
     // CHOCH
-    if (
-      m5CHOCH.bullish
-    ) {
+    if (m5CHOCH.bullish) {
       m5Buy += 10;
-
-      m5BuyReasons.push(
-        "Bullish CHOCH"
-      );
+      m5BuyReasons.push("Bullish CHOCH");
     }
 
-    if (
-      m5CHOCH.bearish
-    ) {
+    if (m5CHOCH.bearish) {
       m5Sell += 10;
-
-      m5SellReasons.push(
-        "Bearish CHOCH"
-      );
+      m5SellReasons.push("Bearish CHOCH");
     }
 
-    // LIQUIDITY
-    if (
-      m5Sweep.bullish
-    ) {
+    // Liquidity
+    if (m5Sweep.bullish) {
       m5Buy += 10;
-
       m5BuyReasons.push(
         "Sell-side liquidity sweep"
       );
     }
 
-    if (
-      m5Sweep.bearish
-    ) {
+    if (m5Sweep.bearish) {
       m5Sell += 10;
-
       m5SellReasons.push(
         "Buy-side liquidity sweep"
       );
     }
 
-    // MOMENTUM
-    if (
-      m5Momentum.bullish
-    ) {
+    // Manipulation
+    if (m5Manipulation.bullish) {
       m5Buy += 10;
-
       m5BuyReasons.push(
-        "Bullish momentum"
+        "Bullish manipulation rejection"
       );
     }
 
-    if (
-      m5Momentum.bearish
-    ) {
+    if (m5Manipulation.bearish) {
       m5Sell += 10;
-
       m5SellReasons.push(
-        "Bearish momentum"
+        "Bearish manipulation rejection"
       );
     }
 
-    m5Buy =
-      clamp(
-        m5Buy,
-        0,
-        100
-      );
+    // Momentum
+    if (m5Momentum.bullish) {
+      m5Buy += 10;
+      m5BuyReasons.push("Bullish momentum");
+    }
 
-    m5Sell =
-      clamp(
-        m5Sell,
-        0,
-        100
-      );
+    if (m5Momentum.bearish) {
+      m5Sell += 10;
+      m5SellReasons.push("Bearish momentum");
+    }
+
+    m5Buy = clamp(m5Buy, 0, 100);
+    m5Sell = clamp(m5Sell, 0, 100);
 
     // =====================================================
     // M5 TRIGGER
     // =====================================================
 
     const m5BuyTriggered =
-      m5Buy >=
-        M5_TRIGGER_SCORE &&
+      m5Buy >= M5_TRIGGER_SCORE &&
       m5Buy >
         m5Sell +
         M5_TRIGGER_GAP;
 
     const m5SellTriggered =
-      m5Sell >=
-        M5_TRIGGER_SCORE &&
+      m5Sell >= M5_TRIGGER_SCORE &&
       m5Sell >
         m5Buy +
         M5_TRIGGER_GAP;
 
-    let m5Trigger =
-      "WAIT";
+    let m5Trigger = "WAIT";
 
-    if (
-      m5BuyTriggered
-    ) {
-      m5Trigger =
-        "BUY";
-    } else if (
-      m5SellTriggered
-    ) {
-      m5Trigger =
-        "SELL";
+    if (m5BuyTriggered) {
+      m5Trigger = "BUY";
+    } else if (m5SellTriggered) {
+      m5Trigger = "SELL";
     }
+
+    // =====================================================
+    // M5 ONLY SCALPING TRIGGER
+    // =====================================================
+
+    const m5OnlyBuy =
+      m5Buy >= M5_ONLY_SCORE &&
+      m5Buy >=
+        m5Sell +
+        M5_ONLY_GAP;
+
+    const m5OnlySell =
+      m5Sell >= M5_ONLY_SCORE &&
+      m5Sell >=
+        m5Buy +
+        M5_ONLY_GAP;
 
     // =====================================================
     // FINAL SIGNAL
     // =====================================================
 
-    let status =
-      "WAIT";
-
-    let signal =
-      "WAIT";
-
-    let signalType =
-      "NONE";
-
-    let execution =
-      "WAIT";
-
-    let score =
-      0;
+    let status = "WAIT";
+    let signal = "WAIT";
+    let signalType = "NONE";
+    let execution = "WAIT";
+    let score = 0;
 
     const reasons = [];
 
@@ -1378,24 +1113,14 @@ export default async function handler(req, res) {
       m15BuyConfirmed &&
       m5BuyTriggered
     ) {
-      status =
-        "ENTRY";
-
-      signal =
-        "BUY";
-
-      signalType =
-        "TREND";
-
-      execution =
-        "READY";
+      status = "ENTRY";
+      signal = "BUY";
+      signalType = "TREND";
+      execution = "READY";
 
       score =
         Math.round(
-          (
-            m15Buy +
-            m5Buy
-          ) / 2
+          (m15Buy + m5Buy) / 2
         );
 
       reasons.push(
@@ -1411,24 +1136,14 @@ export default async function handler(req, res) {
       m15SellConfirmed &&
       m5SellTriggered
     ) {
-      status =
-        "ENTRY";
-
-      signal =
-        "SELL";
-
-      signalType =
-        "TREND";
-
-      execution =
-        "READY";
+      status = "ENTRY";
+      signal = "SELL";
+      signalType = "TREND";
+      execution = "READY";
 
       score =
         Math.round(
-          (
-            m15Sell +
-            m5Sell
-          ) / 2
+          (m15Sell + m5Sell) / 2
         );
 
       reasons.push(
@@ -1441,32 +1156,26 @@ export default async function handler(req, res) {
     }
 
     // =====================================================
-    // 2. REVERSAL
+    // 2. CONFIRMED REVERSAL
     // =====================================================
 
     if (
       status === "WAIT" &&
       m15Reversal === "BUY" &&
-      m5BuyTriggered
+      m5BuyTriggered &&
+      (
+        m5BOS.bullish ||
+        m5CHOCH.bullish
+      )
     ) {
-      status =
-        "ENTRY";
-
-      signal =
-        "BUY";
-
-      signalType =
-        "REVERSAL";
-
-      execution =
-        "READY";
+      status = "ENTRY";
+      signal = "BUY";
+      signalType = "REVERSAL";
+      execution = "READY";
 
       score =
         Math.round(
-          (
-            m15Buy +
-            m5Buy
-          ) / 2
+          (m15Buy + m5Buy) / 2
         );
 
       reasons.push(
@@ -1474,37 +1183,31 @@ export default async function handler(req, res) {
       );
 
       reasons.push(
-        "Liquidity sweep confirmed"
+        "Liquidity/manipulation rejection confirmed"
       );
 
       reasons.push(
-        "M5 bullish trigger"
+        "M5 bullish structure confirmation"
       );
     }
 
     if (
       status === "WAIT" &&
       m15Reversal === "SELL" &&
-      m5SellTriggered
+      m5SellTriggered &&
+      (
+        m5BOS.bearish ||
+        m5CHOCH.bearish
+      )
     ) {
-      status =
-        "ENTRY";
-
-      signal =
-        "SELL";
-
-      signalType =
-        "REVERSAL";
-
-      execution =
-        "READY";
+      status = "ENTRY";
+      signal = "SELL";
+      signalType = "REVERSAL";
+      execution = "READY";
 
       score =
         Math.round(
-          (
-            m15Sell +
-            m5Sell
-          ) / 2
+          (m15Sell + m5Sell) / 2
         );
 
       reasons.push(
@@ -1512,11 +1215,11 @@ export default async function handler(req, res) {
       );
 
       reasons.push(
-        "Liquidity sweep confirmed"
+        "Liquidity/manipulation rejection confirmed"
       );
 
       reasons.push(
-        "M5 bearish trigger"
+        "M5 bearish structure confirmation"
       );
     }
 
@@ -1529,24 +1232,14 @@ export default async function handler(req, res) {
       m15BuyDeveloping &&
       m5BuyTriggered
     ) {
-      status =
-        "EARLY";
-
-      signal =
-        "BUY";
-
-      signalType =
-        "TREND";
-
-      execution =
-        "MONITOR";
+      status = "EARLY";
+      signal = "BUY";
+      signalType = "TREND";
+      execution = "MONITOR";
 
       score =
         Math.round(
-          (
-            m15Buy +
-            m5Buy
-          ) / 2
+          (m15Buy + m5Buy) / 2
         );
 
       reasons.push(
@@ -1563,24 +1256,14 @@ export default async function handler(req, res) {
       m15SellDeveloping &&
       m5SellTriggered
     ) {
-      status =
-        "EARLY";
-
-      signal =
-        "SELL";
-
-      signalType =
-        "TREND";
-
-      execution =
-        "MONITOR";
+      status = "EARLY";
+      signal = "SELL";
+      signalType = "TREND";
+      execution = "MONITOR";
 
       score =
         Math.round(
-          (
-            m15Sell +
-            m5Sell
-          ) / 2
+          (m15Sell + m5Sell) / 2
         );
 
       reasons.push(
@@ -1601,24 +1284,14 @@ export default async function handler(req, res) {
       m15Reversal === "BUY" &&
       m5BuyTriggered
     ) {
-      status =
-        "EARLY";
-
-      signal =
-        "BUY";
-
-      signalType =
-        "REVERSAL";
-
-      execution =
-        "MONITOR";
+      status = "EARLY";
+      signal = "BUY";
+      signalType = "REVERSAL";
+      execution = "MONITOR";
 
       score =
         Math.round(
-          (
-            m15Buy +
-            m5Buy
-          ) / 2
+          (m15Buy + m5Buy) / 2
         );
 
       reasons.push(
@@ -1635,24 +1308,14 @@ export default async function handler(req, res) {
       m15Reversal === "SELL" &&
       m5SellTriggered
     ) {
-      status =
-        "EARLY";
-
-      signal =
-        "SELL";
-
-      signalType =
-        "REVERSAL";
-
-      execution =
-        "MONITOR";
+      status = "EARLY";
+      signal = "SELL";
+      signalType = "REVERSAL";
+      execution = "MONITOR";
 
       score =
         Math.round(
-          (
-            m15Sell +
-            m5Sell
-          ) / 2
+          (m15Sell + m5Sell) / 2
         );
 
       reasons.push(
@@ -1666,32 +1329,22 @@ export default async function handler(req, res) {
 
     // =====================================================
     // 5. M5 ONLY
-    // IMPORTANT:
-    // M15 DOES NOT NEED CONFIRMATION
+    // PURE SCALPING
     // =====================================================
 
     if (
       status === "WAIT" &&
-      m5BuyTriggered &&
-      m5Buy >= M5_ONLY_MIN_SCORE
+      m5OnlyBuy
     ) {
-      status =
-        "M5_ONLY";
+      status = "M5_ONLY";
+      signal = "BUY";
+      signalType = "M5";
+      execution = "SCALP";
 
-      signal =
-        "BUY";
-
-      signalType =
-        "M5";
-
-      execution =
-        "SCALP";
-
-      score =
-        m5Buy;
+      score = m5Buy;
 
       reasons.push(
-        "M5 bullish opportunity"
+        "M5 bullish scalping opportunity"
       );
 
       reasons.push(
@@ -1701,131 +1354,67 @@ export default async function handler(req, res) {
 
     if (
       status === "WAIT" &&
-      m5SellTriggered &&
-      m5Sell >= M5_ONLY_MIN_SCORE
+      m5OnlySell
     ) {
-      status =
-        "M5_ONLY";
+      status = "M5_ONLY";
+      signal = "SELL";
+      signalType = "M5";
+      execution = "SCALP";
 
-      signal =
-        "SELL";
-
-      signalType =
-        "M5";
-
-      execution =
-        "SCALP";
-
-      score =
-        m5Sell;
+      score = m5Sell;
 
       reasons.push(
-        "M5 bearish opportunity"
+        "M5 bearish scalping opportunity"
       );
 
       reasons.push(
         "M15 not confirmed"
       );
-    }
-
-    // =====================================================
-    // 6. MANIPULATION WARNING
-    // =====================================================
-
-    if (
-      status === "WAIT" &&
-      m15Manipulation !== "NONE"
-    ) {
-      signalType =
-        "MANIPULATION";
-
-      execution =
-        "WAIT";
-
-      if (
-        m15Manipulation ===
-        "BULLISH_SWEEP"
-      ) {
-        reasons.push(
-          "M15 sell-side liquidity sweep"
-        );
-
-        reasons.push(
-          "Waiting for bullish confirmation"
-        );
-      }
-
-      if (
-        m15Manipulation ===
-        "BEARISH_SWEEP"
-      ) {
-        reasons.push(
-          "M15 buy-side liquidity sweep"
-        );
-
-        reasons.push(
-          "Waiting for bearish confirmation"
-        );
-      }
     }
 
     // =====================================================
     // CONTEXT
     // =====================================================
 
-    let context =
-      "NEUTRAL";
+    let context = "NEUTRAL";
 
     if (
       signal === "BUY" &&
       h1Direction === "BUY"
     ) {
-      context =
-        "WITH_H1";
+      context = "WITH_H1";
     }
 
     if (
       signal === "SELL" &&
       h1Direction === "SELL"
     ) {
-      context =
-        "WITH_H1";
+      context = "WITH_H1";
     }
 
     if (
       signal === "BUY" &&
       h1Direction === "SELL"
     ) {
-      context =
-        "COUNTER_H1";
+      context = "COUNTER_H1";
     }
 
     if (
       signal === "SELL" &&
       h1Direction === "BUY"
     ) {
-      context =
-        "COUNTER_H1";
+      context = "COUNTER_H1";
     }
 
     // =====================================================
     // TRADE PLAN
     // =====================================================
 
-    let entry =
-      null;
-
-    let stopLoss =
-      null;
-
-    let tp1 =
-      null;
-
-    let tp2 =
-      null;
-
-    let rr =
-      null;
+    let entry = null;
+    let stopLoss = null;
+    let tp1 = null;
+    let tp2 = null;
+    let rr = null;
 
     if (
       (
@@ -1834,8 +1423,7 @@ export default async function handler(req, res) {
       ) &&
       m5ATR !== null
     ) {
-      entry =
-        price;
+      entry = price;
 
       const recentLow =
         lowest(
@@ -1851,9 +1439,7 @@ export default async function handler(req, res) {
             .map(c => c.high)
         );
 
-      if (
-        signal === "BUY"
-      ) {
+      if (signal === "BUY") {
         const atrStop =
           entry -
           m5ATR * 1.2;
@@ -1866,8 +1452,7 @@ export default async function handler(req, res) {
           );
 
         const risk =
-          entry -
-          stopLoss;
+          entry - stopLoss;
 
         tp1 =
           entry +
@@ -1877,13 +1462,10 @@ export default async function handler(req, res) {
           entry +
           risk * 2.5;
 
-        rr =
-          2.5;
+        rr = 2.5;
       }
 
-      if (
-        signal === "SELL"
-      ) {
+      if (signal === "SELL") {
         const atrStop =
           entry +
           m5ATR * 1.2;
@@ -1896,8 +1478,7 @@ export default async function handler(req, res) {
           );
 
         const risk =
-          stopLoss -
-          entry;
+          stopLoss - entry;
 
         tp1 =
           entry -
@@ -1907,8 +1488,7 @@ export default async function handler(req, res) {
           entry -
           risk * 2.5;
 
-        rr =
-          2.5;
+        rr = 2.5;
       }
     }
 
@@ -1919,7 +1499,7 @@ export default async function handler(req, res) {
     return res.status(200).json({
       ok: true,
 
-      version: VERSION,
+      version: "V6-M5-ONLY-MANIPULATION",
 
       symbol: "XAU/USD",
 
@@ -1942,16 +1522,10 @@ export default async function handler(req, res) {
       reasons,
 
       h1: {
-        direction:
-          h1Direction,
-
+        direction: h1Direction,
         context,
-
-        ema50:
-          h1EMA50,
-
-        ema200:
-          h1EMA200
+        ema50: h1EMA50,
+        ema200: h1EMA200
       },
 
       m15: {
@@ -2068,6 +1642,9 @@ export default async function handler(req, res) {
         sweep:
           m5Sweep,
 
+        manipulation:
+          m5Manipulation,
+
         momentum:
           m5Momentum,
 
@@ -2095,16 +1672,15 @@ export default async function handler(req, res) {
 
   } catch (error) {
     console.error(
-      "SCALP V5 ERROR:",
+      "SCALP V6 ERROR:",
       error
     );
 
     return res.status(500).json({
       ok: false,
-      version: "V5-M5-ONLY",
       error:
         error.message ||
-        "SCALP V5 ENGINE ERROR"
+        "SCALP V6 ENGINE ERROR"
     });
   }
 }
