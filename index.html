@@ -2304,11 +2304,33 @@ async function fetchLiveGold(){
 
         const data = await response.json();
 
-        if(!data.ok){
-            throw new Error(
-                data.error || "Scalp API error"
-            );
-        }
+if(!data.ok){
+    throw new Error(
+        data.error || "Scalp API error"
+    );
+}
+
+/* =========================================
+   LIVE SCALP DASHBOARD
+========================================= */
+
+updateScalpDashboard(data);
+
+/* =========================================
+   LIVE SIGNAL PUSH ALERT
+   ENTRY + M5_ONLY sahaja
+========================================= */
+
+if(
+    data.status === "ENTRY" ||
+    data.status === "M5_ONLY"
+){
+
+    sendBrowserNotification(
+        `🚨 XAU/USD ${data.signal}`,
+        `${data.status} | ${data.signalType} | Score ${data.score}% | Entry ${data.tradePlan?.entry ?? data.price}`
+    );
+}
 
         /*
          * SCALP API sekarang menjadi
