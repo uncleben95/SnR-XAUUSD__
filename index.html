@@ -2187,25 +2187,90 @@ async function enableNotifications(){
 
 }
 
-function sendBrowserNotification(title,body){
+function sendBrowserNotification(title, body){
 
-if(!("Notification" in window))return;
+    if(!("Notification" in window)) return;
 
-if(Notification.permission!=="granted")return;
+    if(Notification.permission !== "granted") return;
 
-try{
+    /*
+     * =========================================
+     * ALERT PROTECTION
+     * Same signal = NO repeat notification
+     * New signal = notification
+     * =========================================
+     */
 
-new Notification(
-title,
-{
-body,
-icon:"/icon.png",
-tag:"xau-signal",
-renotify:true
-}
-);
+    const signalKey =
+        window.scalp?.signal || "WAIT";
 
-}catch(e){}
+    const statusKey =
+        window.scalp?.status || "WAIT";
+
+    const typeKey =
+        window.scalp?.signalType || "NONE";
+
+    /*
+     * Jangan alert WAIT
+     */
+
+    if(signalKey === "WAIT") return;
+
+    const currentKey =
+        `${statusKey}_${signalKey}_${typeKey}`;
+
+    const lastKey =
+        localStorage.getItem(
+            "xau_last_push_signal"
+        );
+
+    /*
+     * Signal yang sama:
+     * jangan spam setiap 60 saat
+     */
+
+    if(lastKey === currentKey){
+        console.log(
+            "PUSH BLOCKED — duplicate:",
+            currentKey
+        );
+        return;
+    }
+
+    /*
+     * Simpan signal terbaru
+     */
+
+    localStorage.setItem(
+        "xau_last_push_signal",
+        currentKey
+    );
+
+    try{
+
+        new Notification(
+            title,
+            {
+                body: body,
+                icon: "/icon.png",
+                tag: "xau-signal",
+                renotify: true
+            }
+        );
+
+        console.log(
+            "🔔 PUSH SENT:",
+            currentKey
+        );
+
+    }catch(e){
+
+        console.error(
+            "Push notification error:",
+            e
+        );
+
+    }
 
 }
 
