@@ -2404,21 +2404,95 @@ SCALP DASHBOARD
 
 function updateScalpDashboard(data){
 
-    const status =
-        data.status || "WAIT";
+    console.log("DASHBOARD UPDATE:", data);
 
-    const signal =
-        data.signal || "WAIT";
+    const status = data.status || "WAIT";
+    const signal = data.signal || "WAIT";
+    const type = data.signalType || "NONE";
+    const score = Number(data.score || 0);
 
-    const type =
-        data.signalType || "NONE";
+    // MASTER SIGNAL
+    const master = document.getElementById("masterSignal");
 
-    const score =
-        Number(data.score || 0);
+    if(master){
+        master.innerText =
+            signal === "WAIT"
+                ? "WAIT"
+                : `${status} ${signal}`;
+    }
 
-    console.log(
-        `SCALP: ${status} ${signal} ${type} ${score}`
-    );
+    // SCORE
+    const scoreEl = document.getElementById("entryScore");
+
+    if(scoreEl){
+        scoreEl.innerText = `${score}/100`;
+    }
+
+    // SCALP STATUS
+    const scalpStatus = document.getElementById("scalpStatus");
+
+    if(scalpStatus){
+        scalpStatus.innerText = `${status} ${signal}`;
+    }
+
+    // SIGNAL TYPE
+    const scalpType = document.getElementById("scalpType");
+
+    if(scalpType){
+        scalpType.innerText = type;
+    }
+
+    // ================================
+    // EXTRA: UPDATE COMMON DASHBOARD IDs
+    // ================================
+
+    const signalEls = [
+        "signal",
+        "masterSignalText",
+        "signalText",
+        "tradeSignal"
+    ];
+
+    signalEls.forEach(id => {
+
+        const el = document.getElementById(id);
+
+        if(el){
+            el.innerText =
+                signal === "WAIT"
+                    ? "WAIT"
+                    : `${status} ${signal}`;
+        }
+
+    });
+
+    // ================================
+    // ENTRY / SL / TP
+    // ================================
+
+    if(data.tradePlan){
+
+        const plan = data.tradePlan;
+
+        const entry = document.getElementById("entryPrice");
+        const sl = document.getElementById("stopLoss");
+        const tp1 = document.getElementById("tp1");
+        const tp2 = document.getElementById("tp2");
+
+        if(entry && plan.entry != null)
+            entry.innerText = Number(plan.entry).toFixed(2);
+
+        if(sl && plan.stopLoss != null)
+            sl.innerText = Number(plan.stopLoss).toFixed(2);
+
+        if(tp1 && plan.tp1 != null)
+            tp1.innerText = Number(plan.tp1).toFixed(2);
+
+        if(tp2 && plan.tp2 != null)
+            tp2.innerText = Number(plan.tp2).toFixed(2);
+    }
+
+}
 
     /* =====================================================
        WEB PUSH ALERT
