@@ -13,8 +13,11 @@ export default async function handler(req, res) {
       symbol: "XAU/USD",
       candles: 2500,
 
-      // 1 Twelve Data request / 60s
+      // M5 candle cache
       cacheTTL: 60 * 1000,
+
+      // Live price cache — 30s to stay comfortably below 8 req/min
+      livePriceTTL: 30 * 1000,
 
       // M15
       M15_CONFIRM_SCORE: 55,
@@ -32,7 +35,7 @@ export default async function handler(req, res) {
     };
 
     // =====================================================
-    // CACHE
+    // CACHE - M5 CANDLES
     // =====================================================
 
     globalThis.__XAU_SCALP_CACHE__ ??= {
@@ -108,6 +111,141 @@ export default async function handler(req, res) {
         cache.fetchedAt = now;
       }
     }
+
+    // =====================================================
+    // LIVE PRICE CACHE
+    // =====================================================
+
+    globalThis.__XAU_LIVE_PRICE_CACHE__ ??= {
+      price: null,
+      fetchedAt: 0
+    };
+
+    const livePriceCache =
+      globalThis.__XAU_LIVE_PRICE_CACHE__;
+
+    const candlePrice =
+      candles.at(-1)?.close ?? null;
+
+    let livePrice = candlePrice;
+    let livePriceSource = "M5_CANDLE";
+    let livePriceError = null;
+
+    if (
+      livePriceCache.price !== null &&
+      Date.now() - livePriceCache.fetchedAt <
+        CFG.livePriceTTL
+    ) {
+
+      livePrice =
+        livePriceCache.price;
+
+      livePriceSource =
+        "TWELVE_DATA_PRICE_CACHE";
+
+    } else {
+
+      try {
+
+        const priceUrl =
+          `https://api.twelvedata.com/price` +
+          `?symbol=${encodeURIComponent(CFG.symbol)}` +
+          `&apikey=${API_KEY}`;
+
+        const priceResponse =
+          await fetch(priceUrl);
+
+        const priceData =
+          await priceResponse.json();
+
+        const parsedPrice =
+          Number(priceData?.price);
+
+        if (
+          priceResponse.ok &&
+          priceData?.status !== "error" &&
+          Number.isFinite(parsedPrice)
+        ) {
+
+          livePrice =
+            parsedPrice;
+
+          livePriceSource =
+            "TWELVE_DATA_PRICE";
+
+          livePriceCache.price =
+            parsedPrice;
+
+          livePriceCache.fetchedAt =
+            Date.now();
+
+        } else {
+
+          livePriceError =
+            priceData?.message ||
+            "Live price API error";
+
+          if (
+            livePriceCache.price !== null
+          ) {
+
+            livePrice =
+              livePriceCache.price;
+
+            livePriceSource =
+              "TWELVE_DATA_PRICE_CACHE";
+
+          } else {
+
+            livePrice =
+              candlePrice;
+
+            livePriceSource =
+              "M5_CANDLE_FALLBACK";
+          }
+        }
+
+      } catch (error) {
+
+        console.error(
+          "LIVE PRICE ERROR:",
+          error
+        );
+
+        livePriceError =
+          error?.message ||
+          "Live price request failed";
+
+        if (
+          livePriceCache.price !== null
+        ) {
+
+          livePrice =
+            livePriceCache.price;
+
+          livePriceSource =
+            "TWELVE_DATA_PRICE_CACHE";
+
+        } else {
+
+          livePrice =
+            candlePrice;
+
+          livePriceSource =
+            "M5_CANDLE_FALLBACK";
+        }
+      }
+    }
+
+    // =====================================================
+    // SIGNAL PRICE
+    // =====================================================
+
+    // IMPORTANT:
+    // Signal engine tetap menggunakan
+    // close candle M5 supaya logic V10 tidak berubah.
+
+    const price = candlePrice;
 
     // =====================================================
     // HELPERS
@@ -693,8 +831,6 @@ export default async function handler(req, res) {
     const c5 = m5.map(c => c.close);
     const c15 = m15.map(c => c.close);
     const c1 = h1.map(c => c.close);
-
-    const price = c5.at(-1);
 
     // =====================================================
     // H1 CONTEXT
@@ -1285,7 +1421,8 @@ export default async function handler(req, res) {
         CFG.M5_ONLY_GAP;
 
     // =====================================================
-    // FINAL SIGNAL
+    // FINAL SIGNAL — M15 + M5 MUST AGREE
+    // H1 IS BIAS / HOLD ONLY
     // =====================================================
 
     let status = "WAIT";
@@ -1297,347 +1434,160 @@ export default async function handler(req, res) {
 
     const reasons = [];
 
-    // =====================================================
-    // CONTINUATION
-    // =====================================================
-
-    if (
+    // Strict execution rule:
+    // BUY only when M15 BUY + M5 BUY
+    // SELL only when M15 SELL + M5 SELL
+    // Any mismatch = WAIT
+    const alignedBuy =
       m15BuyConfirmed &&
-      m5BuyTriggered
-    ) {
+      m5BuyTriggered;
 
-      status = "ENTRY";
-      signal = "BUY";
-      signalType = "TREND";
-      setupType = "CONTINUATION";
-      execution = "READY";
-
-      score =
-        Math.round(
-          (m15Buy + m5Buy) / 2
-        );
-
-      reasons.push(
-        "M15 confirmed bullish"
-      );
-
-      reasons.push(
-        "M5 bullish trigger"
-      );
-
-    } else if (
+    const alignedSell =
       m15SellConfirmed &&
-      m5SellTriggered
-    ) {
+      m5SellTriggered;
 
+    if (alignedBuy) {
+      status = "ENTRY";
+      signal = "BUY";
+      signalType = "TREND";
+      setupType = "M15+M5 ALIGNMENT";
+      execution = "READY";
+      score = Math.round((m15Buy + m5Buy) / 2);
+
+      reasons.push("M15 BUY confirmed");
+      reasons.push("M5 BUY trigger confirmed");
+      reasons.push("M15 + M5 aligned");
+    } else if (alignedSell) {
       status = "ENTRY";
       signal = "SELL";
       signalType = "TREND";
-      setupType = "CONTINUATION";
+      setupType = "M15+M5 ALIGNMENT";
       execution = "READY";
+      score = Math.round((m15Sell + m5Sell) / 2);
 
-      score =
-        Math.round(
-          (m15Sell + m5Sell) / 2
-        );
-
-      reasons.push(
-        "M15 confirmed bearish"
+      reasons.push("M15 SELL confirmed");
+      reasons.push("M5 SELL trigger confirmed");
+      reasons.push("M15 + M5 aligned");
+    } else {
+      // Never expose an early/M5-only BUY or SELL as the final signal.
+      signal = "WAIT";
+      status = "WAIT";
+      signalType = "NONE";
+      setupType = "NO ALIGNMENT";
+      execution = "WAIT";
+      score = Math.round(
+        Math.max(m15Buy, m15Sell, m5Buy, m5Sell)
       );
-
-      reasons.push(
-        "M5 bearish trigger"
-      );
-    }
-
-    // =====================================================
-    // REVERSAL
-    // =====================================================
-
-    if (
-      status === "WAIT" &&
-      m15Reversal === "BUY" &&
-      m5BuyTriggered &&
-      (
-        m5BOS.bullish ||
-        m5CHOCH.bullish
-      )
-    ) {
-
-      status = "ENTRY";
-      signal = "BUY";
-      signalType = "REVERSAL";
-      setupType = "REVERSAL";
-      execution = "READY";
-
-      score =
-        Math.round(
-          (m15Buy + m5Buy) / 2
-        );
-
-      reasons.push(
-        "M15 bullish reversal"
-      );
-
-      reasons.push(
-        "Liquidity/manipulation rejection confirmed"
-      );
-
-      reasons.push(
-        "M5 bullish structure confirmation"
-      );
-
-    } else if (
-      status === "WAIT" &&
-      m15Reversal === "SELL" &&
-      m5SellTriggered &&
-      (
-        m5BOS.bearish ||
-        m5CHOCH.bearish
-      )
-    ) {
-
-      status = "ENTRY";
-      signal = "SELL";
-      signalType = "REVERSAL";
-      setupType = "REVERSAL";
-      execution = "READY";
-
-      score =
-        Math.round(
-          (m15Sell + m5Sell) / 2
-        );
-
-      reasons.push(
-        "M15 bearish reversal"
-      );
-
-      reasons.push(
-        "Liquidity/manipulation rejection confirmed"
-      );
-
-      reasons.push(
-        "M5 bearish structure confirmation"
-      );
-    }
-
-    // =====================================================
-    // DEVELOPING
-    // =====================================================
-
-    if (
-      status === "WAIT" &&
-      m15BuyDeveloping &&
-      m5BuyTriggered
-    ) {
-
-      status = "EARLY";
-      signal = "BUY";
-      signalType = "TREND";
-      setupType = "CONTINUATION";
-      execution = "MONITOR";
-
-      score =
-        Math.round(
-          (m15Buy + m5Buy) / 2
-        );
-
-      reasons.push(
-        "M15 developing bullish"
-      );
-
-      reasons.push(
-        "M5 bullish trigger"
-      );
-
-    } else if (
-      status === "WAIT" &&
-      m15SellDeveloping &&
-      m5SellTriggered
-    ) {
-
-      status = "EARLY";
-      signal = "SELL";
-      signalType = "TREND";
-      setupType = "CONTINUATION";
-      execution = "MONITOR";
-
-      score =
-        Math.round(
-          (m15Sell + m5Sell) / 2
-        );
-
-      reasons.push(
-        "M15 developing bearish"
-      );
-
-      reasons.push(
-        "M5 bearish trigger"
-      );
-    }
-
-    // =====================================================
-    // EARLY REVERSAL
-    // =====================================================
-
-    if (
-      status === "WAIT" &&
-      m15Reversal === "BUY" &&
-      m5BuyTriggered
-    ) {
-
-      status = "EARLY";
-      signal = "BUY";
-      signalType = "REVERSAL";
-      setupType = "REVERSAL";
-      execution = "MONITOR";
-
-      score =
-        Math.round(
-          (m15Buy + m5Buy) / 2
-        );
-
-      reasons.push(
-        "M15 bullish reversal developing"
-      );
-
-      reasons.push(
-        "M5 bullish trigger"
-      );
-
-    } else if (
-      status === "WAIT" &&
-      m15Reversal === "SELL" &&
-      m5SellTriggered
-    ) {
-
-      status = "EARLY";
-      signal = "SELL";
-      signalType = "REVERSAL";
-      setupType = "REVERSAL";
-      execution = "MONITOR";
-
-      score =
-        Math.round(
-          (m15Sell + m5Sell) / 2
-        );
-
-      reasons.push(
-        "M15 bearish reversal developing"
-      );
-
-      reasons.push(
-        "M5 bearish trigger"
-      );
-    }
-
-    // =====================================================
-    // MANIPULATION WARNING
-    // =====================================================
-
-    if (
-      status === "WAIT" &&
-      (
-        m15Manipulation.bullish ||
-        m15Manipulation.bearish
-      )
-    ) {
 
       if (
-        m15Manipulation.bullish &&
-        !m15Manipulation.bearish
+        m15BuyConfirmed &&
+        m5SellTriggered
       ) {
-
-        signal = "BUY";
-        signalType = "MANIPULATION";
-        setupType = "MANIPULATION";
-        execution = "MONITOR";
-        score = m15Buy;
-
-        reasons.push(
-          "M15 bullish manipulation detected"
-        );
-
-        reasons.push(
-          "Waiting M5 confirmation"
-        );
-
+        reasons.push("M15 BUY vs M5 SELL — conflicting");
       } else if (
-        m15Manipulation.bearish &&
-        !m15Manipulation.bullish
+        m15SellConfirmed &&
+        m5BuyTriggered
       ) {
-
-        signal = "SELL";
-        signalType = "MANIPULATION";
-        setupType = "MANIPULATION";
-        execution = "MONITOR";
-        score = m15Sell;
-
-        reasons.push(
-          "M15 bearish manipulation detected"
-        );
-
-        reasons.push(
-          "Waiting M5 confirmation"
-        );
+        reasons.push("M15 SELL vs M5 BUY — conflicting");
+      } else if (
+        m15BuyConfirmed ||
+        m15SellConfirmed
+      ) {
+        reasons.push("M15 signal present — waiting M5 confirmation");
+      } else if (
+        m5BuyTriggered ||
+        m5SellTriggered
+      ) {
+        reasons.push("M5 trigger present — waiting M15 confirmation");
+      } else {
+        reasons.push("M15 + M5 not aligned");
       }
     }
 
     // =====================================================
-    // M5 ONLY SCALP
+    // H1 BIAS / HOLD
     // =====================================================
 
+    let holdBias = "NEUTRAL";
+    let holdPermission = "NO HOLD";
+
+    if (h1Direction === "BUY") {
+      holdBias = "BUY";
+    } else if (h1Direction === "SELL") {
+      holdBias = "SELL";
+    }
+
     if (
-      status === "WAIT" &&
-      m5OnlyBuy
+      signal === "BUY" &&
+      h1Direction === "BUY"
     ) {
-
-      status = "M5_ONLY";
-      signal = "BUY";
-      signalType = "M5";
-      setupType = "M5_SCALP";
-      execution = "SCALP";
-      score = m5Buy;
-
-      reasons.push(
-        "M5 bullish scalping trigger"
-      );
-
-      reasons.push(
-        "M5 actual trigger confirmed"
-      );
-
-      reasons.push(
-        "M15 confirmation not required"
-      );
-
+      holdPermission = "HOLD BUY";
     } else if (
-      status === "WAIT" &&
-      m5OnlySell
+      signal === "SELL" &&
+      h1Direction === "SELL"
     ) {
-
-      status = "M5_ONLY";
-      signal = "SELL";
-      signalType = "M5";
-      setupType = "M5_SCALP";
-      execution = "SCALP";
-      score = m5Sell;
-
+      holdPermission = "HOLD SELL";
+    } else if (
+      signal === "BUY" ||
+      signal === "SELL"
+    ) {
+      holdPermission = "SCALP ONLY";
       reasons.push(
-        "M5 bearish scalping trigger"
-      );
-
-      reasons.push(
-        "M5 actual trigger confirmed"
-      );
-
-      reasons.push(
-        "M15 confirmation not required"
+        "Signal is counter to H1 bias — scalp only"
       );
     }
 
     // =====================================================
-    // H1 CONTEXT
+    // SCORE BREAKDOWN
+    // =====================================================
+
+    const scoreBreakdown = [
+      {
+        label: "M15 BUY score",
+        value: m15Buy
+      },
+      {
+        label: "M15 SELL score",
+        value: m15Sell
+      },
+      {
+        label: "M5 BUY score",
+        value: m5Buy
+      },
+      {
+        label: "M5 SELL score",
+        value: m5Sell
+      },
+      {
+        label: "M15 + M5 alignment",
+        value: alignedBuy || alignedSell ? "YES" : "NO"
+      }
+    ];
+
+    // =====================================================
+    // SIGNAL FRESHNESS / VALIDITY
+    // =====================================================
+
+    const signalTimestamp =
+      new Date().toISOString();
+
+    const signalAgeSeconds = 0;
+
+    let setupStatus = "WAITING";
+
+    if (signal === "BUY" || signal === "SELL") {
+      setupStatus = "ACTIVE";
+    } else if (
+      m15BuyConfirmed ||
+      m15SellConfirmed ||
+      m5BuyTriggered ||
+      m5SellTriggered
+    ) {
+      setupStatus = "WAITING_CONFIRMATION";
+    }
+
+    // =====================================================
+    // CONTEXT
     // =====================================================
 
     let context = "NEUTRAL";
@@ -1647,19 +1597,16 @@ export default async function handler(req, res) {
       h1Direction === "BUY"
     ) {
       context = "WITH_H1";
-
     } else if (
       signal === "SELL" &&
       h1Direction === "SELL"
     ) {
       context = "WITH_H1";
-
     } else if (
       signal === "BUY" &&
       h1Direction === "SELL"
     ) {
       context = "COUNTER_H1";
-
     } else if (
       signal === "SELL" &&
       h1Direction === "BUY"
@@ -1679,13 +1626,16 @@ export default async function handler(req, res) {
 
     if (
       (
-        status === "ENTRY" ||
-        status === "M5_ONLY"
+        status === "ENTRY"
       ) &&
       m5ATR !== null
     ) {
 
-      entry = price;
+      // IMPORTANT:
+      // Entry menggunakan LIVE PRICE,
+      // bukan M5 candle close.
+
+      entry = livePrice;
 
       const recentLow =
         lowest(
@@ -1764,7 +1714,7 @@ export default async function handler(req, res) {
       ok: true,
 
       version:
-        "V10-SCALP-CONTINUATION-REVERSAL-MANIPULATION",
+        "V10-SCALP-M15-M5-ALIGNMENT-H1-HOLD-LIVEPRICE",
 
       symbol:
         CFG.symbol,
@@ -1773,10 +1723,10 @@ export default async function handler(req, res) {
         "SCALP",
 
       architecture:
-        "ONE-M5-API-CALL",
+        "M15+M5-ALIGNED-SIGNAL + H1-HOLD + LIVE-PRICE",
 
       apiUsage:
-        "1 Twelve Data request max per cache refresh",
+        "1 Twelve Data time_series request / 60s + 1 price request / 30s cache",
 
       cache: {
         active:
@@ -1794,7 +1744,34 @@ export default async function handler(req, res) {
           CFG.cacheTTL / 1000
       },
 
-      price,
+      livePrice: {
+        price: livePrice,
+
+        source:
+          livePriceSource,
+
+        ageSeconds:
+          livePriceCache.fetchedAt
+            ? Math.round(
+                (
+                  Date.now() -
+                  livePriceCache.fetchedAt
+                ) / 1000
+              )
+            : null,
+
+        ttlSeconds:
+          CFG.livePriceTTL / 1000,
+
+        error:
+          livePriceError
+      },
+
+      // Live price untuk dashboard
+      price: livePrice,
+
+      // Close candle M5 untuk debugging
+      candlePrice,
 
       candles:
         m5.slice(-60),
@@ -1818,7 +1795,13 @@ export default async function handler(req, res) {
           h1EMA50,
 
         ema200:
-          h1EMA200
+          h1EMA200,
+
+        holdBias,
+
+        holdPermission,
+
+        structure: structure(h1, 12)
       },
 
       m15: {
