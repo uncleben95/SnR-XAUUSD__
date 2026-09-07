@@ -1,0 +1,20 @@
+{
+  "version": 2,
+  "functions": {
+    "api/scalp.js": {
+      "maxDuration": 10
+    },
+    "api/push-check.js": {
+      "maxDuration": 10
+    },
+    "api/push-send.js": {
+      "maxDuration": 10
+    },
+    "api/push-subscribe.js": {
+      "maxDuration": 10
+    },
+    "api/push-config.js": {
+      "maxDuration": 10
+    }
+  }
+}
