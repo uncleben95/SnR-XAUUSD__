@@ -13,4 +13,4 @@ jobs:
       - name: Trigger XAU Scalp Engine
         run: |
           curl -fsS --max-time 120 \
-            "https://snr-xauusd.vercel.app/api/scalp?cron=1&ts=$(date +%s)"
+            "https://sn-r-xauusd-ta3j.vercel.app/api/scalp?cron=1&ts=$(date +%s)"
