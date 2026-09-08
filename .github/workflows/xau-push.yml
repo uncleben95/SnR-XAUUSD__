@@ -2,13 +2,9 @@ name: XAU Push
 
 on:
   workflow_dispatch:
-  schedule:
-    - cron: "*/5 * * * *"
 
 jobs:
-  trigger:
+  test:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Trigger scalp API
-        run: curl -f "https://sn-r-xauusd-ta3j.vercel.app/api/scalp?cron=1"
+      - run: echo "XAU PUSH WORKFLOW OK"
