@@ -1,0 +1,16 @@
+name: XAU/USD Push Engine
+
+on:
+  schedule:
+    - cron: "*/5 * * * *"
+  workflow_dispatch:
+
+jobs:
+  scalp:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Trigger XAU Scalp Engine
+        run: |
+          curl -fsS --max-time 120 \
+            "https://snr-xauusd.vercel.app/api/scalp?cron=1&ts=$(date +%s)"
