@@ -18,36 +18,44 @@ jobs:
         env:
           XAU_API_URL: ${{ secrets.XAU_API_URL }}
         run: |
-          set -e
+          set -u
 
           if [ -z "$XAU_API_URL" ]; then
             echo "ERROR: XAU_API_URL GitHub Secret belum diset."
             exit 1
           fi
 
+          echo "======================================"
           echo "Checking XAU/USD signal..."
           echo "API: $XAU_API_URL"
+          echo "======================================"
 
-          RESPONSE=$(curl \
+          HTTP_CODE=$(curl \
             --silent \
             --show-error \
-            --fail-with-body \
             --max-time 60 \
+            --output response.json \
+            --write-out "%{http_code}" \
             -H "Accept: application/json" \
             "$XAU_API_URL")
 
-          export RESPONSE
+          echo ""
+          echo "HTTP STATUS: $HTTP_CODE"
+          echo ""
+          echo "API RESPONSE:"
+          cat response.json
+          echo ""
+          echo "======================================"
 
-          echo "API response:"
-          echo "$RESPONSE"
+          if [ "$HTTP_CODE" -lt 200 ] || [ "$HTTP_CODE" -ge 300 ]; then
+            echo "ERROR: API returned HTTP $HTTP_CODE"
+            exit 1
+          fi
 
           node <<'NODE'
-          const response = process.env.RESPONSE;
+          const fs = require("fs");
 
-          if (!response) {
-            console.error("Empty API response.");
-            process.exit(1);
-          }
+          const response = fs.readFileSync("response.json", "utf8");
 
           let data;
 
@@ -55,13 +63,6 @@ jobs:
             data = JSON.parse(response);
           } catch (error) {
             console.error("API returned invalid JSON.");
-            console.error(response);
-            process.exit(1);
-          }
-
-          if (!data.ok) {
-            console.error("Scalp API returned ok=false.");
-            console.error(data);
             process.exit(1);
           }
 
@@ -77,7 +78,11 @@ jobs:
           console.log("Signal Candle:", data.signalCandle || "--");
           console.log("Signal Key:", data.signalKey || "--");
           console.log("======================================");
-          console.log("");
+
+          if (!data.ok) {
+            console.error("Scalp API returned ok=false.");
+            process.exit(1);
+          }
 
           if (
             data.signal !== "BUY" &&
@@ -88,5 +93,6 @@ jobs:
             process.exit(1);
           }
 
+          console.log("");
           console.log("Signal check completed successfully.");
           NODE
