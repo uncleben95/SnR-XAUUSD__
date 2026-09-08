@@ -16,24 +16,21 @@ jobs:
     steps:
       - name: Check XAU/USD scalp API
         env:
-          XAU_API_URL: ${{ secrets.XAU_API_URL }}
+          XAU_API_URL: https://sn-r-xauusd-1c6g.vercel.app/api/scalp
         run: |
-          set -u
-
-          if [ -z "$XAU_API_URL" ]; then
-            echo "ERROR: XAU_API_URL GitHub Secret belum diset."
-            exit 1
-          fi
+          set -e
 
           echo "======================================"
-          echo "Checking XAU/USD signal..."
+          echo "XAU/USD SIGNAL CHECK"
+          echo "======================================"
           echo "API: $XAU_API_URL"
           echo "======================================"
 
           HTTP_CODE=$(curl \
             --silent \
             --show-error \
-            --max-time 60 \
+            --location \
+            --max-time 90 \
             --output response.json \
             --write-out "%{http_code}" \
             -H "Accept: application/json" \
@@ -45,7 +42,6 @@ jobs:
           echo "API RESPONSE:"
           cat response.json
           echo ""
-          echo "======================================"
 
           if [ "$HTTP_CODE" -lt 200 ] || [ "$HTTP_CODE" -ge 300 ]; then
             echo "ERROR: API returned HTTP $HTTP_CODE"
@@ -55,20 +51,19 @@ jobs:
           node <<'NODE'
           const fs = require("fs");
 
-          const response = fs.readFileSync("response.json", "utf8");
+          const raw = fs.readFileSync("response.json", "utf8");
 
           let data;
 
           try {
-            data = JSON.parse(response);
+            data = JSON.parse(raw);
           } catch (error) {
             console.error("API returned invalid JSON.");
             process.exit(1);
           }
 
-          console.log("");
           console.log("======================================");
-          console.log("       XAU/USD SIGNAL CHECK");
+          console.log("       XAU/USD SIGNAL");
           console.log("======================================");
           console.log("Signal:", data.signal || "WAIT");
           console.log("Status:", data.status || "WAIT");
@@ -84,15 +79,10 @@ jobs:
             process.exit(1);
           }
 
-          if (
-            data.signal !== "BUY" &&
-            data.signal !== "SELL" &&
-            data.signal !== "WAIT"
-          ) {
+          if (!["BUY", "SELL", "WAIT"].includes(data.signal)) {
             console.error("Unknown signal:", data.signal);
             process.exit(1);
           }
 
-          console.log("");
           console.log("Signal check completed successfully.");
           NODE
