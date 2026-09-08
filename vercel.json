@@ -4,11 +4,5 @@
     "api/*.js": {
       "runtime": "nodejs20.x"
     }
-  },
-  "crons": [
-    {
-      "path": "/api/cron",
-      "schedule": "* * * * *"
-    }
-  ]
+  }
 }
