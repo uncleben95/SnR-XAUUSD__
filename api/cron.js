@@ -1,24 +1,32 @@
-import scalpHandler from "./scalp.js";
-
 export default async function handler(req, res) {
-  const auth = req.headers.authorization;
-  const expected = process.env.CRON_SECRET;
-
-  if (expected && auth !== `Bearer ${expected}`) {
-    return res.status(401).json({
-      ok: false,
-      error: "Unauthorized"
-    });
-  }
-
   try {
-    await scalpHandler(req, res);
+    const base =
+      process.env.VERCEL_URL
+        ? `https://${process.env.VERCEL_URL}`
+        : `https://${req.headers.host}`;
+
+    const response = await fetch(
+      `${base}/api/scalp?cron=1&ts=${Date.now()}`,
+      {
+        method: "GET",
+        headers: {
+          "x-cron-internal": "XAU-SCALP-CRON"
+        },
+        cache: "no-store"
+      }
+    );
+
+    const text = await response.text();
+
+    return res.status(response.status).send(text);
+
   } catch (error) {
-    console.error("CRON SCALP ERROR", error);
+
+    console.error("CRON ERROR:", error);
 
     return res.status(500).json({
       ok: false,
-      error: error?.message || "Cron execution failed"
+      error: error?.message || "Cron failed"
     });
   }
 }
