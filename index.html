@@ -81,9 +81,7 @@ header p{
   text-transform:uppercase
 }
 
-.s strong{
-  font-size:.82rem
-}
+.s strong{font-size:.82rem}
 
 .good{color:var(--green)}
 .bad{color:var(--red)}
@@ -222,13 +220,9 @@ header p{
   font-size:.74rem
 }
 
-.metric:last-child{
-  border-bottom:0
-}
+.metric:last-child{border-bottom:0}
 
-.plan{
-  background:var(--sub)
-}
+.plan{background:var(--sub)}
 
 .plangrid{
   display:grid;
@@ -280,9 +274,7 @@ header p{
   font-size:.68rem
 }
 
-.d span{
-  color:#cbd5e1
-}
+.d span{color:#cbd5e1}
 
 .foot{
   text-align:center;
@@ -292,6 +284,7 @@ header p{
 }
 
 @media(max-width:650px){
+
   .status{
     grid-template-columns:repeat(2,1fr)
   }
@@ -316,368 +309,379 @@ header p{
 <div class="wrap">
 
 <header>
-  <h1>XAU/USD PRO SNIPER</h1>
-  <p>Free-safe Twelve Data → H1 Bias → M15 Confirmation → M5 Trigger → Push Alert</p>
+<h1>XAU/USD PRO SNIPER</h1>
+<p>Free-safe Twelve Data → H1 Bias → M15 Confirmation → M5 Trigger → Push Alert</p>
 </header>
 
 <div class="status">
-  <div class="s">
-    <small>System</small>
-    <strong id="system">CONNECTING</strong>
-  </div>
 
-  <div class="s">
-    <small>API</small>
-    <strong id="api">CONNECTING</strong>
-  </div>
+<div class="s">
+<small>System</small>
+<strong id="system">CONNECTING</strong>
+</div>
 
-  <div class="s">
-    <small>Signal</small>
-    <strong id="signalTop" class="wait">WAIT</strong>
-  </div>
+<div class="s">
+<small>API</small>
+<strong id="api">CONNECTING</strong>
+</div>
 
-  <div class="s">
-    <small>MYT</small>
-    <strong id="clock">--:--:--</strong>
-  </div>
+<div class="s">
+<small>Signal</small>
+<strong id="signalTop" class="wait">WAIT</strong>
+</div>
+
+<div class="s">
+<small>MYT</small>
+<strong id="clock">--:--:--</strong>
+</div>
+
 </div>
 
 <div class="sessions">
-  <div style="font-size:.68rem;color:var(--muted);font-weight:bold;margin-bottom:7px">
-    TRADING SESSION — MALAYSIA TIME
-  </div>
 
-  <div class="sessiongrid">
-    <div id="asia" class="pill">
-      ASIA
-      <div>08:00–17:00</div>
-    </div>
+<div style="font-size:.68rem;color:var(--muted);font-weight:bold;margin-bottom:7px">
+TRADING SESSION — MALAYSIA TIME
+</div>
 
-    <div id="london" class="pill">
-      LONDON
-      <div>15:00–00:00</div>
-    </div>
+<div class="sessiongrid">
 
-    <div id="ny" class="pill">
-      NEW YORK
-      <div>20:00–05:00</div>
-    </div>
-  </div>
+<div id="asia" class="pill">
+ASIA
+<div>08:00–17:00</div>
+</div>
+
+<div id="london" class="pill">
+LONDON
+<div>15:00–00:00</div>
+</div>
+
+<div id="ny" class="pill">
+NEW YORK
+<div>20:00–05:00</div>
+</div>
+
+</div>
 </div>
 
 <div class="notify">
-  <div>
-    <b style="font-size:.7rem">🔔 SIGNAL PUSH</b>
-    <small id="notificationStatus">
-      Notification belum diaktifkan
-    </small>
-  </div>
 
-  <button
-    id="notificationButton"
-    class="btn"
-    onclick="enableNotifications()">
-    🔔 ENABLE
-  </button>
+<div>
+<b style="font-size:.7rem">🔔 SIGNAL PUSH</b>
+
+<small id="notificationStatus">
+Notification belum diaktifkan
+</small>
+</div>
+
+<button
+id="notificationButton"
+class="btn"
+onclick="enableNotifications()">
+🔔 ENABLE
+</button>
+
 </div>
 
 <div class="card">
 
-  <h3 style="margin:0 0 8px;color:var(--blue);font-size:.82rem">
-    XAU/USD • LIVE M5 • LAST 60 CANDLES
-  </h3>
+<h3 style="margin:0 0 8px;color:var(--blue);font-size:.82rem">
+XAU/USD • LIVE M5 • LAST 60 CANDLES
+</h3>
 
-  <div class="chartbox">
-    <canvas id="chart"></canvas>
-    <div id="chartPrice" class="chartprice">--</div>
-  </div>
+<div class="chartbox">
 
+<canvas id="chart"></canvas>
+
+<div id="chartPrice" class="chartprice">
+--
+</div>
+
+</div>
 </div>
 
 <div class="card master">
 
-  <div style="font-size:.65rem;color:var(--muted);font-weight:bold">
-    XAU/USD MARKET PRICE
-  </div>
+<div style="font-size:.65rem;color:var(--muted);font-weight:bold">
+XAU/USD MARKET PRICE
+</div>
 
-  <div id="price" class="price">--</div>
+<div id="price" class="price">--</div>
 
-  <div id="source" class="source">
-    Waiting for /api/scalp
-  </div>
+<div id="source" class="source">
+Waiting for /api/scalp
+</div>
 
-  <div id="badge" class="badge neutral">
-    ⏳ WAIT
-  </div>
+<div id="badge" class="badge neutral">
+⏳ WAIT
+</div>
 
-  <div>
-    Entry Quality:
-    <strong id="score">0/100</strong>
-  </div>
+<div>
+Entry Quality:
+<strong id="score">0/100</strong>
+</div>
 
-  <div class="progress">
-    <div id="fill" class="fill"></div>
-  </div>
+<div class="progress">
+<div id="fill" class="fill"></div>
+</div>
 
 </div>
 
 <div class="plan">
 
-  <h3 style="margin:0 0 8px;color:var(--blue);font-size:.82rem">
-    🎯 DYNAMIC TRADE PLAN
-  </h3>
+<h3 style="margin:0 0 8px;color:var(--blue);font-size:.82rem">
+🎯 DYNAMIC TRADE PLAN
+</h3>
 
-  <div class="plangrid">
+<div class="plangrid">
 
-    <div class="p">
-      STATUS
-      <strong id="planStatus">WAIT</strong>
-    </div>
+<div class="p">
+STATUS
+<strong id="planStatus">WAIT</strong>
+</div>
 
-    <div class="p">
-      DIRECTION
-      <strong id="planDir">--</strong>
-    </div>
+<div class="p">
+DIRECTION
+<strong id="planDir">--</strong>
+</div>
 
-    <div class="p">
-      ENTRY
-      <strong id="entry">--</strong>
-    </div>
+<div class="p">
+ENTRY
+<strong id="entry">--</strong>
+</div>
 
-    <div class="p">
-      STOP LOSS
-      <strong id="sl">--</strong>
-    </div>
+<div class="p">
+STOP LOSS
+<strong id="sl">--</strong>
+</div>
 
-    <div class="p">
-      TP1
-      <strong id="tp1">--</strong>
-    </div>
+<div class="p">
+TP1
+<strong id="tp1">--</strong>
+</div>
 
-    <div class="p">
-      TP2
-      <strong id="tp2">--</strong>
-    </div>
+<div class="p">
+TP2
+<strong id="tp2">--</strong>
+</div>
 
-    <div class="p">
-      TP3
-      <strong id="tp3">--</strong>
-    </div>
+<div class="p">
+TP3
+<strong id="tp3">--</strong>
+</div>
 
-    <div class="p">
-      R:R
-      <strong id="rr">--</strong>
-    </div>
+<div class="p">
+R:R
+<strong id="rr">--</strong>
+</div>
 
-    <div class="p">
-      SETUP
-      <strong id="setup">--</strong>
-    </div>
+<div class="p">
+SETUP
+<strong id="setup">--</strong>
+</div>
 
-  </div>
+</div>
 </div>
 
 <div class="grid">
 
-  <div class="card">
+<div class="card">
 
-    <h3 style="margin:0 0 8px;color:var(--blue);font-size:.82rem">
-      H1 — CORE BIAS
-    </h3>
+<h3 style="margin:0 0 8px;color:var(--blue);font-size:.82rem">
+H1 — CORE BIAS
+</h3>
 
-    <div class="metric">
-      <span>Direction</span>
-      <strong id="h1dir">--</strong>
-    </div>
+<div class="metric">
+<span>Direction</span>
+<strong id="h1dir">--</strong>
+</div>
 
-    <div class="metric">
-      <span>EMA 50</span>
-      <strong id="h1ema50">--</strong>
-    </div>
+<div class="metric">
+<span>EMA 50</span>
+<strong id="h1ema50">--</strong>
+</div>
 
-    <div class="metric">
-      <span>EMA 200</span>
-      <strong id="h1ema200">--</strong>
-    </div>
+<div class="metric">
+<span>EMA 200</span>
+<strong id="h1ema200">--</strong>
+</div>
 
-    <div class="metric">
-      <span>Structure</span>
-      <strong id="h1struct">--</strong>
-    </div>
+<div class="metric">
+<span>Structure</span>
+<strong id="h1struct">--</strong>
+</div>
 
-    <div class="metric">
-      <span>Hold</span>
-      <strong id="hold">--</strong>
-    </div>
+<div class="metric">
+<span>Hold</span>
+<strong id="hold">--</strong>
+</div>
 
-  </div>
+</div>
 
-  <div class="card">
+<div class="card">
 
-    <h3 style="margin:0 0 8px;color:var(--blue);font-size:.82rem">
-      M15 — CONFIRMATION
-    </h3>
+<h3 style="margin:0 0 8px;color:var(--blue);font-size:.82rem">
+M15 — CONFIRMATION
+</h3>
 
-    <div class="metric">
-      <span>Direction</span>
-      <strong id="m15dir">--</strong>
-    </div>
+<div class="metric">
+<span>Direction</span>
+<strong id="m15dir">--</strong>
+</div>
 
-    <div class="metric">
-      <span>EMA 20 / 50</span>
-      <strong id="m15ema">--</strong>
-    </div>
+<div class="metric">
+<span>EMA 20 / 50</span>
+<strong id="m15ema">--</strong>
+</div>
 
-    <div class="metric">
-      <span>RSI 14</span>
-      <strong id="m15rsi">--</strong>
-    </div>
+<div class="metric">
+<span>RSI 14</span>
+<strong id="m15rsi">--</strong>
+</div>
 
-    <div class="metric">
-      <span>MACD</span>
-      <strong id="m15macd">--</strong>
-    </div>
+<div class="metric">
+<span>MACD</span>
+<strong id="m15macd">--</strong>
+</div>
 
-    <div class="metric">
-      <span>ADX</span>
-      <strong id="m15adx">--</strong>
-    </div>
+<div class="metric">
+<span>ADX</span>
+<strong id="m15adx">--</strong>
+</div>
 
-    <div class="metric">
-      <span>BOS / CHOCH</span>
-      <strong id="m15structure">--</strong>
-    </div>
+<div class="metric">
+<span>BOS / CHOCH</span>
+<strong id="m15structure">--</strong>
+</div>
 
-  </div>
+</div>
 
-  <div class="card">
+<div class="card">
 
-    <h3 style="margin:0 0 8px;color:var(--blue);font-size:.82rem">
-      M5 — TRIGGER
-    </h3>
+<h3 style="margin:0 0 8px;color:var(--blue);font-size:.82rem">
+M5 — TRIGGER
+</h3>
 
-    <div class="metric">
-      <span>Direction</span>
-      <strong id="m5dir">--</strong>
-    </div>
+<div class="metric">
+<span>Direction</span>
+<strong id="m5dir">--</strong>
+</div>
 
-    <div class="metric">
-      <span>EMA 9 / 20 / 50</span>
-      <strong id="m5ema">--</strong>
-    </div>
+<div class="metric">
+<span>EMA 9 / 20 / 50</span>
+<strong id="m5ema">--</strong>
+</div>
 
-    <div class="metric">
-      <span>RSI 14</span>
-      <strong id="m5rsi">--</strong>
-    </div>
+<div class="metric">
+<span>RSI 14</span>
+<strong id="m5rsi">--</strong>
+</div>
 
-    <div class="metric">
-      <span>MACD</span>
-      <strong id="m5macd">--</strong>
-    </div>
+<div class="metric">
+<span>MACD</span>
+<strong id="m5macd">--</strong>
+</div>
 
-    <div class="metric">
-      <span>ATR</span>
-      <strong id="m5atr">--</strong>
-    </div>
+<div class="metric">
+<span>ATR</span>
+<strong id="m5atr">--</strong>
+</div>
 
-    <div class="metric">
-      <span>BOS / CHOCH</span>
-      <strong id="m5structure">--</strong>
-    </div>
+<div class="metric">
+<span>BOS / CHOCH</span>
+<strong id="m5structure">--</strong>
+</div>
 
-  </div>
+</div>
 
-  <div class="card">
+<div class="card">
 
-    <h3 style="margin:0 0 8px;color:var(--blue);font-size:.82rem">
-      SCALP SCORE
-    </h3>
+<h3 style="margin:0 0 8px;color:var(--blue);font-size:.82rem">
+SCALP SCORE
+</h3>
 
-    <div class="metric">
-      <span>M15 BUY / SELL</span>
-      <strong id="m15score">--</strong>
-    </div>
+<div class="metric">
+<span>M15 BUY / SELL</span>
+<strong id="m15score">--</strong>
+</div>
 
-    <div class="metric">
-      <span>M5 BUY / SELL</span>
-      <strong id="m5score">--</strong>
-    </div>
+<div class="metric">
+<span>M5 BUY / SELL</span>
+<strong id="m5score">--</strong>
+</div>
 
-    <div class="metric">
-      <span>Context</span>
-      <strong id="context">--</strong>
-    </div>
+<div class="metric">
+<span>Context</span>
+<strong id="context">--</strong>
+</div>
 
-    <div class="metric">
-      <span>Setup Status</span>
-      <strong id="setupStatus">--</strong>
-    </div>
+<div class="metric">
+<span>Setup Status</span>
+<strong id="setupStatus">--</strong>
+</div>
 
-    <div class="metric">
-      <span>Execution</span>
-      <strong id="execution">--</strong>
-    </div>
+<div class="metric">
+<span>Execution</span>
+<strong id="execution">--</strong>
+</div>
 
-  </div>
+</div>
 
 </div>
 
 <div class="diag">
 
-  <h3 style="margin:0 0 8px;color:var(--blue);font-size:.82rem">
-    🔎 DATA / SIGNAL DIAGNOSTIC
-  </h3>
+<h3 style="margin:0 0 8px;color:var(--blue);font-size:.82rem">
+🔎 DATA / SIGNAL DIAGNOSTIC
+</h3>
 
-  <div class="diaggrid">
+<div class="diaggrid">
 
-    <div class="d">
-      <span>M5 candles</span>
-      <strong id="m5count">--</strong>
-    </div>
+<div class="d">
+<span>M5 candles</span>
+<strong id="m5count">--</strong>
+</div>
 
-    <div class="d">
-      <span>M15 candles</span>
-      <strong id="m15count">--</strong>
-    </div>
+<div class="d">
+<span>M15 candles</span>
+<strong id="m15count">--</strong>
+</div>
 
-    <div class="d">
-      <span>H1 candles</span>
-      <strong id="h1count">--</strong>
-    </div>
+<div class="d">
+<span>H1 candles</span>
+<strong id="h1count">--</strong>
+</div>
 
-    <div class="d">
-      <span>Live source</span>
-      <strong id="liveSource">--</strong>
-    </div>
+<div class="d">
+<span>Live source</span>
+<strong id="liveSource">--</strong>
+</div>
 
-    <div class="d">
-      <span>Cache age</span>
-      <strong id="cacheAge">--</strong>
-    </div>
+<div class="d">
+<span>Cache age</span>
+<strong id="cacheAge">--</strong>
+</div>
 
-    <div class="d">
-      <span>Quota</span>
-      <strong id="quota">--</strong>
-    </div>
+<div class="d">
+<span>Quota</span>
+<strong id="quota">--</strong>
+</div>
 
-  </div>
-
+</div>
 </div>
 
 <div class="foot">
-  Free-safe build: frontend polls every 15s, while Twelve Data is cached server-side.
-  Push is triggered only when a new BUY/SELL signal transition is detected.
+Free-safe build: frontend polls every 15s, while Twelve Data is cached server-side.
+Push subscription is registered with the backend.
+Automatic BUY/SELL notifications are sent server-side.
 </div>
 
 </div>
+
 
 <script>
 
 let candles = [];
-
 let lastSignal = null;
-
 let pushReady = false;
 
 const $ = id => document.getElementById(id);
@@ -688,7 +692,9 @@ const fmt = v =>
     : "--";
 
 const text = (id,v) => {
+
   const el = $(id);
+
   if(!el) return;
 
   el.textContent =
@@ -696,6 +702,7 @@ const text = (id,v) => {
       ? "--"
       : v;
 };
+
 
 function clsDirection(el,v){
 
@@ -715,10 +722,10 @@ function clsDirection(el,v){
   );
 }
 
+
 function updateSessions(){
 
   const d = new Date();
-
   const h = d.getHours();
 
   $("clock").textContent =
@@ -740,17 +747,16 @@ function updateSessions(){
   );
 }
 
+
 function draw(){
 
   const c = $("chart");
-
   const r = c.getBoundingClientRect();
 
   const dpr =
     window.devicePixelRatio || 1;
 
   c.width = r.width * dpr;
-
   c.height = r.height * dpr;
 
   const x = c.getContext("2d");
@@ -765,7 +771,6 @@ function draw(){
   );
 
   const w = r.width;
-
   const h = r.height;
 
   const data =
@@ -774,7 +779,6 @@ function draw(){
   if(data.length < 2){
 
     x.clearRect(0,0,w,h);
-
     return;
   }
 
@@ -788,7 +792,6 @@ function draw(){
     (hi - lo || 1) * 0.12;
 
   const max = hi + pad;
-
   const min = lo - pad;
 
   const X = i =>
@@ -813,11 +816,8 @@ function draw(){
       (h-35)*i/5;
 
     x.beginPath();
-
     x.moveTo(8,gy);
-
     x.lineTo(w-8,gy);
-
     x.stroke();
   }
 
@@ -826,11 +826,14 @@ function draw(){
   data.forEach((a,i) => {
 
     if(i){
+
       x.lineTo(
         X(i),
         Y(a.close)
       );
+
     }else{
+
       x.moveTo(
         X(i),
         Y(a.close)
@@ -840,11 +843,14 @@ function draw(){
   });
 
   x.strokeStyle = "#fbbf24";
-
   x.lineWidth = 2;
-
   x.stroke();
 }
+
+
+/* =========================================================
+   STABLE SIGNAL KEY
+   ========================================================= */
 
 function buildSignalKey(d){
 
@@ -856,15 +862,6 @@ function buildSignalKey(d){
     return null;
   }
 
-  /*
-   * IMPORTANT:
-   * Do NOT use API response timestamp here.
-   * The API can return a new timestamp every poll.
-   *
-   * We use the candle timestamp / candle price
-   * so the same signal isn't pushed every 15 sec.
-   */
-
   const lastCandle =
     Array.isArray(d.candles) &&
     d.candles.length
@@ -875,6 +872,7 @@ function buildSignalKey(d){
     lastCandle?.time ||
     lastCandle?.datetime ||
     d.candleTime ||
+    d.signalCandle ||
     "";
 
   const candlePrice =
@@ -889,6 +887,11 @@ function buildSignalKey(d){
     candlePrice
   ].join("|");
 }
+
+
+/* =========================================================
+   RENDER
+   ========================================================= */
 
 function render(d){
 
@@ -947,8 +950,7 @@ function render(d){
     (d.livePrice?.source ||
       "TWELVE_DATA") +
     " • " +
-    new Date()
-      .toLocaleTimeString("en-MY")
+    new Date().toLocaleTimeString("en-MY")
   );
 
   $("badge").textContent =
@@ -982,40 +984,16 @@ function render(d){
       Math.min(100,score)
     ) + "%";
 
-  text(
-    "planStatus",
-    d.status
-  );
 
-  text(
-    "planDir",
-    sig
-  );
+  /* TRADE PLAN */
 
-  text(
-    "entry",
-    fmt(tp.entry)
-  );
-
-  text(
-    "sl",
-    fmt(tp.stopLoss)
-  );
-
-  text(
-    "tp1",
-    fmt(tp.tp1)
-  );
-
-  text(
-    "tp2",
-    fmt(tp.tp2)
-  );
-
-  text(
-    "tp3",
-    fmt(tp.tp3)
-  );
+  text("planStatus",d.status);
+  text("planDir",sig);
+  text("entry",fmt(tp.entry));
+  text("sl",fmt(tp.stopLoss));
+  text("tp1",fmt(tp.tp1));
+  text("tp2",fmt(tp.tp2));
+  text("tp3",fmt(tp.tp3));
 
   text(
     "rr",
@@ -1024,25 +1002,14 @@ function render(d){
       : String(tp.rr)
   );
 
-  text(
-    "setup",
-    d.setupType
-  );
+  text("setup",d.setupType);
 
-  text(
-    "h1dir",
-    h1.direction
-  );
 
-  text(
-    "h1ema50",
-    fmt(h1.ema50)
-  );
+  /* H1 */
 
-  text(
-    "h1ema200",
-    fmt(h1.ema200)
-  );
+  text("h1dir",h1.direction);
+  text("h1ema50",fmt(h1.ema50));
+  text("h1ema200",fmt(h1.ema200));
 
   text(
     "h1struct",
@@ -1058,6 +1025,9 @@ function render(d){
     h1.holdPermission || "--"
   );
 
+
+  /* M15 */
+
   text(
     "m15dir",
     m15.confirmation ||
@@ -1071,10 +1041,7 @@ function render(d){
     fmt(m15.ema50)
   );
 
-  text(
-    "m15rsi",
-    fmt(m15.rsi)
-  );
+  text("m15rsi",fmt(m15.rsi));
 
   text(
     "m15macd",
@@ -1109,6 +1076,9 @@ function render(d){
             : "RANGE"
   );
 
+
+  /* M5 */
+
   text(
     "m5dir",
     m5.trigger ||
@@ -1124,10 +1094,7 @@ function render(d){
     fmt(m5.ema50)
   );
 
-  text(
-    "m5rsi",
-    fmt(m5.rsi)
-  );
+  text("m5rsi",fmt(m5.rsi));
 
   text(
     "m5macd",
@@ -1138,10 +1105,7 @@ function render(d){
         : "--"
   );
 
-  text(
-    "m5atr",
-    fmt(m5.atr)
-  );
+  text("m5atr",fmt(m5.atr));
 
   text(
     "m5structure",
@@ -1162,6 +1126,9 @@ function render(d){
             : "RANGE"
   );
 
+
+  /* SCORE */
+
   text(
     "m15score",
     fmt(m15.buyScore) +
@@ -1176,20 +1143,12 @@ function render(d){
     fmt(m5.sellScore)
   );
 
-  text(
-    "context",
-    d.context
-  );
+  text("context",d.context);
+  text("setupStatus",d.setupStatus);
+  text("execution",d.execution);
 
-  text(
-    "setupStatus",
-    d.setupStatus
-  );
 
-  text(
-    "execution",
-    d.execution
-  );
+  /* DIAGNOSTIC */
 
   text(
     "m5count",
@@ -1227,18 +1186,15 @@ function render(d){
       : "--"
   );
 
-  /*
-   * FIX:
-   * Original code only called handleSignal()
-   * when d.signalKey existed.
-   *
-   * The frontend now creates its own stable key.
-   */
-
   handleSignal(d);
 }
 
-async function handleSignal(d){
+
+/* =========================================================
+   SIGNAL STATE
+   ========================================================= */
+
+function handleSignal(d){
 
   const sig =
     String(d.signal || "WAIT")
@@ -1258,13 +1214,13 @@ async function handleSignal(d){
 
   const stored =
     localStorage.getItem(
-      "xau_last_notified_signal"
+      "xau_last_signal_key"
     );
 
   /*
    * First load:
-   * remember current signal but don't
-   * immediately spam the user.
+   * remember current signal.
+   * Do not generate a notification.
    */
 
   if(lastSignal === null){
@@ -1272,8 +1228,9 @@ async function handleSignal(d){
     lastSignal = sig;
 
     if(!stored){
+
       localStorage.setItem(
-        "xau_last_notified_signal",
+        "xau_last_signal_key",
         key
       );
     }
@@ -1282,8 +1239,7 @@ async function handleSignal(d){
   }
 
   /*
-   * Same exact candle + same signal:
-   * nothing to do.
+   * Exact same signal/candle.
    */
 
   if(stored === key){
@@ -1294,11 +1250,8 @@ async function handleSignal(d){
   }
 
   /*
-   * Same signal but a NEW candle:
-   *
-   * We don't push every new candle.
-   * Only BUY <-> SELL transitions are
-   * treated as a new signal.
+   * Same direction.
+   * Do not spam every 15 seconds.
    */
 
   if(lastSignal === sig){
@@ -1307,95 +1260,28 @@ async function handleSignal(d){
   }
 
   /*
-   * Signal changed:
    * BUY -> SELL
    * SELL -> BUY
+   *
+   * IMPORTANT:
+   * Notification itself is NOT sent
+   * from browser.
+   *
+   * Backend /api/scalp handles push.
    */
 
-  if(!pushReady){
-
-    lastSignal = sig;
-
-    /*
-     * Don't overwrite the stored signal
-     * when push isn't ready.
-     */
-
-    return;
-  }
-
-  const ok =
-    await sendPush(sig,d);
-
-  if(ok){
-
-    localStorage.setItem(
-      "xau_last_notified_signal",
-      key
-    );
-  }
+  localStorage.setItem(
+    "xau_last_signal_key",
+    key
+  );
 
   lastSignal = sig;
 }
 
-async function sendPush(sig,d){
 
-  try{
-
-    const p =
-      d.tradePlan || {};
-
-    const title =
-      sig === "BUY"
-        ? "🟢 XAU/USD BUY SIGNAL"
-        : "🔴 XAU/USD SELL SIGNAL";
-
-    const body =
-      `${sig} • Entry ${fmt(p.entry)} • SL ${fmt(p.stopLoss)} • TP1 ${fmt(p.tp1)} • ${d.setupType || "Scalp setup"}`;
-
-    const r =
-      await fetch(
-        "/api/push-send",
-        {
-          method:"POST",
-          headers:{
-            "Content-Type":
-              "application/json"
-          },
-          body:JSON.stringify({
-            title,
-            body
-          })
-        }
-      );
-
-    if(!r.ok){
-
-      const errorText =
-        await r.text()
-          .catch(() => "");
-
-      console.error(
-        "push-send HTTP error:",
-        r.status,
-        errorText
-      );
-
-      return false;
-    }
-
-    return true;
-
-  }catch(e){
-
-    console.error(
-      "push-send",
-      e
-    );
-
-    return false;
-  }
-}
+/* =========================================================
+   BASE64 VAPID
+   ========================================================= */
 
 function urlBase64ToUint8Array(
   base64String
@@ -1422,6 +1308,11 @@ function urlBase64ToUint8Array(
       .map(c => c.charCodeAt(0))
   );
 }
+
+
+/* =========================================================
+   ENABLE PUSH
+   ========================================================= */
 
 async function enableNotifications(){
 
@@ -1462,14 +1353,21 @@ async function enableNotifications(){
     const reg =
       await navigator.serviceWorker.register(
         "/sw.js",
-        {scope:"/"}
+        {
+          scope:"/",
+          updateViaCache:"none"
+        }
       );
 
     await navigator.serviceWorker.ready;
 
+
+    /* GET VAPID PUBLIC KEY */
+
     const cr =
       await fetch(
-        "/api/push-config",
+        "/api/push-config?ts=" +
+        Date.now(),
         {
           cache:"no-store"
         }
@@ -1489,24 +1387,36 @@ async function enableNotifications(){
     if(!cfg.publicKey){
 
       throw new Error(
-        "VAPID public key kosong"
+        "VAPID_PUBLIC_KEY tidak dijumpai."
       );
     }
 
+
+    /* GET EXISTING SUBSCRIPTION */
+
     let sub =
       await reg.pushManager.getSubscription();
+
+
+    /* CREATE SUBSCRIPTION */
 
     if(!sub){
 
       sub =
         await reg.pushManager.subscribe({
+
           userVisibleOnly:true,
+
           applicationServerKey:
             urlBase64ToUint8Array(
               cfg.publicKey
             )
+
         });
     }
+
+
+    /* SEND SUBSCRIPTION TO BACKEND */
 
     const subscriptionJSON =
       sub.toJSON();
@@ -1516,10 +1426,12 @@ async function enableNotifications(){
         "/api/push-subscribe",
         {
           method:"POST",
+
           headers:{
             "Content-Type":
               "application/json"
           },
+
           body:
             JSON.stringify(
               subscriptionJSON
@@ -1536,9 +1448,16 @@ async function enableNotifications(){
       throw new Error(
         "push-subscribe gagal: HTTP " +
         sr.status +
-        (err ? " — " + err : "")
+        (
+          err
+            ? " — " + err
+            : ""
+        )
       );
     }
+
+
+    /* PUSH READY */
 
     pushReady = true;
 
@@ -1549,7 +1468,7 @@ async function enableNotifications(){
       "btn on";
 
     $("notificationStatus").textContent =
-      "Push aktif — menunggu signal BUY/SELL baru.";
+      "Push aktif — subscription berjaya disimpan.";
 
   }catch(e){
 
@@ -1557,6 +1476,8 @@ async function enableNotifications(){
       "Notification setup:",
       e
     );
+
+    pushReady = false;
 
     $("notificationStatus").textContent =
       "Push gagal: " +
@@ -1566,6 +1487,11 @@ async function enableNotifications(){
       "btn err";
   }
 }
+
+
+/* =========================================================
+   RESTORE PUSH
+   ========================================================= */
 
 async function restorePushState(){
 
@@ -1598,10 +1524,9 @@ async function restorePushState(){
       return;
     }
 
+
     /*
-     * Re-register existing subscription
-     * with backend in case Redis/server was
-     * restarted or the subscription changed.
+     * Re-save existing subscription.
      */
 
     const sr =
@@ -1609,10 +1534,12 @@ async function restorePushState(){
         "/api/push-subscribe",
         {
           method:"POST",
+
           headers:{
             "Content-Type":
               "application/json"
           },
+
           body:
             JSON.stringify(
               sub.toJSON()
@@ -1632,6 +1559,13 @@ async function restorePushState(){
 
       $("notificationStatus").textContent =
         "Push aktif — subscription dipulihkan.";
+
+    }else{
+
+      console.warn(
+        "Unable to restore push subscription:",
+        sr.status
+      );
     }
 
   }catch(e){
@@ -1642,6 +1576,11 @@ async function restorePushState(){
     );
   }
 }
+
+
+/* =========================================================
+   API
+   ========================================================= */
 
 async function fetchData(){
 
@@ -1667,9 +1606,13 @@ async function fetchData(){
       );
     }
 
+
+    /* CANDLES */
+
     candles =
       (d.candles || [])
         .map(x => ({
+
           time:
             x.time ||
             x.datetime,
@@ -1681,6 +1624,7 @@ async function fetchData(){
           low:+x.low,
 
           close:+x.close
+
         }))
         .filter(x =>
           [
@@ -1692,6 +1636,7 @@ async function fetchData(){
             Number.isFinite
           )
         );
+
 
     render(d);
 
@@ -1716,6 +1661,11 @@ async function fetchData(){
   }
 }
 
+
+/* =========================================================
+   START
+   ========================================================= */
+
 window.addEventListener(
   "resize",
   draw
@@ -1728,16 +1678,34 @@ setInterval(
   1000
 );
 
+
+/* SERVICE WORKER */
+
 if("serviceWorker" in navigator){
 
   navigator.serviceWorker
     .register(
       "/sw.js",
-      {scope:"/"}
+      {
+        scope:"/",
+        updateViaCache:"none"
+      }
     )
-    .then(() => {
+    .then(async reg => {
 
-      restorePushState();
+      try{
+
+        await reg.update();
+
+      }catch(e){
+
+        console.warn(
+          "SW update:",
+          e
+        );
+      }
+
+      await restorePushState();
 
     })
     .catch(err => {
@@ -1747,6 +1715,9 @@ if("serviceWorker" in navigator){
         err
       );
 
+      $("notificationStatus").textContent =
+        "Service Worker gagal: " +
+        err.message;
     });
 
 }else{
@@ -1755,7 +1726,13 @@ if("serviceWorker" in navigator){
     "Service Worker tidak disokong browser ini.";
 }
 
+
+/* FIRST API CALL */
+
 fetchData();
+
+
+/* REFRESH EVERY 15 SECONDS */
 
 setInterval(
   fetchData,
