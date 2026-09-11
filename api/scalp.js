@@ -2,6 +2,7 @@ import { sendPushToAll, redis } from "./push-lib.js";
 
 export default async function handler(req, res) {
   const API_KEY = process.env.TWELVE_DATA_API_KEY;
+
   if (!API_KEY) {
     return res.status(500).json({
       ok: false,
@@ -14,11 +15,24 @@ export default async function handler(req, res) {
     m5Size: 1500,
     m15Size: 500,
     h1Size: 300,
+
     cacheTTL: 60_000,
     priceTTL: 15_000,
+
     minM5: 250,
     minM15: 100,
-    minH1: 210
+    minH1: 210,
+
+    // H1 S/R
+    srLookback: 80,
+    srSwingStrength: 2,
+    srMaxLevels: 12,
+
+    // Jarak maksimum untuk dianggap dekat S/R
+    srATRMultiplier: 0.50,
+
+    // Minimum absolute distance XAU
+    srMinDistance: 2.0
   };
 
   globalThis.__XAU_REPAIR_CACHE__ ??= {
@@ -122,38 +136,6 @@ export default async function handler(req, res) {
     };
   }
 
-  function aggregate(data, minutes) {
-    const ms = minutes * 60_000;
-    const m = new Map();
-
-    for (const c of data) {
-      const t = new Date(c.time).getTime();
-      const k = Math.floor(t / ms) * ms;
-
-      if (!m.has(k)) {
-        m.set(k, {
-          time: new Date(k).toISOString(),
-          open: c.open,
-          high: c.high,
-          low: c.low,
-          close: c.close,
-          volume: c.volume || 0
-        });
-      } else {
-        const b = m.get(k);
-
-        b.high = Math.max(b.high, c.high);
-        b.low = Math.min(b.low, c.low);
-        b.close = c.close;
-        b.volume += c.volume || 0;
-      }
-    }
-
-    return [...m.values()].sort(
-      (a, b) => new Date(a.time) - new Date(b.time)
-    );
-  }
-
   function structure(d, lookback = 20) {
     if (d.length < lookback * 2) {
       return {
@@ -172,6 +154,7 @@ export default async function handler(req, res) {
 
     const high = Math.max(...r.map(x => x.high));
     const low = Math.min(...r.map(x => x.low));
+
     const previousHigh = Math.max(...p.map(x => x.high));
     const previousLow = Math.min(...p.map(x => x.low));
 
@@ -216,6 +199,7 @@ export default async function handler(req, res) {
 
     const rh = Math.max(...r.map(x => x.high));
     const rl = Math.min(...r.map(x => x.low));
+
     const ph = Math.max(...p.map(x => x.high));
     const pl = Math.min(...p.map(x => x.low));
 
@@ -266,15 +250,20 @@ export default async function handler(req, res) {
     };
   }
 
-  // =========================================================
-  // H1 SUPPORT / RESISTANCE
-  // =========================================================
+  /*
+   * ============================================================
+   * H1 SUPPORT / RESISTANCE ENGINE
+   * ============================================================
+   */
 
-  function findH1SupportResistance(d, price) {
-    if (!Array.isArray(d) || d.length < 30 || !Number.isFinite(price)) {
+  function findH1SupportResistance(data, price, h1ATR) {
+    const source = data.slice(-CFG.srLookback);
+
+    if (source.length < 20) {
       return {
         support: null,
         resistance: null,
+        levels: [],
         supportDistance: null,
         resistanceDistance: null,
         supportDistancePct: null,
@@ -285,190 +274,255 @@ export default async function handler(req, res) {
         nearSupport: false,
         nearResistance: false,
         atSupport: false,
-        atResistance: false
+        atResistance: false,
+        signalContext: "NO S/R DATA"
       };
     }
 
-    const swingHighs = [];
-    const swingLows = [];
+    const levels = [];
 
-    // Detect H1 swing highs / lows
-    for (let i = 2; i < d.length - 2; i++) {
-      const c = d[i];
+    // Swing highs
+    for (
+      let i = CFG.srSwingStrength;
+      i < source.length - CFG.srSwingStrength;
+      i++
+    ) {
+      const c = source[i];
 
-      if (
-        c.high >= d[i - 1].high &&
-        c.high >= d[i - 2].high &&
-        c.high >= d[i + 1].high &&
-        c.high >= d[i + 2].high
+      let isHigh = true;
+
+      for (
+        let j = 1;
+        j <= CFG.srSwingStrength;
+        j++
       ) {
-        swingHighs.push(c.high);
-      }
-
-      if (
-        c.low <= d[i - 1].low &&
-        c.low <= d[i - 2].low &&
-        c.low <= d[i + 1].low &&
-        c.low <= d[i + 2].low
-      ) {
-        swingLows.push(c.low);
-      }
-    }
-
-    // Recent H1 range
-    const recent = d.slice(-80);
-
-    if (recent.length) {
-      swingHighs.push(
-        Math.max(...recent.map(x => x.high))
-      );
-
-      swingLows.push(
-        Math.min(...recent.map(x => x.low))
-      );
-    }
-
-    // Cluster nearby levels
-    function clusterLevels(levels) {
-      const sorted = [
-        ...new Set(
-          levels
-            .filter(Number.isFinite)
-            .map(x => Number(x.toFixed(2)))
-        )
-      ].sort((a, b) => a - b);
-
-      const clusters = [];
-
-      for (const level of sorted) {
-        const last = clusters.at(-1);
-
-        // Gold levels within $2.50 = same zone
-        if (last && Math.abs(level - last.price) <= 2.5) {
-          last.values.push(level);
-
-          last.price =
-            last.values.reduce((a, b) => a + b, 0) /
-            last.values.length;
-        } else {
-          clusters.push({
-            price: level,
-            values: [level]
-          });
+        if (
+          c.high <= source[i - j].high ||
+          c.high <= source[i + j].high
+        ) {
+          isHigh = false;
+          break;
         }
       }
 
-      return clusters.map(x => ({
-        price: Number(x.price.toFixed(2)),
-        strength: x.values.length
-      }));
+      if (isHigh) {
+        levels.push({
+          price: c.high,
+          type: "RESISTANCE",
+          index: i
+        });
+      }
     }
 
-    const resistanceLevels = clusterLevels(
-      swingHighs.filter(x => x > price)
+    // Swing lows
+    for (
+      let i = CFG.srSwingStrength;
+      i < source.length - CFG.srSwingStrength;
+      i++
+    ) {
+      const c = source[i];
+
+      let isLow = true;
+
+      for (
+        let j = 1;
+        j <= CFG.srSwingStrength;
+        j++
+      ) {
+        if (
+          c.low >= source[i - j].low ||
+          c.low >= source[i + j].low
+        ) {
+          isLow = false;
+          break;
+        }
+      }
+
+      if (isLow) {
+        levels.push({
+          price: c.low,
+          type: "SUPPORT",
+          index: i
+        });
+      }
+    }
+
+    /*
+     * Tambah high/low structure sebagai fallback.
+     */
+    levels.push({
+      price: Math.max(...source.map(x => x.high)),
+      type: "RESISTANCE",
+      index: source.length - 1
+    });
+
+    levels.push({
+      price: Math.min(...source.map(x => x.low)),
+      type: "SUPPORT",
+      index: source.length - 1
+    });
+
+    /*
+     * Group level yang terlalu dekat.
+     */
+    const grouped = [];
+
+    const groupingDistance = Math.max(
+      (h1ATR || 10) * 0.20,
+      1.5
     );
 
-    const supportLevels = clusterLevels(
-      swingLows.filter(x => x < price)
+    for (const level of levels) {
+      const existing = grouped.find(
+        x =>
+          x.type === level.type &&
+          Math.abs(x.price - level.price) <= groupingDistance
+      );
+
+      if (existing) {
+        existing.prices.push(level.price);
+        existing.touches += 1;
+        existing.price =
+          existing.prices.reduce((a, b) => a + b, 0) /
+          existing.prices.length;
+      } else {
+        grouped.push({
+          type: level.type,
+          price: level.price,
+          prices: [level.price],
+          touches: 1
+        });
+      }
+    }
+
+    const supports = grouped
+      .filter(x => x.type === "SUPPORT" && x.price < price)
+      .sort((a, b) => b.price - a.price);
+
+    const resistances = grouped
+      .filter(x => x.type === "RESISTANCE" && x.price > price)
+      .sort((a, b) => a.price - b.price);
+
+    const support = supports[0] || null;
+    const resistance = resistances[0] || null;
+
+    const supportDistance =
+      support ? price - support.price : null;
+
+    const resistanceDistance =
+      resistance ? resistance.price - price : null;
+
+    const threshold = Math.max(
+      (h1ATR || 10) * CFG.srATRMultiplier,
+      CFG.srMinDistance
     );
-
-    const support = supportLevels.length
-      ? supportLevels.sort(
-          (a, b) => b.price - a.price
-        )[0]
-      : null;
-
-    const resistance = resistanceLevels.length
-      ? resistanceLevels.sort(
-          (a, b) => a.price - b.price
-        )[0]
-      : null;
-
-    const supportDistance = support
-      ? price - support.price
-      : null;
-
-    const resistanceDistance = resistance
-      ? resistance.price - price
-      : null;
-
-    const supportDistancePct = support
-      ? (supportDistance / price) * 100
-      : null;
-
-    const resistanceDistancePct = resistance
-      ? (resistanceDistance / price) * 100
-      : null;
-
-    // Dynamic distance threshold
-    const threshold = clamp(
-      price * 0.0012,
-      2.5,
-      8
-    );
-
-    const atSupport =
-      supportDistance != null &&
-      supportDistance <= threshold * 0.45;
 
     const nearSupport =
       supportDistance != null &&
       supportDistance <= threshold;
 
-    const atResistance =
-      resistanceDistance != null &&
-      resistanceDistance <= threshold * 0.45;
-
     const nearResistance =
       resistanceDistance != null &&
       resistanceDistance <= threshold;
 
-    let position = "MID-ZONE";
-    let zone = "MID-ZONE";
+    const atSupport =
+      supportDistance != null &&
+      supportDistance <= threshold * 0.35;
+
+    const atResistance =
+      resistanceDistance != null &&
+      resistanceDistance <= threshold * 0.35;
+
+    let position = "BETWEEN S/R";
+    let zone = "NEUTRAL";
 
     if (atSupport) {
       position = "AT SUPPORT";
       zone = "SUPPORT";
-    } else if (nearSupport) {
-      position = "NEAR SUPPORT";
-      zone = "SUPPORT";
     } else if (atResistance) {
       position = "AT RESISTANCE";
       zone = "RESISTANCE";
+    } else if (nearSupport && nearResistance) {
+      position = "BETWEEN S/R";
+      zone = "TIGHT RANGE";
+    } else if (nearSupport) {
+      position = "NEAR SUPPORT";
+      zone = "SUPPORT";
     } else if (nearResistance) {
       position = "NEAR RESISTANCE";
       zone = "RESISTANCE";
     }
 
+    let signalContext = "NO S/R WARNING";
+
+    if (nearResistance) {
+      signalContext = "RESISTANCE NEARBY";
+    }
+
+    if (nearSupport) {
+      signalContext = "SUPPORT NEARBY";
+    }
+
+    if (nearSupport && nearResistance) {
+      signalContext = "TIGHT S/R RANGE";
+    }
+
     return {
       support: support
         ? {
-            price: support.price,
-            strength: support.strength
+            price: Number(support.price.toFixed(2)),
+            strength: support.touches
           }
         : null,
 
       resistance: resistance
         ? {
-            price: resistance.price,
-            strength: resistance.strength
+            price: Number(resistance.price.toFixed(2)),
+            strength: resistance.touches
           }
         : null,
 
-      supportDistance,
-      resistanceDistance,
-      supportDistancePct,
-      resistanceDistancePct,
+      levels: grouped
+        .sort((a, b) => Math.abs(a.price - price) - Math.abs(b.price - price))
+        .slice(0, CFG.srMaxLevels)
+        .map(x => ({
+          price: Number(x.price.toFixed(2)),
+          type: x.type,
+          strength: x.touches
+        })),
 
-      threshold,
+      supportDistance:
+        supportDistance != null
+          ? Number(supportDistance.toFixed(2))
+          : null,
+
+      resistanceDistance:
+        resistanceDistance != null
+          ? Number(resistanceDistance.toFixed(2))
+          : null,
+
+      supportDistancePct:
+        supportDistance != null
+          ? Number((supportDistance / price * 100).toFixed(3))
+          : null,
+
+      resistanceDistancePct:
+        resistanceDistance != null
+          ? Number((resistanceDistance / price * 100).toFixed(3))
+          : null,
+
+      threshold: Number(threshold.toFixed(2)),
 
       position,
       zone,
 
       nearSupport,
       nearResistance,
+
       atSupport,
-      atResistance
+      atResistance,
+
+      signalContext
     };
   }
 
@@ -495,29 +549,29 @@ export default async function handler(req, res) {
       );
     }
 
-    const data = (j.values || [])
-      .reverse()
-      .map(x => ({
-        time: x.datetime,
-        open: +x.open,
-        high: +x.high,
-        low: +x.low,
-        close: +x.close,
-        volume: +x.volume || 0
-      }))
-      .filter(x =>
-        [x.open, x.high, x.low, x.close]
-          .every(Number.isFinite)
-      );
+    const data =
+      (j.values || [])
+        .reverse()
+        .map(x => ({
+          time: x.datetime,
+          open: +x.open,
+          high: +x.high,
+          low: +x.low,
+          close: +x.close,
+          volume: +x.volume || 0
+        }))
+        .filter(x =>
+          [x.open, x.high, x.low, x.close]
+            .every(Number.isFinite)
+        );
 
-    if (
-      data.length <
-      ({
-        5: CFG.minM5,
-        "15": CFG.minM15,
-        60: CFG.minH1
-      }[interval])
-    ) {
+    const minRequired = {
+      "5min": CFG.minM5,
+      "15min": CFG.minM15,
+      "1h": CFG.minH1
+    }[interval];
+
+    if (data.length < minRequired) {
       throw new Error(
         `Data ${interval} tak cukup: ${data.length}`
       );
@@ -534,6 +588,12 @@ export default async function handler(req, res) {
   let m5, m15, h1, livePrice, candlePrice;
 
   try {
+    /*
+     * ============================================================
+     * LOAD MARKET DATA
+     * ============================================================
+     */
+
     [m5, m15, h1] = await Promise.all([
       series("5min", CFG.m5Size, "m5"),
       series("15min", CFG.m15Size, "m15"),
@@ -572,16 +632,20 @@ export default async function handler(req, res) {
       C.priceAt = Date.now();
     }
 
+    /*
+     * ============================================================
+     * H1
+     * ============================================================
+     */
+
     const c5 = m5.map(x => x.close);
     const c15 = m15.map(x => x.close);
     const c1 = h1.map(x => x.close);
 
-    // =========================================================
-    // H1
-    // =========================================================
-
     const h1EMA50 = ema(c1, 50);
     const h1EMA200 = ema(c1, 200);
+    const h1ATR = atr(h1);
+
     const h1Struct = structure(h1, 20);
 
     let h1Direction = "WAIT";
@@ -603,15 +667,24 @@ export default async function handler(req, res) {
       }
     }
 
-    // H1 Support / Resistance
-    const h1SR = findH1SupportResistance(
-      h1,
-      livePrice
-    );
+    /*
+     * ============================================================
+     * H1 SUPPORT / RESISTANCE
+     * ============================================================
+     */
 
-    // =========================================================
-    // M15
-    // =========================================================
+    const h1SupportResistance =
+      findH1SupportResistance(
+        h1,
+        livePrice,
+        h1ATR
+      );
+
+    /*
+     * ============================================================
+     * M15
+     * ============================================================
+     */
 
     const m15EMA20 = ema(c15, 20);
     const m15EMA50 = ema(c15, 50);
@@ -628,8 +701,8 @@ export default async function handler(req, res) {
     let m15Buy = 0;
     let m15Sell = 0;
 
-    let rb = [];
-    let rs = [];
+    const rb = [];
+    const rs = [];
 
     if (
       m15EMA20 != null &&
@@ -659,18 +732,12 @@ export default async function handler(req, res) {
     }
 
     if (m15RSI != null) {
-      if (
-        m15RSI >= 50 &&
-        m15RSI <= 72
-      ) {
+      if (m15RSI >= 50 && m15RSI <= 72) {
         m15Buy += 10;
         rb.push("RSI bullish");
       }
 
-      if (
-        m15RSI >= 28 &&
-        m15RSI < 50
-      ) {
+      if (m15RSI >= 28 && m15RSI < 50) {
         m15Sell += 10;
         rs.push("RSI bearish");
       }
@@ -754,9 +821,11 @@ export default async function handler(req, res) {
           ? "SELL"
           : "WAIT";
 
-    // =========================================================
-    // M5
-    // =========================================================
+    /*
+     * ============================================================
+     * M5
+     * ============================================================
+     */
 
     const m5EMA9 = ema(c5, 9);
     const m5EMA20 = ema(c5, 20);
@@ -774,8 +843,8 @@ export default async function handler(req, res) {
     let m5Buy = 0;
     let m5Sell = 0;
 
-    let r5b = [];
-    let r5s = [];
+    const r5b = [];
+    const r5s = [];
 
     if (
       m5EMA20 != null &&
@@ -805,18 +874,12 @@ export default async function handler(req, res) {
     }
 
     if (m5RSI != null) {
-      if (
-        m5RSI >= 50 &&
-        m5RSI < 75
-      ) {
+      if (m5RSI >= 50 && m5RSI < 75) {
         m5Buy += 10;
         r5b.push("RSI bullish");
       }
 
-      if (
-        m5RSI > 25 &&
-        m5RSI < 50
-      ) {
+      if (m5RSI > 25 && m5RSI < 50) {
         m5Sell += 10;
         r5s.push("RSI bearish");
       }
@@ -900,9 +963,64 @@ export default async function handler(req, res) {
           ? "SELL"
           : "WAIT";
 
-    // =========================================================
-    // FINAL SIGNAL
-    // =========================================================
+    /*
+     * ============================================================
+     * RAW M15 + M5 ALIGNMENT
+     * ============================================================
+     */
+
+    const rawBuyAlignment =
+      m15BuyConfirmed &&
+      m5BuyTriggered;
+
+    const rawSellAlignment =
+      m15SellConfirmed &&
+      m5SellTriggered;
+
+    /*
+     * ============================================================
+     * S/R ENTRY FILTER
+     *
+     * BUY:
+     * - Jangan BUY terlalu dekat H1 resistance.
+     *
+     * SELL:
+     * - Jangan SELL terlalu dekat H1 support.
+     *
+     * BUY dekat support = good context.
+     * SELL dekat resistance = good context.
+     * ============================================================
+     */
+
+    let srBuyAllowed = true;
+    let srSellAllowed = true;
+
+    let srBuyContext = "NEUTRAL";
+    let srSellContext = "NEUTRAL";
+
+    if (h1SupportResistance.nearResistance) {
+      srBuyAllowed = false;
+      srBuyContext = "BLOCKED_NEAR_RESISTANCE";
+    }
+
+    if (h1SupportResistance.nearSupport) {
+      srSellAllowed = false;
+      srSellContext = "BLOCKED_NEAR_SUPPORT";
+    }
+
+    if (h1SupportResistance.nearSupport) {
+      srBuyContext = "BUY_NEAR_SUPPORT";
+    }
+
+    if (h1SupportResistance.nearResistance) {
+      srSellContext = "SELL_NEAR_RESISTANCE";
+    }
+
+    /*
+     * ============================================================
+     * FINAL SIGNAL
+     * ============================================================
+     */
 
     let signal = "WAIT";
     let status = "WAIT";
@@ -920,65 +1038,77 @@ export default async function handler(req, res) {
 
     let reasons = [];
 
-    if (
-      m15BuyConfirmed &&
-      m5BuyTriggered
-    ) {
-      signal = "BUY";
-      status = "ENTRY";
-      execution = "READY";
-      setupType = "M15+M5 ALIGNMENT";
+    if (rawBuyAlignment) {
+      if (srBuyAllowed) {
+        signal = "BUY";
+        status = "ENTRY";
+        execution = "READY";
+        setupType = "M15+M5 ALIGNMENT + H1 S/R";
+        score = Math.round(
+          (m15Buy + m5Buy) / 2
+        );
 
-      score = Math.round(
-        (m15Buy + m5Buy) / 2
-      );
+        reasons = [
+          "M15 BUY confirmed",
+          "M5 BUY trigger confirmed",
+          "M15 + M5 aligned",
+          `H1 S/R: ${h1SupportResistance.position}`,
+          h1SupportResistance.nearSupport
+            ? "BUY near H1 support"
+            : "H1 resistance clear"
+        ];
+      } else {
+        reasons = [
+          "M15 BUY confirmed",
+          "M5 BUY trigger confirmed",
+          "BUY BLOCKED",
+          "Too close to H1 resistance",
+          `Resistance ${h1SupportResistance.resistance?.price ?? "N/A"}`
+        ];
+      }
+    } else if (rawSellAlignment) {
+      if (srSellAllowed) {
+        signal = "SELL";
+        status = "ENTRY";
+        execution = "READY";
+        setupType = "M15+M5 ALIGNMENT + H1 S/R";
+        score = Math.round(
+          (m15Sell + m5Sell) / 2
+        );
 
-      reasons = [
-        "M15 BUY confirmed",
-        "M5 BUY trigger confirmed",
-        "M15 + M5 aligned"
-      ];
-    }
-
-    else if (
-      m15SellConfirmed &&
-      m5SellTriggered
-    ) {
-      signal = "SELL";
-      status = "ENTRY";
-      execution = "READY";
-      setupType = "M15+M5 ALIGNMENT";
-
-      score = Math.round(
-        (m15Sell + m5Sell) / 2
-      );
-
-      reasons = [
-        "M15 SELL confirmed",
-        "M5 SELL trigger confirmed",
-        "M15 + M5 aligned"
-      ];
-    }
-
-    else if (
+        reasons = [
+          "M15 SELL confirmed",
+          "M5 SELL trigger confirmed",
+          "M15 + M5 aligned",
+          `H1 S/R: ${h1SupportResistance.position}`,
+          h1SupportResistance.nearResistance
+            ? "SELL near H1 resistance"
+            : "H1 support clear"
+        ];
+      } else {
+        reasons = [
+          "M15 SELL confirmed",
+          "M5 SELL trigger confirmed",
+          "SELL BLOCKED",
+          "Too close to H1 support",
+          `Support ${h1SupportResistance.support?.price ?? "N/A"}`
+        ];
+      }
+    } else if (
       m15BuyConfirmed &&
       m5SellTriggered
     ) {
       reasons = [
         "M15 BUY vs M5 SELL — conflicting"
       ];
-    }
-
-    else if (
+    } else if (
       m15SellConfirmed &&
       m5BuyTriggered
     ) {
       reasons = [
         "M15 SELL vs M5 BUY — conflicting"
       ];
-    }
-
-    else if (
+    } else if (
       m15BuyConfirmed ||
       m15SellConfirmed ||
       m5BuyTriggered ||
@@ -987,17 +1117,17 @@ export default async function handler(req, res) {
       reasons = [
         "Waiting for timeframe alignment"
       ];
-    }
-
-    else {
+    } else {
       reasons = [
         "M15 + M5 not aligned"
       ];
     }
 
-    // =========================================================
-    // H1 HOLD
-    // =========================================================
+    /*
+     * ============================================================
+     * H1 HOLD
+     * ============================================================
+     */
 
     const holdBias =
       h1Direction === "BUY"
@@ -1031,83 +1161,11 @@ export default async function handler(req, res) {
           ? "NEUTRAL"
           : "COUNTER_H1";
 
-    // =========================================================
-    // S/R SIGNAL CONTEXT
-    // =========================================================
-
-    let srSignalContext = "NO S/R WARNING";
-
-    if (signal === "BUY") {
-      if (h1SR.atSupport) {
-        srSignalContext = "BUY AT H1 SUPPORT";
-        reasons.push(
-          `H1 SUPPORT ${h1SR.support.price.toFixed(2)}`
-        );
-      }
-
-      else if (h1SR.nearSupport) {
-        srSignalContext = "BUY NEAR H1 SUPPORT";
-        reasons.push(
-          `Near H1 SUPPORT ${h1SR.support.price.toFixed(2)}`
-        );
-      }
-
-      else if (h1SR.atResistance) {
-        srSignalContext = "BUY AT H1 RESISTANCE";
-        reasons.push(
-          `WARNING: H1 RESISTANCE ${h1SR.resistance.price.toFixed(2)}`
-        );
-      }
-
-      else if (h1SR.nearResistance) {
-        srSignalContext = "BUY NEAR H1 RESISTANCE";
-        reasons.push(
-          `WARNING: near H1 RESISTANCE ${h1SR.resistance.price.toFixed(2)}`
-        );
-      }
-
-      else {
-        srSignalContext = "BUY MID-ZONE";
-      }
-    }
-
-    else if (signal === "SELL") {
-      if (h1SR.atResistance) {
-        srSignalContext = "SELL AT H1 RESISTANCE";
-        reasons.push(
-          `H1 RESISTANCE ${h1SR.resistance.price.toFixed(2)}`
-        );
-      }
-
-      else if (h1SR.nearResistance) {
-        srSignalContext = "SELL NEAR H1 RESISTANCE";
-        reasons.push(
-          `Near H1 RESISTANCE ${h1SR.resistance.price.toFixed(2)}`
-        );
-      }
-
-      else if (h1SR.atSupport) {
-        srSignalContext = "SELL AT H1 SUPPORT";
-        reasons.push(
-          `WARNING: H1 SUPPORT ${h1SR.support.price.toFixed(2)}`
-        );
-      }
-
-      else if (h1SR.nearSupport) {
-        srSignalContext = "SELL NEAR H1 SUPPORT";
-        reasons.push(
-          `WARNING: near H1 SUPPORT ${h1SR.support.price.toFixed(2)}`
-        );
-      }
-
-      else {
-        srSignalContext = "SELL MID-ZONE";
-      }
-    }
-
-    // =========================================================
-    // TRADE PLAN
-    // =========================================================
+    /*
+     * ============================================================
+     * TRADE PLAN
+     * ============================================================
+     */
 
     let entry = null;
     let stopLoss = null;
@@ -1132,9 +1190,7 @@ export default async function handler(req, res) {
         tp1 = entry + risk * 1.5;
         tp2 = entry + risk * 2.5;
         tp3 = entry + risk * 4;
-      }
-
-      else {
+      } else {
         stopLoss = entry + risk;
         tp1 = entry - risk * 1.5;
         tp2 = entry - risk * 2.5;
@@ -1144,9 +1200,11 @@ export default async function handler(req, res) {
       rr = "1 : 1.5 / 2.5 / 4.0";
     }
 
-    // =========================================================
-    // PUSH NOTIFICATION
-    // =========================================================
+    /*
+     * ============================================================
+     * PUSH NOTIFICATION
+     * ============================================================
+     */
 
     const signalCandle =
       m5.at(-1)?.time ||
@@ -1173,6 +1231,15 @@ export default async function handler(req, res) {
               ? "🟢 XAU/USD BUY ENTRY"
               : "🔴 XAU/USD SELL ENTRY";
 
+          const srText =
+            signal === "BUY"
+              ? h1SupportResistance.nearSupport
+                ? `H1 SUPPORT ${h1SupportResistance.support?.price}`
+                : "H1 RESISTANCE CLEAR"
+              : h1SupportResistance.nearResistance
+                ? `H1 RESISTANCE ${h1SupportResistance.resistance?.price}`
+                : "H1 SUPPORT CLEAR";
+
           const body = [
             `${signal} • Score ${score}/100`,
             `Entry ${entry?.toFixed(2)}`,
@@ -1180,14 +1247,9 @@ export default async function handler(req, res) {
             `TP1 ${tp1?.toFixed(2)}`,
             `TP2 ${tp2?.toFixed(2)}`,
             `TP3 ${tp3?.toFixed(2)}`,
-            `${setupType} • ${holdPermission}`,
-            `H1 S/R: ${h1SR.position}`,
-            h1SR.support
-              ? `Support ${h1SR.support.price.toFixed(2)} (${h1SR.supportDistance.toFixed(2)} away)`
-              : "Support N/A",
-            h1SR.resistance
-              ? `Resistance ${h1SR.resistance.price.toFixed(2)} (${h1SR.resistanceDistance.toFixed(2)} away)`
-              : "Resistance N/A"
+            `${setupType}`,
+            `${srText}`,
+            `${holdPermission}`
           ].join(" • ");
 
           const delivery =
@@ -1206,9 +1268,7 @@ export default async function handler(req, res) {
             );
           }
         }
-      }
-
-      catch (pushError) {
+      } catch (pushError) {
         console.error(
           "Automatic push error:",
           pushError
@@ -1216,12 +1276,15 @@ export default async function handler(req, res) {
       }
     }
 
-    // =========================================================
-    // RESPONSE
-    // =========================================================
+    /*
+     * ============================================================
+     * RESPONSE
+     * ============================================================
+     */
 
     return res.status(200).json({
       ok: true,
+
       symbol: CFG.symbol,
 
       price: livePrice,
@@ -1253,67 +1316,48 @@ export default async function handler(req, res) {
       signalKey,
       signalCandle,
 
-      // =====================================================
-      // H1 + SUPPORT / RESISTANCE
-      // =====================================================
-
+      /*
+       * H1
+       */
       h1: {
         direction: h1Direction,
 
         ema50: h1EMA50,
         ema200: h1EMA200,
+        atr: h1ATR,
 
         holdBias,
         holdPermission,
 
         structure: h1Struct,
 
-        supportResistance: {
-          support: h1SR.support,
-          resistance: h1SR.resistance,
+        /*
+         * MAIN H1 S/R
+         */
+        supportResistance:
+          h1SupportResistance,
 
-          supportDistance:
-            h1SR.supportDistance,
+        /*
+         * S/R FILTER
+         */
+        srFilter: {
+          buyAllowed: srBuyAllowed,
+          sellAllowed: srSellAllowed,
 
-          resistanceDistance:
-            h1SR.resistanceDistance,
+          buyContext: srBuyContext,
+          sellContext: srSellContext,
 
-          supportDistancePct:
-            h1SR.supportDistancePct,
+          buyBlocked:
+            !srBuyAllowed,
 
-          resistanceDistancePct:
-            h1SR.resistanceDistancePct,
-
-          threshold:
-            h1SR.threshold,
-
-          position:
-            h1SR.position,
-
-          zone:
-            h1SR.zone,
-
-          nearSupport:
-            h1SR.nearSupport,
-
-          nearResistance:
-            h1SR.nearResistance,
-
-          atSupport:
-            h1SR.atSupport,
-
-          atResistance:
-            h1SR.atResistance,
-
-          signalContext:
-            srSignalContext
+          sellBlocked:
+            !srSellAllowed
         }
       },
 
-      // =====================================================
-      // M15
-      // =====================================================
-
+      /*
+       * M15
+       */
       m15: {
         direction: m15Confirmation,
         confirmation: m15Confirmation,
@@ -1321,8 +1365,11 @@ export default async function handler(req, res) {
         buyScore: m15Buy,
         sellScore: m15Sell,
 
-        buyConfirmed: m15BuyConfirmed,
-        sellConfirmed: m15SellConfirmed,
+        buyConfirmed:
+          m15BuyConfirmed,
+
+        sellConfirmed:
+          m15SellConfirmed,
 
         ema20: m15EMA20,
         ema50: m15EMA50,
@@ -1342,10 +1389,9 @@ export default async function handler(req, res) {
         sellReasons: rs
       },
 
-      // =====================================================
-      // M5
-      // =====================================================
-
+      /*
+       * M5
+       */
       m5: {
         trigger: m5Trigger,
         confirmation: m5Trigger,
@@ -1353,8 +1399,11 @@ export default async function handler(req, res) {
         buyScore: m5Buy,
         sellScore: m5Sell,
 
-        buyTriggered: m5BuyTriggered,
-        sellTriggered: m5SellTriggered,
+        buyTriggered:
+          m5BuyTriggered,
+
+        sellTriggered:
+          m5SellTriggered,
 
         ema9: m5EMA9,
         ema20: m5EMA20,
@@ -1375,10 +1424,9 @@ export default async function handler(req, res) {
         sellReasons: r5s
       },
 
-      // =====================================================
-      // TRADE PLAN
-      // =====================================================
-
+      /*
+       * FINAL TRADE PLAN
+       */
       tradePlan: {
         entry,
         stopLoss,
@@ -1386,6 +1434,57 @@ export default async function handler(req, res) {
         tp2,
         tp3,
         rr
+      },
+
+      /*
+       * S/R SUMMARY
+       */
+      srAnalysis: {
+        timeframe: "H1",
+
+        currentPrice: livePrice,
+
+        support:
+          h1SupportResistance.support,
+
+        resistance:
+          h1SupportResistance.resistance,
+
+        position:
+          h1SupportResistance.position,
+
+        zone:
+          h1SupportResistance.zone,
+
+        supportDistance:
+          h1SupportResistance.supportDistance,
+
+        resistanceDistance:
+          h1SupportResistance.resistanceDistance,
+
+        threshold:
+          h1SupportResistance.threshold,
+
+        nearSupport:
+          h1SupportResistance.nearSupport,
+
+        nearResistance:
+          h1SupportResistance.nearResistance,
+
+        atSupport:
+          h1SupportResistance.atSupport,
+
+        atResistance:
+          h1SupportResistance.atResistance,
+
+        signalContext:
+          h1SupportResistance.signalContext,
+
+        buyAllowed: srBuyAllowed,
+        sellAllowed: srSellAllowed,
+
+        buyContext: srBuyContext,
+        sellContext: srSellContext
       },
 
       data: {
