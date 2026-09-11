@@ -4,11 +4,14 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#0f172a">
+
 <link rel="manifest" href="/manifest.json">
 <link rel="apple-touch-icon" href="/icon.png">
+
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<title>XAU/USD Pro Sniper — V11 Fixed Trade Plan</title>
+
+<title>XAU/USD Pro Sniper — V12 Fixed Trade Plan</title>
 
 <style>
 :root{
@@ -22,6 +25,7 @@
   --green:#15803d;
   --red:#dc2626;
   --yellow:#a16207;
+  --purple:#7c3aed;
   --dark:#0f172a
 }
 
@@ -57,7 +61,7 @@ header p{
   font-size:.72rem
 }
 
-.card,.status,.sessions,.plan,.notify,.diag{
+.card,.status,.sessions,.plan,.notify,.diag,.setupbox{
   background:var(--card);
   border:1px solid var(--border);
   border-radius:10px;
@@ -86,6 +90,7 @@ header p{
 .good{color:var(--green)}
 .bad{color:var(--red)}
 .wait{color:var(--yellow)}
+.purple{color:var(--purple)}
 
 .sessiongrid{
   display:grid;
@@ -201,7 +206,7 @@ header p{
 }
 
 .neutral{
-  color:#7c3aed;
+  color:var(--purple);
   background:#f3e8ff;
   border-color:#a78bfa
 }
@@ -215,12 +220,17 @@ header p{
 .metric{
   display:flex;
   justify-content:space-between;
+  gap:10px;
   padding:6px 0;
   border-bottom:1px solid #f0f2f5;
   font-size:.74rem
 }
 
 .metric:last-child{border-bottom:0}
+
+.metric strong{
+  text-align:right
+}
 
 .plan{
   background:var(--sub)
@@ -260,6 +270,37 @@ header p{
   transition:.2s
 }
 
+.setupbox{
+  background:#fff
+}
+
+.setupgrid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:9px
+}
+
+.setup{
+  border:1px solid var(--border);
+  border-radius:8px;
+  padding:9px;
+  background:#fafafa
+}
+
+.setup h4{
+  margin:0 0 7px;
+  font-size:.75rem
+}
+
+.setup .metric{
+  font-size:.68rem
+}
+
+.target{
+  background:#eff6ff;
+  border-color:#93c5fd
+}
+
 .diaggrid{
   display:grid;
   grid-template-columns:repeat(2,1fr);
@@ -269,6 +310,7 @@ header p{
 .d{
   display:flex;
   justify-content:space-between;
+  gap:8px;
   background:#111827;
   color:#fff;
   border-radius:7px;
@@ -299,6 +341,10 @@ header p{
     grid-template-columns:1fr 1fr
   }
 
+  .setupgrid{
+    grid-template-columns:1fr
+  }
+
   .chartbox{
     height:230px
   }
@@ -312,7 +358,10 @@ header p{
 
 <header>
 <h1>XAU/USD PRO SNIPER</h1>
-<p>V11 • H1 Bias → M15 Confirmation → M5 Trigger → Fixed Entry/SL/TP → Server Push</p>
+<p>
+V12 • H1 Bias → M15 Confirmation → M5 Trigger →
+Reversal/Continuation → H1 S/R Target → Fixed Entry/SL/TP → Server Push
+</p>
 </header>
 
 <div class="status">
@@ -338,6 +387,7 @@ header p{
 </div>
 
 </div>
+
 
 <div class="sessions">
 
@@ -365,6 +415,7 @@ NEW YORK
 </div>
 </div>
 
+
 <div class="notify">
 
 <div>
@@ -383,6 +434,7 @@ onclick="enableNotifications()">
 
 </div>
 
+
 <div class="card">
 
 <h3 style="margin:0 0 8px;color:var(--blue);font-size:.82rem">
@@ -399,6 +451,7 @@ XAU/USD • LIVE M5 • LAST 60 CANDLES
 
 </div>
 </div>
+
 
 <div class="card master">
 
@@ -426,6 +479,7 @@ Entry Quality:
 </div>
 
 </div>
+
 
 <div class="plan">
 
@@ -483,7 +537,128 @@ SETUP
 </div>
 </div>
 
+
+<div class="setupbox">
+
+<h3 style="margin:0 0 8px;color:var(--blue);font-size:.82rem">
+🧠 V12 SETUP ANALYSIS
+</h3>
+
+<div class="setupgrid">
+
+<div class="setup">
+
+<h4 class="good">🟢 BUY ANALYSIS</h4>
+
+<div class="metric">
+<span>Aligned</span>
+<strong id="buyAligned">--</strong>
+</div>
+
+<div class="metric">
+<span>Continuation</span>
+<strong id="buyContinuation">--</strong>
+</div>
+
+<div class="metric">
+<span>Reversal</span>
+<strong id="buyReversal">--</strong>
+</div>
+
+<div class="metric">
+<span>Type</span>
+<strong id="buyType">--</strong>
+</div>
+
+<div class="metric">
+<span>Location</span>
+<strong id="buyLocation">--</strong>
+</div>
+
+<div class="metric target">
+<span>H1 S/R Target</span>
+<strong id="buyTarget">--</strong>
+</div>
+
+</div>
+
+
+<div class="setup">
+
+<h4 class="bad">🔴 SELL ANALYSIS</h4>
+
+<div class="metric">
+<span>Aligned</span>
+<strong id="sellAligned">--</strong>
+</div>
+
+<div class="metric">
+<span>Continuation</span>
+<strong id="sellContinuation">--</strong>
+</div>
+
+<div class="metric">
+<span>Reversal</span>
+<strong id="sellReversal">--</strong>
+</div>
+
+<div class="metric">
+<span>Type</span>
+<strong id="sellType">--</strong>
+</div>
+
+<div class="metric">
+<span>Location</span>
+<strong id="sellLocation">--</strong>
+</div>
+
+<div class="metric target">
+<span>H1 S/R Target</span>
+<strong id="sellTarget">--</strong>
+</div>
+
+</div>
+
+</div>
+</div>
+
+
+<div class="card">
+
+<h3 style="margin:0 0 8px;color:var(--blue);font-size:.82rem">
+🎯 ACTIVE H1 S/R TARGET
+</h3>
+
+<div class="metric">
+<span>Target</span>
+<strong id="activeTarget">--</strong>
+</div>
+
+<div class="metric">
+<span>Target Type</span>
+<strong id="activeTargetType">--</strong>
+</div>
+
+<div class="metric">
+<span>Distance</span>
+<strong id="activeTargetDistance">--</strong>
+</div>
+
+<div class="metric">
+<span>Valid</span>
+<strong id="activeTargetValid">--</strong>
+</div>
+
+<div class="metric">
+<span>Target Mode</span>
+<strong id="targetMode">--</strong>
+</div>
+
+</div>
+
+
 <div class="grid">
+
 
 <div class="card">
 
@@ -507,16 +682,27 @@ H1 — CORE BIAS
 </div>
 
 <div class="metric">
+<span>ATR</span>
+<strong id="h1atr">--</strong>
+</div>
+
+<div class="metric">
 <span>Structure</span>
 <strong id="h1struct">--</strong>
 </div>
 
 <div class="metric">
-<span>Hold</span>
+<span>Hold Bias</span>
+<strong id="holdBias">--</strong>
+</div>
+
+<div class="metric">
+<span>Hold Permission</span>
 <strong id="hold">--</strong>
 </div>
 
 </div>
+
 
 <div class="card">
 
@@ -540,6 +726,11 @@ H1 — SUPPORT / RESISTANCE
 </div>
 
 <div class="metric">
+<span>Zone</span>
+<strong id="srzone">--</strong>
+</div>
+
+<div class="metric">
 <span>Buy Filter</span>
 <strong id="buyfilter">--</strong>
 </div>
@@ -550,6 +741,7 @@ H1 — SUPPORT / RESISTANCE
 </div>
 
 </div>
+
 
 <div class="card">
 
@@ -578,16 +770,17 @@ M15 — CONFIRMATION
 </div>
 
 <div class="metric">
-<span>ADX</span>
-<strong id="m15adx">--</strong>
-</div>
-
-<div class="metric">
 <span>BOS / CHOCH</span>
 <strong id="m15structure">--</strong>
 </div>
 
+<div class="metric">
+<span>Momentum</span>
+<strong id="m15momentum">--</strong>
 </div>
+
+</div>
+
 
 <div class="card">
 
@@ -625,7 +818,13 @@ M5 — TRIGGER
 <strong id="m5structure">--</strong>
 </div>
 
+<div class="metric">
+<span>Momentum</span>
+<strong id="m5momentum">--</strong>
 </div>
+
+</div>
+
 
 <div class="card">
 
@@ -649,7 +848,7 @@ SCALP SCORE
 </div>
 
 <div class="metric">
-<span>Setup Status</span>
+<span>Setup Type</span>
 <strong id="setupStatus">--</strong>
 </div>
 
@@ -666,6 +865,7 @@ SCALP SCORE
 </div>
 
 </div>
+
 
 <div class="diag">
 
@@ -705,14 +905,28 @@ SCALP SCORE
 <strong id="quota">--</strong>
 </div>
 
+<div class="d">
+<span>Signal candle</span>
+<strong id="signalCandle">--</strong>
+</div>
+
+<div class="d">
+<span>Signal key</span>
+<strong id="signalKey">--</strong>
+</div>
+
 </div>
 </div>
+
 
 <div class="foot">
-V11 • Server-side signal engine • Fixed trade plan • Frontend refresh 15s • Push handled by backend
+V12 • Server-side signal engine • Reversal/Continuation •
+H1 S/R Target • Fixed Entry/SL/TP • Frontend refresh 15s •
+Push handled by backend
 </div>
 
 </div>
+
 
 <script>
 
@@ -724,9 +938,14 @@ let lastSignal = null;
 const $ = id => document.getElementById(id);
 
 const fmt = v => {
+
   const n = Number(v);
-  return Number.isFinite(n) ? n.toFixed(2) : "--";
+
+  return Number.isFinite(n)
+    ? n.toFixed(2)
+    : "--";
 };
+
 
 function text(id,v){
 
@@ -748,19 +967,22 @@ function text(id,v){
   el.textContent = v;
 }
 
+
 function clsDirection(el,v){
 
   if(!el) return;
 
   const s =
-    String(v || "WAIT").toUpperCase();
+    String(v || "WAIT")
+      .toUpperCase();
 
   el.className = "";
 
   if(
     s === "BUY" ||
     s === "BULL" ||
-    s === "BULLISH"
+    s === "BULLISH" ||
+    s === "ALLOWED"
   ){
 
     el.classList.add("good");
@@ -768,7 +990,8 @@ function clsDirection(el,v){
   }else if(
     s === "SELL" ||
     s === "BEAR" ||
-    s === "BEARISH"
+    s === "BEARISH" ||
+    s === "BLOCKED"
   ){
 
     el.classList.add("bad");
@@ -778,6 +1001,26 @@ function clsDirection(el,v){
     el.classList.add("wait");
   }
 }
+
+
+function yn(id,v){
+
+  if(v === true){
+
+    text(id,"YES");
+    $(id)?.classList.add("good");
+
+  }else if(v === false){
+
+    text(id,"NO");
+    $(id)?.classList.add("bad");
+
+  }else{
+
+    text(id,"--");
+  }
+}
+
 
 function updateSessions(){
 
@@ -808,6 +1051,7 @@ function updateSessions(){
     h >= 20 || h < 5
   );
 }
+
 
 function draw(){
 
@@ -983,16 +1227,6 @@ function buildSignalKey(d){
         : ""
     );
 
-  /*
-   * IMPORTANT:
-   * Signal identity uses the server's
-   * signal candle, NOT the live price.
-   *
-   * This prevents the same signal from
-   * becoming a new notification every
-   * time live price changes.
-   */
-
   return [
     sig,
     candle
@@ -1023,10 +1257,20 @@ function render(d){
     h1.supportResistance ||
     {};
 
+  const sa =
+    d.setupAnalysis || {};
+
+  const buy =
+    sa.buy || {};
+
+  const sell =
+    sa.sell || {};
+
   const sig =
     String(
       d.signal || "WAIT"
     ).toUpperCase();
+
 
   $("system").textContent =
     "ONLINE";
@@ -1040,13 +1284,17 @@ function render(d){
   $("api").className =
     "good";
 
-  $("signalTop").textContent =
-    sig;
+
+  text(
+    "signalTop",
+    sig
+  );
 
   clsDirection(
     $("signalTop"),
     sig
   );
+
 
   const livePrice =
     d.livePrice?.price ??
@@ -1062,6 +1310,7 @@ function render(d){
     fmt(livePrice)
   );
 
+
   text(
     "source",
     (
@@ -1074,6 +1323,7 @@ function render(d){
       {hour12:false}
     )
   );
+
 
   $("badge").textContent =
     sig === "BUY"
@@ -1091,6 +1341,7 @@ function render(d){
           ? "sell"
           : "neutral"
     );
+
 
   const score =
     Number(d.score || 0);
@@ -1169,6 +1420,131 @@ function render(d){
 
 
   /* =======================================================
+     ACTIVE TARGET
+     ======================================================= */
+
+  text(
+    "activeTarget",
+    fmt(tp.targetSR)
+  );
+
+  text(
+    "activeTargetType",
+    tp.targetSRType ||
+    "--"
+  );
+
+  text(
+    "activeTargetDistance",
+    tp.targetSRDistance == null
+      ? "--"
+      : fmt(tp.targetSRDistance)
+  );
+
+  text(
+    "activeTargetValid",
+    tp.targetSRValid === true
+      ? "YES"
+      : tp.targetSRValid === false
+        ? "NO"
+        : "--"
+  );
+
+  text(
+    "targetMode",
+    tp.targetMode ||
+    "--"
+  );
+
+  clsDirection(
+    $("activeTargetValid"),
+    tp.targetSRValid === true
+      ? "BUY"
+      : tp.targetSRValid === false
+        ? "SELL"
+        : "WAIT"
+  );
+
+
+  /* =======================================================
+     BUY ANALYSIS
+     ======================================================= */
+
+  yn(
+    "buyAligned",
+    buy.aligned
+  );
+
+  yn(
+    "buyContinuation",
+    buy.continuation
+  );
+
+  yn(
+    "buyReversal",
+    buy.reversal
+  );
+
+  text(
+    "buyType",
+    buy.type ||
+    "--"
+  );
+
+  text(
+    "buyLocation",
+    buy.location ||
+    "--"
+  );
+
+  text(
+    "buyTarget",
+    buy.targetSR == null
+      ? "--"
+      : fmt(buy.targetSR)
+  );
+
+
+  /* =======================================================
+     SELL ANALYSIS
+     ======================================================= */
+
+  yn(
+    "sellAligned",
+    sell.aligned
+  );
+
+  yn(
+    "sellContinuation",
+    sell.continuation
+  );
+
+  yn(
+    "sellReversal",
+    sell.reversal
+  );
+
+  text(
+    "sellType",
+    sell.type ||
+    "--"
+  );
+
+  text(
+    "sellLocation",
+    sell.location ||
+    "--"
+  );
+
+  text(
+    "sellTarget",
+    sell.targetSR == null
+      ? "--"
+      : fmt(sell.targetSR)
+  );
+
+
+  /* =======================================================
      H1
      ======================================================= */
 
@@ -1193,6 +1569,11 @@ function render(d){
   );
 
   text(
+    "h1atr",
+    fmt(h1.atr)
+  );
+
+  text(
     "h1struct",
     h1.structure?.bullish
       ? "BULLISH"
@@ -1202,19 +1583,25 @@ function render(d){
   );
 
   text(
+    "holdBias",
+    h1.holdBias ||
+    "--"
+  );
+
+  clsDirection(
+    $("holdBias"),
+    h1.holdBias
+  );
+
+  text(
     "hold",
     h1.holdPermission ||
     "--"
   );
 
-  clsDirection(
-    $("hold"),
-    h1.holdBias
-  );
-
 
   /* =======================================================
-     H1 SUPPORT / RESISTANCE
+     H1 S/R
      ======================================================= */
 
   const support =
@@ -1238,6 +1625,11 @@ function render(d){
   text(
     "srposition",
     sr.position ||
+    "--"
+  );
+
+  text(
+    "srzone",
     sr.zone ||
     "--"
   );
@@ -1262,14 +1654,14 @@ function render(d){
 
   clsDirection(
     $("buyfilter"),
-    sr.buyAllowed
+    sr.buyAllowed === true
       ? "BUY"
       : "WAIT"
   );
 
   clsDirection(
     $("sellfilter"),
-    sr.sellAllowed
+    sr.sellAllowed === true
       ? "SELL"
       : "WAIT"
   );
@@ -1314,14 +1706,6 @@ function render(d){
   );
 
   text(
-    "m15adx",
-    fmt(
-      m15.adx?.value ??
-      m15.adx
-    )
-  );
-
-  text(
     "m15structure",
     (
       m15.bos?.bullish ||
@@ -1338,6 +1722,20 @@ function render(d){
           : m15.structure?.bearish
             ? "BEARISH"
             : "RANGE"
+  );
+
+  text(
+    "m15momentum",
+    m15.momentum?.strength != null
+      ? (
+          m15.momentum.bullish
+            ? "BULLISH "
+            : m15.momentum.bearish
+              ? "BEARISH "
+              : "NEUTRAL "
+        ) +
+        fmt(m15.momentum.strength)
+      : "--"
   );
 
 
@@ -1405,6 +1803,20 @@ function render(d){
             : "RANGE"
   );
 
+  text(
+    "m5momentum",
+    m5.momentum?.strength != null
+      ? (
+          m5.momentum.bullish
+            ? "BULLISH "
+            : m5.momentum.bearish
+              ? "BEARISH "
+              : "NEUTRAL "
+        ) +
+        fmt(m5.momentum.strength)
+      : "--"
+  );
+
 
   /* =======================================================
      SCORE
@@ -1432,7 +1844,7 @@ function render(d){
 
   text(
     "setupStatus",
-    d.setupStatus ||
+    d.setupType ||
     d.status ||
     "WAIT"
   );
@@ -1503,6 +1915,19 @@ function render(d){
       : "--"
   );
 
+  text(
+    "signalCandle",
+    d.signalCandle ||
+    "--"
+  );
+
+  text(
+    "signalKey",
+    buildSignalKey(d) ||
+    "--"
+  );
+
+
   handleSignal(d);
 }
 
@@ -1521,11 +1946,6 @@ function handleSignal(d){
   const key =
     buildSignalKey(d);
 
-  /*
-   * WAIT:
-   * Do nothing.
-   */
-
   if(
     sig !== "BUY" &&
     sig !== "SELL"
@@ -1543,11 +1963,13 @@ function handleSignal(d){
       "xau_last_signal_key"
     );
 
+
   /*
-   * FIRST LOAD:
+   * FIRST LOAD
    *
-   * Save the current signal only.
-   * No browser notification.
+   * Save current signal.
+   * Jangan generate notification
+   * dari browser.
    */
 
   if(
@@ -1567,8 +1989,9 @@ function handleSignal(d){
     return;
   }
 
+
   /*
-   * Same exact server signal/candle.
+   * Same exact signal/candle.
    */
 
   if(stored === key){
@@ -1578,13 +2001,11 @@ function handleSignal(d){
     return;
   }
 
+
   /*
-   * Same direction:
+   * Same direction.
    *
-   * Backend is responsible for
-   * the actual push notification.
-   *
-   * Frontend must NOT create one.
+   * Backend handles push.
    */
 
   if(lastSignal === sig){
@@ -1592,10 +2013,9 @@ function handleSignal(d){
     return;
   }
 
+
   /*
    * Direction changed.
-   *
-   * Remember it locally.
    */
 
   localStorage.setItem(
