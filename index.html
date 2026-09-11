@@ -1,0 +1,1745 @@
+<!doctype html>
+<html lang="ms">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#0f172a">
+<link rel="manifest" href="/manifest.json">
+<link rel="apple-touch-icon" href="/icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<title>XAU/USD Pro Sniper — Free Safe + Push</title>
+
+<style>
+:root{
+  --bg:#eef2f6;
+  --card:#fff;
+  --sub:#f7f9fc;
+  --text:#20252b;
+  --muted:#737b87;
+  --border:#e1e5ea;
+  --blue:#2563eb;
+  --green:#15803d;
+  --red:#dc2626;
+  --yellow:#a16207;
+  --dark:#0f172a
+}
+
+*{box-sizing:border-box}
+
+body{
+  margin:0;
+  padding:10px;
+  background:var(--bg);
+  color:var(--text);
+  font-family:Arial,Helvetica,sans-serif
+}
+
+.wrap{
+  max-width:1100px;
+  margin:auto
+}
+
+header{
+  text-align:center;
+  margin-bottom:10px
+}
+
+h1{
+  margin:0;
+  color:#a87900;
+  font-size:1.35rem
+}
+
+header p{
+  margin:4px 0;
+  color:var(--muted);
+  font-size:.72rem
+}
+
+.card,.status,.sessions,.plan,.notify,.diag{
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:10px;
+  box-shadow:0 4px 16px rgba(0,0,0,.055);
+  padding:10px;
+  margin-bottom:10px
+}
+
+.status{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:7px
+}
+
+.s{text-align:center}
+
+.s small{
+  display:block;
+  color:var(--muted);
+  font-size:.6rem;
+  text-transform:uppercase
+}
+
+.s strong{font-size:.82rem}
+
+.good{color:var(--green)}
+.bad{color:var(--red)}
+.wait{color:var(--yellow)}
+
+.sessiongrid{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:7px
+}
+
+.pill{
+  padding:8px;
+  text-align:center;
+  border:1px solid var(--border);
+  border-radius:7px;
+  font-weight:bold;
+  font-size:.72rem;
+  color:#666
+}
+
+.pill.active{
+  background:#dcfce7;
+  border-color:#22c55e;
+  color:var(--green)
+}
+
+.notify{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px
+}
+
+.notify small{
+  display:block;
+  color:var(--muted);
+  font-size:.62rem;
+  margin-top:2px
+}
+
+.btn{
+  border:0;
+  border-radius:7px;
+  padding:8px 11px;
+  background:var(--blue);
+  color:white;
+  font-weight:bold;
+  font-size:.68rem;
+  cursor:pointer
+}
+
+.btn.on{background:var(--green)}
+.btn.err{background:var(--red)}
+
+.chartbox{
+  height:300px;
+  background:var(--dark);
+  border-radius:8px;
+  position:relative;
+  overflow:hidden
+}
+
+.chartbox canvas{
+  width:100%;
+  height:100%
+}
+
+.chartprice{
+  position:absolute;
+  right:7px;
+  top:7px;
+  background:#fff;
+  padding:4px 7px;
+  border-radius:5px;
+  font-weight:bold;
+  font-size:.7rem;
+  color:#a87900
+}
+
+.master{
+  text-align:center;
+  border:2px solid var(--border)
+}
+
+.price{
+  font-size:2rem;
+  font-weight:800;
+  color:#a87900
+}
+
+.source{
+  font-size:.62rem;
+  color:var(--muted)
+}
+
+.badge{
+  display:inline-block;
+  margin:7px;
+  padding:8px 30px;
+  border-radius:8px;
+  font-size:1.2rem;
+  font-weight:800;
+  border:1px solid
+}
+
+.buy{
+  color:var(--green);
+  background:#dcfce7;
+  border-color:#22c55e
+}
+
+.sell{
+  color:var(--red);
+  background:#fee2e2;
+  border-color:#ef4444
+}
+
+.neutral{
+  color:#7c3aed;
+  background:#f3e8ff;
+  border-color:#a78bfa
+}
+
+.grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:9px
+}
+
+.metric{
+  display:flex;
+  justify-content:space-between;
+  padding:6px 0;
+  border-bottom:1px solid #f0f2f5;
+  font-size:.74rem
+}
+
+.metric:last-child{border-bottom:0}
+
+.plan{background:var(--sub)}
+
+.plangrid{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:7px
+}
+
+.p{
+  background:#fff;
+  border:1px solid var(--border);
+  border-radius:6px;
+  padding:8px;
+  font-size:.68rem
+}
+
+.p strong{
+  display:block;
+  margin-top:2px;
+  font-size:.9rem
+}
+
+.progress{
+  height:8px;
+  background:#e5e7eb;
+  border-radius:20px;
+  overflow:hidden
+}
+
+.fill{
+  height:100%;
+  width:0;
+  background:var(--green);
+  transition:.2s
+}
+
+.diaggrid{
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:6px
+}
+
+.d{
+  display:flex;
+  justify-content:space-between;
+  background:#111827;
+  color:#fff;
+  border-radius:7px;
+  padding:8px;
+  font-size:.68rem
+}
+
+.d span{color:#cbd5e1}
+
+.foot{
+  text-align:center;
+  color:var(--muted);
+  font-size:.6rem;
+  padding:10px
+}
+
+@media(max-width:650px){
+
+  .status{
+    grid-template-columns:repeat(2,1fr)
+  }
+
+  .grid{
+    grid-template-columns:1fr
+  }
+
+  .plangrid{
+    grid-template-columns:1fr 1fr
+  }
+
+  .chartbox{
+    height:230px
+  }
+}
+</style>
+</head>
+
+<body>
+
+<div class="wrap">
+
+<header>
+<h1>XAU/USD PRO SNIPER</h1>
+<p>Free-safe Twelve Data → H1 Bias → M15 Confirmation → M5 Trigger → Push Alert</p>
+</header>
+
+<div class="status">
+
+<div class="s">
+<small>System</small>
+<strong id="system">CONNECTING</strong>
+</div>
+
+<div class="s">
+<small>API</small>
+<strong id="api">CONNECTING</strong>
+</div>
+
+<div class="s">
+<small>Signal</small>
+<strong id="signalTop" class="wait">WAIT</strong>
+</div>
+
+<div class="s">
+<small>MYT</small>
+<strong id="clock">--:--:--</strong>
+</div>
+
+</div>
+
+<div class="sessions">
+
+<div style="font-size:.68rem;color:var(--muted);font-weight:bold;margin-bottom:7px">
+TRADING SESSION — MALAYSIA TIME
+</div>
+
+<div class="sessiongrid">
+
+<div id="asia" class="pill">
+ASIA
+<div>08:00–17:00</div>
+</div>
+
+<div id="london" class="pill">
+LONDON
+<div>15:00–00:00</div>
+</div>
+
+<div id="ny" class="pill">
+NEW YORK
+<div>20:00–05:00</div>
+</div>
+
+</div>
+</div>
+
+<div class="notify">
+
+<div>
+<b style="font-size:.7rem">🔔 SIGNAL PUSH</b>
+
+<small id="notificationStatus">
+Notification belum diaktifkan
+</small>
+</div>
+
+<button
+id="notificationButton"
+class="btn"
+onclick="enableNotifications()">
+🔔 ENABLE
+</button>
+
+</div>
+
+<div class="card">
+
+<h3 style="margin:0 0 8px;color:var(--blue);font-size:.82rem">
+XAU/USD • LIVE M5 • LAST 60 CANDLES
+</h3>
+
+<div class="chartbox">
+
+<canvas id="chart"></canvas>
+
+<div id="chartPrice" class="chartprice">
+--
+</div>
+
+</div>
+</div>
+
+<div class="card master">
+
+<div style="font-size:.65rem;color:var(--muted);font-weight:bold">
+XAU/USD MARKET PRICE
+</div>
+
+<div id="price" class="price">--</div>
+
+<div id="source" class="source">
+Waiting for /api/scalp
+</div>
+
+<div id="badge" class="badge neutral">
+⏳ WAIT
+</div>
+
+<div>
+Entry Quality:
+<strong id="score">0/100</strong>
+</div>
+
+<div class="progress">
+<div id="fill" class="fill"></div>
+</div>
+
+</div>
+
+<div class="plan">
+
+<h3 style="margin:0 0 8px;color:var(--blue);font-size:.82rem">
+🎯 DYNAMIC TRADE PLAN
+</h3>
+
+<div class="plangrid">
+
+<div class="p">
+STATUS
+<strong id="planStatus">WAIT</strong>
+</div>
+
+<div class="p">
+DIRECTION
+<strong id="planDir">--</strong>
+</div>
+
+<div class="p">
+ENTRY
+<strong id="entry">--</strong>
+</div>
+
+<div class="p">
+STOP LOSS
+<strong id="sl">--</strong>
+</div>
+
+<div class="p">
+TP1
+<strong id="tp1">--</strong>
+</div>
+
+<div class="p">
+TP2
+<strong id="tp2">--</strong>
+</div>
+
+<div class="p">
+TP3
+<strong id="tp3">--</strong>
+</div>
+
+<div class="p">
+R:R
+<strong id="rr">--</strong>
+</div>
+
+<div class="p">
+SETUP
+<strong id="setup">--</strong>
+</div>
+
+</div>
+</div>
+
+<div class="grid">
+
+<div class="card">
+
+<h3 style="margin:0 0 8px;color:var(--blue);font-size:.82rem">
+H1 — CORE BIAS
+</h3>
+
+<div class="metric">
+<span>Direction</span>
+<strong id="h1dir">--</strong>
+</div>
+
+<div class="metric">
+<span>EMA 50</span>
+<strong id="h1ema50">--</strong>
+</div>
+
+<div class="metric">
+<span>EMA 200</span>
+<strong id="h1ema200">--</strong>
+</div>
+
+<div class="metric">
+<span>Structure</span>
+<strong id="h1struct">--</strong>
+</div>
+
+<div class="metric">
+<span>Hold</span>
+<strong id="hold">--</strong>
+</div>
+
+</div>
+
+<div class="card">
+
+<h3 style="margin:0 0 8px;color:var(--blue);font-size:.82rem">
+M15 — CONFIRMATION
+</h3>
+
+<div class="metric">
+<span>Direction</span>
+<strong id="m15dir">--</strong>
+</div>
+
+<div class="metric">
+<span>EMA 20 / 50</span>
+<strong id="m15ema">--</strong>
+</div>
+
+<div class="metric">
+<span>RSI 14</span>
+<strong id="m15rsi">--</strong>
+</div>
+
+<div class="metric">
+<span>MACD</span>
+<strong id="m15macd">--</strong>
+</div>
+
+<div class="metric">
+<span>ADX</span>
+<strong id="m15adx">--</strong>
+</div>
+
+<div class="metric">
+<span>BOS / CHOCH</span>
+<strong id="m15structure">--</strong>
+</div>
+
+</div>
+
+<div class="card">
+
+<h3 style="margin:0 0 8px;color:var(--blue);font-size:.82rem">
+M5 — TRIGGER
+</h3>
+
+<div class="metric">
+<span>Direction</span>
+<strong id="m5dir">--</strong>
+</div>
+
+<div class="metric">
+<span>EMA 9 / 20 / 50</span>
+<strong id="m5ema">--</strong>
+</div>
+
+<div class="metric">
+<span>RSI 14</span>
+<strong id="m5rsi">--</strong>
+</div>
+
+<div class="metric">
+<span>MACD</span>
+<strong id="m5macd">--</strong>
+</div>
+
+<div class="metric">
+<span>ATR</span>
+<strong id="m5atr">--</strong>
+</div>
+
+<div class="metric">
+<span>BOS / CHOCH</span>
+<strong id="m5structure">--</strong>
+</div>
+
+</div>
+
+<div class="card">
+
+<h3 style="margin:0 0 8px;color:var(--blue);font-size:.82rem">
+SCALP SCORE
+</h3>
+
+<div class="metric">
+<span>M15 BUY / SELL</span>
+<strong id="m15score">--</strong>
+</div>
+
+<div class="metric">
+<span>M5 BUY / SELL</span>
+<strong id="m5score">--</strong>
+</div>
+
+<div class="metric">
+<span>Context</span>
+<strong id="context">--</strong>
+</div>
+
+<div class="metric">
+<span>Setup Status</span>
+<strong id="setupStatus">--</strong>
+</div>
+
+<div class="metric">
+<span>Execution</span>
+<strong id="execution">--</strong>
+</div>
+
+</div>
+
+</div>
+
+<div class="diag">
+
+<h3 style="margin:0 0 8px;color:var(--blue);font-size:.82rem">
+🔎 DATA / SIGNAL DIAGNOSTIC
+</h3>
+
+<div class="diaggrid">
+
+<div class="d">
+<span>M5 candles</span>
+<strong id="m5count">--</strong>
+</div>
+
+<div class="d">
+<span>M15 candles</span>
+<strong id="m15count">--</strong>
+</div>
+
+<div class="d">
+<span>H1 candles</span>
+<strong id="h1count">--</strong>
+</div>
+
+<div class="d">
+<span>Live source</span>
+<strong id="liveSource">--</strong>
+</div>
+
+<div class="d">
+<span>Cache age</span>
+<strong id="cacheAge">--</strong>
+</div>
+
+<div class="d">
+<span>Quota</span>
+<strong id="quota">--</strong>
+</div>
+
+</div>
+</div>
+
+<div class="foot">
+Free-safe build: frontend polls every 15s, while Twelve Data is cached server-side.
+Push subscription is registered with the backend.
+Automatic BUY/SELL notifications are sent server-side.
+</div>
+
+</div>
+
+
+<script>
+
+let candles = [];
+let lastSignal = null;
+let pushReady = false;
+
+const $ = id => document.getElementById(id);
+
+const fmt = v =>
+  Number.isFinite(Number(v))
+    ? Number(v).toFixed(2)
+    : "--";
+
+const text = (id,v) => {
+
+  const el = $(id);
+
+  if(!el) return;
+
+  el.textContent =
+    v == null || v === ""
+      ? "--"
+      : v;
+};
+
+
+function clsDirection(el,v){
+
+  if(!el) return;
+
+  el.className = "";
+
+  const s =
+    String(v || "WAIT").toUpperCase();
+
+  el.classList.add(
+    s === "BUY" || s === "BULL"
+      ? "good"
+      : s === "SELL" || s === "BEAR"
+        ? "bad"
+        : "wait"
+  );
+}
+
+
+function updateSessions(){
+
+  const d = new Date();
+  const h = d.getHours();
+
+  $("clock").textContent =
+    d.toLocaleTimeString("en-MY");
+
+  $("asia").classList.toggle(
+    "active",
+    h >= 8 && h < 17
+  );
+
+  $("london").classList.toggle(
+    "active",
+    h >= 15 && h < 24
+  );
+
+  $("ny").classList.toggle(
+    "active",
+    h >= 20 || h < 5
+  );
+}
+
+
+function draw(){
+
+  const c = $("chart");
+  const r = c.getBoundingClientRect();
+
+  const dpr =
+    window.devicePixelRatio || 1;
+
+  c.width = r.width * dpr;
+  c.height = r.height * dpr;
+
+  const x = c.getContext("2d");
+
+  x.setTransform(
+    dpr,
+    0,
+    0,
+    dpr,
+    0,
+    0
+  );
+
+  const w = r.width;
+  const h = r.height;
+
+  const data =
+    candles.slice(-60);
+
+  if(data.length < 2){
+
+    x.clearRect(0,0,w,h);
+    return;
+  }
+
+  const hi =
+    Math.max(...data.map(a => a.high));
+
+  const lo =
+    Math.min(...data.map(a => a.low));
+
+  const pad =
+    (hi - lo || 1) * 0.12;
+
+  const max = hi + pad;
+  const min = lo - pad;
+
+  const X = i =>
+    8 +
+    i/(data.length-1) *
+    (w-16);
+
+  const Y = p =>
+    h - 20 -
+    (p-min)/(max-min) *
+    (h-35);
+
+  x.clearRect(0,0,w,h);
+
+  x.strokeStyle =
+    "rgba(255,255,255,.08)";
+
+  for(let i=1;i<5;i++){
+
+    const gy =
+      15 +
+      (h-35)*i/5;
+
+    x.beginPath();
+    x.moveTo(8,gy);
+    x.lineTo(w-8,gy);
+    x.stroke();
+  }
+
+  x.beginPath();
+
+  data.forEach((a,i) => {
+
+    if(i){
+
+      x.lineTo(
+        X(i),
+        Y(a.close)
+      );
+
+    }else{
+
+      x.moveTo(
+        X(i),
+        Y(a.close)
+      );
+    }
+
+  });
+
+  x.strokeStyle = "#fbbf24";
+  x.lineWidth = 2;
+  x.stroke();
+}
+
+
+/* =========================================================
+   STABLE SIGNAL KEY
+   ========================================================= */
+
+function buildSignalKey(d){
+
+  const sig =
+    String(d.signal || "WAIT")
+      .toUpperCase();
+
+  if(sig !== "BUY" && sig !== "SELL"){
+    return null;
+  }
+
+  const lastCandle =
+    Array.isArray(d.candles) &&
+    d.candles.length
+      ? d.candles[d.candles.length - 1]
+      : null;
+
+  const candleTime =
+    lastCandle?.time ||
+    lastCandle?.datetime ||
+    d.candleTime ||
+    d.signalCandle ||
+    "";
+
+  const candlePrice =
+    d.candlePrice ??
+    d.livePrice?.price ??
+    d.price ??
+    "";
+
+  return [
+    sig,
+    candleTime,
+    candlePrice
+  ].join("|");
+}
+
+
+/* =========================================================
+   RENDER
+   ========================================================= */
+
+function render(d){
+
+  const h1 =
+    d.h1 || {};
+
+  const m15 =
+    d.m15 || {};
+
+  const m5 =
+    d.m5 || {};
+
+  const tp =
+    d.tradePlan || {};
+
+  const sig =
+    String(d.signal || "WAIT")
+      .toUpperCase();
+
+  $("system").textContent =
+    "ONLINE";
+
+  $("system").className =
+    "good";
+
+  $("api").textContent =
+    "LIVE";
+
+  $("api").className =
+    "good";
+
+  $("signalTop").textContent =
+    sig;
+
+  clsDirection(
+    $("signalTop"),
+    sig
+  );
+
+  const livePrice =
+    d.livePrice?.price ??
+    d.price;
+
+  text(
+    "price",
+    fmt(livePrice)
+  );
+
+  text(
+    "chartPrice",
+    fmt(livePrice)
+  );
+
+  text(
+    "source",
+    (d.livePrice?.source ||
+      "TWELVE_DATA") +
+    " • " +
+    new Date().toLocaleTimeString("en-MY")
+  );
+
+  $("badge").textContent =
+    sig === "BUY"
+      ? "🟢 BUY"
+      : sig === "SELL"
+        ? "🔴 SELL"
+        : "⏳ WAIT";
+
+  $("badge").className =
+    "badge " +
+    (
+      sig === "BUY"
+        ? "buy"
+        : sig === "SELL"
+          ? "sell"
+          : "neutral"
+    );
+
+  const score =
+    Number(d.score || 0);
+
+  text(
+    "score",
+    Math.round(score) + "/100"
+  );
+
+  $("fill").style.width =
+    Math.max(
+      0,
+      Math.min(100,score)
+    ) + "%";
+
+
+  /* TRADE PLAN */
+
+  text("planStatus",d.status);
+  text("planDir",sig);
+  text("entry",fmt(tp.entry));
+  text("sl",fmt(tp.stopLoss));
+  text("tp1",fmt(tp.tp1));
+  text("tp2",fmt(tp.tp2));
+  text("tp3",fmt(tp.tp3));
+
+  text(
+    "rr",
+    tp.rr == null
+      ? "--"
+      : String(tp.rr)
+  );
+
+  text("setup",d.setupType);
+
+
+  /* H1 */
+
+  text("h1dir",h1.direction);
+  text("h1ema50",fmt(h1.ema50));
+  text("h1ema200",fmt(h1.ema200));
+
+  text(
+    "h1struct",
+    h1.structure?.bullish
+      ? "BULLISH"
+      : h1.structure?.bearish
+        ? "BEARISH"
+        : "RANGE"
+  );
+
+  text(
+    "hold",
+    h1.holdPermission || "--"
+  );
+
+
+  /* M15 */
+
+  text(
+    "m15dir",
+    m15.confirmation ||
+    m15.direction
+  );
+
+  text(
+    "m15ema",
+    fmt(m15.ema20) +
+    " / " +
+    fmt(m15.ema50)
+  );
+
+  text("m15rsi",fmt(m15.rsi));
+
+  text(
+    "m15macd",
+    m15.macd?.bullish
+      ? "BULLISH"
+      : m15.macd?.bearish
+        ? "BEARISH"
+        : "--"
+  );
+
+  text(
+    "m15adx",
+    fmt(m15.adx?.value)
+  );
+
+  text(
+    "m15structure",
+    (
+      m15.bos?.bullish ||
+      m15.choch?.bullish
+    )
+      ? "BOS/CHOCH ↑"
+      : (
+          m15.bos?.bearish ||
+          m15.choch?.bearish
+        )
+        ? "BOS/CHOCH ↓"
+        : m15.structure?.bullish
+          ? "BULLISH"
+          : m15.structure?.bearish
+            ? "BEARISH"
+            : "RANGE"
+  );
+
+
+  /* M5 */
+
+  text(
+    "m5dir",
+    m5.trigger ||
+    m5.confirmation
+  );
+
+  text(
+    "m5ema",
+    fmt(m5.ema9) +
+    " / " +
+    fmt(m5.ema20) +
+    " / " +
+    fmt(m5.ema50)
+  );
+
+  text("m5rsi",fmt(m5.rsi));
+
+  text(
+    "m5macd",
+    m5.macd?.bullish
+      ? "BULLISH"
+      : m5.macd?.bearish
+        ? "BEARISH"
+        : "--"
+  );
+
+  text("m5atr",fmt(m5.atr));
+
+  text(
+    "m5structure",
+    (
+      m5.bos?.bullish ||
+      m5.choch?.bullish
+    )
+      ? "BOS/CHOCH ↑"
+      : (
+          m5.bos?.bearish ||
+          m5.choch?.bearish
+        )
+        ? "BOS/CHOCH ↓"
+        : m5.structure?.bullish
+          ? "BULLISH"
+          : m5.structure?.bearish
+            ? "BEARISH"
+            : "RANGE"
+  );
+
+
+  /* SCORE */
+
+  text(
+    "m15score",
+    fmt(m15.buyScore) +
+    " / " +
+    fmt(m15.sellScore)
+  );
+
+  text(
+    "m5score",
+    fmt(m5.buyScore) +
+    " / " +
+    fmt(m5.sellScore)
+  );
+
+  text("context",d.context);
+  text("setupStatus",d.setupStatus);
+  text("execution",d.execution);
+
+
+  /* DIAGNOSTIC */
+
+  text(
+    "m5count",
+    d.data?.m5Candles
+  );
+
+  text(
+    "m15count",
+    d.data?.m15Candles
+  );
+
+  text(
+    "h1count",
+    d.data?.h1Candles
+  );
+
+  text(
+    "liveSource",
+    d.livePrice?.source
+  );
+
+  text(
+    "cacheAge",
+    d.data?.cacheAgeSeconds != null
+      ? Math.round(
+          d.data.cacheAgeSeconds
+        ) + "s"
+      : "--"
+  );
+
+  text(
+    "quota",
+    d.data?.quotaUsed != null
+      ? d.data.quotaUsed + "/700 day"
+      : "--"
+  );
+
+  handleSignal(d);
+}
+
+
+/* =========================================================
+   SIGNAL STATE
+   ========================================================= */
+
+function handleSignal(d){
+
+  const sig =
+    String(d.signal || "WAIT")
+      .toUpperCase();
+
+  if(sig !== "BUY" && sig !== "SELL"){
+
+    lastSignal = sig;
+
+    return;
+  }
+
+  const key =
+    buildSignalKey(d);
+
+  if(!key) return;
+
+  const stored =
+    localStorage.getItem(
+      "xau_last_signal_key"
+    );
+
+  /*
+   * First load:
+   * remember current signal.
+   * Do not generate a notification.
+   */
+
+  if(lastSignal === null){
+
+    lastSignal = sig;
+
+    if(!stored){
+
+      localStorage.setItem(
+        "xau_last_signal_key",
+        key
+      );
+    }
+
+    return;
+  }
+
+  /*
+   * Exact same signal/candle.
+   */
+
+  if(stored === key){
+
+    lastSignal = sig;
+
+    return;
+  }
+
+  /*
+   * Same direction.
+   * Do not spam every 15 seconds.
+   */
+
+  if(lastSignal === sig){
+
+    return;
+  }
+
+  /*
+   * BUY -> SELL
+   * SELL -> BUY
+   *
+   * IMPORTANT:
+   * Notification itself is NOT sent
+   * from browser.
+   *
+   * Backend /api/scalp handles push.
+   */
+
+  localStorage.setItem(
+    "xau_last_signal_key",
+    key
+  );
+
+  lastSignal = sig;
+}
+
+
+/* =========================================================
+   BASE64 VAPID
+   ========================================================= */
+
+function urlBase64ToUint8Array(
+  base64String
+){
+
+  const padding =
+    "=".repeat(
+      (4 - base64String.length % 4) % 4
+    );
+
+  const base64 =
+    (
+      base64String +
+      padding
+    )
+    .replace(/-/g,"+")
+    .replace(/_/g,"/");
+
+  const rawData =
+    atob(base64);
+
+  return Uint8Array.from(
+    [...rawData]
+      .map(c => c.charCodeAt(0))
+  );
+}
+
+
+/* =========================================================
+   ENABLE PUSH
+   ========================================================= */
+
+async function enableNotifications(){
+
+  const btn =
+    $("notificationButton");
+
+  if(
+    !("serviceWorker" in navigator) ||
+    !("PushManager" in window) ||
+    !("Notification" in window)
+  ){
+
+    $("notificationStatus").textContent =
+      "Browser ini tidak menyokong Web Push.";
+
+    btn.className =
+      "btn err";
+
+    return;
+  }
+
+  try{
+
+    const permission =
+      await Notification.requestPermission();
+
+    if(permission !== "granted"){
+
+      $("notificationStatus").textContent =
+        "Permission notification ditolak.";
+
+      btn.className =
+        "btn err";
+
+      return;
+    }
+
+    const reg =
+      await navigator.serviceWorker.register(
+        "/sw.js",
+        {
+          scope:"/",
+          updateViaCache:"none"
+        }
+      );
+
+    await navigator.serviceWorker.ready;
+
+
+    /* GET VAPID PUBLIC KEY */
+
+    const cr =
+      await fetch(
+        "/api/push-config?ts=" +
+        Date.now(),
+        {
+          cache:"no-store"
+        }
+      );
+
+    if(!cr.ok){
+
+      throw new Error(
+        "push-config gagal: HTTP " +
+        cr.status
+      );
+    }
+
+    const cfg =
+      await cr.json();
+
+    if(!cfg.publicKey){
+
+      throw new Error(
+        "VAPID_PUBLIC_KEY tidak dijumpai."
+      );
+    }
+
+
+    /* GET EXISTING SUBSCRIPTION */
+
+    let sub =
+      await reg.pushManager.getSubscription();
+
+
+    /* CREATE SUBSCRIPTION */
+
+    if(!sub){
+
+      sub =
+        await reg.pushManager.subscribe({
+
+          userVisibleOnly:true,
+
+          applicationServerKey:
+            urlBase64ToUint8Array(
+              cfg.publicKey
+            )
+
+        });
+    }
+
+
+    /* SEND SUBSCRIPTION TO BACKEND */
+
+    const subscriptionJSON =
+      sub.toJSON();
+
+    const sr =
+      await fetch(
+        "/api/push-subscribe",
+        {
+          method:"POST",
+
+          headers:{
+            "Content-Type":
+              "application/json"
+          },
+
+          body:
+            JSON.stringify(
+              subscriptionJSON
+            )
+        }
+      );
+
+    if(!sr.ok){
+
+      const err =
+        await sr.text()
+          .catch(() => "");
+
+      throw new Error(
+        "push-subscribe gagal: HTTP " +
+        sr.status +
+        (
+          err
+            ? " — " + err
+            : ""
+        )
+      );
+    }
+
+
+    /* PUSH READY */
+
+    pushReady = true;
+
+    btn.textContent =
+      "🔔 ON";
+
+    btn.className =
+      "btn on";
+
+    $("notificationStatus").textContent =
+      "Push aktif — subscription berjaya disimpan.";
+
+  }catch(e){
+
+    console.error(
+      "Notification setup:",
+      e
+    );
+
+    pushReady = false;
+
+    $("notificationStatus").textContent =
+      "Push gagal: " +
+      e.message;
+
+    btn.className =
+      "btn err";
+  }
+}
+
+
+/* =========================================================
+   RESTORE PUSH
+   ========================================================= */
+
+async function restorePushState(){
+
+  if(
+    !("serviceWorker" in navigator) ||
+    !("PushManager" in window)
+  ){
+
+    return;
+  }
+
+  try{
+
+    if(
+      "Notification" in window &&
+      Notification.permission !== "granted"
+    ){
+
+      return;
+    }
+
+    const reg =
+      await navigator.serviceWorker.ready;
+
+    const sub =
+      await reg.pushManager.getSubscription();
+
+    if(!sub){
+
+      return;
+    }
+
+
+    /*
+     * Re-save existing subscription.
+     */
+
+    const sr =
+      await fetch(
+        "/api/push-subscribe",
+        {
+          method:"POST",
+
+          headers:{
+            "Content-Type":
+              "application/json"
+          },
+
+          body:
+            JSON.stringify(
+              sub.toJSON()
+            )
+        }
+      );
+
+    if(sr.ok){
+
+      pushReady = true;
+
+      $("notificationButton").textContent =
+        "🔔 ON";
+
+      $("notificationButton").className =
+        "btn on";
+
+      $("notificationStatus").textContent =
+        "Push aktif — subscription dipulihkan.";
+
+    }else{
+
+      console.warn(
+        "Unable to restore push subscription:",
+        sr.status
+      );
+    }
+
+  }catch(e){
+
+    console.warn(
+      "restorePushState:",
+      e
+    );
+  }
+}
+
+
+/* =========================================================
+   API
+   ========================================================= */
+
+async function fetchData(){
+
+  try{
+
+    const r =
+      await fetch(
+        "/api/scalp?ts=" +
+        Date.now(),
+        {
+          cache:"no-store"
+        }
+      );
+
+    const d =
+      await r.json();
+
+    if(!r.ok || !d.ok){
+
+      throw new Error(
+        d.error ||
+        "HTTP " + r.status
+      );
+    }
+
+
+    /* CANDLES */
+
+    candles =
+      (d.candles || [])
+        .map(x => ({
+
+          time:
+            x.time ||
+            x.datetime,
+
+          open:+x.open,
+
+          high:+x.high,
+
+          low:+x.low,
+
+          close:+x.close
+
+        }))
+        .filter(x =>
+          [
+            x.open,
+            x.high,
+            x.low,
+            x.close
+          ].every(
+            Number.isFinite
+          )
+        );
+
+
+    render(d);
+
+    draw();
+
+  }catch(e){
+
+    console.error(
+      "scalp API:",
+      e
+    );
+
+    $("api").textContent =
+      "ERROR";
+
+    $("api").className =
+      "bad";
+
+    $("source").textContent =
+      "API ERROR: " +
+      e.message;
+  }
+}
+
+
+/* =========================================================
+   START
+   ========================================================= */
+
+window.addEventListener(
+  "resize",
+  draw
+);
+
+updateSessions();
+
+setInterval(
+  updateSessions,
+  1000
+);
+
+
+/* SERVICE WORKER */
+
+if("serviceWorker" in navigator){
+
+  navigator.serviceWorker
+    .register(
+      "/sw.js",
+      {
+        scope:"/",
+        updateViaCache:"none"
+      }
+    )
+    .then(async reg => {
+
+      try{
+
+        await reg.update();
+
+      }catch(e){
+
+        console.warn(
+          "SW update:",
+          e
+        );
+      }
+
+      await restorePushState();
+
+    })
+    .catch(err => {
+
+      console.warn(
+        "Service Worker:",
+        err
+      );
+
+      $("notificationStatus").textContent =
+        "Service Worker gagal: " +
+        err.message;
+    });
+
+}else{
+
+  $("notificationStatus").textContent =
+    "Service Worker tidak disokong browser ini.";
+}
+
+
+/* FIRST API CALL */
+
+fetchData();
+
+
+/* REFRESH EVERY 15 SECONDS */
+
+setInterval(
+  fetchData,
+  15000
+);
+
+</script>
+
+</body>
+</html>
