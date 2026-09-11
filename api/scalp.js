@@ -12,6 +12,7 @@ export default async function handler(req, res) {
 
   const CFG = {
     symbol: "XAU/USD",
+
     m5Size: 1500,
     m15Size: 500,
     h1Size: 300,
@@ -23,29 +24,34 @@ export default async function handler(req, res) {
     minM15: 100,
     minH1: 210,
 
-    // H1 S/R
     srLookback: 80,
     srSwingStrength: 2,
     srMaxLevels: 12,
-
-    // Jarak maksimum untuk dianggap dekat S/R
     srATRMultiplier: 0.50,
+    srMinDistance: 2.0,
 
-    // Minimum absolute distance XAU
-    srMinDistance: 2.0
+    /*
+     * Trade plan
+     *
+     * Entry/SL/TP akan dikunci berdasarkan
+     * signal candle yang pertama kali menghasilkan ENTRY.
+     */
+    tradeLockTTL: 21600
   };
 
-  globalThis.__XAU_REPAIR_CACHE__ ??= {
+  globalThis.__XAU_SCALP_CACHE__ ??= {
     candles: {},
     price: null,
     priceAt: 0
   };
 
-  const C = globalThis.__XAU_REPAIR_CACHE__;
+  const C = globalThis.__XAU_SCALP_CACHE__;
   const now = Date.now();
 
   const avg = a =>
-    a.length ? a.reduce((x, y) => x + y, 0) / a.length : null;
+    a.length
+      ? a.reduce((x, y) => x + y, 0) / a.length
+      : null;
 
   const clamp = (n, a, b) =>
     Math.max(a, Math.min(b, n));
@@ -66,19 +72,19 @@ export default async function handler(req, res) {
   function rsi(v, p = 14) {
     if (v.length < p + 1) return null;
 
-    let g = 0;
-    let l = 0;
+    let gains = 0;
+    let losses = 0;
 
     for (let i = v.length - p; i < v.length; i++) {
       const d = v[i] - v[i - 1];
 
-      if (d > 0) g += d;
-      else l -= d;
+      if (d > 0) gains += d;
+      else losses -= d;
     }
 
-    if (l === 0) return 100;
+    if (losses === 0) return 100;
 
-    const rs = (g / p) / (l / p);
+    const rs = (gains / p) / (losses / p);
 
     return 100 - 100 / (1 + rs);
   }
@@ -105,13 +111,14 @@ export default async function handler(req, res) {
   }
 
   function macd(v) {
+    if (v.length < 35) return null;
+
     const e12 = ema(v, 12);
     const e26 = ema(v, 26);
 
     if (e12 == null || e26 == null) return null;
 
     const line = e12 - e26;
-
     const lines = [];
 
     for (let i = 26; i <= v.length; i++) {
@@ -180,8 +187,11 @@ export default async function handler(req, res) {
     const p = d.slice(-lookback - 1, -1);
 
     return {
-      bullish: last.close > Math.max(...p.map(x => x.high)),
-      bearish: last.close < Math.min(...p.map(x => x.low))
+      bullish:
+        last.close > Math.max(...p.map(x => x.high)),
+
+      bearish:
+        last.close < Math.min(...p.map(x => x.low))
     };
   }
 
@@ -241,18 +251,23 @@ export default async function handler(req, res) {
     }
 
     const range = c.high - c.low || 1e-9;
-    const ratio = Math.abs(c.close - c.open) / range;
+    const ratio =
+      Math.abs(c.close - c.open) / range;
 
     return {
-      bullish: c.close > c.open && ratio >= 0.45,
-      bearish: c.close < c.open && ratio >= 0.45,
+      bullish:
+        c.close > c.open && ratio >= 0.45,
+
+      bearish:
+        c.close < c.open && ratio >= 0.45,
+
       strength: Math.round(ratio * 100)
     };
   }
 
   /*
    * ============================================================
-   * H1 SUPPORT / RESISTANCE ENGINE
+   * H1 SUPPORT / RESISTANCE
    * ============================================================
    */
 
@@ -266,8 +281,6 @@ export default async function handler(req, res) {
         levels: [],
         supportDistance: null,
         resistanceDistance: null,
-        supportDistancePct: null,
-        resistanceDistancePct: null,
         threshold: null,
         position: "UNKNOWN",
         zone: "UNKNOWN",
@@ -281,7 +294,6 @@ export default async function handler(req, res) {
 
     const levels = [];
 
-    // Swing highs
     for (
       let i = CFG.srSwingStrength;
       i < source.length - CFG.srSwingStrength;
@@ -308,13 +320,11 @@ export default async function handler(req, res) {
       if (isHigh) {
         levels.push({
           price: c.high,
-          type: "RESISTANCE",
-          index: i
+          type: "RESISTANCE"
         });
       }
     }
 
-    // Swing lows
     for (
       let i = CFG.srSwingStrength;
       i < source.length - CFG.srSwingStrength;
@@ -341,30 +351,21 @@ export default async function handler(req, res) {
       if (isLow) {
         levels.push({
           price: c.low,
-          type: "SUPPORT",
-          index: i
+          type: "SUPPORT"
         });
       }
     }
 
-    /*
-     * Tambah high/low structure sebagai fallback.
-     */
     levels.push({
       price: Math.max(...source.map(x => x.high)),
-      type: "RESISTANCE",
-      index: source.length - 1
+      type: "RESISTANCE"
     });
 
     levels.push({
       price: Math.min(...source.map(x => x.low)),
-      type: "SUPPORT",
-      index: source.length - 1
+      type: "SUPPORT"
     });
 
-    /*
-     * Group level yang terlalu dekat.
-     */
     const grouped = [];
 
     const groupingDistance = Math.max(
@@ -382,9 +383,12 @@ export default async function handler(req, res) {
       if (existing) {
         existing.prices.push(level.price);
         existing.touches += 1;
+
         existing.price =
-          existing.prices.reduce((a, b) => a + b, 0) /
-          existing.prices.length;
+          existing.prices.reduce(
+            (a, b) => a + b,
+            0
+          ) / existing.prices.length;
       } else {
         grouped.push({
           type: level.type,
@@ -407,10 +411,14 @@ export default async function handler(req, res) {
     const resistance = resistances[0] || null;
 
     const supportDistance =
-      support ? price - support.price : null;
+      support
+        ? price - support.price
+        : null;
 
     const resistanceDistance =
-      resistance ? resistance.price - price : null;
+      resistance
+        ? resistance.price - price
+        : null;
 
     const threshold = Math.max(
       (h1ATR || 10) * CFG.srATRMultiplier,
@@ -483,7 +491,11 @@ export default async function handler(req, res) {
         : null,
 
       levels: grouped
-        .sort((a, b) => Math.abs(a.price - price) - Math.abs(b.price - price))
+        .sort(
+          (a, b) =>
+            Math.abs(a.price - price) -
+            Math.abs(b.price - price)
+        )
         .slice(0, CFG.srMaxLevels)
         .map(x => ({
           price: Number(x.price.toFixed(2)),
@@ -503,15 +515,22 @@ export default async function handler(req, res) {
 
       supportDistancePct:
         supportDistance != null
-          ? Number((supportDistance / price * 100).toFixed(3))
+          ? Number(
+              (supportDistance / price * 100)
+                .toFixed(3)
+            )
           : null,
 
       resistanceDistancePct:
         resistanceDistance != null
-          ? Number((resistanceDistance / price * 100).toFixed(3))
+          ? Number(
+              (resistanceDistance / price * 100)
+                .toFixed(3)
+            )
           : null,
 
-      threshold: Number(threshold.toFixed(2)),
+      threshold:
+        Number(threshold.toFixed(2)),
 
       position,
       zone,
@@ -526,10 +545,19 @@ export default async function handler(req, res) {
     };
   }
 
+  /*
+   * ============================================================
+   * TWELVE DATA
+   * ============================================================
+   */
+
   async function series(interval, outputsize, key) {
     const cache = C.candles[key];
 
-    if (cache && now - cache.at < CFG.cacheTTL) {
+    if (
+      cache &&
+      now - cache.at < CFG.cacheTTL
+    ) {
       return cache.data;
     }
 
@@ -545,7 +573,8 @@ export default async function handler(req, res) {
 
     if (!r.ok || j.status === "error") {
       throw new Error(
-        j.message || `Twelve Data ${interval} error`
+        j.message ||
+        `Twelve Data ${interval} error`
       );
     }
 
@@ -561,8 +590,12 @@ export default async function handler(req, res) {
           volume: +x.volume || 0
         }))
         .filter(x =>
-          [x.open, x.high, x.low, x.close]
-            .every(Number.isFinite)
+          [
+            x.open,
+            x.high,
+            x.low,
+            x.close
+          ].every(Number.isFinite)
         );
 
     const minRequired = {
@@ -585,22 +618,104 @@ export default async function handler(req, res) {
     return data;
   }
 
-  let m5, m15, h1, livePrice, candlePrice;
+  /*
+   * ============================================================
+   * FIXED TRADE PLAN
+   *
+   * Satu signal candle = satu Entry/SL/TP.
+   * Refresh tidak akan mengira harga baru.
+   * ============================================================
+   */
+
+  async function getLockedTradePlan(signalKey) {
+    if (!signalKey) return null;
+
+    try {
+      const key =
+        `xau_trade_plan:${signalKey}`;
+
+      const raw =
+        await redis.get(key);
+
+      if (!raw) return null;
+
+      if (typeof raw === "string") {
+        return JSON.parse(raw);
+      }
+
+      return raw;
+    } catch (e) {
+      console.error(
+        "Trade plan read error:",
+        e
+      );
+
+      return null;
+    }
+  }
+
+  async function saveLockedTradePlan(
+    signalKey,
+    plan
+  ) {
+    if (!signalKey || !plan) return;
+
+    try {
+      await redis.set(
+        `xau_trade_plan:${signalKey}`,
+        JSON.stringify(plan),
+        {
+          ex: CFG.tradeLockTTL
+        }
+      );
+    } catch (e) {
+      console.error(
+        "Trade plan save error:",
+        e
+      );
+    }
+  }
+
+  let m5;
+  let m15;
+  let h1;
+  let livePrice;
+  let candlePrice;
 
   try {
     /*
-     * ============================================================
-     * LOAD MARKET DATA
-     * ============================================================
+     * ==========================================================
+     * LOAD DATA
+     * ==========================================================
      */
 
-    [m5, m15, h1] = await Promise.all([
-      series("5min", CFG.m5Size, "m5"),
-      series("15min", CFG.m15Size, "m15"),
-      series("1h", CFG.h1Size, "h1")
-    ]);
+    [m5, m15, h1] =
+      await Promise.all([
+        series(
+          "5min",
+          CFG.m5Size,
+          "m5"
+        ),
 
-    candlePrice = m5.at(-1).close;
+        series(
+          "15min",
+          CFG.m15Size,
+          "m15"
+        ),
+
+        series(
+          "1h",
+          CFG.h1Size,
+          "h1"
+        )
+      ]);
+
+    candlePrice =
+      m5.at(-1).close;
+
+    /*
+     * LIVE PRICE
+     */
 
     if (
       C.price != null &&
@@ -608,14 +723,18 @@ export default async function handler(req, res) {
     ) {
       livePrice = C.price;
     } else {
-      const pr = await fetch(
-        `https://api.twelvedata.com/price` +
-        `?symbol=${encodeURIComponent(CFG.symbol)}` +
-        `&apikey=${API_KEY}`
-      );
+      const pr =
+        await fetch(
+          `https://api.twelvedata.com/price` +
+          `?symbol=${encodeURIComponent(CFG.symbol)}` +
+          `&apikey=${API_KEY}`
+        );
 
-      const pj = await pr.json();
-      const p = Number(pj?.price);
+      const pj =
+        await pr.json();
+
+      const p =
+        Number(pj?.price);
 
       if (
         !pr.ok ||
@@ -623,32 +742,40 @@ export default async function handler(req, res) {
         !Number.isFinite(p)
       ) {
         throw new Error(
-          pj.message || "Live price error"
+          pj.message ||
+          "Live price error"
         );
       }
 
       livePrice = p;
+
       C.price = p;
       C.priceAt = Date.now();
     }
 
     /*
-     * ============================================================
+     * ==========================================================
      * H1
-     * ============================================================
+     * ==========================================================
      */
 
-    const c5 = m5.map(x => x.close);
-    const c15 = m15.map(x => x.close);
-    const c1 = h1.map(x => x.close);
+    const c1 =
+      h1.map(x => x.close);
 
-    const h1EMA50 = ema(c1, 50);
-    const h1EMA200 = ema(c1, 200);
-    const h1ATR = atr(h1);
+    const h1EMA50 =
+      ema(c1, 50);
 
-    const h1Struct = structure(h1, 20);
+    const h1EMA200 =
+      ema(c1, 200);
 
-    let h1Direction = "WAIT";
+    const h1ATR =
+      atr(h1);
+
+    const h1Struct =
+      structure(h1, 20);
+
+    let h1Direction =
+      "WAIT";
 
     if (
       h1EMA50 != null &&
@@ -658,20 +785,16 @@ export default async function handler(req, res) {
         livePrice > h1EMA200 &&
         h1EMA50 > h1EMA200
       ) {
-        h1Direction = "BUY";
+        h1Direction =
+          "BUY";
       } else if (
         livePrice < h1EMA200 &&
         h1EMA50 < h1EMA200
       ) {
-        h1Direction = "SELL";
+        h1Direction =
+          "SELL";
       }
     }
-
-    /*
-     * ============================================================
-     * H1 SUPPORT / RESISTANCE
-     * ============================================================
-     */
 
     const h1SupportResistance =
       findH1SupportResistance(
@@ -681,22 +804,43 @@ export default async function handler(req, res) {
       );
 
     /*
-     * ============================================================
+     * ==========================================================
      * M15
-     * ============================================================
+     * ==========================================================
      */
 
-    const m15EMA20 = ema(c15, 20);
-    const m15EMA50 = ema(c15, 50);
-    const m15RSI = rsi(c15);
-    const m15MACD = macd(c15);
-    const m15ATR = atr(m15);
+    const c15 =
+      m15.map(x => x.close);
 
-    const m15Struct = structure(m15, 20);
-    const m15BOS = bos(m15, 12);
-    const m15CHOCH = choch(m15, 10);
-    const m15Sweep = sweep(m15, 12);
-    const m15Mom = momentum(m15);
+    const m15EMA20 =
+      ema(c15, 20);
+
+    const m15EMA50 =
+      ema(c15, 50);
+
+    const m15RSI =
+      rsi(c15);
+
+    const m15MACD =
+      macd(c15);
+
+    const m15ATR =
+      atr(m15);
+
+    const m15Struct =
+      structure(m15, 20);
+
+    const m15BOS =
+      bos(m15, 12);
+
+    const m15CHOCH =
+      choch(m15, 10);
+
+    const m15Sweep =
+      sweep(m15, 12);
+
+    const m15Mom =
+      momentum(m15);
 
     let m15Buy = 0;
     let m15Sell = 0;
@@ -708,103 +852,160 @@ export default async function handler(req, res) {
       m15EMA20 != null &&
       m15EMA50 != null
     ) {
-      if (m15EMA20 > m15EMA50) {
+      if (
+        m15EMA20 >
+        m15EMA50
+      ) {
         m15Buy += 20;
-        rb.push("EMA20 > EMA50");
+        rb.push(
+          "EMA20 > EMA50"
+        );
       }
 
-      if (m15EMA20 < m15EMA50) {
+      if (
+        m15EMA20 <
+        m15EMA50
+      ) {
         m15Sell += 20;
-        rs.push("EMA20 < EMA50");
+        rs.push(
+          "EMA20 < EMA50"
+        );
       }
     }
 
     if (m15EMA20 != null) {
-      if (livePrice > m15EMA20) {
+      if (
+        livePrice >
+        m15EMA20
+      ) {
         m15Buy += 10;
-        rb.push("Price > EMA20");
+        rb.push(
+          "Price > EMA20"
+        );
       }
 
-      if (livePrice < m15EMA20) {
+      if (
+        livePrice <
+        m15EMA20
+      ) {
         m15Sell += 10;
-        rs.push("Price < EMA20");
+        rs.push(
+          "Price < EMA20"
+        );
       }
     }
 
     if (m15RSI != null) {
-      if (m15RSI >= 50 && m15RSI <= 72) {
+      if (
+        m15RSI >= 50 &&
+        m15RSI <= 72
+      ) {
         m15Buy += 10;
-        rb.push("RSI bullish");
+        rb.push(
+          "RSI bullish"
+        );
       }
 
-      if (m15RSI >= 28 && m15RSI < 50) {
+      if (
+        m15RSI >= 28 &&
+        m15RSI < 50
+      ) {
         m15Sell += 10;
-        rs.push("RSI bearish");
+        rs.push(
+          "RSI bearish"
+        );
       }
     }
 
     if (m15MACD?.bullish) {
       m15Buy += 15;
-      rb.push("MACD bullish");
+      rb.push(
+        "MACD bullish"
+      );
     }
 
     if (m15MACD?.bearish) {
       m15Sell += 15;
-      rs.push("MACD bearish");
+      rs.push(
+        "MACD bearish"
+      );
     }
 
     if (m15Struct.bullish) {
       m15Buy += 15;
-      rb.push("Structure bullish");
+      rb.push(
+        "Structure bullish"
+      );
     }
 
     if (m15Struct.bearish) {
       m15Sell += 15;
-      rs.push("Structure bearish");
+      rs.push(
+        "Structure bearish"
+      );
     }
 
     if (m15BOS.bullish) {
       m15Buy += 15;
-      rb.push("BOS bullish");
+      rb.push(
+        "BOS bullish"
+      );
     }
 
     if (m15BOS.bearish) {
       m15Sell += 15;
-      rs.push("BOS bearish");
+      rs.push(
+        "BOS bearish"
+      );
     }
 
     if (m15CHOCH.bullish) {
       m15Buy += 10;
-      rb.push("CHOCH bullish");
+      rb.push(
+        "CHOCH bullish"
+      );
     }
 
     if (m15CHOCH.bearish) {
       m15Sell += 10;
-      rs.push("CHOCH bearish");
+      rs.push(
+        "CHOCH bearish"
+      );
     }
 
     if (m15Sweep.bullish) {
       m15Buy += 10;
-      rb.push("Sell-side sweep");
+      rb.push(
+        "Sell-side sweep"
+      );
     }
 
     if (m15Sweep.bearish) {
       m15Sell += 10;
-      rs.push("Buy-side sweep");
+      rs.push(
+        "Buy-side sweep"
+      );
     }
 
     if (m15Mom.bullish) {
       m15Buy += 5;
-      rb.push("Momentum bullish");
+      rb.push(
+        "Momentum bullish"
+      );
     }
 
     if (m15Mom.bearish) {
       m15Sell += 5;
-      rs.push("Momentum bearish");
+      rs.push(
+        "Momentum bearish"
+      );
     }
 
-    m15Buy = clamp(m15Buy, 0, 100);
-    m15Sell = clamp(m15Sell, 0, 100);
+    m15Buy =
+      clamp(m15Buy, 0, 100);
+
+    m15Sell =
+      clamp(m15Sell, 0, 100);
 
     const m15BuyConfirmed =
       m15Buy >= 55 &&
@@ -822,23 +1023,46 @@ export default async function handler(req, res) {
           : "WAIT";
 
     /*
-     * ============================================================
+     * ==========================================================
      * M5
-     * ============================================================
+     * ==========================================================
      */
 
-    const m5EMA9 = ema(c5, 9);
-    const m5EMA20 = ema(c5, 20);
-    const m5EMA50 = ema(c5, 50);
-    const m5RSI = rsi(c5);
-    const m5MACD = macd(c5);
-    const m5ATR = atr(m5);
+    const c5 =
+      m5.map(x => x.close);
 
-    const m5Struct = structure(m5, 24);
-    const m5BOS = bos(m5, 10);
-    const m5CHOCH = choch(m5, 8);
-    const m5Sweep = sweep(m5, 10);
-    const m5Mom = momentum(m5);
+    const m5EMA9 =
+      ema(c5, 9);
+
+    const m5EMA20 =
+      ema(c5, 20);
+
+    const m5EMA50 =
+      ema(c5, 50);
+
+    const m5RSI =
+      rsi(c5);
+
+    const m5MACD =
+      macd(c5);
+
+    const m5ATR =
+      atr(m5);
+
+    const m5Struct =
+      structure(m5, 24);
+
+    const m5BOS =
+      bos(m5, 10);
+
+    const m5CHOCH =
+      choch(m5, 8);
+
+    const m5Sweep =
+      sweep(m5, 10);
+
+    const m5Mom =
+      momentum(m5);
 
     let m5Buy = 0;
     let m5Sell = 0;
@@ -850,103 +1074,160 @@ export default async function handler(req, res) {
       m5EMA20 != null &&
       m5EMA50 != null
     ) {
-      if (m5EMA20 > m5EMA50) {
+      if (
+        m5EMA20 >
+        m5EMA50
+      ) {
         m5Buy += 20;
-        r5b.push("EMA20 > EMA50");
+        r5b.push(
+          "EMA20 > EMA50"
+        );
       }
 
-      if (m5EMA20 < m5EMA50) {
+      if (
+        m5EMA20 <
+        m5EMA50
+      ) {
         m5Sell += 20;
-        r5s.push("EMA20 < EMA50");
+        r5s.push(
+          "EMA20 < EMA50"
+        );
       }
     }
 
     if (m5EMA9 != null) {
-      if (livePrice > m5EMA9) {
+      if (
+        livePrice >
+        m5EMA9
+      ) {
         m5Buy += 8;
-        r5b.push("Price > EMA9");
+        r5b.push(
+          "Price > EMA9"
+        );
       }
 
-      if (livePrice < m5EMA9) {
+      if (
+        livePrice <
+        m5EMA9
+      ) {
         m5Sell += 8;
-        r5s.push("Price < EMA9");
+        r5s.push(
+          "Price < EMA9"
+        );
       }
     }
 
     if (m5RSI != null) {
-      if (m5RSI >= 50 && m5RSI < 75) {
+      if (
+        m5RSI >= 50 &&
+        m5RSI < 75
+      ) {
         m5Buy += 10;
-        r5b.push("RSI bullish");
+        r5b.push(
+          "RSI bullish"
+        );
       }
 
-      if (m5RSI > 25 && m5RSI < 50) {
+      if (
+        m5RSI > 25 &&
+        m5RSI < 50
+      ) {
         m5Sell += 10;
-        r5s.push("RSI bearish");
+        r5s.push(
+          "RSI bearish"
+        );
       }
     }
 
     if (m5MACD?.bullish) {
       m5Buy += 10;
-      r5b.push("MACD bullish");
+      r5b.push(
+        "MACD bullish"
+      );
     }
 
     if (m5MACD?.bearish) {
       m5Sell += 10;
-      r5s.push("MACD bearish");
+      r5s.push(
+        "MACD bearish"
+      );
     }
 
     if (m5Struct.bullish) {
       m5Buy += 12;
-      r5b.push("Structure bullish");
+      r5b.push(
+        "Structure bullish"
+      );
     }
 
     if (m5Struct.bearish) {
       m5Sell += 12;
-      r5s.push("Structure bearish");
+      r5s.push(
+        "Structure bearish"
+      );
     }
 
     if (m5BOS.bullish) {
       m5Buy += 15;
-      r5b.push("BOS bullish");
+      r5b.push(
+        "BOS bullish"
+      );
     }
 
     if (m5BOS.bearish) {
       m5Sell += 15;
-      r5s.push("BOS bearish");
+      r5s.push(
+        "BOS bearish"
+      );
     }
 
     if (m5CHOCH.bullish) {
       m5Buy += 12;
-      r5b.push("CHOCH bullish");
+      r5b.push(
+        "CHOCH bullish"
+      );
     }
 
     if (m5CHOCH.bearish) {
       m5Sell += 12;
-      r5s.push("CHOCH bearish");
+      r5s.push(
+        "CHOCH bearish"
+      );
     }
 
     if (m5Sweep.bullish) {
       m5Buy += 8;
-      r5b.push("Sell-side sweep");
+      r5b.push(
+        "Sell-side sweep"
+      );
     }
 
     if (m5Sweep.bearish) {
       m5Sell += 8;
-      r5s.push("Buy-side sweep");
+      r5s.push(
+        "Buy-side sweep"
+      );
     }
 
     if (m5Mom.bullish) {
       m5Buy += 5;
-      r5b.push("Momentum bullish");
+      r5b.push(
+        "Momentum bullish"
+      );
     }
 
     if (m5Mom.bearish) {
       m5Sell += 5;
-      r5s.push("Momentum bearish");
+      r5s.push(
+        "Momentum bearish"
+      );
     }
 
-    m5Buy = clamp(m5Buy, 0, 100);
-    m5Sell = clamp(m5Sell, 0, 100);
+    m5Buy =
+      clamp(m5Buy, 0, 100);
+
+    m5Sell =
+      clamp(m5Sell, 0, 100);
 
     const m5BuyTriggered =
       m5Buy >= 50 &&
@@ -964,9 +1245,9 @@ export default async function handler(req, res) {
           : "WAIT";
 
     /*
-     * ============================================================
-     * RAW M15 + M5 ALIGNMENT
-     * ============================================================
+     * ==========================================================
+     * ALIGNMENT
+     * ==========================================================
      */
 
     const rawBuyAlignment =
@@ -978,18 +1259,9 @@ export default async function handler(req, res) {
       m5SellTriggered;
 
     /*
-     * ============================================================
-     * S/R ENTRY FILTER
-     *
-     * BUY:
-     * - Jangan BUY terlalu dekat H1 resistance.
-     *
-     * SELL:
-     * - Jangan SELL terlalu dekat H1 support.
-     *
-     * BUY dekat support = good context.
-     * SELL dekat resistance = good context.
-     * ============================================================
+     * ==========================================================
+     * S/R FILTER
+     * ==========================================================
      */
 
     let srBuyAllowed = true;
@@ -998,102 +1270,139 @@ export default async function handler(req, res) {
     let srBuyContext = "NEUTRAL";
     let srSellContext = "NEUTRAL";
 
-    if (h1SupportResistance.nearResistance) {
+    if (
+      h1SupportResistance.nearResistance
+    ) {
       srBuyAllowed = false;
-      srBuyContext = "BLOCKED_NEAR_RESISTANCE";
+      srBuyContext =
+        "BLOCKED_NEAR_RESISTANCE";
     }
 
-    if (h1SupportResistance.nearSupport) {
+    if (
+      h1SupportResistance.nearSupport
+    ) {
       srSellAllowed = false;
-      srSellContext = "BLOCKED_NEAR_SUPPORT";
+      srSellContext =
+        "BLOCKED_NEAR_SUPPORT";
     }
 
-    if (h1SupportResistance.nearSupport) {
-      srBuyContext = "BUY_NEAR_SUPPORT";
+    if (
+      h1SupportResistance.nearSupport
+    ) {
+      srBuyContext =
+        "BUY_NEAR_SUPPORT";
     }
 
-    if (h1SupportResistance.nearResistance) {
-      srSellContext = "SELL_NEAR_RESISTANCE";
+    if (
+      h1SupportResistance.nearResistance
+    ) {
+      srSellContext =
+        "SELL_NEAR_RESISTANCE";
     }
 
     /*
-     * ============================================================
+     * ==========================================================
      * FINAL SIGNAL
-     * ============================================================
+     * ==========================================================
      */
 
     let signal = "WAIT";
     let status = "WAIT";
     let execution = "WAIT";
-    let setupType = "NO ALIGNMENT";
 
-    let score = Math.round(
-      Math.max(
-        m15Buy,
-        m15Sell,
-        m5Buy,
-        m5Sell
-      )
-    );
+    let setupType =
+      "NO ALIGNMENT";
+
+    let score =
+      Math.round(
+        Math.max(
+          m15Buy,
+          m15Sell,
+          m5Buy,
+          m5Sell
+        )
+      );
 
     let reasons = [];
 
-    if (rawBuyAlignment) {
-      if (srBuyAllowed) {
-        signal = "BUY";
-        status = "ENTRY";
-        execution = "READY";
-        setupType = "M15+M5 ALIGNMENT + H1 S/R";
-        score = Math.round(
+    if (
+      rawBuyAlignment &&
+      srBuyAllowed
+    ) {
+      signal = "BUY";
+      status = "ENTRY";
+      execution = "READY";
+
+      setupType =
+        "M15+M5 ALIGNMENT + H1 S/R";
+
+      score =
+        Math.round(
           (m15Buy + m5Buy) / 2
         );
 
-        reasons = [
-          "M15 BUY confirmed",
-          "M5 BUY trigger confirmed",
-          "M15 + M5 aligned",
-          `H1 S/R: ${h1SupportResistance.position}`,
-          h1SupportResistance.nearSupport
-            ? "BUY near H1 support"
-            : "H1 resistance clear"
-        ];
-      } else {
-        reasons = [
-          "M15 BUY confirmed",
-          "M5 BUY trigger confirmed",
-          "BUY BLOCKED",
-          "Too close to H1 resistance",
-          `Resistance ${h1SupportResistance.resistance?.price ?? "N/A"}`
-        ];
-      }
-    } else if (rawSellAlignment) {
-      if (srSellAllowed) {
-        signal = "SELL";
-        status = "ENTRY";
-        execution = "READY";
-        setupType = "M15+M5 ALIGNMENT + H1 S/R";
-        score = Math.round(
+      reasons = [
+        "M15 BUY confirmed",
+        "M5 BUY trigger confirmed",
+        "M15 + M5 aligned",
+        `H1 S/R: ${h1SupportResistance.position}`,
+        h1SupportResistance.nearSupport
+          ? "BUY near H1 support"
+          : "H1 resistance clear"
+      ];
+    } else if (
+      rawSellAlignment &&
+      srSellAllowed
+    ) {
+      signal = "SELL";
+      status = "ENTRY";
+      execution = "READY";
+
+      setupType =
+        "M15+M5 ALIGNMENT + H1 S/R";
+
+      score =
+        Math.round(
           (m15Sell + m5Sell) / 2
         );
 
-        reasons = [
-          "M15 SELL confirmed",
-          "M5 SELL trigger confirmed",
-          "M15 + M5 aligned",
-          `H1 S/R: ${h1SupportResistance.position}`,
-          h1SupportResistance.nearResistance
-            ? "SELL near H1 resistance"
-            : "H1 support clear"
-        ];
-      } else {
-        reasons = [
-          "M15 SELL confirmed",
-          "M5 SELL trigger confirmed",
-          "SELL BLOCKED",
-          "Too close to H1 support",
-          `Support ${h1SupportResistance.support?.price ?? "N/A"}`
-        ];
-      }
+      reasons = [
+        "M15 SELL confirmed",
+        "M5 SELL trigger confirmed",
+        "M15 + M5 aligned",
+        `H1 S/R: ${h1SupportResistance.position}`,
+        h1SupportResistance.nearResistance
+          ? "SELL near H1 resistance"
+          : "H1 support clear"
+      ];
+    } else if (
+      rawBuyAlignment &&
+      !srBuyAllowed
+    ) {
+      reasons = [
+        "M15 BUY confirmed",
+        "M5 BUY trigger confirmed",
+        "BUY BLOCKED",
+        "Too close to H1 resistance",
+        `Resistance ${
+          h1SupportResistance
+            .resistance?.price ?? "N/A"
+        }`
+      ];
+    } else if (
+      rawSellAlignment &&
+      !srSellAllowed
+    ) {
+      reasons = [
+        "M15 SELL confirmed",
+        "M5 SELL trigger confirmed",
+        "SELL BLOCKED",
+        "Too close to H1 support",
+        `Support ${
+          h1SupportResistance
+            .support?.price ?? "N/A"
+        }`
+      ];
     } else if (
       m15BuyConfirmed &&
       m5SellTriggered
@@ -1124,9 +1433,9 @@ export default async function handler(req, res) {
     }
 
     /*
-     * ============================================================
+     * ==========================================================
      * H1 HOLD
-     * ============================================================
+     * ==========================================================
      */
 
     const holdBias =
@@ -1162,48 +1471,11 @@ export default async function handler(req, res) {
           : "COUNTER_H1";
 
     /*
-     * ============================================================
-     * TRADE PLAN
-     * ============================================================
-     */
-
-    let entry = null;
-    let stopLoss = null;
-    let tp1 = null;
-    let tp2 = null;
-    let tp3 = null;
-    let rr = null;
-
-    if (
-      status === "ENTRY" &&
-      m5ATR != null
-    ) {
-      entry = livePrice;
-
-      const risk = Math.max(
-        m5ATR * 1.25,
-        0.8
-      );
-
-      if (signal === "BUY") {
-        stopLoss = entry - risk;
-        tp1 = entry + risk * 1.5;
-        tp2 = entry + risk * 2.5;
-        tp3 = entry + risk * 4;
-      } else {
-        stopLoss = entry + risk;
-        tp1 = entry - risk * 1.5;
-        tp2 = entry - risk * 2.5;
-        tp3 = entry - risk * 4;
-      }
-
-      rr = "1 : 1.5 / 2.5 / 4.0";
-    }
-
-    /*
-     * ============================================================
-     * PUSH NOTIFICATION
-     * ============================================================
+     * ==========================================================
+     * FIXED SIGNAL KEY
+     *
+     * Hanya berubah bila M5 candle berubah.
+     * ==========================================================
      */
 
     const signalCandle =
@@ -1215,7 +1487,156 @@ export default async function handler(req, res) {
         ? `XAUUSD|${signal}|${signalCandle}`
         : null;
 
+    /*
+     * ==========================================================
+     * FIXED TRADE PLAN
+     * ==========================================================
+     */
+
+    let entry = null;
+    let stopLoss = null;
+    let tp1 = null;
+    let tp2 = null;
+    let tp3 = null;
+    let rr = null;
+
+    let tradePlanLocked = false;
+    let tradePlanSource = "NONE";
+
+    /*
+     * First:
+     * cuba ambil plan yang sudah dikunci.
+     */
+
     if (signalKey) {
+      const locked =
+        await getLockedTradePlan(
+          signalKey
+        );
+
+      if (locked) {
+        entry = locked.entry;
+        stopLoss = locked.stopLoss;
+        tp1 = locked.tp1;
+        tp2 = locked.tp2;
+        tp3 = locked.tp3;
+        rr = locked.rr;
+
+        tradePlanLocked = true;
+        tradePlanSource = "REDIS_LOCK";
+      }
+    }
+
+    /*
+     * Kalau belum ada:
+     * cipta sekali sahaja menggunakan
+     * livePrice pada masa signal muncul.
+     */
+
+    if (
+      status === "ENTRY" &&
+      m5ATR != null &&
+      signalKey &&
+      !tradePlanLocked
+    ) {
+      entry =
+        Number(
+          livePrice.toFixed(2)
+        );
+
+      const risk =
+        Math.max(
+          m5ATR * 1.25,
+          0.8
+        );
+
+      if (signal === "BUY") {
+        stopLoss =
+          Number(
+            (entry - risk).toFixed(2)
+          );
+
+        tp1 =
+          Number(
+            (entry + risk * 1.5)
+              .toFixed(2)
+          );
+
+        tp2 =
+          Number(
+            (entry + risk * 2.5)
+              .toFixed(2)
+          );
+
+        tp3 =
+          Number(
+            (entry + risk * 4)
+              .toFixed(2)
+          );
+      } else {
+        stopLoss =
+          Number(
+            (entry + risk).toFixed(2)
+          );
+
+        tp1 =
+          Number(
+            (entry - risk * 1.5)
+              .toFixed(2)
+          );
+
+        tp2 =
+          Number(
+            (entry - risk * 2.5)
+              .toFixed(2)
+          );
+
+        tp3 =
+          Number(
+            (entry - risk * 4)
+              .toFixed(2)
+          );
+      }
+
+      rr =
+        "1 : 1.5 / 2.5 / 4.0";
+
+      const newPlan = {
+        entry,
+        stopLoss,
+        tp1,
+        tp2,
+        tp3,
+        rr,
+        signal,
+        signalKey,
+        signalCandle,
+        createdAt:
+          new Date().toISOString()
+      };
+
+      await saveLockedTradePlan(
+        signalKey,
+        newPlan
+      );
+
+      tradePlanLocked = true;
+      tradePlanSource = "NEW_REDIS_LOCK";
+    }
+
+    /*
+     * ==========================================================
+     * PUSH
+     * ==========================================================
+     */
+
+    let pushSent = false;
+    let pushSkipped = false;
+
+    if (
+      signalKey &&
+      status === "ENTRY"
+    ) {
       try {
         const lockKey =
           "xau_last_entry_notification";
@@ -1247,9 +1668,9 @@ export default async function handler(req, res) {
             `TP1 ${tp1?.toFixed(2)}`,
             `TP2 ${tp2?.toFixed(2)}`,
             `TP3 ${tp3?.toFixed(2)}`,
-            `${setupType}`,
-            `${srText}`,
-            `${holdPermission}`
+            setupType,
+            srText,
+            holdPermission
           ].join(" • ");
 
           const delivery =
@@ -1260,13 +1681,20 @@ export default async function handler(req, res) {
               url: "/"
             });
 
-          if (delivery.sent > 0) {
+          pushSent =
+            Number(delivery?.sent || 0) > 0;
+
+          if (pushSent) {
             await redis.set(
               lockKey,
               signalKey,
-              { ex: 21600 }
+              {
+                ex: CFG.tradeLockTTL
+              }
             );
           }
+        } else {
+          pushSkipped = true;
         }
       } catch (pushError) {
         console.error(
@@ -1277,13 +1705,19 @@ export default async function handler(req, res) {
     }
 
     /*
-     * ============================================================
+     * ==========================================================
      * RESPONSE
-     * ============================================================
+     * ==========================================================
      */
 
     return res.status(200).json({
       ok: true,
+
+      version:
+        "V11-SCALP-M15-M5-ALIGNMENT-H1-HOLD-FIXED-TRADEPLAN",
+
+      architecture:
+        "M15+M5-ALIGNED-SIGNAL + H1-HOLD + H1-SR + FIXED-ENTRY-SL-TP",
 
       symbol: CFG.symbol,
 
@@ -1293,15 +1727,18 @@ export default async function handler(req, res) {
       livePrice: {
         price: livePrice,
         source: "TWELVE_DATA_PRICE",
-        ageSeconds: Math.round(
-          (Date.now() - C.priceAt) / 1000
-        )
+        ageSeconds:
+          Math.round(
+            (Date.now() - C.priceAt) / 1000
+          )
       },
 
-      candles: m5.slice(-60),
+      candles:
+        m5.slice(-60),
 
       status,
       signal,
+
       signalType:
         signal === "WAIT"
           ? "NONE"
@@ -1316,9 +1753,16 @@ export default async function handler(req, res) {
       signalKey,
       signalCandle,
 
-      /*
-       * H1
-       */
+      push: {
+        attempted:
+          Boolean(
+            signalKey &&
+            status === "ENTRY"
+          ),
+        sent: pushSent,
+        skipped: pushSkipped
+      },
+
       h1: {
         direction: h1Direction,
 
@@ -1331,21 +1775,21 @@ export default async function handler(req, res) {
 
         structure: h1Struct,
 
-        /*
-         * MAIN H1 S/R
-         */
         supportResistance:
           h1SupportResistance,
 
-        /*
-         * S/R FILTER
-         */
         srFilter: {
-          buyAllowed: srBuyAllowed,
-          sellAllowed: srSellAllowed,
+          buyAllowed:
+            srBuyAllowed,
 
-          buyContext: srBuyContext,
-          sellContext: srSellContext,
+          sellAllowed:
+            srSellAllowed,
+
+          buyContext:
+            srBuyContext,
+
+          sellContext:
+            srSellContext,
 
           buyBlocked:
             !srBuyAllowed,
@@ -1355,15 +1799,18 @@ export default async function handler(req, res) {
         }
       },
 
-      /*
-       * M15
-       */
       m15: {
-        direction: m15Confirmation,
-        confirmation: m15Confirmation,
+        direction:
+          m15Confirmation,
 
-        buyScore: m15Buy,
-        sellScore: m15Sell,
+        confirmation:
+          m15Confirmation,
+
+        buyScore:
+          m15Buy,
+
+        sellScore:
+          m15Sell,
 
         buyConfirmed:
           m15BuyConfirmed,
@@ -1371,33 +1818,55 @@ export default async function handler(req, res) {
         sellConfirmed:
           m15SellConfirmed,
 
-        ema20: m15EMA20,
-        ema50: m15EMA50,
+        ema20:
+          m15EMA20,
 
-        rsi: m15RSI,
-        macd: m15MACD,
-        atr: m15ATR,
+        ema50:
+          m15EMA50,
 
-        bos: m15BOS,
-        choch: m15CHOCH,
-        sweep: m15Sweep,
-        momentum: m15Mom,
+        rsi:
+          m15RSI,
 
-        structure: m15Struct,
+        macd:
+          m15MACD,
 
-        buyReasons: rb,
-        sellReasons: rs
+        atr:
+          m15ATR,
+
+        bos:
+          m15BOS,
+
+        choch:
+          m15CHOCH,
+
+        sweep:
+          m15Sweep,
+
+        momentum:
+          m15Mom,
+
+        structure:
+          m15Struct,
+
+        buyReasons:
+          rb,
+
+        sellReasons:
+          rs
       },
 
-      /*
-       * M5
-       */
       m5: {
-        trigger: m5Trigger,
-        confirmation: m5Trigger,
+        trigger:
+          m5Trigger,
 
-        buyScore: m5Buy,
-        sellScore: m5Sell,
+        confirmation:
+          m5Trigger,
+
+        buyScore:
+          m5Buy,
+
+        sellScore:
+          m5Sell,
 
         buyTriggered:
           m5BuyTriggered,
@@ -1405,44 +1874,72 @@ export default async function handler(req, res) {
         sellTriggered:
           m5SellTriggered,
 
-        ema9: m5EMA9,
-        ema20: m5EMA20,
-        ema50: m5EMA50,
+        ema9:
+          m5EMA9,
 
-        rsi: m5RSI,
-        macd: m5MACD,
-        atr: m5ATR,
+        ema20:
+          m5EMA20,
 
-        bos: m5BOS,
-        choch: m5CHOCH,
-        sweep: m5Sweep,
-        momentum: m5Mom,
+        ema50:
+          m5EMA50,
 
-        structure: m5Struct,
+        rsi:
+          m5RSI,
 
-        buyReasons: r5b,
-        sellReasons: r5s
+        macd:
+          m5MACD,
+
+        atr:
+          m5ATR,
+
+        bos:
+          m5BOS,
+
+        choch:
+          m5CHOCH,
+
+        sweep:
+          m5Sweep,
+
+        momentum:
+          m5Mom,
+
+        structure:
+          m5Struct,
+
+        buyReasons:
+          r5b,
+
+        sellReasons:
+          r5s
       },
 
-      /*
-       * FINAL TRADE PLAN
-       */
       tradePlan: {
         entry,
         stopLoss,
         tp1,
         tp2,
         tp3,
-        rr
+        rr,
+
+        locked:
+          tradePlanLocked,
+
+        source:
+          tradePlanSource,
+
+        fixed:
+          Boolean(
+            signalKey &&
+            entry != null
+          )
       },
 
-      /*
-       * S/R SUMMARY
-       */
       srAnalysis: {
         timeframe: "H1",
 
-        currentPrice: livePrice,
+        currentPrice:
+          livePrice,
 
         support:
           h1SupportResistance.support,
@@ -1480,17 +1977,28 @@ export default async function handler(req, res) {
         signalContext:
           h1SupportResistance.signalContext,
 
-        buyAllowed: srBuyAllowed,
-        sellAllowed: srSellAllowed,
+        buyAllowed:
+          srBuyAllowed,
 
-        buyContext: srBuyContext,
-        sellContext: srSellContext
+        sellAllowed:
+          srSellAllowed,
+
+        buyContext:
+          srBuyContext,
+
+        sellContext:
+          srSellContext
       },
 
       data: {
-        m5Candles: m5.length,
-        m15Candles: m15.length,
-        h1Candles: h1.length
+        m5Candles:
+          m5.length,
+
+        m15Candles:
+          m15.length,
+
+        h1Candles:
+          h1.length
       },
 
       timestamp:
@@ -1499,7 +2007,7 @@ export default async function handler(req, res) {
 
   } catch (e) {
     console.error(
-      "REPAIRED SCALP ERROR",
+      "SCALP API ERROR",
       e
     );
 
