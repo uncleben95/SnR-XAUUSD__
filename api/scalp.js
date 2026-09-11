@@ -2,7 +2,6 @@ import { sendPushToAll, redis } from "./push-lib.js";
 
 export default async function handler(req, res) {
   const API_KEY = process.env.TWELVE_DATA_API_KEY;
-
   if (!API_KEY) {
     return res.status(500).json({
       ok: false,
@@ -12,24 +11,14 @@ export default async function handler(req, res) {
 
   const CFG = {
     symbol: "XAU/USD",
-
     m5Size: 1500,
     m15Size: 500,
     h1Size: 300,
-
     cacheTTL: 60_000,
     priceTTL: 15_000,
-
     minM5: 250,
     minM15: 100,
-    minH1: 210,
-
-    // H1 S/R
-    snrLookback: 180,
-    snrSwingLeft: 3,
-    snrSwingRight: 3,
-    snrClusterATR: 0.35,
-    snrZoneATR: 0.50
+    minH1: 210
   };
 
   globalThis.__XAU_REPAIR_CACHE__ ??= {
@@ -42,9 +31,7 @@ export default async function handler(req, res) {
   const now = Date.now();
 
   const avg = a =>
-    a.length
-      ? a.reduce((x, y) => x + y, 0) / a.length
-      : null;
+    a.length ? a.reduce((x, y) => x + y, 0) / a.length : null;
 
   const clamp = (n, a, b) =>
     Math.max(a, Math.min(b, n));
@@ -107,9 +94,7 @@ export default async function handler(req, res) {
     const e12 = ema(v, 12);
     const e26 = ema(v, 26);
 
-    if (!Number.isFinite(e12) || !Number.isFinite(e26)) {
-      return null;
-    }
+    if (e12 == null || e26 == null) return null;
 
     const line = e12 - e26;
 
@@ -187,14 +172,8 @@ export default async function handler(req, res) {
 
     const high = Math.max(...r.map(x => x.high));
     const low = Math.min(...r.map(x => x.low));
-
-    const previousHigh = Math.max(
-      ...p.map(x => x.high)
-    );
-
-    const previousLow = Math.min(
-      ...p.map(x => x.low)
-    );
+    const previousHigh = Math.max(...p.map(x => x.high));
+    const previousLow = Math.min(...p.map(x => x.low));
 
     return {
       bullish: last.close > previousHigh,
@@ -218,13 +197,8 @@ export default async function handler(req, res) {
     const p = d.slice(-lookback - 1, -1);
 
     return {
-      bullish:
-        last.close >
-        Math.max(...p.map(x => x.high)),
-
-      bearish:
-        last.close <
-        Math.min(...p.map(x => x.low))
+      bullish: last.close > Math.max(...p.map(x => x.high)),
+      bearish: last.close < Math.min(...p.map(x => x.low))
     };
   }
 
@@ -237,27 +211,17 @@ export default async function handler(req, res) {
     }
 
     const r = d.slice(-lookback);
-    const p = d.slice(
-      -lookback * 2,
-      -lookback
-    );
-
+    const p = d.slice(-lookback * 2, -lookback);
     const last = d.at(-1);
 
     const rh = Math.max(...r.map(x => x.high));
     const rl = Math.min(...r.map(x => x.low));
-
     const ph = Math.max(...p.map(x => x.high));
     const pl = Math.min(...p.map(x => x.low));
 
     return {
-      bullish:
-        rh > ph &&
-        last.close > ph,
-
-      bearish:
-        rl < pl &&
-        last.close < pl
+      bullish: rh > ph && last.close > ph,
+      bearish: rl < pl && last.close < pl
     };
   }
 
@@ -276,13 +240,8 @@ export default async function handler(req, res) {
     const l = Math.min(...p.map(x => x.low));
 
     return {
-      bullish:
-        c.low < l &&
-        c.close > l,
-
-      bearish:
-        c.high > h &&
-        c.close < h
+      bullish: c.low < l && c.close > l,
+      bearish: c.high > h && c.close < h
     };
   }
 
@@ -297,406 +256,232 @@ export default async function handler(req, res) {
       };
     }
 
-    const range =
-      c.high - c.low || 1e-9;
-
-    const ratio =
-      Math.abs(c.close - c.open) /
-      range;
+    const range = c.high - c.low || 1e-9;
+    const ratio = Math.abs(c.close - c.open) / range;
 
     return {
-      bullish:
-        c.close > c.open &&
-        ratio >= 0.45,
-
-      bearish:
-        c.close < c.open &&
-        ratio >= 0.45,
-
+      bullish: c.close > c.open && ratio >= 0.45,
+      bearish: c.close < c.open && ratio >= 0.45,
       strength: Math.round(ratio * 100)
     };
   }
 
-  /*
-   * ============================================================
-   * H1 SUPPORT / RESISTANCE ENGINE
-   * ============================================================
-   */
+  // =========================================================
+  // H1 SUPPORT / RESISTANCE
+  // =========================================================
 
-  function findSwingLevels(
-    d,
-    left = 3,
-    right = 3
-  ) {
-    const supports = [];
-    const resistances = [];
-
-    if (d.length < left + right + 5) {
+  function findH1SupportResistance(d, price) {
+    if (!Array.isArray(d) || d.length < 30 || !Number.isFinite(price)) {
       return {
-        supports,
-        resistances
+        support: null,
+        resistance: null,
+        supportDistance: null,
+        resistanceDistance: null,
+        supportDistancePct: null,
+        resistanceDistancePct: null,
+        threshold: null,
+        position: "UNKNOWN",
+        zone: "UNKNOWN",
+        nearSupport: false,
+        nearResistance: false,
+        atSupport: false,
+        atResistance: false
       };
     }
 
-    for (
-      let i = left;
-      i < d.length - right;
-      i++
-    ) {
+    const swingHighs = [];
+    const swingLows = [];
+
+    // Detect H1 swing highs / lows
+    for (let i = 2; i < d.length - 2; i++) {
       const c = d[i];
 
-      let isLow = true;
-      let isHigh = true;
-
-      for (let j = 1; j <= left; j++) {
-        if (d[i - j].low <= c.low) {
-          isLow = false;
-        }
-
-        if (d[i - j].high >= c.high) {
-          isHigh = false;
-        }
-      }
-
-      for (
-        let j = 1;
-        j <= right;
-        j++
+      if (
+        c.high >= d[i - 1].high &&
+        c.high >= d[i - 2].high &&
+        c.high >= d[i + 1].high &&
+        c.high >= d[i + 2].high
       ) {
-        if (d[i + j].low < c.low) {
-          isLow = false;
-        }
-
-        if (d[i + j].high > c.high) {
-          isHigh = false;
-        }
+        swingHighs.push(c.high);
       }
-
-      if (isLow) {
-        supports.push({
-          price: c.low,
-          time: c.time
-        });
-      }
-
-      if (isHigh) {
-        resistances.push({
-          price: c.high,
-          time: c.time
-        });
-      }
-    }
-
-    return {
-      supports,
-      resistances
-    };
-  }
-
-  function clusterLevels(
-    levels,
-    tolerance
-  ) {
-    if (!levels.length) return [];
-
-    const sorted = [...levels].sort(
-      (a, b) => a.price - b.price
-    );
-
-    const clusters = [];
-
-    for (const level of sorted) {
-      let cluster = clusters.find(
-        x =>
-          Math.abs(
-            x.price - level.price
-          ) <= tolerance
-      );
-
-      if (!cluster) {
-        cluster = {
-          price: level.price,
-          touches: 0,
-          lastTime: level.time
-        };
-
-        clusters.push(cluster);
-      }
-
-      cluster.touches += 1;
 
       if (
-        new Date(level.time) >
-        new Date(cluster.lastTime)
+        c.low <= d[i - 1].low &&
+        c.low <= d[i - 2].low &&
+        c.low <= d[i + 1].low &&
+        c.low <= d[i + 2].low
       ) {
-        cluster.lastTime = level.time;
+        swingLows.push(c.low);
       }
-
-      cluster.price =
-        (cluster.price *
-          (cluster.touches - 1) +
-          level.price) /
-        cluster.touches;
     }
 
-    return clusters;
-  }
+    // Recent H1 range
+    const recent = d.slice(-80);
 
-  function nearestLevel(
-    levels,
-    price,
-    direction
-  ) {
-    const valid = levels.filter(x =>
-      direction === "SUPPORT"
-        ? x.price < price
-        : x.price > price
+    if (recent.length) {
+      swingHighs.push(
+        Math.max(...recent.map(x => x.high))
+      );
+
+      swingLows.push(
+        Math.min(...recent.map(x => x.low))
+      );
+    }
+
+    // Cluster nearby levels
+    function clusterLevels(levels) {
+      const sorted = [
+        ...new Set(
+          levels
+            .filter(Number.isFinite)
+            .map(x => Number(x.toFixed(2)))
+        )
+      ].sort((a, b) => a - b);
+
+      const clusters = [];
+
+      for (const level of sorted) {
+        const last = clusters.at(-1);
+
+        // Gold levels within $2.50 = same zone
+        if (last && Math.abs(level - last.price) <= 2.5) {
+          last.values.push(level);
+
+          last.price =
+            last.values.reduce((a, b) => a + b, 0) /
+            last.values.length;
+        } else {
+          clusters.push({
+            price: level,
+            values: [level]
+          });
+        }
+      }
+
+      return clusters.map(x => ({
+        price: Number(x.price.toFixed(2)),
+        strength: x.values.length
+      }));
+    }
+
+    const resistanceLevels = clusterLevels(
+      swingHighs.filter(x => x > price)
     );
 
-    if (!valid.length) return null;
-
-    valid.sort((a, b) =>
-      direction === "SUPPORT"
-        ? b.price - a.price
-        : a.price - b.price
+    const supportLevels = clusterLevels(
+      swingLows.filter(x => x < price)
     );
 
-    return valid[0];
-  }
+    const support = supportLevels.length
+      ? supportLevels.sort(
+          (a, b) => b.price - a.price
+        )[0]
+      : null;
 
-  function calculateH1SNR(
-    h1,
-    price
-  ) {
-    const data = h1.slice(
-      -CFG.snrLookback
+    const resistance = resistanceLevels.length
+      ? resistanceLevels.sort(
+          (a, b) => a.price - b.price
+        )[0]
+      : null;
+
+    const supportDistance = support
+      ? price - support.price
+      : null;
+
+    const resistanceDistance = resistance
+      ? resistance.price - price
+      : null;
+
+    const supportDistancePct = support
+      ? (supportDistance / price) * 100
+      : null;
+
+    const resistanceDistancePct = resistance
+      ? (resistanceDistance / price) * 100
+      : null;
+
+    // Dynamic distance threshold
+    const threshold = clamp(
+      price * 0.0012,
+      2.5,
+      8
     );
 
-    const h1ATR =
-      atr(data, 14) || 5;
-
-    const clusterTolerance =
-      Math.max(
-        h1ATR * CFG.snrClusterATR,
-        0.8
-      );
-
-    const zoneWidth =
-      Math.max(
-        h1ATR * CFG.snrZoneATR,
-        1.2
-      );
-
-    const swings =
-      findSwingLevels(
-        data,
-        CFG.snrSwingLeft,
-        CFG.snrSwingRight
-      );
-
-    const supports =
-      clusterLevels(
-        swings.supports,
-        clusterTolerance
-      );
-
-    const resistances =
-      clusterLevels(
-        swings.resistances,
-        clusterTolerance
-      );
-
-    const support =
-      nearestLevel(
-        supports,
-        price,
-        "SUPPORT"
-      );
-
-    const resistance =
-      nearestLevel(
-        resistances,
-        price,
-        "RESISTANCE"
-      );
-
-    const supportDistance =
-      support
-        ? price - support.price
-        : null;
-
-    const resistanceDistance =
-      resistance
-        ? resistance.price - price
-        : null;
-
-    const supportZone =
-      support
-        ? {
-            low:
-              support.price - zoneWidth,
-            high:
-              support.price + zoneWidth
-          }
-        : null;
-
-    const resistanceZone =
-      resistance
-        ? {
-            low:
-              resistance.price - zoneWidth,
-            high:
-              resistance.price + zoneWidth
-          }
-        : null;
+    const atSupport =
+      supportDistance != null &&
+      supportDistance <= threshold * 0.45;
 
     const nearSupport =
       supportDistance != null &&
-      supportDistance <= zoneWidth;
+      supportDistance <= threshold;
+
+    const atResistance =
+      resistanceDistance != null &&
+      resistanceDistance <= threshold * 0.45;
 
     const nearResistance =
       resistanceDistance != null &&
-      resistanceDistance <= zoneWidth;
+      resistanceDistance <= threshold;
 
-    let location = "MID_RANGE";
-    let bias = "NEUTRAL";
-    let quality = "NEUTRAL";
+    let position = "MID-ZONE";
+    let zone = "MID-ZONE";
 
-    if (nearSupport && !nearResistance) {
-      location = "NEAR_SUPPORT";
-      bias = "BUY";
-    } else if (
-      nearResistance &&
-      !nearSupport
-    ) {
-      location = "NEAR_RESISTANCE";
-      bias = "SELL";
-    } else if (
-      nearSupport &&
-      nearResistance
-    ) {
-      location = "BETWEEN_SNR";
-      bias = "NEUTRAL";
+    if (atSupport) {
+      position = "AT SUPPORT";
+      zone = "SUPPORT";
+    } else if (nearSupport) {
+      position = "NEAR SUPPORT";
+      zone = "SUPPORT";
+    } else if (atResistance) {
+      position = "AT RESISTANCE";
+      zone = "RESISTANCE";
+    } else if (nearResistance) {
+      position = "NEAR RESISTANCE";
+      zone = "RESISTANCE";
     }
 
     return {
-      timeframe: "H1",
-
       support: support
         ? {
             price: support.price,
-            distance: supportDistance,
-            touches: support.touches,
-            zone: supportZone
+            strength: support.strength
           }
         : null,
 
       resistance: resistance
         ? {
             price: resistance.price,
-            distance: resistanceDistance,
-            touches: resistance.touches,
-            zone: resistanceZone
+            strength: resistance.strength
           }
         : null,
 
-      atr: h1ATR,
-      zoneWidth,
+      supportDistance,
+      resistanceDistance,
+      supportDistancePct,
+      resistanceDistancePct,
 
-      location,
-      bias,
+      threshold,
+
+      position,
+      zone,
 
       nearSupport,
       nearResistance,
-
-      getEntryAnalysis(signal) {
-        if (signal === "BUY") {
-          if (nearSupport && !nearResistance) {
-            return {
-              result: "FAVOURABLE",
-              reason:
-                "BUY berada dekat H1 Support",
-              score: 15
-            };
-          }
-
-          if (nearResistance) {
-            return {
-              result: "CAUTION",
-              reason:
-                "BUY berada dekat H1 Resistance",
-              score: -15
-            };
-          }
-
-          return {
-            result: "NEUTRAL",
-            reason:
-              "BUY berada di tengah H1 range",
-            score: 0
-          };
-        }
-
-        if (signal === "SELL") {
-          if (
-            nearResistance &&
-            !nearSupport
-          ) {
-            return {
-              result: "FAVOURABLE",
-              reason:
-                "SELL berada dekat H1 Resistance",
-              score: 15
-            };
-          }
-
-          if (nearSupport) {
-            return {
-              result: "CAUTION",
-              reason:
-                "SELL berada dekat H1 Support",
-              score: -15
-            };
-          }
-
-          return {
-            result: "NEUTRAL",
-            reason:
-              "SELL berada di tengah H1 range",
-            score: 0
-          };
-        }
-
-        return {
-          result: "NEUTRAL",
-          reason:
-            "Belum ada scalp entry",
-          score: 0
-        };
-      }
+      atSupport,
+      atResistance
     };
   }
 
-  async function series(
-    interval,
-    outputsize,
-    key
-  ) {
+  async function series(interval, outputsize, key) {
     const cache = C.candles[key];
 
-    if (
-      cache &&
-      now - cache.at <
-        CFG.cacheTTL
-    ) {
+    if (cache && now - cache.at < CFG.cacheTTL) {
       return cache.data;
     }
 
     const url =
       `https://api.twelvedata.com/time_series` +
-      `?symbol=${encodeURIComponent(
-        CFG.symbol
-      )}` +
+      `?symbol=${encodeURIComponent(CFG.symbol)}` +
       `&interval=${interval}` +
       `&outputsize=${outputsize}` +
       `&apikey=${API_KEY}`;
@@ -704,43 +489,35 @@ export default async function handler(req, res) {
     const r = await fetch(url);
     const j = await r.json();
 
-    if (
-      !r.ok ||
-      j.status === "error"
-    ) {
+    if (!r.ok || j.status === "error") {
       throw new Error(
-        j.message ||
-        `Twelve Data ${interval} error`
+        j.message || `Twelve Data ${interval} error`
       );
     }
 
-    const data =
-      (j.values || [])
-        .reverse()
-        .map(x => ({
-          time: x.datetime,
-          open: +x.open,
-          high: +x.high,
-          low: +x.low,
-          close: +x.close,
-          volume: +x.volume || 0
-        }))
-        .filter(x =>
-          [
-            x.open,
-            x.high,
-            x.low,
-            x.close
-          ].every(Number.isFinite)
-        );
+    const data = (j.values || [])
+      .reverse()
+      .map(x => ({
+        time: x.datetime,
+        open: +x.open,
+        high: +x.high,
+        low: +x.low,
+        close: +x.close,
+        volume: +x.volume || 0
+      }))
+      .filter(x =>
+        [x.open, x.high, x.low, x.close]
+          .every(Number.isFinite)
+      );
 
-    const minimum = {
-      "5min": CFG.minM5,
-      "15min": CFG.minM15,
-      "1h": CFG.minH1
-    }[interval];
-
-    if (data.length < minimum) {
+    if (
+      data.length <
+      ({
+        5: CFG.minM5,
+        "15": CFG.minM15,
+        60: CFG.minH1
+      }[interval])
+    ) {
       throw new Error(
         `Data ${interval} tak cukup: ${data.length}`
       );
@@ -754,59 +531,31 @@ export default async function handler(req, res) {
     return data;
   }
 
-  let m5;
-  let m15;
-  let h1;
-  let livePrice;
-  let candlePrice;
+  let m5, m15, h1, livePrice, candlePrice;
 
   try {
-    [
-      m5,
-      m15,
-      h1
-    ] = await Promise.all([
-      series(
-        "5min",
-        CFG.m5Size,
-        "m5"
-      ),
-      series(
-        "15min",
-        CFG.m15Size,
-        "m15"
-      ),
-      series(
-        "1h",
-        CFG.h1Size,
-        "h1"
-      )
+    [m5, m15, h1] = await Promise.all([
+      series("5min", CFG.m5Size, "m5"),
+      series("15min", CFG.m15Size, "m15"),
+      series("1h", CFG.h1Size, "h1")
     ]);
 
-    candlePrice =
-      m5.at(-1).close;
+    candlePrice = m5.at(-1).close;
 
     if (
       C.price != null &&
-      now - C.priceAt <
-        CFG.priceTTL
+      now - C.priceAt < CFG.priceTTL
     ) {
       livePrice = C.price;
     } else {
-      const pr =
-        await fetch(
-          `https://api.twelvedata.com/price` +
-          `?symbol=${encodeURIComponent(
-            CFG.symbol
-          )}` +
-          `&apikey=${API_KEY}`
-        );
+      const pr = await fetch(
+        `https://api.twelvedata.com/price` +
+        `?symbol=${encodeURIComponent(CFG.symbol)}` +
+        `&apikey=${API_KEY}`
+      );
 
-      const pj =
-        await pr.json();
-
-      const p =
-        Number(pj?.price);
+      const pj = await pr.json();
+      const p = Number(pj?.price);
 
       if (
         !pr.ok ||
@@ -814,8 +563,7 @@ export default async function handler(req, res) {
         !Number.isFinite(p)
       ) {
         throw new Error(
-          pj.message ||
-          "Live price error"
+          pj.message || "Live price error"
         );
       }
 
@@ -824,32 +572,19 @@ export default async function handler(req, res) {
       C.priceAt = Date.now();
     }
 
-    const c5 =
-      m5.map(x => x.close);
+    const c5 = m5.map(x => x.close);
+    const c15 = m15.map(x => x.close);
+    const c1 = h1.map(x => x.close);
 
-    const c15 =
-      m15.map(x => x.close);
+    // =========================================================
+    // H1
+    // =========================================================
 
-    const c1 =
-      h1.map(x => x.close);
+    const h1EMA50 = ema(c1, 50);
+    const h1EMA200 = ema(c1, 200);
+    const h1Struct = structure(h1, 20);
 
-    /*
-     * ============================================================
-     * H1 BIAS
-     * ============================================================
-     */
-
-    const h1EMA50 =
-      ema(c1, 50);
-
-    const h1EMA200 =
-      ema(c1, 200);
-
-    const h1Struct =
-      structure(h1, 20);
-
-    let h1Direction =
-      "WAIT";
+    let h1Direction = "WAIT";
 
     if (
       h1EMA50 != null &&
@@ -868,53 +603,27 @@ export default async function handler(req, res) {
       }
     }
 
-    /*
-     * ============================================================
-     * H1 S/R
-     * ============================================================
-     */
+    // H1 Support / Resistance
+    const h1SR = findH1SupportResistance(
+      h1,
+      livePrice
+    );
 
-    const h1SNR =
-      calculateH1SNR(
-        h1,
-        livePrice
-      );
+    // =========================================================
+    // M15
+    // =========================================================
 
-    /*
-     * ============================================================
-     * M15
-     * ============================================================
-     */
+    const m15EMA20 = ema(c15, 20);
+    const m15EMA50 = ema(c15, 50);
+    const m15RSI = rsi(c15);
+    const m15MACD = macd(c15);
+    const m15ATR = atr(m15);
 
-    const m15EMA20 =
-      ema(c15, 20);
-
-    const m15EMA50 =
-      ema(c15, 50);
-
-    const m15RSI =
-      rsi(c15);
-
-    const m15MACD =
-      macd(c15);
-
-    const m15ATR =
-      atr(m15);
-
-    const m15Struct =
-      structure(m15, 20);
-
-    const m15BOS =
-      bos(m15, 12);
-
-    const m15CHOCH =
-      choch(m15, 10);
-
-    const m15Sweep =
-      sweep(m15, 12);
-
-    const m15Mom =
-      momentum(m15);
+    const m15Struct = structure(m15, 20);
+    const m15BOS = bos(m15, 12);
+    const m15CHOCH = choch(m15, 10);
+    const m15Sweep = sweep(m15, 12);
+    const m15Mom = momentum(m15);
 
     let m15Buy = 0;
     let m15Sell = 0;
@@ -926,46 +635,26 @@ export default async function handler(req, res) {
       m15EMA20 != null &&
       m15EMA50 != null
     ) {
-      if (
-        m15EMA20 >
-        m15EMA50
-      ) {
+      if (m15EMA20 > m15EMA50) {
         m15Buy += 20;
-        rb.push(
-          "EMA20 > EMA50"
-        );
+        rb.push("EMA20 > EMA50");
       }
 
-      if (
-        m15EMA20 <
-        m15EMA50
-      ) {
+      if (m15EMA20 < m15EMA50) {
         m15Sell += 20;
-        rs.push(
-          "EMA20 < EMA50"
-        );
+        rs.push("EMA20 < EMA50");
       }
     }
 
     if (m15EMA20 != null) {
-      if (
-        livePrice >
-        m15EMA20
-      ) {
+      if (livePrice > m15EMA20) {
         m15Buy += 10;
-        rb.push(
-          "Price > EMA20"
-        );
+        rb.push("Price > EMA20");
       }
 
-      if (
-        livePrice <
-        m15EMA20
-      ) {
+      if (livePrice < m15EMA20) {
         m15Sell += 10;
-        rs.push(
-          "Price < EMA20"
-        );
+        rs.push("Price < EMA20");
       }
     }
 
@@ -975,9 +664,7 @@ export default async function handler(req, res) {
         m15RSI <= 72
       ) {
         m15Buy += 10;
-        rb.push(
-          "RSI bullish"
-        );
+        rb.push("RSI bullish");
       }
 
       if (
@@ -985,165 +672,104 @@ export default async function handler(req, res) {
         m15RSI < 50
       ) {
         m15Sell += 10;
-        rs.push(
-          "RSI bearish"
-        );
+        rs.push("RSI bearish");
       }
     }
 
     if (m15MACD?.bullish) {
       m15Buy += 15;
-      rb.push(
-        "MACD bullish"
-      );
+      rb.push("MACD bullish");
     }
 
     if (m15MACD?.bearish) {
       m15Sell += 15;
-      rs.push(
-        "MACD bearish"
-      );
+      rs.push("MACD bearish");
     }
 
     if (m15Struct.bullish) {
       m15Buy += 15;
-      rb.push(
-        "Structure bullish"
-      );
+      rb.push("Structure bullish");
     }
 
     if (m15Struct.bearish) {
       m15Sell += 15;
-      rs.push(
-        "Structure bearish"
-      );
+      rs.push("Structure bearish");
     }
 
     if (m15BOS.bullish) {
       m15Buy += 15;
-      rb.push(
-        "BOS bullish"
-      );
+      rb.push("BOS bullish");
     }
 
     if (m15BOS.bearish) {
       m15Sell += 15;
-      rs.push(
-        "BOS bearish"
-      );
+      rs.push("BOS bearish");
     }
 
     if (m15CHOCH.bullish) {
       m15Buy += 10;
-      rb.push(
-        "CHOCH bullish"
-      );
+      rb.push("CHOCH bullish");
     }
 
     if (m15CHOCH.bearish) {
       m15Sell += 10;
-      rs.push(
-        "CHOCH bearish"
-      );
+      rs.push("CHOCH bearish");
     }
 
     if (m15Sweep.bullish) {
       m15Buy += 10;
-      rb.push(
-        "Sell-side sweep"
-      );
+      rb.push("Sell-side sweep");
     }
 
     if (m15Sweep.bearish) {
       m15Sell += 10;
-      rs.push(
-        "Buy-side sweep"
-      );
+      rs.push("Buy-side sweep");
     }
 
     if (m15Mom.bullish) {
       m15Buy += 5;
-      rb.push(
-        "Momentum bullish"
-      );
+      rb.push("Momentum bullish");
     }
 
     if (m15Mom.bearish) {
       m15Sell += 5;
-      rs.push(
-        "Momentum bearish"
-      );
+      rs.push("Momentum bearish");
     }
 
-    m15Buy =
-      clamp(
-        m15Buy,
-        0,
-        100
-      );
-
-    m15Sell =
-      clamp(
-        m15Sell,
-        0,
-        100
-      );
+    m15Buy = clamp(m15Buy, 0, 100);
+    m15Sell = clamp(m15Sell, 0, 100);
 
     const m15BuyConfirmed =
       m15Buy >= 55 &&
-      m15Buy >=
-        m15Sell + 15;
+      m15Buy >= m15Sell + 15;
 
     const m15SellConfirmed =
       m15Sell >= 55 &&
-      m15Sell >=
-        m15Buy + 15;
+      m15Sell >= m15Buy + 15;
 
     const m15Confirmation =
       m15BuyConfirmed
         ? "BUY"
         : m15SellConfirmed
-        ? "SELL"
-        : "WAIT";
+          ? "SELL"
+          : "WAIT";
 
-    /*
-     * ============================================================
-     * M5
-     * ============================================================
-     */
+    // =========================================================
+    // M5
+    // =========================================================
 
-    const m5EMA9 =
-      ema(c5, 9);
+    const m5EMA9 = ema(c5, 9);
+    const m5EMA20 = ema(c5, 20);
+    const m5EMA50 = ema(c5, 50);
+    const m5RSI = rsi(c5);
+    const m5MACD = macd(c5);
+    const m5ATR = atr(m5);
 
-    const m5EMA20 =
-      ema(c5, 20);
-
-    const m5EMA50 =
-      ema(c5, 50);
-
-    const m5RSI =
-      rsi(c5);
-
-    const m5MACD =
-      macd(c5);
-
-    const m5ATR =
-      atr(m5);
-
-    const m5Struct =
-      structure(m5, 24);
-
-    const m5BOS =
-      bos(m5, 10);
-
-    const m5CHOCH =
-      choch(m5, 8);
-
-    const m5Sweep =
-      sweep(m5, 10);
-
-    const m5Mom =
-      momentum(m5);
+    const m5Struct = structure(m5, 24);
+    const m5BOS = bos(m5, 10);
+    const m5CHOCH = choch(m5, 8);
+    const m5Sweep = sweep(m5, 10);
+    const m5Mom = momentum(m5);
 
     let m5Buy = 0;
     let m5Sell = 0;
@@ -1155,46 +781,26 @@ export default async function handler(req, res) {
       m5EMA20 != null &&
       m5EMA50 != null
     ) {
-      if (
-        m5EMA20 >
-        m5EMA50
-      ) {
+      if (m5EMA20 > m5EMA50) {
         m5Buy += 20;
-        r5b.push(
-          "EMA20 > EMA50"
-        );
+        r5b.push("EMA20 > EMA50");
       }
 
-      if (
-        m5EMA20 <
-        m5EMA50
-      ) {
+      if (m5EMA20 < m5EMA50) {
         m5Sell += 20;
-        r5s.push(
-          "EMA20 < EMA50"
-        );
+        r5s.push("EMA20 < EMA50");
       }
     }
 
     if (m5EMA9 != null) {
-      if (
-        livePrice >
-        m5EMA9
-      ) {
+      if (livePrice > m5EMA9) {
         m5Buy += 8;
-        r5b.push(
-          "Price > EMA9"
-        );
+        r5b.push("Price > EMA9");
       }
 
-      if (
-        livePrice <
-        m5EMA9
-      ) {
+      if (livePrice < m5EMA9) {
         m5Sell += 8;
-        r5s.push(
-          "Price < EMA9"
-        );
+        r5s.push("Price < EMA9");
       }
     }
 
@@ -1204,9 +810,7 @@ export default async function handler(req, res) {
         m5RSI < 75
       ) {
         m5Buy += 10;
-        r5b.push(
-          "RSI bullish"
-        );
+        r5b.push("RSI bullish");
       }
 
       if (
@@ -1214,148 +818,105 @@ export default async function handler(req, res) {
         m5RSI < 50
       ) {
         m5Sell += 10;
-        r5s.push(
-          "RSI bearish"
-        );
+        r5s.push("RSI bearish");
       }
     }
 
     if (m5MACD?.bullish) {
       m5Buy += 10;
-      r5b.push(
-        "MACD bullish"
-      );
+      r5b.push("MACD bullish");
     }
 
     if (m5MACD?.bearish) {
       m5Sell += 10;
-      r5s.push(
-        "MACD bearish"
-      );
+      r5s.push("MACD bearish");
     }
 
     if (m5Struct.bullish) {
       m5Buy += 12;
-      r5b.push(
-        "Structure bullish"
-      );
+      r5b.push("Structure bullish");
     }
 
     if (m5Struct.bearish) {
       m5Sell += 12;
-      r5s.push(
-        "Structure bearish"
-      );
+      r5s.push("Structure bearish");
     }
 
     if (m5BOS.bullish) {
       m5Buy += 15;
-      r5b.push(
-        "BOS bullish"
-      );
+      r5b.push("BOS bullish");
     }
 
     if (m5BOS.bearish) {
       m5Sell += 15;
-      r5s.push(
-        "BOS bearish"
-      );
+      r5s.push("BOS bearish");
     }
 
     if (m5CHOCH.bullish) {
       m5Buy += 12;
-      r5b.push(
-        "CHOCH bullish"
-      );
+      r5b.push("CHOCH bullish");
     }
 
     if (m5CHOCH.bearish) {
       m5Sell += 12;
-      r5s.push(
-        "CHOCH bearish"
-      );
+      r5s.push("CHOCH bearish");
     }
 
     if (m5Sweep.bullish) {
       m5Buy += 8;
-      r5b.push(
-        "Sell-side sweep"
-      );
+      r5b.push("Sell-side sweep");
     }
 
     if (m5Sweep.bearish) {
       m5Sell += 8;
-      r5s.push(
-        "Buy-side sweep"
-      );
+      r5s.push("Buy-side sweep");
     }
 
     if (m5Mom.bullish) {
       m5Buy += 5;
-      r5b.push(
-        "Momentum bullish"
-      );
+      r5b.push("Momentum bullish");
     }
 
     if (m5Mom.bearish) {
       m5Sell += 5;
-      r5s.push(
-        "Momentum bearish"
-      );
+      r5s.push("Momentum bearish");
     }
 
-    m5Buy =
-      clamp(
-        m5Buy,
-        0,
-        100
-      );
-
-    m5Sell =
-      clamp(
-        m5Sell,
-        0,
-        100
-      );
+    m5Buy = clamp(m5Buy, 0, 100);
+    m5Sell = clamp(m5Sell, 0, 100);
 
     const m5BuyTriggered =
       m5Buy >= 50 &&
-      m5Buy >=
-        m5Sell + 8;
+      m5Buy >= m5Sell + 8;
 
     const m5SellTriggered =
       m5Sell >= 50 &&
-      m5Sell >=
-        m5Buy + 8;
+      m5Sell >= m5Buy + 8;
 
     const m5Trigger =
       m5BuyTriggered
         ? "BUY"
         : m5SellTriggered
-        ? "SELL"
-        : "WAIT";
+          ? "SELL"
+          : "WAIT";
 
-    /*
-     * ============================================================
-     * FINAL SCALP SIGNAL
-     * ============================================================
-     */
+    // =========================================================
+    // FINAL SIGNAL
+    // =========================================================
 
     let signal = "WAIT";
     let status = "WAIT";
     let execution = "WAIT";
-    let setupType =
-      "NO ALIGNMENT";
+    let setupType = "NO ALIGNMENT";
 
-    let score =
-      Math.round(
-        Math.max(
-          m15Buy,
-          m15Sell,
-          m5Buy,
-          m5Sell
-        )
-      );
+    let score = Math.round(
+      Math.max(
+        m15Buy,
+        m15Sell,
+        m5Buy,
+        m5Sell
+      )
+    );
 
     let reasons = [];
 
@@ -1366,13 +927,11 @@ export default async function handler(req, res) {
       signal = "BUY";
       status = "ENTRY";
       execution = "READY";
-      setupType =
-        "M15+M5 ALIGNMENT";
+      setupType = "M15+M5 ALIGNMENT";
 
-      score =
-        Math.round(
-          (m15Buy + m5Buy) / 2
-        );
+      score = Math.round(
+        (m15Buy + m5Buy) / 2
+      );
 
       reasons = [
         "M15 BUY confirmed",
@@ -1388,13 +947,11 @@ export default async function handler(req, res) {
       signal = "SELL";
       status = "ENTRY";
       execution = "READY";
-      setupType =
-        "M15+M5 ALIGNMENT";
+      setupType = "M15+M5 ALIGNMENT";
 
-      score =
-        Math.round(
-          (m15Sell + m5Sell) / 2
-        );
+      score = Math.round(
+        (m15Sell + m5Sell) / 2
+      );
 
       reasons = [
         "M15 SELL confirmed",
@@ -1438,65 +995,16 @@ export default async function handler(req, res) {
       ];
     }
 
-    /*
-     * ============================================================
-     * SNR ENTRY ANALYSIS
-     * ============================================================
-     */
-
-    const snrAnalysis =
-      h1SNR.getEntryAnalysis(
-        signal
-      );
-
-    /*
-     * SNR DOES NOT CANCEL THE SIGNAL.
-     * It acts as confluence / warning.
-     */
-
-    if (
-      signal !== "WAIT"
-    ) {
-      if (
-        snrAnalysis.result ===
-        "FAVOURABLE"
-      ) {
-        reasons.push(
-          `H1 SNR favourable: ${snrAnalysis.reason}`
-        );
-      }
-
-      if (
-        snrAnalysis.result ===
-        "CAUTION"
-      ) {
-        reasons.push(
-          `H1 SNR caution: ${snrAnalysis.reason}`
-        );
-      }
-
-      if (
-        snrAnalysis.result ===
-        "NEUTRAL"
-      ) {
-        reasons.push(
-          `H1 SNR neutral: ${snrAnalysis.reason}`
-        );
-      }
-    }
-
-    /*
-     * ============================================================
-     * H1 HOLD
-     * ============================================================
-     */
+    // =========================================================
+    // H1 HOLD
+    // =========================================================
 
     const holdBias =
       h1Direction === "BUY"
         ? "BUY"
         : h1Direction === "SELL"
-        ? "SELL"
-        : "NEUTRAL";
+          ? "SELL"
+          : "NEUTRAL";
 
     const holdPermission =
       signal === "BUY" &&
@@ -1504,10 +1012,10 @@ export default async function handler(req, res) {
         ? "HOLD BUY"
         : signal === "SELL" &&
           h1Direction === "SELL"
-        ? "HOLD SELL"
-        : signal !== "WAIT"
-        ? "SCALP ONLY"
-        : "NO HOLD";
+          ? "HOLD SELL"
+          : signal !== "WAIT"
+            ? "SCALP ONLY"
+            : "NO HOLD";
 
     const context =
       (
@@ -1520,14 +1028,86 @@ export default async function handler(req, res) {
       )
         ? "WITH_H1"
         : signal === "WAIT"
-        ? "NEUTRAL"
-        : "COUNTER_H1";
+          ? "NEUTRAL"
+          : "COUNTER_H1";
 
-    /*
-     * ============================================================
-     * TRADE PLAN
-     * ============================================================
-     */
+    // =========================================================
+    // S/R SIGNAL CONTEXT
+    // =========================================================
+
+    let srSignalContext = "NO S/R WARNING";
+
+    if (signal === "BUY") {
+      if (h1SR.atSupport) {
+        srSignalContext = "BUY AT H1 SUPPORT";
+        reasons.push(
+          `H1 SUPPORT ${h1SR.support.price.toFixed(2)}`
+        );
+      }
+
+      else if (h1SR.nearSupport) {
+        srSignalContext = "BUY NEAR H1 SUPPORT";
+        reasons.push(
+          `Near H1 SUPPORT ${h1SR.support.price.toFixed(2)}`
+        );
+      }
+
+      else if (h1SR.atResistance) {
+        srSignalContext = "BUY AT H1 RESISTANCE";
+        reasons.push(
+          `WARNING: H1 RESISTANCE ${h1SR.resistance.price.toFixed(2)}`
+        );
+      }
+
+      else if (h1SR.nearResistance) {
+        srSignalContext = "BUY NEAR H1 RESISTANCE";
+        reasons.push(
+          `WARNING: near H1 RESISTANCE ${h1SR.resistance.price.toFixed(2)}`
+        );
+      }
+
+      else {
+        srSignalContext = "BUY MID-ZONE";
+      }
+    }
+
+    else if (signal === "SELL") {
+      if (h1SR.atResistance) {
+        srSignalContext = "SELL AT H1 RESISTANCE";
+        reasons.push(
+          `H1 RESISTANCE ${h1SR.resistance.price.toFixed(2)}`
+        );
+      }
+
+      else if (h1SR.nearResistance) {
+        srSignalContext = "SELL NEAR H1 RESISTANCE";
+        reasons.push(
+          `Near H1 RESISTANCE ${h1SR.resistance.price.toFixed(2)}`
+        );
+      }
+
+      else if (h1SR.atSupport) {
+        srSignalContext = "SELL AT H1 SUPPORT";
+        reasons.push(
+          `WARNING: H1 SUPPORT ${h1SR.support.price.toFixed(2)}`
+        );
+      }
+
+      else if (h1SR.nearSupport) {
+        srSignalContext = "SELL NEAR H1 SUPPORT";
+        reasons.push(
+          `WARNING: near H1 SUPPORT ${h1SR.support.price.toFixed(2)}`
+        );
+      }
+
+      else {
+        srSignalContext = "SELL MID-ZONE";
+      }
+    }
+
+    // =========================================================
+    // TRADE PLAN
+    // =========================================================
 
     let entry = null;
     let stopLoss = null;
@@ -1542,51 +1122,31 @@ export default async function handler(req, res) {
     ) {
       entry = livePrice;
 
-      const risk =
-        Math.max(
-          m5ATR * 1.25,
-          0.8
-        );
+      const risk = Math.max(
+        m5ATR * 1.25,
+        0.8
+      );
 
       if (signal === "BUY") {
-        stopLoss =
-          entry - risk;
-
-        tp1 =
-          entry + risk * 1.5;
-
-        tp2 =
-          entry + risk * 2.5;
-
-        tp3 =
-          entry + risk * 4;
+        stopLoss = entry - risk;
+        tp1 = entry + risk * 1.5;
+        tp2 = entry + risk * 2.5;
+        tp3 = entry + risk * 4;
       }
 
       else {
-        stopLoss =
-          entry + risk;
-
-        tp1 =
-          entry - risk * 1.5;
-
-        tp2 =
-          entry - risk * 2.5;
-
-        tp3 =
-          entry - risk * 4;
+        stopLoss = entry + risk;
+        tp1 = entry - risk * 1.5;
+        tp2 = entry - risk * 2.5;
+        tp3 = entry - risk * 4;
       }
 
-      rr =
-        "1 : 1.5 / 2.5 / 4.0";
+      rr = "1 : 1.5 / 2.5 / 4.0";
     }
 
-    /*
-     * ============================================================
-     * PUSH
-     * ============================================================
-     *
-     * One automatic push per direction per M5 candle.
-     */
+    // =========================================================
+    // PUSH NOTIFICATION
+    // =========================================================
 
     const signalCandle =
       m5.at(-1)?.time ||
@@ -1603,36 +1163,15 @@ export default async function handler(req, res) {
           "xau_last_entry_notification";
 
         const alreadyNotified =
-          await redis.get(
-            lockKey
-          );
+          await redis.get(lockKey);
 
         if (
-          alreadyNotified !==
-          signalKey
+          alreadyNotified !== signalKey
         ) {
           const title =
             signal === "BUY"
               ? "🟢 XAU/USD BUY ENTRY"
               : "🔴 XAU/USD SELL ENTRY";
-
-          const supportText =
-            h1SNR.support
-              ? `S ${h1SNR.support.price.toFixed(
-                  2
-                )} (${h1SNR.support.distance.toFixed(
-                  2
-                )})`
-              : "S --";
-
-          const resistanceText =
-            h1SNR.resistance
-              ? `R ${h1SNR.resistance.price.toFixed(
-                  2
-                )} (${h1SNR.resistance.distance.toFixed(
-                  2
-                )})`
-              : "R --";
 
           const body = [
             `${signal} • Score ${score}/100`,
@@ -1642,9 +1181,13 @@ export default async function handler(req, res) {
             `TP2 ${tp2?.toFixed(2)}`,
             `TP3 ${tp3?.toFixed(2)}`,
             `${setupType} • ${holdPermission}`,
-            `H1 SNR ${snrAnalysis.result}`,
-            snrAnalysis.reason,
-            `${supportText} • ${resistanceText}`
+            `H1 S/R: ${h1SR.position}`,
+            h1SR.support
+              ? `Support ${h1SR.support.price.toFixed(2)} (${h1SR.supportDistance.toFixed(2)} away)`
+              : "Support N/A",
+            h1SR.resistance
+              ? `Resistance ${h1SR.resistance.price.toFixed(2)} (${h1SR.resistanceDistance.toFixed(2)} away)`
+              : "Resistance N/A"
           ].join(" • ");
 
           const delivery =
@@ -1655,15 +1198,11 @@ export default async function handler(req, res) {
               url: "/"
             });
 
-          if (
-            delivery.sent > 0
-          ) {
+          if (delivery.sent > 0) {
             await redis.set(
               lockKey,
               signalKey,
-              {
-                ex: 21600
-              }
+              { ex: 21600 }
             );
           }
         }
@@ -1677,39 +1216,29 @@ export default async function handler(req, res) {
       }
     }
 
-    /*
-     * ============================================================
-     * RESPONSE
-     * ============================================================
-     */
+    // =========================================================
+    // RESPONSE
+    // =========================================================
 
     return res.status(200).json({
       ok: true,
-
       symbol: CFG.symbol,
 
       price: livePrice,
-
       candlePrice,
 
       livePrice: {
         price: livePrice,
-        source:
-          "TWELVE_DATA_PRICE",
-        ageSeconds:
-          Math.round(
-            (Date.now() -
-              C.priceAt) /
-              1000
-          )
+        source: "TWELVE_DATA_PRICE",
+        ageSeconds: Math.round(
+          (Date.now() - C.priceAt) / 1000
+        )
       },
 
-      candles:
-        m5.slice(-60),
+      candles: m5.slice(-60),
 
       status,
       signal,
-
       signalType:
         signal === "WAIT"
           ? "NONE"
@@ -1717,7 +1246,6 @@ export default async function handler(req, res) {
 
       setupType,
       execution,
-
       score,
       context,
       reasons,
@@ -1725,188 +1253,131 @@ export default async function handler(req, res) {
       signalKey,
       signalCandle,
 
-      /*
-       * H1
-       */
+      // =====================================================
+      // H1 + SUPPORT / RESISTANCE
+      // =====================================================
 
       h1: {
-        direction:
-          h1Direction,
+        direction: h1Direction,
 
-        ema50:
-          h1EMA50,
-
-        ema200:
-          h1EMA200,
+        ema50: h1EMA50,
+        ema200: h1EMA200,
 
         holdBias,
-
         holdPermission,
 
-        structure:
-          h1Struct
+        structure: h1Struct,
+
+        supportResistance: {
+          support: h1SR.support,
+          resistance: h1SR.resistance,
+
+          supportDistance:
+            h1SR.supportDistance,
+
+          resistanceDistance:
+            h1SR.resistanceDistance,
+
+          supportDistancePct:
+            h1SR.supportDistancePct,
+
+          resistanceDistancePct:
+            h1SR.resistanceDistancePct,
+
+          threshold:
+            h1SR.threshold,
+
+          position:
+            h1SR.position,
+
+          zone:
+            h1SR.zone,
+
+          nearSupport:
+            h1SR.nearSupport,
+
+          nearResistance:
+            h1SR.nearResistance,
+
+          atSupport:
+            h1SR.atSupport,
+
+          atResistance:
+            h1SR.atResistance,
+
+          signalContext:
+            srSignalContext
+        }
       },
 
-      /*
-       * H1 S/R
-       */
-
-      snr: {
-        timeframe: "H1",
-
-        location:
-          h1SNR.location,
-
-        bias:
-          h1SNR.bias,
-
-        quality:
-          snrAnalysis.result,
-
-        reason:
-          snrAnalysis.reason,
-
-        support:
-          h1SNR.support,
-
-        resistance:
-          h1SNR.resistance,
-
-        atr:
-          h1SNR.atr,
-
-        zoneWidth:
-          h1SNR.zoneWidth,
-
-        nearSupport:
-          h1SNR.nearSupport,
-
-        nearResistance:
-          h1SNR.nearResistance
-      },
-
-      /*
-       * M15
-       */
+      // =====================================================
+      // M15
+      // =====================================================
 
       m15: {
-        direction:
-          m15Confirmation,
+        direction: m15Confirmation,
+        confirmation: m15Confirmation,
 
-        confirmation:
-          m15Confirmation,
+        buyScore: m15Buy,
+        sellScore: m15Sell,
 
-        buyScore:
-          m15Buy,
+        buyConfirmed: m15BuyConfirmed,
+        sellConfirmed: m15SellConfirmed,
 
-        sellScore:
-          m15Sell,
+        ema20: m15EMA20,
+        ema50: m15EMA50,
 
-        buyConfirmed:
-          m15BuyConfirmed,
+        rsi: m15RSI,
+        macd: m15MACD,
+        atr: m15ATR,
 
-        sellConfirmed:
-          m15SellConfirmed,
+        bos: m15BOS,
+        choch: m15CHOCH,
+        sweep: m15Sweep,
+        momentum: m15Mom,
 
-        ema20:
-          m15EMA20,
+        structure: m15Struct,
 
-        ema50:
-          m15EMA50,
-
-        rsi:
-          m15RSI,
-
-        macd:
-          m15MACD,
-
-        atr:
-          m15ATR,
-
-        bos:
-          m15BOS,
-
-        choch:
-          m15CHOCH,
-
-        sweep:
-          m15Sweep,
-
-        momentum:
-          m15Mom,
-
-        structure:
-          m15Struct,
-
-        buyReasons:
-          rb,
-
-        sellReasons:
-          rs
+        buyReasons: rb,
+        sellReasons: rs
       },
 
-      /*
-       * M5
-       */
+      // =====================================================
+      // M5
+      // =====================================================
 
       m5: {
-        trigger:
-          m5Trigger,
+        trigger: m5Trigger,
+        confirmation: m5Trigger,
 
-        confirmation:
-          m5Trigger,
+        buyScore: m5Buy,
+        sellScore: m5Sell,
 
-        buyScore:
-          m5Buy,
+        buyTriggered: m5BuyTriggered,
+        sellTriggered: m5SellTriggered,
 
-        sellScore:
-          m5Sell,
+        ema9: m5EMA9,
+        ema20: m5EMA20,
+        ema50: m5EMA50,
 
-        buyTriggered:
-          m5BuyTriggered,
+        rsi: m5RSI,
+        macd: m5MACD,
+        atr: m5ATR,
 
-        sellTriggered:
-          m5SellTriggered,
+        bos: m5BOS,
+        choch: m5CHOCH,
+        sweep: m5Sweep,
+        momentum: m5Mom,
 
-        ema9:
-          m5EMA9,
+        structure: m5Struct,
 
-        ema20:
-          m5EMA20,
-
-        ema50:
-          m5EMA50,
-
-        rsi:
-          m5RSI,
-
-        macd:
-          m5MACD,
-
-        atr:
-          m5ATR,
-
-        bos:
-          m5BOS,
-
-        choch:
-          m5CHOCH,
-
-        sweep:
-          m5Sweep,
-
-        momentum:
-          m5Mom,
-
-        structure:
-          m5Struct,
-
-        buyReasons:
-          r5b,
-
-        sellReasons:
-          r5s
+        buyReasons: r5b,
+        sellReasons: r5s
       },
+
+      // =====================================================
+      // TRADE PLAN
+      // =====================================================
 
       tradePlan: {
         entry,
@@ -1918,22 +1389,16 @@ export default async function handler(req, res) {
       },
 
       data: {
-        m5Candles:
-          m5.length,
-
-        m15Candles:
-          m15.length,
-
-        h1Candles:
-          h1.length
+        m5Candles: m5.length,
+        m15Candles: m15.length,
+        h1Candles: h1.length
       },
 
       timestamp:
         new Date().toISOString()
     });
-  }
 
-  catch (e) {
+  } catch (e) {
     console.error(
       "REPAIRED SCALP ERROR",
       e
