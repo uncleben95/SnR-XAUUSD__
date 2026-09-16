@@ -17,12 +17,38 @@ export default async function handler(req, res) {
     m15Size: 500,
     h1Size: 300,
 
-    cacheTTL: 60_000,
+    /*
+     * ==========================================================
+     * CANDLE CACHE
+     * ==========================================================
+     *
+     * M5  = 5 min
+     * M15 = 15 min
+     * H1  = 1 hour
+     *
+     * Ini bermaksud refresh dashboard tidak semestinya
+     * menyebabkan Twelve Data dipanggil semula.
+     */
+
+    m5CacheTTL: 5 * 60_000,
+    m15CacheTTL: 15 * 60_000,
+    h1CacheTTL: 60 * 60_000,
+
+    /*
+     * LIVE PRICE
+     *
+     * Harga semasa kekal lebih cepat.
+     */
+
     priceTTL: 15_000,
 
     minM5: 250,
     minM15: 100,
     minH1: 210,
+
+    /*
+     * H1 SUPPORT / RESISTANCE
+     */
 
     srLookback: 80,
     srSwingStrength: 2,
@@ -36,24 +62,31 @@ export default async function handler(req, res) {
 
     requireValidSRTarget: true,
 
+    /*
+     * ROADBLOCK
+     *
+     * M15/M5 digunakan untuk mencari halangan
+     * antara entry dan H1 target.
+     */
+
+    roadblockLookbackM15: 80,
+    roadblockLookbackM5: 80,
+
+    roadblockSwingStrength: 2,
+
+    roadblockGroupATRMultiplier: 0.20,
+    roadblockMinGroupDistance: 1.5,
+
+    roadblockMaxLevels: 8,
+
+    /*
+     * TRADE LOCK
+     */
+
     tradeLockTTL: 21600,
 
     /*
-     * ==========================================================
-     * REDIS CACHE
-     * ==========================================================
-     *
-     * Redis digunakan sebagai persistent fallback.
-     *
-     * globalThis cache masih digunakan untuk cache pantas
-     * dalam Vercel instance yang sama.
-     *
-     * Redis digunakan apabila:
-     *
-     * - Twelve Data limit
-     * - Twelve Data error
-     * - Vercel instance restart
-     * - globalThis cache kosong
+     * REDIS
      */
 
     redisCacheTTL: 86400 * 7,
@@ -93,6 +126,7 @@ export default async function handler(req, res) {
   };
 
   const C = globalThis.__XAU_SCALP_CACHE__;
+
   const now = Date.now();
 
   /*
@@ -109,13 +143,31 @@ export default async function handler(req, res) {
   const clamp = (n, a, b) =>
     Math.max(a, Math.min(b, n));
 
+  function getCandleTTL(key) {
+    if (key === "m5") {
+      return CFG.m5CacheTTL;
+    }
+
+    if (key === "m15") {
+      return CFG.m15CacheTTL;
+    }
+
+    if (key === "h1") {
+      return CFG.h1CacheTTL;
+    }
+
+    return 60_000;
+  }
+
   /*
-   * Safe Redis GET
+   * ============================================================
+   * REDIS
+   * ============================================================
    */
+
   async function redisGet(key) {
     try {
-      const value = await redis.get(key);
-      return value;
+      return await redis.get(key);
     } catch (e) {
       console.error(
         `Redis GET error [${key}]:`,
@@ -126,9 +178,6 @@ export default async function handler(req, res) {
     }
   }
 
-  /*
-   * Safe Redis SET
-   */
   async function redisSet(key, value, ttl) {
     try {
       await redis.set(
@@ -150,23 +199,16 @@ export default async function handler(req, res) {
     }
   }
 
-  /*
-   * Redis boleh return object atau string
-   */
   function parseRedisValue(value) {
     if (value == null) {
       return null;
     }
 
-    if (
-      typeof value === "object"
-    ) {
+    if (typeof value === "object") {
       return value;
     }
 
-    if (
-      typeof value === "string"
-    ) {
+    if (typeof value === "string") {
       try {
         return JSON.parse(value);
       } catch {
@@ -184,19 +226,15 @@ export default async function handler(req, res) {
    */
 
   function ema(v, p) {
-    if (v.length < p) return null;
+    if (v.length < p) {
+      return null;
+    }
 
     const k = 2 / (p + 1);
 
-    let e = avg(
-      v.slice(0, p)
-    );
+    let e = avg(v.slice(0, p));
 
-    for (
-      let i = p;
-      i < v.length;
-      i++
-    ) {
+    for (let i = p; i < v.length; i++) {
       e =
         v[i] * k +
         e * (1 - k);
@@ -206,10 +244,7 @@ export default async function handler(req, res) {
   }
 
   function rsi(v, p = 14) {
-    if (
-      v.length <
-      p + 1
-    ) {
+    if (v.length < p + 1) {
       return null;
     }
 
@@ -221,9 +256,7 @@ export default async function handler(req, res) {
       i < v.length;
       i++
     ) {
-      const d =
-        v[i] -
-        v[i - 1];
+      const d = v[i] - v[i - 1];
 
       if (d > 0) {
         gains += d;
@@ -232,9 +265,7 @@ export default async function handler(req, res) {
       }
     }
 
-    if (
-      losses === 0
-    ) {
+    if (losses === 0) {
       return 100;
     }
 
@@ -242,132 +273,74 @@ export default async function handler(req, res) {
       (gains / p) /
       (losses / p);
 
-    return (
-      100 -
-      100 / (1 + rs)
-    );
+    return 100 - 100 / (1 + rs);
   }
 
   function atr(d, p = 14) {
-    if (
-      d.length <
-      p + 1
-    ) {
+    if (d.length < p + 1) {
       return null;
     }
 
     const tr = [];
 
-    for (
-      let i = 1;
-      i < d.length;
-      i++
-    ) {
+    for (let i = 1; i < d.length; i++) {
       const c = d[i];
-      const pc =
-        d[i - 1].close;
+      const pc = d[i - 1].close;
 
       tr.push(
         Math.max(
           c.high - c.low,
-          Math.abs(
-            c.high - pc
-          ),
-          Math.abs(
-            c.low - pc
-          )
+          Math.abs(c.high - pc),
+          Math.abs(c.low - pc)
         )
       );
     }
 
-    return avg(
-      tr.slice(-p)
-    );
+    return avg(tr.slice(-p));
   }
 
   function macd(v) {
-    if (
-      v.length < 35
-    ) {
+    if (v.length < 35) {
       return null;
     }
 
-    const e12 =
-      ema(v, 12);
+    const e12 = ema(v, 12);
+    const e26 = ema(v, 26);
 
-    const e26 =
-      ema(v, 26);
-
-    if (
-      e12 == null ||
-      e26 == null
-    ) {
+    if (e12 == null || e26 == null) {
       return null;
     }
 
-    const line =
-      e12 - e26;
+    const line = e12 - e26;
 
     const lines = [];
 
-    for (
-      let i = 26;
-      i <= v.length;
-      i++
-    ) {
-      const a =
-        ema(
-          v.slice(0, i),
-          12
-        );
+    for (let i = 26; i <= v.length; i++) {
+      const a = ema(v.slice(0, i), 12);
+      const b = ema(v.slice(0, i), 26);
 
-      const b =
-        ema(
-          v.slice(0, i),
-          26
-        );
-
-      if (
-        a != null &&
-        b != null
-      ) {
-        lines.push(
-          a - b
-        );
+      if (a != null && b != null) {
+        lines.push(a - b);
       }
     }
 
-    const signal =
-      ema(lines, 9);
+    const signal = ema(lines, 9);
 
-    if (
-      signal == null
-    ) {
+    if (signal == null) {
       return null;
     }
 
     return {
       line,
       signal,
-      histogram:
-        line - signal,
-
-      bullish:
-        line > signal,
-
-      bearish:
-        line < signal
+      histogram: line - signal,
+      bullish: line > signal,
+      bearish: line < signal
     };
   }
 
-  function structure(
-    d,
-    lookback = 20
-  ) {
-    if (
-      d.length <
-      lookback * 2
-    ) {
+  function structure(d, lookback = 20) {
+    if (d.length < lookback * 2) {
       return {
         bullish: false,
         bearish: false,
@@ -378,54 +351,37 @@ export default async function handler(req, res) {
       };
     }
 
-    const r =
-      d.slice(-lookback);
+    const r = d.slice(-lookback);
 
-    const p =
-      d.slice(
-        -lookback * 2,
-        -lookback
-      );
+    const p = d.slice(
+      -lookback * 2,
+      -lookback
+    );
 
-    const last =
-      d.at(-1);
+    const last = d.at(-1);
 
-    const high =
-      Math.max(
-        ...r.map(
-          x => x.high
-        )
-      );
+    const high = Math.max(
+      ...r.map(x => x.high)
+    );
 
-    const low =
-      Math.min(
-        ...r.map(
-          x => x.low
-        )
-      );
+    const low = Math.min(
+      ...r.map(x => x.low)
+    );
 
-    const previousHigh =
-      Math.max(
-        ...p.map(
-          x => x.high
-        )
-      );
+    const previousHigh = Math.max(
+      ...p.map(x => x.high)
+    );
 
-    const previousLow =
-      Math.min(
-        ...p.map(
-          x => x.low
-        )
-      );
+    const previousLow = Math.min(
+      ...p.map(x => x.low)
+    );
 
     return {
       bullish:
-        last.close >
-        previousHigh,
+        last.close > previousHigh,
 
       bearish:
-        last.close <
-        previousLow,
+        last.close < previousLow,
 
       high,
       low,
@@ -434,101 +390,64 @@ export default async function handler(req, res) {
     };
   }
 
-  function bos(
-    d,
-    lookback = 10
-  ) {
-    if (
-      d.length <
-      lookback + 2
-    ) {
+  function bos(d, lookback = 10) {
+    if (d.length < lookback + 2) {
       return {
         bullish: false,
         bearish: false
       };
     }
 
-    const last =
-      d.at(-1);
+    const last = d.at(-1);
 
-    const p =
-      d.slice(
-        -lookback - 1,
-        -1
-      );
+    const p = d.slice(
+      -lookback - 1,
+      -1
+    );
 
     return {
       bullish:
         last.close >
-        Math.max(
-          ...p.map(
-            x => x.high
-          )
-        ),
+        Math.max(...p.map(x => x.high)),
 
       bearish:
         last.close <
-        Math.min(
-          ...p.map(
-            x => x.low
-          )
-        )
+        Math.min(...p.map(x => x.low))
     };
   }
 
-  function choch(
-    d,
-    lookback = 8
-  ) {
-    if (
-      d.length <
-      lookback * 2 + 2
-    ) {
+  function choch(d, lookback = 8) {
+    if (d.length < lookback * 2 + 2) {
       return {
         bullish: false,
         bearish: false
       };
     }
 
-    const r =
-      d.slice(-lookback);
+    const r = d.slice(-lookback);
 
-    const p =
-      d.slice(
-        -lookback * 2,
-        -lookback
-      );
+    const p = d.slice(
+      -lookback * 2,
+      -lookback
+    );
 
-    const last =
-      d.at(-1);
+    const last = d.at(-1);
 
-    const rh =
-      Math.max(
-        ...r.map(
-          x => x.high
-        )
-      );
+    const rh = Math.max(
+      ...r.map(x => x.high)
+    );
 
-    const rl =
-      Math.min(
-        ...r.map(
-          x => x.low
-        )
-      );
+    const rl = Math.min(
+      ...r.map(x => x.low)
+    );
 
-    const ph =
-      Math.max(
-        ...p.map(
-          x => x.high
-        )
-      );
+    const ph = Math.max(
+      ...p.map(x => x.high)
+    );
 
-    const pl =
-      Math.min(
-        ...p.map(
-          x => x.low
-        )
-      );
+    const pl = Math.min(
+      ...p.map(x => x.low)
+    );
 
     return {
       bullish:
@@ -541,42 +460,28 @@ export default async function handler(req, res) {
     };
   }
 
-  function sweep(
-    d,
-    lookback = 10
-  ) {
-    if (
-      d.length <
-      lookback + 2
-    ) {
+  function sweep(d, lookback = 10) {
+    if (d.length < lookback + 2) {
       return {
         bullish: false,
         bearish: false
       };
     }
 
-    const c =
-      d.at(-1);
+    const c = d.at(-1);
 
-    const p =
-      d.slice(
-        -lookback - 1,
-        -1
-      );
+    const p = d.slice(
+      -lookback - 1,
+      -1
+    );
 
-    const h =
-      Math.max(
-        ...p.map(
-          x => x.high
-        )
-      );
+    const h = Math.max(
+      ...p.map(x => x.high)
+    );
 
-    const l =
-      Math.min(
-        ...p.map(
-          x => x.low
-        )
-      );
+    const l = Math.min(
+      ...p.map(x => x.low)
+    );
 
     return {
       bullish:
@@ -590,8 +495,7 @@ export default async function handler(req, res) {
   }
 
   function momentum(d) {
-    const c =
-      d.at(-1);
+    const c = d.at(-1);
 
     if (!c) {
       return {
@@ -602,37 +506,32 @@ export default async function handler(req, res) {
     }
 
     const range =
-      c.high -
-      c.low ||
+      c.high - c.low ||
       1e-9;
 
     const ratio =
-      Math.abs(
-        c.close -
-        c.open
-      ) / range;
+      Math.abs(c.close - c.open) /
+      range;
 
     return {
       bullish:
-        c.close >
-          c.open &&
+        c.close > c.open &&
         ratio >= 0.45,
 
       bearish:
-        c.close <
-          c.open &&
+        c.close < c.open &&
         ratio >= 0.45,
 
       strength:
-        Math.round(
-          ratio * 100
-        )
+        Math.round(ratio * 100)
     };
   }
 
   /*
    * ============================================================
    * H1 SUPPORT / RESISTANCE
+   *
+   * INI KEKAL LOGIC LAMA KAU
    * ============================================================
    */
 
@@ -641,14 +540,11 @@ export default async function handler(req, res) {
     price,
     h1ATR
   ) {
-    const source =
-      data.slice(
-        -CFG.srLookback
-      );
+    const source = data.slice(
+      -CFG.srLookback
+    );
 
-    if (
-      source.length < 20
-    ) {
+    if (source.length < 20) {
       return {
         support: null,
         resistance: null,
@@ -663,8 +559,9 @@ export default async function handler(req, res) {
         nearResistance: false,
         atSupport: false,
         atResistance: false,
-        signalContext:
-          "NO S/R DATA"
+        reversalAtSupport: false,
+        reversalAtResistance: false,
+        signalContext: "NO S/R DATA"
       };
     }
 
@@ -673,32 +570,26 @@ export default async function handler(req, res) {
     /*
      * Swing highs
      */
+
     for (
-      let i =
-        CFG.srSwingStrength;
+      let i = CFG.srSwingStrength;
       i <
         source.length -
           CFG.srSwingStrength;
       i++
     ) {
-      const c =
-        source[i];
+      const c = source[i];
 
       let isHigh = true;
 
       for (
         let j = 1;
-        j <=
-          CFG.srSwingStrength;
+        j <= CFG.srSwingStrength;
         j++
       ) {
         if (
-          c.high <=
-            source[i - j]
-              .high ||
-          c.high <=
-            source[i + j]
-              .high
+          c.high <= source[i - j].high ||
+          c.high <= source[i + j].high
         ) {
           isHigh = false;
           break;
@@ -708,8 +599,7 @@ export default async function handler(req, res) {
       if (isHigh) {
         levels.push({
           price: c.high,
-          type:
-            "RESISTANCE"
+          type: "RESISTANCE"
         });
       }
     }
@@ -717,32 +607,26 @@ export default async function handler(req, res) {
     /*
      * Swing lows
      */
+
     for (
-      let i =
-        CFG.srSwingStrength;
+      let i = CFG.srSwingStrength;
       i <
         source.length -
           CFG.srSwingStrength;
       i++
     ) {
-      const c =
-        source[i];
+      const c = source[i];
 
       let isLow = true;
 
       for (
         let j = 1;
-        j <=
-          CFG.srSwingStrength;
+        j <= CFG.srSwingStrength;
         j++
       ) {
         if (
-          c.low >=
-            source[i - j]
-              .low ||
-          c.low >=
-            source[i + j]
-              .low
+          c.low >= source[i - j].low ||
+          c.low >= source[i + j].low
         ) {
           isLow = false;
           break;
@@ -760,58 +644,45 @@ export default async function handler(req, res) {
     /*
      * Extreme high
      */
-    levels.push({
-      price:
-        Math.max(
-          ...source.map(
-            x => x.high
-          )
-        ),
 
-      type:
-        "RESISTANCE"
+    levels.push({
+      price: Math.max(
+        ...source.map(x => x.high)
+      ),
+      type: "RESISTANCE"
     });
 
     /*
      * Extreme low
      */
-    levels.push({
-      price:
-        Math.min(
-          ...source.map(
-            x => x.low
-          )
-        ),
 
-      type:
-        "SUPPORT"
+    levels.push({
+      price: Math.min(
+        ...source.map(x => x.low)
+      ),
+      type: "SUPPORT"
     });
 
     /*
      * Group nearby levels
      */
+
     const grouped = [];
 
     const groupingDistance =
       Math.max(
-        (h1ATR || 10) *
-          0.20,
+        (h1ATR || 10) * 0.20,
         1.5
       );
 
-    for (
-      const level of levels
-    ) {
+    for (const level of levels) {
       const existing =
         grouped.find(
           x =>
-            x.type ===
-              level.type &&
+            x.type === level.type &&
             Math.abs(
-              x.price -
-                level.price
-            ) <=
-              groupingDistance
+              x.price - level.price
+            ) <= groupingDistance
         );
 
       if (existing) {
@@ -823,24 +694,15 @@ export default async function handler(req, res) {
 
         existing.price =
           existing.prices.reduce(
-            (a, b) =>
-              a + b,
+            (a, b) => a + b,
             0
           ) /
-          existing.prices
-            .length;
+          existing.prices.length;
       } else {
         grouped.push({
-          type:
-            level.type,
-
-          price:
-            level.price,
-
-          prices: [
-            level.price
-          ],
-
+          type: level.type,
+          price: level.price,
+          prices: [level.price],
           touches: 1
         });
       }
@@ -850,48 +712,40 @@ export default async function handler(req, res) {
       grouped
         .filter(
           x =>
-            x.type ===
-              "SUPPORT" &&
+            x.type === "SUPPORT" &&
             x.price < price
         )
         .sort(
           (a, b) =>
-            b.price -
-            a.price
+            b.price - a.price
         );
 
     const resistances =
       grouped
         .filter(
           x =>
-            x.type ===
-              "RESISTANCE" &&
+            x.type === "RESISTANCE" &&
             x.price > price
         )
         .sort(
           (a, b) =>
-            a.price -
-            b.price
+            a.price - b.price
         );
 
     const support =
-      supports[0] ||
-      null;
+      supports[0] || null;
 
     const resistance =
-      resistances[0] ||
-      null;
+      resistances[0] || null;
 
     const supportDistance =
       support
-        ? price -
-          support.price
+        ? price - support.price
         : null;
 
     const resistanceDistance =
       resistance
-        ? resistance.price -
-          price
+        ? resistance.price - price
         : null;
 
     const threshold =
@@ -906,101 +760,61 @@ export default async function handler(req, res) {
       CFG.reversalZoneMultiplier;
 
     const nearSupport =
-      supportDistance !=
-        null &&
-      supportDistance <=
-        threshold;
+      supportDistance != null &&
+      supportDistance <= threshold;
 
     const nearResistance =
-      resistanceDistance !=
-        null &&
-      resistanceDistance <=
-        threshold;
+      resistanceDistance != null &&
+      resistanceDistance <= threshold;
 
     const atSupport =
-      supportDistance !=
-        null &&
-      supportDistance <=
-        threshold * 0.35;
+      supportDistance != null &&
+      supportDistance <= threshold * 0.35;
 
     const atResistance =
-      resistanceDistance !=
-        null &&
-      resistanceDistance <=
-        threshold * 0.35;
+      resistanceDistance != null &&
+      resistanceDistance <= threshold * 0.35;
 
     const reversalAtSupport =
-      supportDistance !=
-        null &&
-      supportDistance <=
-        reversalThreshold;
+      supportDistance != null &&
+      supportDistance <= reversalThreshold;
 
     const reversalAtResistance =
-      resistanceDistance !=
-        null &&
-      resistanceDistance <=
-        reversalThreshold;
+      resistanceDistance != null &&
+      resistanceDistance <= reversalThreshold;
 
-    let position =
-      "BETWEEN S/R";
-
-    let zone =
-      "NEUTRAL";
+    let position = "BETWEEN S/R";
+    let zone = "NEUTRAL";
 
     if (atSupport) {
-      position =
-        "AT SUPPORT";
-
-      zone =
-        "SUPPORT";
-    } else if (
-      atResistance
-    ) {
-      position =
-        "AT RESISTANCE";
-
-      zone =
-        "RESISTANCE";
+      position = "AT SUPPORT";
+      zone = "SUPPORT";
+    } else if (atResistance) {
+      position = "AT RESISTANCE";
+      zone = "RESISTANCE";
     } else if (
       nearSupport &&
       nearResistance
     ) {
-      position =
-        "BETWEEN S/R";
-
-      zone =
-        "TIGHT RANGE";
-    } else if (
-      nearSupport
-    ) {
-      position =
-        "NEAR SUPPORT";
-
-      zone =
-        "SUPPORT";
-    } else if (
-      nearResistance
-    ) {
-      position =
-        "NEAR RESISTANCE";
-
-      zone =
-        "RESISTANCE";
+      position = "BETWEEN S/R";
+      zone = "TIGHT RANGE";
+    } else if (nearSupport) {
+      position = "NEAR SUPPORT";
+      zone = "SUPPORT";
+    } else if (nearResistance) {
+      position = "NEAR RESISTANCE";
+      zone = "RESISTANCE";
     }
 
     let signalContext =
       "NO S/R WARNING";
 
-    if (
-      nearResistance
-    ) {
+    if (nearResistance) {
       signalContext =
         "RESISTANCE NEARBY";
     }
 
-    if (
-      nearSupport
-    ) {
+    if (nearSupport) {
       signalContext =
         "SUPPORT NEARBY";
     }
@@ -1019,11 +833,8 @@ export default async function handler(req, res) {
           ? {
               price:
                 Number(
-                  support.price.toFixed(
-                    2
-                  )
+                  support.price.toFixed(2)
                 ),
-
               strength:
                 support.touches
             }
@@ -1034,11 +845,8 @@ export default async function handler(req, res) {
           ? {
               price:
                 Number(
-                  resistance.price.toFixed(
-                    2
-                  )
+                  resistance.price.toFixed(2)
                 ),
-
               strength:
                 resistance.touches
             }
@@ -1048,14 +856,8 @@ export default async function handler(req, res) {
         grouped
           .sort(
             (a, b) =>
-              Math.abs(
-                a.price -
-                  price
-              ) -
-              Math.abs(
-                b.price -
-                  price
-              )
+              Math.abs(a.price - price) -
+              Math.abs(b.price - price)
           )
           .slice(
             0,
@@ -1064,41 +866,28 @@ export default async function handler(req, res) {
           .map(x => ({
             price:
               Number(
-                x.price.toFixed(
-                  2
-                )
+                x.price.toFixed(2)
               ),
-
-            type:
-              x.type,
-
-            strength:
-              x.touches
+            type: x.type,
+            strength: x.touches
           })),
 
       supportDistance:
-        supportDistance !=
-        null
+        supportDistance != null
           ? Number(
-              supportDistance.toFixed(
-                2
-              )
+              supportDistance.toFixed(2)
             )
           : null,
 
       resistanceDistance:
-        resistanceDistance !=
-        null
+        resistanceDistance != null
           ? Number(
-              resistanceDistance.toFixed(
-                2
-              )
+              resistanceDistance.toFixed(2)
             )
           : null,
 
       supportDistancePct:
-        supportDistance !=
-        null
+        supportDistance != null
           ? Number(
               (
                 supportDistance /
@@ -1109,8 +898,7 @@ export default async function handler(req, res) {
           : null,
 
       resistanceDistancePct:
-        resistanceDistance !=
-        null
+        resistanceDistance != null
           ? Number(
               (
                 resistanceDistance /
@@ -1122,16 +910,12 @@ export default async function handler(req, res) {
 
       threshold:
         Number(
-          threshold.toFixed(
-            2
-          )
+          threshold.toFixed(2)
         ),
 
       reversalThreshold:
         Number(
-          reversalThreshold.toFixed(
-            2
-          )
+          reversalThreshold.toFixed(2)
         ),
 
       position,
@@ -1152,7 +936,326 @@ export default async function handler(req, res) {
 
   /*
    * ============================================================
-   * TWELVE DATA + PERSISTENT CACHE
+   * M15 / M5 ROADBLOCK DETECTION
+   * ============================================================
+   *
+   * Roadblock = short timeframe support/resistance yang berada
+   * di antara current entry dan H1 target.
+   *
+   * Ia TIDAK block signal.
+   */
+
+  function findRoadblocks(
+    data,
+    price,
+    target,
+    targetType,
+    timeframe,
+    atrValue
+  ) {
+    const lookback =
+      timeframe === "M15"
+        ? CFG.roadblockLookbackM15
+        : CFG.roadblockLookbackM5;
+
+    const source =
+      data.slice(-lookback);
+
+    if (
+      !source.length ||
+      target == null ||
+      price == null
+    ) {
+      return {
+        timeframe,
+        target,
+        targetType,
+        roadblocks: [],
+        nearest: null,
+        count: 0,
+        hasRoadblock: false,
+        status: "NONE"
+      };
+    }
+
+    const levels = [];
+
+    const strength =
+      CFG.roadblockSwingStrength;
+
+    /*
+     * Swing highs = resistance
+     */
+
+    for (
+      let i = strength;
+      i < source.length - strength;
+      i++
+    ) {
+      const c = source[i];
+
+      let isHigh = true;
+
+      for (
+        let j = 1;
+        j <= strength;
+        j++
+      ) {
+        if (
+          c.high <= source[i - j].high ||
+          c.high <= source[i + j].high
+        ) {
+          isHigh = false;
+          break;
+        }
+      }
+
+      if (isHigh) {
+        levels.push({
+          price: c.high,
+          type: "RESISTANCE",
+          index: i
+        });
+      }
+    }
+
+    /*
+     * Swing lows = support
+     */
+
+    for (
+      let i = strength;
+      i < source.length - strength;
+      i++
+    ) {
+      const c = source[i];
+
+      let isLow = true;
+
+      for (
+        let j = 1;
+        j <= strength;
+        j++
+      ) {
+        if (
+          c.low >= source[i - j].low ||
+          c.low >= source[i + j].low
+        ) {
+          isLow = false;
+          break;
+        }
+      }
+
+      if (isLow) {
+        levels.push({
+          price: c.low,
+          type: "SUPPORT",
+          index: i
+        });
+      }
+    }
+
+    /*
+     * Grouping
+     */
+
+    const grouped = [];
+
+    const groupingDistance =
+      Math.max(
+        (atrValue || 5) *
+          CFG.roadblockGroupATRMultiplier,
+        CFG.roadblockMinGroupDistance
+      );
+
+    for (const level of levels) {
+      const existing =
+        grouped.find(
+          x =>
+            x.type === level.type &&
+            Math.abs(
+              x.price - level.price
+            ) <= groupingDistance
+        );
+
+      if (existing) {
+        existing.prices.push(
+          level.price
+        );
+
+        existing.touches += 1;
+
+        existing.price =
+          existing.prices.reduce(
+            (a, b) => a + b,
+            0
+          ) /
+          existing.prices.length;
+      } else {
+        grouped.push({
+          type: level.type,
+          price: level.price,
+          prices: [level.price],
+          touches: 1
+        });
+      }
+    }
+
+    /*
+     * BUY:
+     *
+     * Roadblock mestilah resistance
+     * selepas price tetapi sebelum H1 target.
+     *
+     * SELL:
+     *
+     * Roadblock mestilah support
+     * selepas price tetapi sebelum H1 target.
+     */
+
+    const isBuy =
+      targetType === "BUY TARGET" ||
+      targetType === "H1 RESISTANCE";
+
+    const isSell =
+      targetType === "SELL TARGET" ||
+      targetType === "H1 SUPPORT";
+
+    let candidates = [];
+
+    if (isBuy) {
+      candidates =
+        grouped.filter(
+          x =>
+            x.type === "RESISTANCE" &&
+            x.price > price &&
+            x.price < target
+        );
+    }
+
+    if (isSell) {
+      candidates =
+        grouped.filter(
+          x =>
+            x.type === "SUPPORT" &&
+            x.price < price &&
+            x.price > target
+        );
+    }
+
+    /*
+     * Buang level terlalu dekat dengan current price.
+     *
+     * Ini elakkan noise kecil dianggap roadblock.
+     */
+
+    const minimumDistance =
+      Math.max(
+        (atrValue || 5) * 0.15,
+        0.8
+      );
+
+    candidates =
+      candidates.filter(
+        x =>
+          Math.abs(
+            x.price - price
+          ) >= minimumDistance
+      );
+
+    /*
+     * Sort ikut jarak dari current price.
+     */
+
+    candidates.sort(
+      (a, b) =>
+        Math.abs(a.price - price) -
+        Math.abs(b.price - price)
+    );
+
+    const roadblocks =
+      candidates
+        .slice(
+          0,
+          CFG.roadblockMaxLevels
+        )
+        .map(x => {
+          const distance =
+            Math.abs(
+              x.price - price
+            );
+
+          const targetDistance =
+            Math.abs(
+              target - price
+            );
+
+          const percentage =
+            targetDistance > 0
+              ? (
+                  distance /
+                  targetDistance *
+                  100
+                )
+              : 0;
+
+          return {
+            price:
+              Number(
+                x.price.toFixed(2)
+              ),
+
+            type:
+              x.type,
+
+            strength:
+              x.touches,
+
+            distance:
+              Number(
+                distance.toFixed(2)
+              ),
+
+            targetProgressPct:
+              Number(
+                percentage.toFixed(1)
+              )
+          };
+        });
+
+    const nearest =
+      roadblocks[0] || null;
+
+    return {
+      timeframe,
+
+      target:
+        Number(
+          target.toFixed(2)
+        ),
+
+      targetType,
+
+      roadblocks,
+
+      nearest,
+
+      count:
+        roadblocks.length,
+
+      hasRoadblock:
+        roadblocks.length > 0,
+
+      status:
+        roadblocks.length
+          ? "ROADBLOCK"
+          : "CLEAR"
+    };
+  }
+
+  /*
+   * ============================================================
+   * TWELVE DATA CANDLE CACHE
    * ============================================================
    */
 
@@ -1161,20 +1264,22 @@ export default async function handler(req, res) {
     outputsize,
     key
   ) {
-    /*
-     * ----------------------------------------------------------
-     * 1. LOCAL MEMORY CACHE
-     * ----------------------------------------------------------
-     */
-
     const localCache =
       C.candles[key];
 
+    const candleTTL =
+      getCandleTTL(key);
+
+    /*
+     * ----------------------------------------------------------
+     * 1. LOCAL CACHE
+     * ----------------------------------------------------------
+     */
+
     if (
       localCache &&
-      now -
-        localCache.at <
-        CFG.cacheTTL
+      now - localCache.at <
+        candleTTL
     ) {
       C.dataSource[key] =
         "LOCAL_CACHE";
@@ -1184,7 +1289,7 @@ export default async function handler(req, res) {
 
     /*
      * ----------------------------------------------------------
-     * 2. TRY TWELVE DATA
+     * 2. TWELVE DATA
      * ----------------------------------------------------------
      */
 
@@ -1217,17 +1322,14 @@ export default async function handler(req, res) {
           }
         );
 
-      clearTimeout(
-        timeout
-      );
+      clearTimeout(timeout);
 
       const j =
         await r.json();
 
       if (
         !r.ok ||
-        j.status ===
-          "error"
+        j.status === "error"
       ) {
         throw new Error(
           j.message ||
@@ -1239,21 +1341,11 @@ export default async function handler(req, res) {
         (j.values || [])
           .reverse()
           .map(x => ({
-            time:
-              x.datetime,
-
-            open:
-              +x.open,
-
-            high:
-              +x.high,
-
-            low:
-              +x.low,
-
-            close:
-              +x.close,
-
+            time: x.datetime,
+            open: +x.open,
+            high: +x.high,
+            low: +x.low,
+            close: +x.close,
             volume:
               +x.volume || 0
           }))
@@ -1289,12 +1381,6 @@ export default async function handler(req, res) {
         );
       }
 
-      /*
-       * --------------------------------------------------------
-       * LIVE DATA BERJAYA
-       * --------------------------------------------------------
-       */
-
       const savedAt =
         Date.now();
 
@@ -1310,9 +1396,7 @@ export default async function handler(req, res) {
         savedAt;
 
       /*
-       * --------------------------------------------------------
-       * SIMPAN KE REDIS
-       * --------------------------------------------------------
+       * Redis persistent cache
        */
 
       await redisSet(
@@ -1337,7 +1421,7 @@ export default async function handler(req, res) {
 
       /*
        * --------------------------------------------------------
-       * 3. FALLBACK REDIS
+       * 3. REDIS FALLBACK
        * --------------------------------------------------------
        */
 
@@ -1374,11 +1458,6 @@ export default async function handler(req, res) {
           redisCache.data.length >=
           minRequired
         ) {
-          /*
-           * Masukkan Redis cache
-           * ke local memory juga.
-           */
-
           C.candles[key] = {
             at:
               redisCache.savedAt ||
@@ -1401,11 +1480,8 @@ export default async function handler(req, res) {
 
       /*
        * --------------------------------------------------------
-       * 4. LAST LOCAL CACHE
+       * 4. STALE LOCAL
        * --------------------------------------------------------
-       *
-       * Walaupun TTL local sudah expired,
-       * masih boleh digunakan sebagai emergency fallback.
        */
 
       if (
@@ -1421,12 +1497,6 @@ export default async function handler(req, res) {
         return localCache.data;
       }
 
-      /*
-       * --------------------------------------------------------
-       * 5. TIADA CACHE
-       * --------------------------------------------------------
-       */
-
       throw new Error(
         `${interval}: Twelve Data gagal dan cache terakhir tidak tersedia. ` +
         `${apiError?.message || ""}`
@@ -1436,21 +1506,18 @@ export default async function handler(req, res) {
 
   /*
    * ============================================================
-   * LIVE PRICE + REDIS FALLBACK
+   * LIVE PRICE
    * ============================================================
    */
 
   async function getLivePrice() {
     /*
-     * ----------------------------------------------------------
      * LOCAL PRICE CACHE
-     * ----------------------------------------------------------
      */
 
     if (
       C.price != null &&
-      now -
-        C.priceAt <
+      now - C.priceAt <
         CFG.priceTTL
     ) {
       C.dataSource.price =
@@ -1459,15 +1526,12 @@ export default async function handler(req, res) {
       return {
         price: C.price,
         savedAt: C.priceAt,
-        source:
-          "LOCAL_CACHE"
+        source: "LOCAL_CACHE"
       };
     }
 
     /*
-     * ----------------------------------------------------------
      * TWELVE DATA PRICE
-     * ----------------------------------------------------------
      */
 
     try {
@@ -1494,9 +1558,7 @@ export default async function handler(req, res) {
           }
         );
 
-      clearTimeout(
-        timeout
-      );
+      clearTimeout(timeout);
 
       const pj =
         await pr.json();
@@ -1508,8 +1570,7 @@ export default async function handler(req, res) {
 
       if (
         !pr.ok ||
-        pj.status ===
-          "error" ||
+        pj.status === "error" ||
         !Number.isFinite(p)
       ) {
         throw new Error(
@@ -1521,21 +1582,14 @@ export default async function handler(req, res) {
       const savedAt =
         Date.now();
 
-      C.price =
-        p;
-
-      C.priceAt =
-        savedAt;
+      C.price = p;
+      C.priceAt = savedAt;
 
       C.dataSource.price =
         "TWELVE_DATA";
 
       C.cacheAt.price =
         savedAt;
-
-      /*
-       * Save price to Redis
-       */
 
       await redisSet(
         CFG.redisKeys.price,
@@ -1549,8 +1603,7 @@ export default async function handler(req, res) {
       return {
         price: p,
         savedAt,
-        source:
-          "TWELVE_DATA"
+        source: "TWELVE_DATA"
       };
 
     } catch (priceError) {
@@ -1561,9 +1614,7 @@ export default async function handler(req, res) {
       );
 
       /*
-       * --------------------------------------------------------
-       * REDIS PRICE FALLBACK
-       * --------------------------------------------------------
+       * REDIS
        */
 
       const redisRaw =
@@ -1614,9 +1665,7 @@ export default async function handler(req, res) {
       }
 
       /*
-       * --------------------------------------------------------
-       * LOCAL STALE PRICE
-       * --------------------------------------------------------
+       * STALE LOCAL
        */
 
       if (
@@ -1664,21 +1713,14 @@ export default async function handler(req, res) {
         `xau_trade_plan:${signalKey}`;
 
       const raw =
-        await redis.get(
-          key
-        );
+        await redis.get(key);
 
       if (!raw) {
         return null;
       }
 
-      if (
-        typeof raw ===
-        "string"
-      ) {
-        return JSON.parse(
-          raw
-        );
+      if (typeof raw === "string") {
+        return JSON.parse(raw);
       }
 
       return raw;
@@ -1697,19 +1739,14 @@ export default async function handler(req, res) {
     signalKey,
     plan
   ) {
-    if (
-      !signalKey ||
-      !plan
-    ) {
+    if (!signalKey || !plan) {
       return;
     }
 
     try {
       await redis.set(
         `xau_trade_plan:${signalKey}`,
-        JSON.stringify(
-          plan
-        ),
+        JSON.stringify(plan),
         {
           ex:
             CFG.tradeLockTTL
@@ -1737,14 +1774,15 @@ export default async function handler(req, res) {
   let livePrice;
   let candlePrice;
 
-  let priceSource =
-    "NONE";
+  let priceSource = "NONE";
 
   try {
     /*
-     * ----------------------------------------------------------
+     * ==========================================================
      * LOAD CANDLES
-     * ----------------------------------------------------------
+     * ==========================================================
+     *
+     * Setiap timeframe ada cache sendiri.
      */
 
     [
@@ -1772,9 +1810,9 @@ export default async function handler(req, res) {
     ]);
 
     /*
-     * ----------------------------------------------------------
-     * PRICE
-     * ----------------------------------------------------------
+     * ==========================================================
+     * LIVE PRICE
+     * ==========================================================
      */
 
     const priceResult =
@@ -1841,6 +1879,13 @@ export default async function handler(req, res) {
           "SELL";
       }
     }
+
+    /*
+     * H1 S/R
+     *
+     * S/R levels berasal daripada H1 candle.
+     * Tetapi jarak / position menggunakan LIVE PRICE.
+     */
 
     const h1SupportResistance =
       findH1SupportResistance(
@@ -1917,7 +1962,6 @@ export default async function handler(req, res) {
         m15EMA50
       ) {
         m15Buy += 20;
-
         rb.push(
           "EMA20 > EMA50"
         );
@@ -1928,7 +1972,6 @@ export default async function handler(req, res) {
         m15EMA50
       ) {
         m15Sell += 20;
-
         rs.push(
           "EMA20 < EMA50"
         );
@@ -1943,7 +1986,6 @@ export default async function handler(req, res) {
         m15EMA20
       ) {
         m15Buy += 10;
-
         rb.push(
           "Price > EMA20"
         );
@@ -1954,7 +1996,6 @@ export default async function handler(req, res) {
         m15EMA20
       ) {
         m15Sell += 10;
-
         rs.push(
           "Price < EMA20"
         );
@@ -1969,7 +2010,6 @@ export default async function handler(req, res) {
         m15RSI <= 72
       ) {
         m15Buy += 10;
-
         rb.push(
           "RSI bullish"
         );
@@ -1980,128 +2020,91 @@ export default async function handler(req, res) {
         m15RSI < 50
       ) {
         m15Sell += 10;
-
         rs.push(
           "RSI bearish"
         );
       }
     }
 
-    if (
-      m15MACD?.bullish
-    ) {
+    if (m15MACD?.bullish) {
       m15Buy += 15;
-
       rb.push(
         "MACD bullish"
       );
     }
 
-    if (
-      m15MACD?.bearish
-    ) {
+    if (m15MACD?.bearish) {
       m15Sell += 15;
-
       rs.push(
         "MACD bearish"
       );
     }
 
-    if (
-      m15Struct.bullish
-    ) {
+    if (m15Struct.bullish) {
       m15Buy += 15;
-
       rb.push(
         "Structure bullish"
       );
     }
 
-    if (
-      m15Struct.bearish
-    ) {
+    if (m15Struct.bearish) {
       m15Sell += 15;
-
       rs.push(
         "Structure bearish"
       );
     }
 
-    if (
-      m15BOS.bullish
-    ) {
+    if (m15BOS.bullish) {
       m15Buy += 15;
-
       rb.push(
         "BOS bullish"
       );
     }
 
-    if (
-      m15BOS.bearish
-    ) {
+    if (m15BOS.bearish) {
       m15Sell += 15;
-
       rs.push(
         "BOS bearish"
       );
     }
 
-    if (
-      m15CHOCH.bullish
-    ) {
+    if (m15CHOCH.bullish) {
       m15Buy += 10;
-
       rb.push(
         "CHOCH bullish"
       );
     }
 
-    if (
-      m15CHOCH.bearish
-    ) {
+    if (m15CHOCH.bearish) {
       m15Sell += 10;
-
       rs.push(
         "CHOCH bearish"
       );
     }
 
-    if (
-      m15Sweep.bullish
-    ) {
+    if (m15Sweep.bullish) {
       m15Buy += 10;
-
       rb.push(
         "Sell-side sweep"
       );
     }
 
-    if (
-      m15Sweep.bearish
-    ) {
+    if (m15Sweep.bearish) {
       m15Sell += 10;
-
       rs.push(
         "Buy-side sweep"
       );
     }
 
-    if (
-      m15Mom.bullish
-    ) {
+    if (m15Mom.bullish) {
       m15Buy += 5;
-
       rb.push(
         "Momentum bullish"
       );
     }
 
-    if (
-      m15Mom.bearish
-    ) {
+    if (m15Mom.bearish) {
       m15Sell += 5;
-
       rs.push(
         "Momentum bearish"
       );
@@ -2209,7 +2212,6 @@ export default async function handler(req, res) {
         m5EMA50
       ) {
         m5Buy += 20;
-
         r5b.push(
           "EMA20 > EMA50"
         );
@@ -2220,22 +2222,18 @@ export default async function handler(req, res) {
         m5EMA50
       ) {
         m5Sell += 20;
-
         r5s.push(
           "EMA20 < EMA50"
         );
       }
     }
 
-    if (
-      m5EMA9 != null
-    ) {
+    if (m5EMA9 != null) {
       if (
         livePrice >
         m5EMA9
       ) {
         m5Buy += 8;
-
         r5b.push(
           "Price > EMA9"
         );
@@ -2246,22 +2244,18 @@ export default async function handler(req, res) {
         m5EMA9
       ) {
         m5Sell += 8;
-
         r5s.push(
           "Price < EMA9"
         );
       }
     }
 
-    if (
-      m5RSI != null
-    ) {
+    if (m5RSI != null) {
       if (
         m5RSI >= 50 &&
         m5RSI < 75
       ) {
         m5Buy += 10;
-
         r5b.push(
           "RSI bullish"
         );
@@ -2272,128 +2266,91 @@ export default async function handler(req, res) {
         m5RSI < 50
       ) {
         m5Sell += 10;
-
         r5s.push(
           "RSI bearish"
         );
       }
     }
 
-    if (
-      m5MACD?.bullish
-    ) {
+    if (m5MACD?.bullish) {
       m5Buy += 10;
-
       r5b.push(
         "MACD bullish"
       );
     }
 
-    if (
-      m5MACD?.bearish
-    ) {
+    if (m5MACD?.bearish) {
       m5Sell += 10;
-
       r5s.push(
         "MACD bearish"
       );
     }
 
-    if (
-      m5Struct.bullish
-    ) {
+    if (m5Struct.bullish) {
       m5Buy += 12;
-
       r5b.push(
         "Structure bullish"
       );
     }
 
-    if (
-      m5Struct.bearish
-    ) {
+    if (m5Struct.bearish) {
       m5Sell += 12;
-
       r5s.push(
         "Structure bearish"
       );
     }
 
-    if (
-      m5BOS.bullish
-    ) {
+    if (m5BOS.bullish) {
       m5Buy += 15;
-
       r5b.push(
         "BOS bullish"
       );
     }
 
-    if (
-      m5BOS.bearish
-    ) {
+    if (m5BOS.bearish) {
       m5Sell += 15;
-
       r5s.push(
         "BOS bearish"
       );
     }
 
-    if (
-      m5CHOCH.bullish
-    ) {
+    if (m5CHOCH.bullish) {
       m5Buy += 12;
-
       r5b.push(
         "CHOCH bullish"
       );
     }
 
-    if (
-      m5CHOCH.bearish
-    ) {
+    if (m5CHOCH.bearish) {
       m5Sell += 12;
-
       r5s.push(
         "CHOCH bearish"
       );
     }
 
-    if (
-      m5Sweep.bullish
-    ) {
+    if (m5Sweep.bullish) {
       m5Buy += 8;
-
       r5b.push(
         "Sell-side sweep"
       );
     }
 
-    if (
-      m5Sweep.bearish
-    ) {
+    if (m5Sweep.bearish) {
       m5Sell += 8;
-
       r5s.push(
         "Buy-side sweep"
       );
     }
 
-    if (
-      m5Mom.bullish
-    ) {
+    if (m5Mom.bullish) {
       m5Buy += 5;
-
       r5b.push(
         "Momentum bullish"
       );
     }
 
-    if (
-      m5Mom.bearish
-    ) {
+    if (m5Mom.bearish) {
       m5Sell += 5;
-
       r5s.push(
         "Momentum bearish"
       );
@@ -2446,7 +2403,7 @@ export default async function handler(req, res) {
 
     /*
      * ==========================================================
-     * S/R FILTER
+     * H1 S/R FILTER
      * ==========================================================
      */
 
@@ -2533,47 +2490,31 @@ export default async function handler(req, res) {
       h1Direction !==
         "SELL";
 
-    if (
-      buyContinuation
-    ) {
+    if (buyContinuation) {
       buySetupType =
         "CONTINUATION";
-
-    } else if (
-      buyReversal
-    ) {
+    } else if (buyReversal) {
       buySetupType =
         "REVERSAL";
-
-    } else if (
-      rawBuyAlignment
-    ) {
+    } else if (rawBuyAlignment) {
       buySetupType =
         "COUNTER-TREND";
     }
 
-    if (
-      sellContinuation
-    ) {
+    if (sellContinuation) {
       sellSetupType =
         "CONTINUATION";
-
-    } else if (
-      sellReversal
-    ) {
+    } else if (sellReversal) {
       sellSetupType =
         "REVERSAL";
-
-    } else if (
-      rawSellAlignment
-    ) {
+    } else if (rawSellAlignment) {
       sellSetupType =
         "COUNTER-TREND";
     }
 
     /*
      * ==========================================================
-     * TARGET S/R
+     * H1 TARGET
      * ==========================================================
      */
 
@@ -2622,6 +2563,148 @@ export default async function handler(req, res) {
           ).toFixed(2)
         );
     }
+
+    /*
+     * ==========================================================
+     * ROADBLOCKS
+     * ==========================================================
+     */
+
+    const buyM15Roadblocks =
+      targetSR != null &&
+      rawBuyAlignment
+        ? findRoadblocks(
+            m15,
+            livePrice,
+            targetSR,
+            "BUY TARGET",
+            "M15",
+            m15ATR
+          )
+        : {
+            timeframe: "M15",
+            target: targetSR,
+            targetType: "BUY TARGET",
+            roadblocks: [],
+            nearest: null,
+            count: 0,
+            hasRoadblock: false,
+            status: "NONE"
+          };
+
+    const buyM5Roadblocks =
+      targetSR != null &&
+      rawBuyAlignment
+        ? findRoadblocks(
+            m5,
+            livePrice,
+            targetSR,
+            "BUY TARGET",
+            "M5",
+            m5ATR
+          )
+        : {
+            timeframe: "M5",
+            target: targetSR,
+            targetType: "BUY TARGET",
+            roadblocks: [],
+            nearest: null,
+            count: 0,
+            hasRoadblock: false,
+            status: "NONE"
+          };
+
+    const sellM15Roadblocks =
+      targetSR != null &&
+      rawSellAlignment
+        ? findRoadblocks(
+            m15,
+            livePrice,
+            targetSR,
+            "SELL TARGET",
+            "M15",
+            m15ATR
+          )
+        : {
+            timeframe: "M15",
+            target: targetSR,
+            targetType: "SELL TARGET",
+            roadblocks: [],
+            nearest: null,
+            count: 0,
+            hasRoadblock: false,
+            status: "NONE"
+          };
+
+    const sellM5Roadblocks =
+      targetSR != null &&
+      rawSellAlignment
+        ? findRoadblocks(
+            m5,
+            livePrice,
+            targetSR,
+            "SELL TARGET",
+            "M5",
+            m5ATR
+          )
+        : {
+            timeframe: "M5",
+            target: targetSR,
+            targetType: "SELL TARGET",
+            roadblocks: [],
+            nearest: null,
+            count: 0,
+            hasRoadblock: false,
+            status: "NONE"
+          };
+
+    /*
+     * Gabungkan roadblock ikut signal
+     */
+
+    const activeRoadblocks =
+      rawBuyAlignment
+        ? [
+            ...buyM5Roadblocks.roadblocks.map(
+              x => ({
+                ...x,
+                timeframe: "M5"
+              })
+            ),
+
+            ...buyM15Roadblocks.roadblocks.map(
+              x => ({
+                ...x,
+                timeframe: "M15"
+              })
+            )
+          ]
+        : rawSellAlignment
+          ? [
+              ...sellM5Roadblocks.roadblocks.map(
+                x => ({
+                  ...x,
+                  timeframe: "M5"
+                })
+              ),
+
+              ...sellM15Roadblocks.roadblocks.map(
+                x => ({
+                  ...x,
+                  timeframe: "M15"
+                })
+              )
+            ]
+          : [];
+
+    activeRoadblocks.sort(
+      (a, b) =>
+        a.distance - b.distance
+    );
+
+    const nearestRoadblock =
+      activeRoadblocks[0] ||
+      null;
 
     /*
      * ==========================================================
@@ -2694,11 +2777,19 @@ export default async function handler(req, res) {
           : "H1 support/resistance location valid"
       ];
 
-      if (
-        targetSR != null
-      ) {
+      if (targetSR != null) {
         reasons.push(
           `${targetSRType} target ${targetSR}`
+        );
+      }
+
+      /*
+       * Roadblock warning sahaja.
+       */
+
+      if (nearestRoadblock) {
+        reasons.push(
+          `ROADBLOCK ${nearestRoadblock.timeframe} ${nearestRoadblock.price}`
         );
       }
     }
@@ -2744,17 +2835,21 @@ export default async function handler(req, res) {
           : "H1 support/resistance location valid"
       ];
 
-      if (
-        targetSR != null
-      ) {
+      if (targetSR != null) {
         reasons.push(
           `${targetSRType} target ${targetSR}`
+        );
+      }
+
+      if (nearestRoadblock) {
+        reasons.push(
+          `ROADBLOCK ${nearestRoadblock.timeframe} ${nearestRoadblock.price}`
         );
       }
     }
 
     /*
-     * BUY blocked
+     * BUY blocked H1 S/R
      */
 
     else if (
@@ -2776,7 +2871,7 @@ export default async function handler(req, res) {
     }
 
     /*
-     * SELL blocked
+     * SELL blocked H1 S/R
      */
 
     else if (
@@ -2847,29 +2942,24 @@ export default async function handler(req, res) {
      */
 
     const holdBias =
-      h1Direction ===
-      "BUY"
+      h1Direction === "BUY"
         ? "BUY"
-        : h1Direction ===
-          "SELL"
+        : h1Direction === "SELL"
           ? "SELL"
           : "NEUTRAL";
 
     const holdPermission =
       signal === "BUY" &&
-      h1Direction ===
-        "BUY"
+      h1Direction === "BUY"
 
         ? "HOLD BUY"
 
         : signal === "SELL" &&
-          h1Direction ===
-            "SELL"
+          h1Direction === "SELL"
 
           ? "HOLD SELL"
 
-          : signal !==
-              "WAIT"
+          : signal !== "WAIT"
 
             ? "SCALP ONLY"
 
@@ -2878,19 +2968,16 @@ export default async function handler(req, res) {
     const context =
       (
         signal === "BUY" &&
-        h1Direction ===
-          "BUY"
+        h1Direction === "BUY"
       ) ||
       (
         signal === "SELL" &&
-        h1Direction ===
-          "SELL"
+        h1Direction === "SELL"
       )
 
         ? "WITH_H1"
 
-        : signal ===
-            "WAIT"
+        : signal === "WAIT"
 
           ? "NEUTRAL"
 
@@ -3015,9 +3102,7 @@ export default async function handler(req, res) {
       candidateRisk != null &&
       targetSR != null
     ) {
-      if (
-        signal === "BUY"
-      ) {
+      if (signal === "BUY") {
         targetSRValid =
           (
             targetSR -
@@ -3027,9 +3112,7 @@ export default async function handler(req, res) {
             CFG.minTargetR;
       }
 
-      if (
-        signal === "SELL"
-      ) {
+      if (signal === "SELL") {
         targetSRValid =
           (
             candidateEntry -
@@ -3070,8 +3153,7 @@ export default async function handler(req, res) {
 
     if (
       status === "ENTRY" &&
-      execution ===
-        "READY" &&
+      execution === "READY" &&
       m5ATR != null &&
       signalKey &&
       !tradePlanLocked
@@ -3082,9 +3164,7 @@ export default async function handler(req, res) {
       risk =
         candidateRisk;
 
-      if (
-        signal === "BUY"
-      ) {
+      if (signal === "BUY") {
         stopLoss =
           Number(
             (
@@ -3209,8 +3289,7 @@ export default async function handler(req, res) {
     if (
       signalKey &&
       status === "ENTRY" &&
-      execution ===
-        "READY"
+      execution === "READY"
     ) {
       try {
         const lockKey =
@@ -3235,6 +3314,11 @@ export default async function handler(req, res) {
               ? `TARGET ${targetSRType} ${targetSR}`
               : "NO H1 S/R TARGET";
 
+          const roadblockText =
+            nearestRoadblock
+              ? `ROADBLOCK ${nearestRoadblock.timeframe} ${nearestRoadblock.price}`
+              : "ROADBLOCK CLEAR";
+
           const body = [
             `${signal} • Score ${score}/100`,
             `Entry ${entry?.toFixed(2)}`,
@@ -3244,6 +3328,7 @@ export default async function handler(req, res) {
             `TP3 ${tp3?.toFixed(2)}`,
             setupType,
             srText,
+            roadblockText,
             `H1 ${h1Direction}`,
             holdPermission
           ].join(
@@ -3254,8 +3339,7 @@ export default async function handler(req, res) {
             await sendPushToAll({
               title,
               body,
-              tag:
-                signalKey,
+              tag: signalKey,
               url: "/"
             });
 
@@ -3274,14 +3358,13 @@ export default async function handler(req, res) {
               }
             );
           }
+
         } else {
           pushSkipped =
             true;
         }
 
-      } catch (
-        pushError
-      ) {
+      } catch (pushError) {
         console.error(
           "Automatic push error:",
           pushError
@@ -3305,33 +3388,23 @@ export default async function handler(req, res) {
     const usingCache =
       sourceValues.some(
         x =>
-          x ===
-            "REDIS_CACHE" ||
-          x ===
-            "STALE_LOCAL_CACHE" ||
-          x ===
-            "LOCAL_CACHE"
+          x === "REDIS_CACHE" ||
+          x === "STALE_LOCAL_CACHE" ||
+          x === "LOCAL_CACHE"
       );
 
     const usingLive =
       sourceValues.some(
         x =>
-          x ===
-          "TWELVE_DATA"
+          x === "TWELVE_DATA"
       );
 
     const stale =
       sourceValues.some(
         x =>
-          x ===
-            "REDIS_CACHE" ||
-          x ===
-            "STALE_LOCAL_CACHE"
+          x === "REDIS_CACHE" ||
+          x === "STALE_LOCAL_CACHE"
       );
-
-    /*
-     * Cache age
-     */
 
     const cacheAges = {
       m5:
@@ -3381,14 +3454,10 @@ export default async function handler(req, res) {
     if (stale) {
       overallDataSource =
         "CACHE";
-    } else if (
-      usingLive
-    ) {
+    } else if (usingLive) {
       overallDataSource =
         "LIVE";
-    } else if (
-      usingCache
-    ) {
+    } else if (usingCache) {
       overallDataSource =
         "CACHE";
     }
@@ -3403,10 +3472,10 @@ export default async function handler(req, res) {
       ok: true,
 
       version:
-        "V13-SCALP-PERSISTENT-CACHE",
+        "V14-SCALP-TF-CACHE-LIVE-PRICE-ROADBLOCK",
 
       architecture:
-        "M15+M5-ALIGNED-SIGNAL + REVERSAL/CONTINUATION + H1-HOLD + H1-SR-TARGET + FIXED-ENTRY-SL-TP + REDIS-FALLBACK",
+        "M15+M5-ALIGNED-SIGNAL + H1-HOLD + H1-SR-TARGET + M15/M5-ROADBLOCK + FIXED-ENTRY-SL-TP + TIMEFRAME-CACHE + LIVE-PRICE",
 
       symbol:
         CFG.symbol,
@@ -3428,11 +3497,28 @@ export default async function handler(req, res) {
       stale,
 
       cache: {
-        enabled:
-          true,
+        enabled: true,
 
         storage:
           "REDIS + LOCAL",
+
+        candleTTLSeconds: {
+          m5:
+            CFG.m5CacheTTL /
+            1000,
+
+          m15:
+            CFG.m15CacheTTL /
+            1000,
+
+          h1:
+            CFG.h1CacheTTL /
+            1000
+        },
+
+        priceTTLSeconds:
+          CFG.priceTTL /
+          1000,
 
         redisTTLSeconds:
           CFG.redisCacheTTL,
@@ -3495,10 +3581,8 @@ export default async function handler(req, res) {
         attempted:
           Boolean(
             signalKey &&
-            status ===
-              "ENTRY" &&
-            execution ===
-              "READY"
+            status === "ENTRY" &&
+            execution === "READY"
           ),
 
         sent:
@@ -3744,6 +3828,42 @@ export default async function handler(req, res) {
               ? h1SupportResistance
                   .support
               : null
+        }
+      },
+
+      /*
+       * ========================================================
+       * ROADBLOCK ANALYSIS
+       * ========================================================
+       */
+
+      roadblocks: {
+        active:
+          activeRoadblocks,
+
+        nearest:
+          nearestRoadblock,
+
+        count:
+          activeRoadblocks.length,
+
+        hasRoadblock:
+          activeRoadblocks.length > 0,
+
+        buy: {
+          m5:
+            buyM5Roadblocks,
+
+          m15:
+            buyM15Roadblocks
+        },
+
+        sell: {
+          m5:
+            sellM5Roadblocks,
+
+          m15:
+            sellM15Roadblocks
         }
       },
 
