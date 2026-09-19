@@ -17,7 +17,6 @@
   --red:#ef4444;
   --yellow:#f59e0b;
   --blue:#38bdf8;
-  --purple:#a78bfa;
 }
 
 *{box-sizing:border-box}
@@ -47,7 +46,6 @@ header{
 .logo{
   font-size:24px;
   font-weight:900;
-  letter-spacing:.5px;
 }
 
 .logo span{
@@ -78,19 +76,19 @@ header{
   background:var(--red);
 }
 
+.card{
+  background:rgba(13,19,29,.94);
+  border:1px solid var(--border);
+  border-radius:16px;
+  padding:15px;
+  box-shadow:0 12px 35px rgba(0,0,0,.2);
+}
+
 .hero{
   display:grid;
   grid-template-columns:1.4fr .8fr .8fr;
   gap:12px;
   margin-bottom:12px;
-}
-
-.card{
-  background:rgba(13,19,29,.92);
-  border:1px solid var(--border);
-  border-radius:16px;
-  padding:15px;
-  box-shadow:0 12px 35px rgba(0,0,0,.2);
 }
 
 .priceCard{
@@ -108,7 +106,6 @@ header{
 .price{
   font-size:38px;
   font-weight:900;
-  letter-spacing:-1px;
 }
 
 .priceSub{
@@ -145,11 +142,6 @@ header{
   grid-template-columns:repeat(3,1fr);
   gap:12px;
   margin-bottom:12px;
-}
-
-.tf{
-  position:relative;
-  overflow:hidden;
 }
 
 .tfHead{
@@ -212,6 +204,8 @@ header{
 .metricValue{
   font-size:14px;
   font-weight:800;
+  overflow:hidden;
+  text-overflow:ellipsis;
 }
 
 .section{
@@ -365,11 +359,12 @@ header{
   color:var(--yellow);
 }
 
-.footer{
-  text-align:center;
-  color:var(--muted);
-  font-size:10px;
-  padding:10px 0 20px;
+.buyText{
+  color:var(--green);
+}
+
+.sellText{
+  color:var(--red);
 }
 
 .loading{
@@ -386,6 +381,13 @@ header{
   padding:14px;
   font-size:12px;
   margin-bottom:12px;
+}
+
+.footer{
+  text-align:center;
+  color:var(--muted);
+  font-size:10px;
+  padding:10px 0 20px;
 }
 
 @media(max-width:900px){
@@ -445,285 +447,310 @@ header{
 
 <div id="errorBox" class="errorBox" style="display:none"></div>
 
-<div id="app">
+<div class="hero">
 
-  <div class="hero">
-
-    <div class="card priceCard">
-      <div class="label">XAU / USD</div>
-      <div id="price" class="price">—</div>
-      <div id="priceSub" class="priceSub">Waiting for market data...</div>
+  <div class="card priceCard">
+    <div class="label">XAU / USD</div>
+    <div id="price" class="price">—</div>
+    <div id="priceSub" class="priceSub">
+      Waiting for market data...
     </div>
-
-    <div class="card signalCard">
-      <div class="label">SCALP SIGNAL</div>
-      <div id="signal" class="signal wait">WAIT</div>
-      <div id="signalReason" class="signalReason">Loading...</div>
-    </div>
-
-    <div class="card signalCard">
-      <div class="label">MARKET FILTER</div>
-      <div id="marketFilter" class="signal wait">WAIT</div>
-      <div id="marketReason" class="signalReason">M5 + M15 alignment</div>
-    </div>
-
   </div>
 
-  <div class="grid">
-
-    <div class="card tf">
-      <div class="tfHead">
-        <div class="tfName">M5</div>
-        <div id="m5Badge" class="badge neutral">NEUTRAL</div>
-      </div>
-
-      <div class="metrics">
-        <div class="metric">
-          <div class="metricName">Direction</div>
-          <div id="m5Direction" class="metricValue">—</div>
-        </div>
-
-        <div class="metric">
-          <div class="metricName">RSI</div>
-          <div id="m5Rsi" class="metricValue">—</div>
-        </div>
-
-        <div class="metric">
-          <div class="metricName">EMA Fast</div>
-          <div id="m5Fast" class="metricValue">—</div>
-        </div>
-
-        <div class="metric">
-          <div class="metricName">EMA Slow</div>
-          <div id="m5Slow" class="metricValue">—</div>
-        </div>
-
-        <div class="metric">
-          <div class="metricName">ATR</div>
-          <div id="m5Atr" class="metricValue">—</div>
-        </div>
-
-        <div class="metric">
-          <div class="metricName">Last Candle</div>
-          <div id="m5Last" class="metricValue">—</div>
-        </div>
-      </div>
+  <div class="card signalCard">
+    <div class="label">SCALP SIGNAL</div>
+    <div id="signal" class="signal wait">WAIT</div>
+    <div id="signalReason" class="signalReason">
+      Loading...
     </div>
-
-    <div class="card tf">
-      <div class="tfHead">
-        <div class="tfName">M15</div>
-        <div id="m15Badge" class="badge neutral">NEUTRAL</div>
-      </div>
-
-      <div class="metrics">
-        <div class="metric">
-          <div class="metricName">Direction</div>
-          <div id="m15Direction" class="metricValue">—</div>
-        </div>
-
-        <div class="metric">
-          <div class="metricName">RSI</div>
-          <div id="m15Rsi" class="metricValue">—</div>
-        </div>
-
-        <div class="metric">
-          <div class="metricName">EMA Fast</div>
-          <div id="m15Fast" class="metricValue">—</div>
-        </div>
-
-        <div class="metric">
-          <div class="metricName">EMA Slow</div>
-          <div id="m15Slow" class="metricValue">—</div>
-        </div>
-
-        <div class="metric">
-          <div class="metricName">ATR</div>
-          <div id="m15Atr" class="metricValue">—</div>
-        </div>
-
-        <div class="metric">
-          <div class="metricName">Last Candle</div>
-          <div id="m15Last" class="metricValue">—</div>
-        </div>
-      </div>
-    </div>
-
-    <div class="card tf">
-      <div class="tfHead">
-        <div class="tfName">H1</div>
-        <div id="h1Badge" class="badge neutral">NEUTRAL</div>
-      </div>
-
-      <div class="metrics">
-        <div class="metric">
-          <div class="metricName">Direction</div>
-          <div id="h1Direction" class="metricValue">—</div>
-        </div>
-
-        <div class="metric">
-          <div class="metricName">RSI</div>
-          <div id="h1Rsi" class="metricValue">—</div>
-        </div>
-
-        <div class="metric">
-          <div class="metricName">EMA Fast</div>
-          <div id="h1Fast" class="metricValue">—</div>
-        </div>
-
-        <div class="metric">
-          <div class="metricName">EMA Slow</div>
-          <div id="h1Slow" class="metricValue">—</div>
-        </div>
-
-        <div class="metric">
-          <div class="metricName">ATR</div>
-          <div id="h1Atr" class="metricValue">—</div>
-        </div>
-
-        <div class="metric">
-          <div class="metricName">Context</div>
-          <div id="h1Context" class="metricValue">HOLD</div>
-        </div>
-      </div>
-    </div>
-
   </div>
 
-  <div class="card section">
-
-    <div class="sectionTitle">H1 Support / Resistance</div>
-
-    <div class="srGrid">
-
-      <div class="level support">
-        <div class="levelTitle">Support</div>
-        <div id="support" class="levelPrice">—</div>
-        <div id="supportTime" class="levelTime">—</div>
-      </div>
-
-      <div class="level resistance">
-        <div class="levelTitle">Resistance</div>
-        <div id="resistance" class="levelPrice">—</div>
-        <div id="resistanceTime" class="levelTime">—</div>
-      </div>
-
+  <div class="card signalCard">
+    <div class="label">MARKET FILTER</div>
+    <div id="marketFilter" class="signal wait">WAIT</div>
+    <div id="marketReason" class="signalReason">
+      M5 + M15 alignment
     </div>
-
   </div>
 
-  <div class="card section">
+</div>
 
-    <div class="sectionTitle">Signal Confluence</div>
+<div class="grid">
 
-    <div class="infoGrid">
+  <div class="card">
 
-      <div class="infoBox">
-        <div class="infoTitle">Score</div>
-        <div id="confScore" class="infoValue">—</div>
+    <div class="tfHead">
+      <div class="tfName">M5</div>
+      <div id="m5Badge" class="badge neutral">NEUTRAL</div>
+    </div>
+
+    <div class="metrics">
+
+      <div class="metric">
+        <div class="metricName">Direction</div>
+        <div id="m5Direction" class="metricValue">—</div>
       </div>
 
-      <div class="infoBox">
-        <div class="infoTitle">Quality</div>
-        <div id="confQuality" class="infoValue">—</div>
+      <div class="metric">
+        <div class="metricName">RSI</div>
+        <div id="m5Rsi" class="metricValue">—</div>
       </div>
 
-      <div class="infoBox">
-        <div class="infoTitle">Entry Quality</div>
-        <div id="entryQuality" class="infoValue">—</div>
+      <div class="metric">
+        <div class="metricName">EMA Fast</div>
+        <div id="m5Fast" class="metricValue">—</div>
       </div>
 
-      <div class="infoBox">
-        <div class="infoTitle">Structure</div>
-        <div id="structure" class="infoValue">—</div>
+      <div class="metric">
+        <div class="metricName">EMA Slow</div>
+        <div id="m5Slow" class="metricValue">—</div>
+      </div>
+
+      <div class="metric">
+        <div class="metricName">ATR</div>
+        <div id="m5Atr" class="metricValue">—</div>
+      </div>
+
+      <div class="metric">
+        <div class="metricName">Last Candle</div>
+        <div id="m5Last" class="metricValue">—</div>
       </div>
 
     </div>
-
   </div>
 
-  <div class="card section">
+  <div class="card">
 
-    <div class="sectionTitle">Trade Plan</div>
+    <div class="tfHead">
+      <div class="tfName">M15</div>
+      <div id="m15Badge" class="badge neutral">NEUTRAL</div>
+    </div>
 
-    <div class="plan">
+    <div class="metrics">
 
-      <div class="planBox">
-        <div class="planTitle">Status</div>
-        <div id="planStatus" class="planValue waitText">WAIT</div>
+      <div class="metric">
+        <div class="metricName">Direction</div>
+        <div id="m15Direction" class="metricValue">—</div>
       </div>
 
-      <div class="planBox">
-        <div class="planTitle">Entry</div>
-        <div id="planEntry" class="planValue">—</div>
+      <div class="metric">
+        <div class="metricName">RSI</div>
+        <div id="m15Rsi" class="metricValue">—</div>
       </div>
 
-      <div class="planBox">
-        <div class="planTitle">Stop Loss</div>
-        <div id="planSL" class="planValue">—</div>
+      <div class="metric">
+        <div class="metricName">EMA Fast</div>
+        <div id="m15Fast" class="metricValue">—</div>
       </div>
 
-      <div class="planBox">
-        <div class="planTitle">TP1</div>
-        <div id="planTP1" class="planValue">—</div>
+      <div class="metric">
+        <div class="metricName">EMA Slow</div>
+        <div id="m15Slow" class="metricValue">—</div>
       </div>
 
-      <div class="planBox">
-        <div class="planTitle">TP2</div>
-        <div id="planTP2" class="planValue">—</div>
+      <div class="metric">
+        <div class="metricName">ATR</div>
+        <div id="m15Atr" class="metricValue">—</div>
+      </div>
+
+      <div class="metric">
+        <div class="metricName">Last Candle</div>
+        <div id="m15Last" class="metricValue">—</div>
       </div>
 
     </div>
-
   </div>
 
-  <div class="card section news" id="newsCard">
+  <div class="card">
 
-    <div class="newsHeader">
-      <div class="sectionTitle" style="margin:0">News Filter</div>
-      <div id="newsStatus" class="newsStatus">—</div>
+    <div class="tfHead">
+      <div class="tfName">H1</div>
+      <div id="h1Badge" class="badge neutral">NEUTRAL</div>
     </div>
 
-    <div id="newsList" class="newsList">
-      <div class="loading">Loading news...</div>
-    </div>
+    <div class="metrics">
 
+      <div class="metric">
+        <div class="metricName">Direction</div>
+        <div id="h1Direction" class="metricValue">—</div>
+      </div>
+
+      <div class="metric">
+        <div class="metricName">RSI</div>
+        <div id="h1Rsi" class="metricValue">—</div>
+      </div>
+
+      <div class="metric">
+        <div class="metricName">EMA Fast</div>
+        <div id="h1Fast" class="metricValue">—</div>
+      </div>
+
+      <div class="metric">
+        <div class="metricName">EMA Slow</div>
+        <div id="h1Slow" class="metricValue">—</div>
+      </div>
+
+      <div class="metric">
+        <div class="metricName">ATR</div>
+        <div id="h1Atr" class="metricValue">—</div>
+      </div>
+
+      <div class="metric">
+        <div class="metricName">Context</div>
+        <div id="h1Context" class="metricValue">HOLD</div>
+      </div>
+
+    </div>
   </div>
 
-  <div class="card section">
+</div>
 
-    <div class="sectionTitle">Liquidity Map</div>
+<div class="card section">
 
-    <div class="infoGrid">
+  <div class="sectionTitle">
+    H1 Support / Resistance
+  </div>
 
-      <div class="infoBox">
-        <div class="infoTitle">H1 Above</div>
-        <div id="liqH1Above" class="infoValue">—</div>
-      </div>
+  <div class="srGrid">
 
-      <div class="infoBox">
-        <div class="infoTitle">M15 Above</div>
-        <div id="liqM15Above" class="infoValue">—</div>
-      </div>
+    <div class="level support">
+      <div class="levelTitle">Support</div>
+      <div id="support" class="levelPrice">—</div>
+      <div id="supportTime" class="levelTime">—</div>
+    </div>
 
-      <div class="infoBox">
-        <div class="infoTitle">M5 Above</div>
-        <div id="liqM5Above" class="infoValue">—</div>
-      </div>
-
-      <div class="infoBox">
-        <div class="infoTitle">H1 Below</div>
-        <div id="liqH1Below" class="infoValue">—</div>
-      </div>
-
+    <div class="level resistance">
+      <div class="levelTitle">Resistance</div>
+      <div id="resistance" class="levelPrice">—</div>
+      <div id="resistanceTime" class="levelTime">—</div>
     </div>
 
   </div>
 
 </div>
 
+<div class="card section">
+
+  <div class="sectionTitle">
+    Signal Confluence
+  </div>
+
+  <div class="infoGrid">
+
+    <div class="infoBox">
+      <div class="infoTitle">Score</div>
+      <div id="confScore" class="infoValue">—</div>
+    </div>
+
+    <div class="infoBox">
+      <div class="infoTitle">Quality</div>
+      <div id="confQuality" class="infoValue">—</div>
+    </div>
+
+    <div class="infoBox">
+      <div class="infoTitle">Entry Quality</div>
+      <div id="entryQuality" class="infoValue">—</div>
+    </div>
+
+    <div class="infoBox">
+      <div class="infoTitle">Structure</div>
+      <div id="structure" class="infoValue">—</div>
+    </div>
+
+  </div>
+</div>
+
+<div class="card section">
+
+  <div class="sectionTitle">
+    Trade Plan
+  </div>
+
+  <div class="plan">
+
+    <div class="planBox">
+      <div class="planTitle">Status</div>
+      <div id="planStatus" class="planValue waitText">WAIT</div>
+    </div>
+
+    <div class="planBox">
+      <div class="planTitle">Entry</div>
+      <div id="planEntry" class="planValue">—</div>
+    </div>
+
+    <div class="planBox">
+      <div class="planTitle">Stop Loss</div>
+      <div id="planSL" class="planValue">—</div>
+    </div>
+
+    <div class="planBox">
+      <div class="planTitle">TP1</div>
+      <div id="planTP1" class="planValue">—</div>
+    </div>
+
+    <div class="planBox">
+      <div class="planTitle">TP2</div>
+      <div id="planTP2" class="planValue">—</div>
+    </div>
+
+  </div>
+</div>
+
+<div id="newsCard" class="card section news">
+
+  <div class="newsHeader">
+
+    <div class="sectionTitle" style="margin:0">
+      News Filter
+    </div>
+
+    <div id="newsStatus" class="newsStatus">
+      —
+    </div>
+
+  </div>
+
+  <div id="newsList" class="newsList">
+    <div class="loading">
+      Loading news...
+    </div>
+  </div>
+
+</div>
+
+<div class="card section">
+
+  <div class="sectionTitle">
+    Liquidity Map
+  </div>
+
+  <div class="infoGrid">
+
+    <div class="infoBox">
+      <div class="infoTitle">H1 Above</div>
+      <div id="liqH1Above" class="infoValue">—</div>
+    </div>
+
+    <div class="infoBox">
+      <div class="infoTitle">M15 Above</div>
+      <div id="liqM15Above" class="infoValue">—</div>
+    </div>
+
+    <div class="infoBox">
+      <div class="infoTitle">M5 Above</div>
+      <div id="liqM5Above" class="infoValue">—</div>
+    </div>
+
+    <div class="infoBox">
+      <div class="infoTitle">H1 Below</div>
+      <div id="liqH1Below" class="infoValue">—</div>
+    </div>
+
+  </div>
+</div>
+
 <div class="footer">
-  XAUUSDSNIPER • M5 + M15 scalp alignment • H1 context • Cached Twelve Data
+  XAUUSDSNIPER • M5 + M15 scalp alignment • H1 context
   <br>
   <span id="updated">Last update: —</span>
 </div>
@@ -731,6 +758,7 @@ header{
 </div>
 
 <script>
+
 const API = "/api/scalp";
 const REFRESH_MS = 60000;
 
@@ -738,52 +766,107 @@ function $(id){
   return document.getElementById(id);
 }
 
-function fmt(v, digits=2){
-  if(v === null || v === undefined || v === "" || Number.isNaN(Number(v))){
+function setText(id,value){
+  const el = $(id);
+
+  if(!el){
+    return;
+  }
+
+  el.textContent =
+    value === null ||
+    value === undefined ||
+    value === ""
+      ? "—"
+      : String(value);
+}
+
+function fmt(value,digits=2){
+
+  if(
+    value === null ||
+    value === undefined ||
+    value === "" ||
+    Number.isNaN(Number(value))
+  ){
     return "—";
   }
 
-  return Number(v).toFixed(digits);
+  return Number(value).toFixed(digits);
 }
 
-function safe(v, fallback="—"){
-  return v === null || v === undefined || v === "" ? fallback : v;
+function safe(value,fallback="—"){
+  return value === null ||
+         value === undefined ||
+         value === ""
+    ? fallback
+    : value;
 }
 
 function directionClass(value){
-  const v = String(value || "").toUpperCase();
 
-  if(v === "BUY") return "buy";
-  if(v === "SELL") return "sell";
+  const v =
+    String(value || "")
+      .toUpperCase();
+
+  if(v === "BUY"){
+    return "buy";
+  }
+
+  if(v === "SELL"){
+    return "sell";
+  }
+
   return "neutral";
 }
 
 function setBadge(id,value){
-  const el = $(id);
-  if(!el) return;
 
-  const v = String(value || "NEUTRAL").toUpperCase();
+  const el = $(id);
+
+  if(!el){
+    return;
+  }
+
+  const v =
+    String(value || "NEUTRAL")
+      .toUpperCase();
 
   el.textContent = v;
-  el.className = "badge " + directionClass(v);
+  el.className =
+    "badge " + directionClass(v);
 }
 
 function setSignal(id,value){
-  const el = $(id);
-  if(!el) return;
 
-  const v = String(value || "WAIT").toUpperCase();
+  const el = $(id);
+
+  if(!el){
+    return;
+  }
+
+  const v =
+    String(value || "WAIT")
+      .toUpperCase();
 
   el.textContent = v;
-  el.className = "signal " + (
-    v === "BUY" ? "buy" :
-    v === "SELL" ? "sell" :
-    "wait"
-  );
+
+  el.className =
+    "signal " +
+    (
+      v === "BUY"
+        ? "buy"
+        : v === "SELL"
+          ? "sell"
+          : "wait"
+    );
 }
 
 function formatTime(value){
-  if(!value) return "—";
+
+  if(!value){
+    return "—";
+  }
 
   return String(value)
     .replace("T"," ")
@@ -791,27 +874,77 @@ function formatTime(value){
 }
 
 function renderTimeframe(prefix,data){
-  if(!data) return;
+
+  if(!data){
+    return;
+  }
 
   const direction =
     data.direction ||
     data.bias ||
     "NEUTRAL";
 
-  setBadge(prefix + "Badge",direction);
+  setBadge(
+    prefix + "Badge",
+    direction
+  );
 
-  $(prefix + "Direction").textContent = safe(direction);
-  $(prefix + "Rsi").textContent = fmt(data.rsi,2);
-  $(prefix + "Fast").textContent = fmt(data.emaFast,2);
-  $(prefix + "Slow").textContent = fmt(data.emaSlow,2);
-  $(prefix + "Atr").textContent = fmt(data.atr,2);
-  $(prefix + "Last").textContent = formatTime(data.lastCandle);
+  setText(
+    prefix + "Direction",
+    direction
+  );
+
+  setText(
+    prefix + "Rsi",
+    fmt(data.rsi,2)
+  );
+
+  setText(
+    prefix + "Fast",
+    fmt(data.emaFast,2)
+  );
+
+  setText(
+    prefix + "Slow",
+    fmt(data.emaSlow,2)
+  );
+
+  setText(
+    prefix + "Atr",
+    fmt(data.atr,2)
+  );
+
+  /*
+    IMPORTANT:
+    Don't directly access .textContent.
+    Some older/mobile cached HTML may not contain
+    the Last Candle element.
+  */
+
+  setText(
+    prefix + "Last",
+    formatTime(data.lastCandle)
+  );
 
   if(prefix === "h1"){
-    $("h1Context").textContent = direction === "NEUTRAL"
-      ? "CONTEXT"
-      : "HOLD " + direction;
+
+    setText(
+      "h1Context",
+      direction === "NEUTRAL"
+        ? "CONTEXT"
+        : "HOLD " + direction
+    );
   }
+}
+
+function escapeHtml(value){
+
+  return String(value)
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;")
+    .replaceAll("'","&#039;");
 }
 
 function renderNews(data){
@@ -820,90 +953,156 @@ function renderNews(data){
   const status = $("newsStatus");
   const list = $("newsList");
 
-  if(!data){
-    status.textContent = "UNKNOWN";
-    list.innerHTML = '<div class="loading">No news data</div>';
+  if(!card || !status || !list){
     return;
   }
 
-  const level = String(
-    data.level ||
-    data.status ||
-    "UNKNOWN"
-  ).toUpperCase();
+  if(!data){
+
+    status.textContent = "UNKNOWN";
+
+    list.innerHTML =
+      '<div class="loading">No news data</div>';
+
+    return;
+  }
+
+  const level =
+    String(
+      data.level ||
+      data.status ||
+      "UNKNOWN"
+    ).toUpperCase();
 
   status.textContent =
     level +
-    (data.score !== undefined ? " • " + data.score : "");
+    (
+      data.score !== undefined
+        ? " • " + data.score
+        : ""
+    );
 
-  card.classList.remove("risk","clear");
+  card.classList.remove(
+    "risk",
+    "clear"
+  );
 
-  if(level === "HIGH" || level === "RISK"){
+  if(
+    level === "HIGH" ||
+    level === "RISK"
+  ){
     card.classList.add("risk");
   }
 
-  if(level === "LOW" || level === "CLEAR"){
+  if(
+    level === "LOW" ||
+    level === "CLEAR"
+  ){
     card.classList.add("clear");
   }
 
-  const items = Array.isArray(data.items)
-    ? data.items
-    : [];
+  const items =
+    Array.isArray(data.items)
+      ? data.items
+      : [];
 
   if(!items.length){
+
     list.innerHTML =
       '<div class="loading">No recent news detected</div>';
+
     return;
   }
 
-  list.innerHTML = items
-    .slice(0,8)
-    .map(item => `
-      <div class="newsItem">
-        <div class="newsCat">${safe(item.category,"NEWS")}</div>
-        <div class="newsTitle">${escapeHtml(
-          safe(item.title,"Untitled")
-        )}</div>
-      </div>
-    `)
-    .join("");
+  list.innerHTML =
+    items
+      .slice(0,8)
+      .map(item => {
+
+        const category =
+          safe(
+            item?.category,
+            "NEWS"
+          );
+
+        const title =
+          safe(
+            item?.title,
+            "Untitled"
+          );
+
+        return `
+          <div class="newsItem">
+            <div class="newsCat">
+              ${escapeHtml(category)}
+            </div>
+
+            <div class="newsTitle">
+              ${escapeHtml(title)}
+            </div>
+          </div>
+        `;
+      })
+      .join("");
 }
 
-function escapeHtml(str){
-  return String(str)
-    .replaceAll("&","&amp;")
-    .replaceAll("<","&lt;")
-    .replaceAll(">","&gt;")
-    .replaceAll('"',"&quot;")
-    .replaceAll("'","&#039;");
-}
+function renderLiquidity(data){
 
-function renderLiquidity(liq){
+  if(!data){
+    return;
+  }
 
-  if(!liq) return;
+  const above =
+    data.above || {};
 
-  const above = liq.above || {};
-  const below = liq.below || {};
+  const below =
+    data.below || {};
 
-  $("liqH1Above").textContent =
-    above.h1 ? fmt(above.h1.price,2) : "—";
+  setText(
+    "liqH1Above",
+    above.h1
+      ? fmt(above.h1.price,2)
+      : "—"
+  );
 
-  $("liqM15Above").textContent =
-    above.m15 ? fmt(above.m15.price,2) : "—";
+  setText(
+    "liqM15Above",
+    above.m15
+      ? fmt(above.m15.price,2)
+      : "—"
+  );
 
-  $("liqM5Above").textContent =
-    above.m5 ? fmt(above.m5.price,2) : "—";
+  setText(
+    "liqM5Above",
+    above.m5
+      ? fmt(above.m5.price,2)
+      : "—"
+  );
 
-  $("liqH1Below").textContent =
-    below.h1 ? fmt(below.h1.price,2) : "—";
+  setText(
+    "liqH1Below",
+    below.h1
+      ? fmt(below.h1.price,2)
+      : "—"
+  );
 }
 
 function render(data){
 
-  if(!data || data.ok !== true){
+  if(!data){
+
     throw new Error(
-      data?.error ||
-      "API returned invalid response"
+      "Empty API response"
+    );
+  }
+
+  if(data.ok !== true){
+
+    throw new Error(
+      safe(
+        data.error,
+        "API returned ok:false"
+      )
     );
   }
 
@@ -913,7 +1112,10 @@ function render(data){
     data.m5?.price ??
     null;
 
-  $("price").textContent = fmt(price,2);
+  setText(
+    "price",
+    fmt(price,2)
+  );
 
   const source =
     data.livePrice?.source ||
@@ -923,15 +1125,18 @@ function render(data){
   const age =
     data.livePrice?.ageSeconds;
 
-  $("priceSub").textContent =
+  setText(
+    "priceSub",
     source +
-    (age !== undefined
-      ? " • cache " + age + "s"
-      : "");
+    (
+      age !== undefined
+        ? " • cache " + age + "s"
+        : ""
+    )
+  );
 
   const signalData =
-    data.signal ||
-    {};
+    data.signal || {};
 
   const scalp =
     signalData.scalpSignal ||
@@ -939,124 +1144,207 @@ function render(data){
     signalData.signal ||
     "WAIT";
 
-  setSignal("signal",scalp);
+  setSignal(
+    "signal",
+    scalp
+  );
 
-  $("signalReason").textContent =
+  setText(
+    "signalReason",
     safe(
       signalData.reason,
       "Waiting for M5 + M15 alignment"
-    );
+    )
+  );
 
   const market =
-    data.marketFilter ||
-    {};
+    data.marketFilter || {};
 
   const marketStatus =
     market.status ||
     scalp ||
     "WAIT";
 
-  setSignal("marketFilter",marketStatus);
+  setSignal(
+    "marketFilter",
+    marketStatus
+  );
 
-  $("marketReason").textContent =
+  setText(
+    "marketReason",
     safe(
       market.note,
       "M5 + M15 alignment required"
-    );
+    )
+  );
 
-  renderTimeframe("m5",data.m5);
-  renderTimeframe("m15",data.m15);
-  renderTimeframe("h1",data.h1);
+  renderTimeframe(
+    "m5",
+    data.m5
+  );
+
+  renderTimeframe(
+    "m15",
+    data.m15
+  );
+
+  renderTimeframe(
+    "h1",
+    data.h1
+  );
 
   const sr =
-    data.supportResistance ||
-    {};
+    data.supportResistance || {};
 
-  $("support").textContent =
-    fmt(sr.support,2);
+  setText(
+    "support",
+    fmt(sr.support,2)
+  );
 
-  $("supportTime").textContent =
-    formatTime(sr.supportTime);
+  setText(
+    "supportTime",
+    formatTime(sr.supportTime)
+  );
 
-  $("resistance").textContent =
-    fmt(sr.resistance,2);
+  setText(
+    "resistance",
+    fmt(sr.resistance,2)
+  );
 
-  $("resistanceTime").textContent =
-    formatTime(sr.resistanceTime);
+  setText(
+    "resistanceTime",
+    formatTime(sr.resistanceTime)
+  );
 
   const confluence =
-    data.confluence ||
-    {};
+    data.confluence || {};
 
-  $("confScore").textContent =
-    safe(confluence.score);
+  setText(
+    "confScore",
+    safe(confluence.score)
+  );
 
-  $("confQuality").textContent =
-    safe(confluence.quality);
+  setText(
+    "confQuality",
+    safe(confluence.quality)
+  );
 
   const entry =
-    data.entryQuality ||
-    {};
+    data.entryQuality || {};
 
-  $("entryQuality").textContent =
-    safe(entry.quality);
+  setText(
+    "entryQuality",
+    safe(entry.quality)
+  );
 
-  $("structure").textContent =
-    safe(data.h1?.structure?.bias);
+  setText(
+    "structure",
+    safe(
+      data.h1?.structure?.bias
+    )
+  );
 
   const plan =
-    data.tradePlan ||
-    {};
+    data.tradePlan || {};
 
-  $("planStatus").textContent =
-    safe(plan.status,"WAIT");
+  const planStatus =
+    String(
+      plan.status || "WAIT"
+    ).toUpperCase();
 
-  $("planStatus").className =
-    "planValue " +
-    (
-      String(plan.status || "").toUpperCase() === "BUY"
-        ? "buy"
-        : String(plan.status || "").toUpperCase() === "SELL"
-          ? "sell"
-          : "waitText"
-    );
+  setText(
+    "planStatus",
+    planStatus
+  );
 
-  $("planEntry").textContent =
-    fmt(plan.entry,2);
+  const planEl =
+    $("planStatus");
 
-  $("planSL").textContent =
-    fmt(plan.stopLoss,2);
+  if(planEl){
 
-  $("planTP1").textContent =
-    fmt(plan.takeProfit1,2);
+    planEl.className =
+      "planValue " +
+      (
+        planStatus === "BUY"
+          ? "buyText"
+          : planStatus === "SELL"
+            ? "sellText"
+            : "waitText"
+      );
+  }
 
-  $("planTP2").textContent =
-    fmt(plan.takeProfit2,2);
+  setText(
+    "planEntry",
+    fmt(plan.entry,2)
+  );
 
-  renderNews(data.newsFilter);
+  setText(
+    "planSL",
+    fmt(plan.stopLoss,2)
+  );
 
-  renderLiquidity(data.liquidity);
+  setText(
+    "planTP1",
+    fmt(plan.takeProfit1,2)
+  );
 
-  const cache = data.cache;
+  setText(
+    "planTP2",
+    fmt(plan.takeProfit2,2)
+  );
+
+  renderNews(
+    data.newsFilter
+  );
+
+  renderLiquidity(
+    data.liquidity
+  );
+
+  const cache =
+    data.cache;
 
   if(cache){
-    $("updated").textContent =
+
+    setText(
+      "updated",
       "Updated • M5 " +
       safe(cache.m5?.source,"API") +
       " • M15 " +
       safe(cache.m15?.source,"API") +
       " • H1 " +
-      safe(cache.h1?.source,"API");
+      safe(cache.h1?.source,"API")
+    );
+
   }else{
-    $("updated").textContent =
+
+    setText(
+      "updated",
       "Updated • " +
-      new Date().toLocaleTimeString();
+      new Date().toLocaleTimeString()
+    );
   }
 
-  $("statusDot").className = "dot ok";
-  $("statusText").textContent = "API ONLINE";
+  const dot =
+    $("statusDot");
 
-  $("errorBox").style.display = "none";
+  if(dot){
+    dot.className =
+      "dot ok";
+  }
+
+  setText(
+    "statusText",
+    "API ONLINE"
+  );
+
+  const errorBox =
+    $("errorBox");
+
+  if(errorBox){
+    errorBox.style.display =
+      "none";
+  }
 }
 
 async function load(){
@@ -1074,24 +1362,29 @@ async function load(){
         }
       );
 
-    const text =
+    const raw =
       await response.text();
 
     let data;
 
     try{
-      data = JSON.parse(text);
-    }catch{
+
+      data =
+        JSON.parse(raw);
+
+    }catch(parseError){
+
       throw new Error(
-        "API returned non-JSON response: " +
-        text.slice(0,200)
+        "API returned invalid JSON"
       );
     }
 
     if(!response.ok){
+
       throw new Error(
         data?.error ||
-        "HTTP " + response.status
+        "HTTP " +
+        response.status
       );
     }
 
@@ -1099,21 +1392,39 @@ async function load(){
 
   }catch(error){
 
-    console.error(error);
+    console.error(
+      "XAUUSDSNIPER:",
+      error
+    );
 
-    $("statusDot").className =
-      "dot error";
+    const dot =
+      $("statusDot");
 
-    $("statusText").textContent =
-      "API ERROR";
+    if(dot){
+      dot.className =
+        "dot error";
+    }
 
-    $("errorBox").style.display =
-      "block";
+    setText(
+      "statusText",
+      "API ERROR"
+    );
 
-    $("errorBox").textContent =
-      "API Error: " +
-      (error?.message || error);
+    const box =
+      $("errorBox");
 
+    if(box){
+
+      box.style.display =
+        "block";
+
+      box.textContent =
+        "API Error: " +
+        (
+          error?.message ||
+          String(error)
+        );
+    }
   }
 }
 
@@ -1123,6 +1434,7 @@ setInterval(
   load,
   REFRESH_MS
 );
+
 </script>
 
 </body>
