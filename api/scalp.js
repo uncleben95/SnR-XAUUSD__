@@ -1,1914 +1,2168 @@
-import { sendPushToAll } from "./push-lib.js";
-
-export const config = {
-  maxDuration: 10,
-};
-
-const TWELVE_DATA_API = "https://api.twelvedata.com";
-const SYMBOL = "XAU/USD";
-const NEWS_TIMEOUT = 5000;
-
-// ============================================================
-// HELPERS
-// ============================================================
-
-function num(v, fallback = 0) {
-  const n = Number(v);
-  return Number.isFinite(n) ? n : fallback;
-}
-
-function clamp(v, min, max) {
-  return Math.max(min, Math.min(max, v));
-}
-
-function avg(arr) {
-  const a = arr.filter(Number.isFinite);
-  if (!a.length) return 0;
-  return a.reduce((x, y) => x + y, 0) / a.length;
-}
-
-function round(v, digits = 2) {
-  const p = 10 ** digits;
-  return Math.round(v * p) / p;
-}
-
-function parseTime(v) {
-  const t = Date.parse(v);
-  return Number.isFinite(t) ? t : 0;
-}
-
-function normalizeCandle(c) {
-  return {
-    datetime: c.datetime,
-    open: num(c.open),
-    high: num(c.high),
-    low: num(c.low),
-    close: num(c.close),
-    volume: num(c.volume),
-  };
-}
-
-// ============================================================
-// TWELVE DATA
-// ============================================================
-
-async function twelveData(path, params) {
-  const key = process.env.TWELVE_DATA_API_KEY;
-
-  if (!key) {
-    throw new Error("TWELVE_DATA_API_KEY missing");
-  }
-
-  const qs = new URLSearchParams({
-    ...params,
-    apikey: key,
-  });
-
-  const url = `${TWELVE_DATA_API}/${path}?${qs.toString()}`;
-
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), 8000);
-
-  try {
-    const response = await fetch(url, {
-      signal: controller.signal,
-      headers: {
-        Accept: "application/json",
-      },
-    });
-
-    const text = await response.text();
-
-    let data;
-
-    try {
-      data = JSON.parse(text);
-    } catch {
-      throw new Error("Twelve Data returned invalid JSON");
-    }
-
-    if (!response.ok) {
-      throw new Error(
-        data?.message || `Twelve Data HTTP ${response.status}`
-      );
-    }
-
-    if (data?.status === "error") {
-      throw new Error(
-        data?.message || "Twelve Data API error"
-      );
-    }
-
-    return data;
-  } finally {
-    clearTimeout(timer);
-  }
-}
-
-async function getPrice() {
-  const data = await twelveData("price", {
-    symbol: SYMBOL,
-  });
-
-  const price = num(data?.price);
-
-  if (!price) {
-    throw new Error("Invalid live price");
-  }
-
-  return price;
-}
-
-async function getM5() {
-  const data = await twelveData("time_series", {
-    symbol: SYMBOL,
-    interval: "5min",
-    outputsize: "500",
-    order: "asc",
-    format: "JSON",
-  });
-
-  if (!Array.isArray(data?.values)) {
-    throw new Error("No M5 candle data");
-  }
-
-  return data.values
-    .map(normalizeCandle)
-    .filter(
-      (c) =>
-        c.datetime &&
-        c.open &&
-        c.high &&
-        c.low &&
-        c.close
-    )
-    .sort(
-      (a, b) =>
-        parseTime(a.datetime) -
-        parseTime(b.datetime)
-    );
-}
-
-// ============================================================
-// AGGREGATE M5 -> M15 / H1
-// ============================================================
-
-function aggregateCandles(candles, minutes) {
-  if (!candles.length) return [];
-
-  const bucketMs = minutes * 60 * 1000;
-  const groups = new Map();
-
-  for (const c of candles) {
-    const t = parseTime(c.datetime);
-
-    if (!t) continue;
-
-    const bucket =
-      Math.floor(t / bucketMs) * bucketMs;
-
-    if (!groups.has(bucket)) {
-      groups.set(bucket, []);
-    }
-
-    groups.get(bucket).push(c);
-  }
-
-  const output = [];
-
-  for (const [bucket, group] of groups.entries()) {
-    group.sort(
-      (a, b) =>
-        parseTime(a.datetime) -
-        parseTime(b.datetime)
-    );
-
-    const first = group[0];
-    const last = group[group.length - 1];
-
-    output.push({
-      datetime: new Date(bucket).toISOString(),
-      open: first.open,
-      high: Math.max(...group.map((x) => x.high)),
-      low: Math.min(...group.map((x) => x.low)),
-      close: last.close,
-      volume: group.reduce(
-        (sum, x) => sum + num(x.volume),
-        0
-      ),
-    });
-  }
-
-  return output.sort(
-    (a, b) =>
-      parseTime(a.datetime) -
-      parseTime(b.datetime)
-  );
-}
-
-// ============================================================
-// INDICATORS
-// ============================================================
-
-function ema(candles, period) {
-  if (candles.length < period) return null;
-
-  let value = avg(
-    candles
-      .slice(0, period)
-      .map((c) => c.close)
-  );
-
-  const k = 2 / (period + 1);
-
-  for (let i = period; i < candles.length; i++) {
-    value =
-      candles[i].close * k +
-      value * (1 - k);
-  }
-
-  return value;
-}
-
-function rsi(candles, period = 14) {
-  if (candles.length <= period) return 50;
-
-  let gains = 0;
-  let losses = 0;
-
-  const start = candles.length - period;
-
-  for (let i = start; i < candles.length; i++) {
-    const prev = candles[i - 1]?.close;
-    const curr = candles[i]?.close;
-
-    if (!Number.isFinite(prev) || !Number.isFinite(curr)) {
-      continue;
-    }
-
-    const change = curr - prev;
-
-    if (change > 0) gains += change;
-    if (change < 0) losses += Math.abs(change);
-  }
-
-  if (losses === 0) return 100;
-
-  const rs =
-    (gains / period) /
-    (losses / period);
-
-  return 100 - 100 / (1 + rs);
-}
-
-function atr(candles, period = 14) {
-  if (candles.length <= period) return 0;
-
-  const trs = [];
-
-  for (let i = 1; i < candles.length; i++) {
-    const c = candles[i];
-    const p = candles[i - 1];
-
-    const tr = Math.max(
-      c.high - c.low,
-      Math.abs(c.high - p.close),
-      Math.abs(c.low - p.close)
-    );
-
-    trs.push(tr);
-  }
-
-  return avg(trs.slice(-period));
-}
-
-// ============================================================
-// TIMEFRAME ANALYSIS
-// ============================================================
-
-function timeframeAnalysis(candles) {
-  if (!candles.length) {
-    return {
-      direction: "NEUTRAL",
-      trend: "NEUTRAL",
-      strength: 0,
-      rsi: 50,
-      emaFast: 0,
-      emaSlow: 0,
-      atr: 0,
-    };
-  }
-
-  const price =
-    candles[candles.length - 1].close;
-
-  const fast = ema(candles, 9);
-  const slow = ema(candles, 21);
-  const r = rsi(candles, 14);
-  const a = atr(candles, 14);
-
-  let score = 0;
-
-  if (fast !== null && slow !== null) {
-    if (fast > slow) score += 2;
-    if (fast < slow) score -= 2;
-  }
-
-  if (fast !== null) {
-    if (price > fast) score += 1;
-    if (price < fast) score -= 1;
-  }
-
-  if (r > 55) score += 1;
-  if (r < 45) score -= 1;
-
-  let direction = "NEUTRAL";
-
-  if (score >= 2) direction = "BUY";
-  if (score <= -2) direction = "SELL";
-
-  return {
-    direction,
-    trend: direction,
-    strength: round(
-      clamp((Math.abs(score) / 4) * 100, 0, 100)
-    ),
-    rsi: round(r, 1),
-    emaFast: round(fast || 0, 3),
-    emaSlow: round(slow || 0, 3),
-    atr: round(a, 3),
-  };
-}
-
-// ============================================================
-// CONFIRMED SWING HIGH / LOW
+// api/scalp.js
+// XAUUSDSNIPER - Cached Multi-Timeframe Scalp Engine
+// M5  = scalp trigger
+// M15 = confirmation
+// H1  = context / hold + confirmed swing S/R
+// News = Google News RSS, cached
+//
+// Twelve Data is aggressively cached to protect Free API quota.
 //
 // IMPORTANT:
-// A swing is only confirmed after candles appear on BOTH sides.
-//
-// Example:
-//
-//      HIGH
-//       /\
-//      /  \
-// ----/----\----
-//
-// The high candle must have lower highs around it.
-//
-// We deliberately do NOT use the latest unfinished candle.
-// ============================================================
-
-function findConfirmedSwings(
-  candles,
-  left = 2,
-  right = 2
-) {
-  const highs = [];
-  const lows = [];
-
-  if (
-    candles.length <
-    left + right + 1
-  ) {
-    return {
-      highs,
-      lows,
-    };
-  }
-
-  // Exclude the latest candles because they may still
-  // be forming / not fully confirmed.
-  const lastIndex =
-    candles.length - right - 1;
-
-  for (
-    let i = left;
-    i <= lastIndex;
-    i++
-  ) {
-    const current = candles[i];
-
-    let swingHigh = true;
-    let swingLow = true;
-
-    // LEFT side
-    for (
-      let j = i - left;
-      j < i;
-      j++
-    ) {
-      if (
-        candles[j].high >=
-        current.high
-      ) {
-        swingHigh = false;
-      }
-
-      if (
-        candles[j].low <=
-        current.low
-      ) {
-        swingLow = false;
-      }
-    }
-
-    // RIGHT side
-    for (
-      let j = i + 1;
-      j <= i + right;
-      j++
-    ) {
-      if (
-        candles[j].high >=
-        current.high
-      ) {
-        swingHigh = false;
-      }
-
-      if (
-        candles[j].low <=
-        current.low
-      ) {
-        swingLow = false;
-      }
-    }
-
-    if (swingHigh) {
-      highs.push({
-        price: current.high,
-        datetime: current.datetime,
-        index: i,
-      });
-    }
-
-    if (swingLow) {
-      lows.push({
-        price: current.low,
-        datetime: current.datetime,
-        index: i,
-      });
-    }
-  }
-
-  return {
-    highs,
-    lows,
-  };
-}
-
-// ============================================================
-// H1 STRUCTURE
-//
-// Resistance = LAST CONFIRMED H1 SWING HIGH
-// Support    = LAST CONFIRMED H1 SWING LOW
-//
-// This is NOT simply highest/lowest of 50 candles.
-// ============================================================
-
-function getH1Structure(h1Candles, price) {
-  const swings =
-    findConfirmedSwings(
-      h1Candles,
-      2,
-      2
-    );
-
-  const highs = swings.highs;
-  const lows = swings.lows;
-
-  // Last confirmed swing BEFORE current price context.
-  const resistanceCandidates =
-    highs.filter(
-      (x) => x.price > price
-    );
-
-  const supportCandidates =
-    lows.filter(
-      (x) => x.price < price
-    );
-
-  // Prefer nearest valid level to current price.
-  const resistance =
-    resistanceCandidates.length
-      ? resistanceCandidates.sort(
-          (a, b) => a.price - b.price
-        )[0]
-      : highs.length
-        ? highs[highs.length - 1]
-        : null;
-
-  const support =
-    supportCandidates.length
-      ? supportCandidates.sort(
-          (a, b) => b.price - a.price
-        )[0]
-      : lows.length
-        ? lows[lows.length - 1]
-        : null;
-
-  // Previous levels for extra context.
-  const previousResistance =
-    highs.length >= 2
-      ? highs[highs.length - 2]
-      : null;
-
-  const previousSupport =
-    lows.length >= 2
-      ? lows[lows.length - 2]
-      : null;
-
-  return {
-    method:
-      "Confirmed H1 swing high/low",
-
-    support: support
-      ? round(support.price, 3)
-      : 0,
-
-    resistance: resistance
-      ? round(resistance.price, 3)
-      : 0,
-
-    supportDatetime:
-      support?.datetime || null,
-
-    resistanceDatetime:
-      resistance?.datetime || null,
-
-    previousSupport:
-      previousSupport
-        ? round(previousSupport.price, 3)
-        : 0,
-
-    previousResistance:
-      previousResistance
-        ? round(previousResistance.price, 3)
-        : 0,
-
-    confirmedSwingHighs:
-      highs.slice(-10).map((x) => ({
-        price: round(x.price, 3),
-        datetime: x.datetime,
-      })),
-
-    confirmedSwingLows:
-      lows.slice(-10).map((x) => ({
-        price: round(x.price, 3),
-        datetime: x.datetime,
-      })),
-  };
-}
-
-// ============================================================
-// M15 / M5 STRUCTURE
-// ============================================================
-
-function getStructureLevels(candles) {
-  const swings =
-    findConfirmedSwings(
-      candles,
-      2,
-      2
-    );
-
-  const latestHigh =
-    swings.highs.length
-      ? swings.highs[swings.highs.length - 1]
-      : null;
-
-  const latestLow =
-    swings.lows.length
-      ? swings.lows[swings.lows.length - 1]
-      : null;
-
-  return {
-    swingHigh:
-      latestHigh
-        ? round(latestHigh.price, 3)
-        : 0,
-
-    swingLow:
-      latestLow
-        ? round(latestLow.price, 3)
-        : 0,
-
-    swingHighDatetime:
-      latestHigh?.datetime || null,
-
-    swingLowDatetime:
-      latestLow?.datetime || null,
-  };
-}
-
-// ============================================================
-// LIQUIDITY MAP
-// ============================================================
-
-function liquidityMap(
-  candles,
-  price,
-  h1Structure
-) {
-  const highs = [];
-  const lows = [];
-
-  const swings =
-    findConfirmedSwings(
-      candles,
-      2,
-      2
-    );
-
-  for (const h of swings.highs) {
-    if (h.price > price) {
-      highs.push(h.price);
-    }
-  }
-
-  for (const l of swings.lows) {
-    if (l.price < price) {
-      lows.push(l.price);
-    }
-  }
-
-  // Add H1 confirmed structure as major liquidity.
-  if (
-    h1Structure.resistance &&
-    h1Structure.resistance > price
-  ) {
-    highs.push(
-      h1Structure.resistance
-    );
-  }
-
-  if (
-    h1Structure.support &&
-    h1Structure.support < price
-  ) {
-    lows.push(
-      h1Structure.support
-    );
-  }
-
-  const above = [
-    ...new Set(
-      highs.map((x) => round(x, 3))
-    ),
-  ].sort((a, b) => a - b);
-
-  const below = [
-    ...new Set(
-      lows.map((x) => round(x, 3))
-    ),
-  ].sort((a, b) => b - a);
-
-  return {
-    above: above.slice(0, 8),
-    below: below.slice(0, 8),
-
-    nearestAbove:
-      above.length
-        ? above[0]
-        : 0,
-
-    nearestBelow:
-      below.length
-        ? below[0]
-        : 0,
-  };
-}
-
-// ============================================================
-// FREE NEWS FILTER
-// Google News RSS - NO API KEY
-// ============================================================
-
-function googleNewsUrl(query) {
-  return (
-    "https://news.google.com/rss/search?" +
-    new URLSearchParams({
-      q: `${query} when:2d`,
-      hl: "en-US",
-      gl: "US",
-      ceid: "US:en",
-    }).toString()
-  );
-}
-
-async function fetchNewsFeed(query) {
-  const controller =
-    new AbortController();
-
-  const timer = setTimeout(
-    () => controller.abort(),
-    NEWS_TIMEOUT
-  );
-
-  try {
-    const response =
-      await fetch(
-        googleNewsUrl(query),
-        {
-          signal:
-            controller.signal,
-
-          headers: {
-            Accept:
-              "application/rss+xml, application/xml, text/xml",
-
-            "User-Agent":
-              "XAUUSDSNIPER/1.0",
-          },
-        }
-      );
-
-    if (!response.ok) {
-      throw new Error(
-        `News HTTP ${response.status}`
-      );
-    }
-
-    return await response.text();
-  } finally {
-    clearTimeout(timer);
-  }
-}
-
-function xmlDecode(text = "") {
-  return text
-    .replace(
-      /<!\[CDATA\[(.*?)\]\]>/gs,
-      "$1"
-    )
-    .replace(/&amp;/g, "&")
-    .replace(/&lt;/g, "<")
-    .replace(/&gt;/g, ">")
-    .replace(/&quot;/g, '"')
-    .replace(/&#39;/g, "'")
-    .replace(/&#x27;/g, "'");
-}
-
-function parseRSS(xml) {
-  const items = [];
-
-  const matches =
-    xml.match(
-      /<item[\s\S]*?<\/item>/gi
-    ) || [];
-
-  for (
-    const item of matches.slice(0, 20)
-  ) {
-    const title =
-      item.match(
-        /<title[^>]*>([\s\S]*?)<\/title>/i
-      )?.[1] || "";
-
-    const link =
-      item.match(
-        /<link[^>]*>([\s\S]*?)<\/link>/i
-      )?.[1] || "";
-
-    const pubDate =
-      item.match(
-        /<pubDate[^>]*>([\s\S]*?)<\/pubDate>/i
-      )?.[1] || "";
-
-    const source =
-      item.match(
-        /<source[^>]*>([\s\S]*?)<\/source>/i
-      )?.[1] || "";
-
-    const cleanTitle =
-      xmlDecode(title)
-        .replace(/<[^>]+>/g, "")
-        .trim();
-
-    if (!cleanTitle) continue;
-
-    items.push({
-      title: cleanTitle,
-      link: xmlDecode(link).trim(),
-      pubDate:
-        xmlDecode(pubDate).trim(),
-      source:
-        xmlDecode(source)
-          .replace(/<[^>]+>/g, "")
-          .trim() || "Google News",
+// M5 + M15 must align for BUY/SELL.
+// H1 never blocks a scalp signal.
+// H1 support/resistance comes from confirmed H1 swing highs/lows.
+
+export default async function handler(req, res) {
+  const API_KEY = process.env.TWELVE_DATA_API_KEY;
+
+  if (!API_KEY) {
+    return res.status(500).json({
+      ok: false,
+      error: "TWELVE_DATA_API_KEY belum diset"
     });
   }
 
-  return items;
-}
+  const CFG = {
+    symbol: "XAU/USD",
 
-function newsImpact(title) {
-  const t =
-    title.toLowerCase();
+    // Twelve Data refresh intervals
+    m5TTL: 5 * 60 * 1000,
+    m15TTL: 15 * 60 * 1000,
+    h1TTL: 60 * 60 * 1000,
+    priceTTL: 5 * 60 * 1000,
 
-  const high = [
-    "federal reserve",
-    "fed decision",
-    "fed rate",
-    "interest rate decision",
-    "rate hike",
-    "rate cut",
-    "fomc",
-    "cpi",
-    "consumer price index",
-    "nonfarm payroll",
-    "non-farm payroll",
-    "nfp",
-    "jobs report",
-    "employment report",
-    "ppi",
-    "producer price index",
-    "powell",
-    "fed chair",
-    "inflation",
-    "us inflation",
-    "us jobs",
-    "treasury yield",
-    "dollar index",
-    "dxy",
-  ];
+    // News refresh
+    newsTTL: 15 * 60 * 1000,
 
-  const medium = [
-    "gold",
-    "xau",
-    "bullion",
-    "precious metals",
-    "usd",
-    "us dollar",
-    "oil",
-    "crude",
-    "opec",
-    "middle east",
-    "geopolitical",
-    "safe haven",
-    "central bank",
-    "economic data",
-    "retail sales",
-    "pmi",
-    "gdp",
-    "jobless claims",
-    "unemployment",
-  ];
+    // Candle history
+    m5OutputSize: 500,
+    m15OutputSize: 300,
+    h1OutputSize: 200,
 
-  if (
-    high.some((k) => t.includes(k))
-  ) {
-    return "HIGH";
+    // Confirmed swing settings
+    pivotLeft: 2,
+    pivotRight: 2,
+
+    // ATR
+    atrPeriod: 14,
+
+    // EMA
+    emaFast: 9,
+    emaSlow: 21,
+    emaTrend: 50,
+
+    // RSI
+    rsiPeriod: 14
+  };
+
+  // ---------------------------------------------------------
+  // CACHE
+  // ---------------------------------------------------------
+
+  globalThis.__XAU_CACHE__ ??= {
+    m5: null,
+    m15: null,
+    h1: null,
+    price: null,
+    news: null
+  };
+
+  const memoryCache = globalThis.__XAU_CACHE__;
+
+  // ---------------------------------------------------------
+  // KV / REDIS HELPERS
+  // Supports:
+  // KV_REST_API_URL + KV_REST_API_TOKEN
+  // UPSTASH_REDIS_REST_URL + UPSTASH_REDIS_REST_TOKEN
+  // ---------------------------------------------------------
+
+  const REDIS_URL =
+    process.env.KV_REST_API_URL ||
+    process.env.UPSTASH_REDIS_REST_URL ||
+    null;
+
+  const REDIS_TOKEN =
+    process.env.KV_REST_API_TOKEN ||
+    process.env.UPSTASH_REDIS_REST_TOKEN ||
+    null;
+
+  async function redisCommand(command) {
+    if (!REDIS_URL || !REDIS_TOKEN) return null;
+
+    try {
+      const r = await fetch(REDIS_URL, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${REDIS_TOKEN}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(command)
+      });
+
+      if (!r.ok) return null;
+
+      const d = await r.json();
+      return d?.result ?? null;
+    } catch {
+      return null;
+    }
   }
 
-  if (
-    medium.some((k) => t.includes(k))
-  ) {
-    return "MEDIUM";
+  async function cacheGet(key) {
+    // Redis first
+    const redisValue = await redisCommand([
+      "GET",
+      key
+    ]);
+
+    if (redisValue) {
+      try {
+        return JSON.parse(redisValue);
+      } catch {
+        return redisValue;
+      }
+    }
+
+    // Memory fallback
+    const item = memoryCache[key];
+
+    if (!item) return null;
+
+    if (Date.now() > item.expiresAt) {
+      return null;
+    }
+
+    return item.value;
   }
 
-  return "LOW";
-}
+  async function cacheSet(key, value, ttlMs) {
+    const ttlSeconds = Math.max(1, Math.round(ttlMs / 1000));
 
-function newsRelevant(title) {
-  const t =
-    title.toLowerCase();
+    // Memory fallback
+    memoryCache[key] = {
+      value,
+      expiresAt: Date.now() + ttlMs
+    };
 
-  const keywords = [
-    "gold",
-    "xau",
-    "bullion",
-    "precious metal",
-    "silver",
-    "fed",
-    "federal reserve",
-    "fomc",
-    "powell",
-    "interest rate",
-    "rate hike",
-    "rate cut",
-    "inflation",
-    "cpi",
-    "ppi",
-    "nonfarm",
-    "non-farm",
-    "nfp",
-    "jobs report",
-    "employment",
-    "unemployment",
-    "dollar",
-    "dxy",
-    "treasury",
-    "yield",
-    "oil",
-    "crude",
-    "opec",
-    "geopolitical",
-    "middle east",
-    "safe haven",
-    "central bank",
-    "economic data",
-  ];
+    // Redis
+    if (REDIS_URL && REDIS_TOKEN) {
+      try {
+        await redisCommand([
+          "SET",
+          key,
+          JSON.stringify(value),
+          "EX",
+          ttlSeconds
+        ]);
+      } catch {
+        // Memory cache remains active
+      }
+    }
+  }
 
-  return keywords.some((k) =>
-    t.includes(k)
-  );
-}
+  // ---------------------------------------------------------
+  // TWELVE DATA
+  // ---------------------------------------------------------
 
-async function getNewsFilter() {
-  const queries = [
-    '"gold" OR "XAU" OR bullion',
-    '"Federal Reserve" OR FOMC OR "interest rate"',
-    "CPI OR inflation OR NFP OR \"jobs report\"",
-    '"US dollar" OR DXY OR "Treasury yield"',
-  ];
+  async function twelveDataTimeSeries(interval, outputsize) {
+    const url =
+      `https://api.twelvedata.com/time_series` +
+      `?symbol=${encodeURIComponent(CFG.symbol)}` +
+      `&interval=${encodeURIComponent(interval)}` +
+      `&outputsize=${outputsize}` +
+      `&order=asc` +
+      `&format=JSON` +
+      `&apikey=${encodeURIComponent(API_KEY)}`;
 
-  try {
-    const results =
-      await Promise.allSettled(
-        queries.map(
-          (q) => fetchNewsFeed(q)
-        )
+    const r = await fetch(url);
+    const d = await r.json();
+
+    if (!r.ok || d?.status === "error" || !Array.isArray(d?.values)) {
+      throw new Error(
+        d?.message ||
+        `Twelve Data ${interval} error`
+      );
+    }
+
+    const candles = d.values
+      .slice()
+      .reverse()
+      .map(c => ({
+        datetime: c.datetime,
+        time: c.datetime,
+        open: Number(c.open),
+        high: Number(c.high),
+        low: Number(c.low),
+        close: Number(c.close),
+        volume: Number(c.volume || 0)
+      }))
+      .filter(c =>
+        [
+          c.open,
+          c.high,
+          c.low,
+          c.close
+        ].every(Number.isFinite)
+      )
+      .sort(
+        (a, b) =>
+          new Date(a.datetime) -
+          new Date(b.datetime)
       );
 
-    let all = [];
+    if (!candles.length) {
+      throw new Error(`No ${interval} candles returned`);
+    }
 
-    for (const result of results) {
+    return candles;
+  }
+
+  async function twelveDataPrice() {
+    const url =
+      `https://api.twelvedata.com/price` +
+      `?symbol=${encodeURIComponent(CFG.symbol)}` +
+      `&apikey=${encodeURIComponent(API_KEY)}`;
+
+    const r = await fetch(url);
+    const d = await r.json();
+
+    const price = Number(d?.price);
+
+    if (
+      !r.ok ||
+      d?.status === "error" ||
+      !Number.isFinite(price)
+    ) {
+      throw new Error(
+        d?.message || "Twelve Data price error"
+      );
+    }
+
+    return price;
+  }
+
+  // ---------------------------------------------------------
+  // GENERIC CACHED TWELVE DATA FETCH
+  // ---------------------------------------------------------
+
+  async function getCachedTimeSeries(
+    key,
+    interval,
+    outputsize,
+    ttl
+  ) {
+    const cached = await cacheGet(key);
+
+    if (
+      cached &&
+      Array.isArray(cached.candles) &&
+      cached.candles.length
+    ) {
+      return {
+        candles: cached.candles,
+        source: "CACHE"
+      };
+    }
+
+    try {
+      const candles = await twelveDataTimeSeries(
+        interval,
+        outputsize
+      );
+
+      await cacheSet(
+        key,
+        {
+          candles,
+          fetchedAt: Date.now()
+        },
+        ttl
+      );
+
+      return {
+        candles,
+        source: "TWELVE_DATA"
+      };
+    } catch (error) {
+      // Try stale memory / redis cache
+      const stale = await getStaleCache(key);
+
       if (
-        result.status ===
-        "fulfilled"
+        stale &&
+        Array.isArray(stale.candles) &&
+        stale.candles.length
       ) {
-        all.push(
-          ...parseRSS(
-            result.value
-          )
-        );
+        return {
+          candles: stale.candles,
+          source: "STALE_CACHE",
+          error: error?.message || null
+        };
+      }
+
+      throw error;
+    }
+  }
+
+  async function getStaleCache(key) {
+    // Redis raw GET
+    if (REDIS_URL && REDIS_TOKEN) {
+      const redisValue = await redisCommand([
+        "GET",
+        key
+      ]);
+
+      if (redisValue) {
+        try {
+          return JSON.parse(redisValue);
+        } catch {}
       }
     }
 
-    const unique =
-      new Map();
+    // Memory stale
+    const item = memoryCache[key];
 
-    for (const item of all) {
-      const key =
-        item.title.toLowerCase();
+    return item?.value || null;
+  }
 
-      if (!unique.has(key)) {
-        unique.set(
-          key,
-          item
-        );
+  // ---------------------------------------------------------
+  // PRICE CACHE
+  // ---------------------------------------------------------
+
+  async function getCachedPrice(fallbackPrice) {
+    const cached = await cacheGet("xau:price");
+
+    if (
+      cached &&
+      Number.isFinite(Number(cached.price))
+    ) {
+      return {
+        price: Number(cached.price),
+        source: "TWELVE_DATA_PRICE_CACHE",
+        ageSeconds: Math.round(
+          (Date.now() - Number(cached.fetchedAt || Date.now())) /
+          1000
+        )
+      };
+    }
+
+    try {
+      const price = await twelveDataPrice();
+
+      await cacheSet(
+        "xau:price",
+        {
+          price,
+          fetchedAt: Date.now()
+        },
+        CFG.priceTTL
+      );
+
+      return {
+        price,
+        source: "TWELVE_DATA_PRICE",
+        ageSeconds: 0
+      };
+    } catch (error) {
+      return {
+        price: fallbackPrice,
+        source: "M5_CANDLE_FALLBACK",
+        ageSeconds: null,
+        error: error?.message || null
+      };
+    }
+  }
+
+  // ---------------------------------------------------------
+  // TECHNICAL INDICATORS
+  // ---------------------------------------------------------
+
+  function ema(values, period) {
+    if (!values?.length) return null;
+
+    if (values.length < period) {
+      return values.at(-1) ?? null;
+    }
+
+    const multiplier = 2 / (period + 1);
+
+    let result = 0;
+
+    for (let i = 0; i < period; i++) {
+      result += Number(values[i]);
+    }
+
+    result /= period;
+
+    for (let i = period; i < values.length; i++) {
+      result =
+        (Number(values[i]) - result) *
+        multiplier +
+        result;
+    }
+
+    return result;
+  }
+
+  function rsi(values, period = 14) {
+    if (!values || values.length <= period) {
+      return 50;
+    }
+
+    let gains = 0;
+    let losses = 0;
+
+    for (let i = 1; i <= period; i++) {
+      const diff =
+        Number(values[i]) -
+        Number(values[i - 1]);
+
+      if (diff >= 0) gains += diff;
+      else losses += Math.abs(diff);
+    }
+
+    let avgGain = gains / period;
+    let avgLoss = losses / period;
+
+    for (let i = period + 1; i < values.length; i++) {
+      const diff =
+        Number(values[i]) -
+        Number(values[i - 1]);
+
+      const gain = diff > 0 ? diff : 0;
+      const loss = diff < 0 ? Math.abs(diff) : 0;
+
+      avgGain =
+        ((avgGain * (period - 1)) + gain) /
+        period;
+
+      avgLoss =
+        ((avgLoss * (period - 1)) + loss) /
+        period;
+    }
+
+    if (avgLoss === 0) return 100;
+
+    const rs = avgGain / avgLoss;
+
+    return 100 - 100 / (1 + rs);
+  }
+
+  function atr(candles, period = 14) {
+    if (!candles || candles.length < period + 1) {
+      return 0;
+    }
+
+    const trs = [];
+
+    for (let i = 1; i < candles.length; i++) {
+      const c = candles[i];
+      const p = candles[i - 1];
+
+      const tr = Math.max(
+        c.high - c.low,
+        Math.abs(c.high - p.close),
+        Math.abs(c.low - p.close)
+      );
+
+      trs.push(tr);
+    }
+
+    if (trs.length < period) {
+      return trs.at(-1) || 0;
+    }
+
+    let value = 0;
+
+    for (let i = 0; i < period; i++) {
+      value += trs[i];
+    }
+
+    value /= period;
+
+    for (let i = period; i < trs.length; i++) {
+      value =
+        ((value * (period - 1)) + trs[i]) /
+        period;
+    }
+
+    return value;
+  }
+
+  // ---------------------------------------------------------
+  // CONFIRMED SWINGS
+  // ---------------------------------------------------------
+
+  function findConfirmedSwings(
+    candles,
+    left = 2,
+    right = 2
+  ) {
+    const highs = [];
+    const lows = [];
+
+    if (!Array.isArray(candles)) {
+      return {
+        highs,
+        lows
+      };
+    }
+
+    for (
+      let i = left;
+      i < candles.length - right;
+      i++
+    ) {
+      const c = candles[i];
+
+      let isHigh = true;
+      let isLow = true;
+
+      for (let j = 1; j <= left; j++) {
+        if (!(c.high > candles[i - j].high)) {
+          isHigh = false;
+        }
+
+        if (!(c.low < candles[i - j].low)) {
+          isLow = false;
+        }
+      }
+
+      for (let j = 1; j <= right; j++) {
+        if (!(c.high >= candles[i + j].high)) {
+          isHigh = false;
+        }
+
+        if (!(c.low <= candles[i + j].low)) {
+          isLow = false;
+        }
+      }
+
+      if (isHigh) {
+        highs.push({
+          price: c.high,
+          time: c.datetime,
+          index: i
+        });
+      }
+
+      if (isLow) {
+        lows.push({
+          price: c.low,
+          time: c.datetime,
+          index: i
+        });
       }
     }
 
-    const news =
-      [...unique.values()]
-        .filter((item) =>
-          newsRelevant(
-            item.title
-          )
-        )
-        .map((item) => ({
-          ...item,
+    return {
+      highs,
+      lows
+    };
+  }
 
-          impact:
-            newsImpact(
-              item.title
-            ),
+  function nearestBelow(swings, price) {
+    const levels = swings
+      .filter(x =>
+        Number.isFinite(x.price) &&
+        x.price < price
+      )
+      .sort((a, b) => b.price - a.price);
 
-          timestamp:
-            Date.parse(
-              item.pubDate
-            ) || Date.now(),
-        }))
-        .sort(
-          (a, b) =>
-            b.timestamp -
-            a.timestamp
-        )
-        .slice(0, 15);
+    return levels[0] || null;
+  }
+
+  function nearestAbove(swings, price) {
+    const levels = swings
+      .filter(x =>
+        Number.isFinite(x.price) &&
+        x.price > price
+      )
+      .sort((a, b) => a.price - b.price);
+
+    return levels[0] || null;
+  }
+
+  function latestBelow(swings, price) {
+    const levels = swings.filter(x =>
+      Number.isFinite(x.price) &&
+      x.price < price
+    );
+
+    return levels.at(-1) || null;
+  }
+
+  function latestAbove(swings, price) {
+    const levels = swings.filter(x =>
+      Number.isFinite(x.price) &&
+      x.price > price
+    );
+
+    return levels.at(-1) || null;
+  }
+
+  // ---------------------------------------------------------
+  // STRUCTURE
+  // ---------------------------------------------------------
+
+  function classifyStructure(
+    swingHighs,
+    swingLows
+  ) {
+    const h = swingHighs.slice(-3);
+    const l = swingLows.slice(-3);
+
+    let highPattern = "NONE";
+    let lowPattern = "NONE";
+
+    if (h.length >= 2) {
+      const a = h.at(-2).price;
+      const b = h.at(-1).price;
+
+      if (b > a) highPattern = "HH";
+      else if (b < a) highPattern = "LH";
+      else highPattern = "EQH";
+    }
+
+    if (l.length >= 2) {
+      const a = l.at(-2).price;
+      const b = l.at(-1).price;
+
+      if (b > a) lowPattern = "HL";
+      else if (b < a) lowPattern = "LL";
+      else lowPattern = "EQL";
+    }
+
+    let bias = "NEUTRAL";
+
+    if (
+      highPattern === "HH" &&
+      lowPattern === "HL"
+    ) {
+      bias = "BULLISH";
+    } else if (
+      highPattern === "LH" &&
+      lowPattern === "LL"
+    ) {
+      bias = "BEARISH";
+    }
+
+    return {
+      bias,
+      highPattern,
+      lowPattern,
+      lastSwingHigh:
+        h.at(-1)?.price ?? null,
+      lastSwingLow:
+        l.at(-1)?.price ?? null
+    };
+  }
+
+  function detectStructureEvent(
+    candles,
+    swingHighs,
+    swingLows,
+    structure
+  ) {
+    const last = candles.at(-1);
+
+    if (!last) {
+      return {
+        type: "NONE",
+        direction: "NONE",
+        price: null,
+        level: null,
+        time: null
+      };
+    }
 
     const high =
-      news.filter(
-        (n) =>
-          n.impact ===
-          "HIGH"
+      swingHighs.at(-1);
+
+    const low =
+      swingLows.at(-1);
+
+    if (
+      high &&
+      last.close > high.price
+    ) {
+      const type =
+        structure.bias === "BEARISH"
+          ? "CHOCH"
+          : "BOS";
+
+      return {
+        type,
+        direction: "BULLISH",
+        price: last.close,
+        level: high.price,
+        time: last.datetime,
+        description:
+          type === "BOS"
+            ? "Bullish BOS - swing high broken"
+            : "Bullish CHOCH - bearish structure broken"
+      };
+    }
+
+    if (
+      low &&
+      last.close < low.price
+    ) {
+      const type =
+        structure.bias === "BULLISH"
+          ? "CHOCH"
+          : "BOS";
+
+      return {
+        type,
+        direction: "BEARISH",
+        price: last.close,
+        level: low.price,
+        time: last.datetime,
+        description:
+          type === "BOS"
+            ? "Bearish BOS - swing low broken"
+            : "Bearish CHOCH - bullish structure broken"
+      };
+    }
+
+    return {
+      type: "NONE",
+      direction: "NONE",
+      price: null,
+      level: null,
+      time: null,
+      description:
+        "No new structure break"
+    };
+  }
+
+  // ---------------------------------------------------------
+  // TIMEFRAME ANALYSIS
+  // ---------------------------------------------------------
+
+  function analyzeTimeframe(
+    candles,
+    name
+  ) {
+    if (!candles?.length) {
+      return {
+        timeframe: name,
+        direction: "NEUTRAL",
+        bias: "NEUTRAL",
+        emaFast: null,
+        emaSlow: null,
+        emaTrend: null,
+        rsi: 50,
+        atr: 0
+      };
+    }
+
+    const closes =
+      candles.map(c => c.close);
+
+    const fast = ema(
+      closes,
+      CFG.emaFast
+    );
+
+    const slow = ema(
+      closes,
+      CFG.emaSlow
+    );
+
+    const trend = ema(
+      closes,
+      CFG.emaTrend
+    );
+
+    const current =
+      closes.at(-1);
+
+    const r = rsi(
+      closes,
+      CFG.rsiPeriod
+    );
+
+    const a = atr(
+      candles,
+      CFG.atrPeriod
+    );
+
+    let direction = "NEUTRAL";
+
+    if (
+      current > fast &&
+      fast > slow &&
+      slow > trend
+    ) {
+      direction = "BUY";
+    } else if (
+      current < fast &&
+      fast < slow &&
+      slow < trend
+    ) {
+      direction = "SELL";
+    } else if (
+      fast > slow &&
+      current > slow
+    ) {
+      direction = "BUY";
+    } else if (
+      fast < slow &&
+      current < slow
+    ) {
+      direction = "SELL";
+    }
+
+    return {
+      timeframe: name,
+      direction,
+      bias: direction,
+      price: current,
+      emaFast: round(fast),
+      emaSlow: round(slow),
+      emaTrend: round(trend),
+      rsi: round(r),
+      atr: round(a),
+      lastCandle:
+        candles.at(-1)?.datetime ?? null
+    };
+  }
+
+  // ---------------------------------------------------------
+  // NEWS FILTER
+  // ---------------------------------------------------------
+
+  async function getNewsFilter() {
+    const cached =
+      await cacheGet("xau:news");
+
+    if (
+      cached &&
+      cached.result
+    ) {
+      return {
+        ...cached.result,
+        source: "CACHE"
+      };
+    }
+
+    const feeds = [
+      {
+        name: "Gold",
+        query:
+          "gold XAU bullion precious metals"
+      },
+      {
+        name: "Fed",
+        query:
+          "Federal Reserve FOMC interest rates"
+      },
+      {
+        name: "Inflation",
+        query:
+          "US CPI inflation jobs NFP"
+      },
+      {
+        name: "USD",
+        query:
+          "USD dollar DXY treasury yields"
+      }
+    ];
+
+    let items = [];
+
+    await Promise.all(
+      feeds.map(async feed => {
+        try {
+          const url =
+            "https://news.google.com/rss/search?q=" +
+            encodeURIComponent(
+              feed.query
+            ) +
+            "&hl=en-US&gl=US&ceid=US:en";
+
+          const r = await fetch(url);
+
+          if (!r.ok) return;
+
+          const xml =
+            await r.text();
+
+          const matches =
+            xml.match(
+              /<item>[\s\S]*?<\/item>/g
+            ) || [];
+
+          for (const item of matches.slice(0, 8)) {
+            const title =
+              decodeXml(
+                (
+                  item.match(
+                    /<title>([\s\S]*?)<\/title>/
+                  ) || []
+                )[1] || ""
+              );
+
+            const pubDate =
+              decodeXml(
+                (
+                  item.match(
+                    /<pubDate>([\s\S]*?)<\/pubDate>/
+                  ) || []
+                )[1] || ""
+              );
+
+            if (title) {
+              items.push({
+                category: feed.name,
+                title,
+                pubDate
+              });
+            }
+          }
+        } catch {}
+      })
+    );
+
+    items =
+      items
+        .sort(
+          (a, b) =>
+            new Date(b.pubDate || 0) -
+            new Date(a.pubDate || 0)
+        )
+        .slice(0, 20);
+
+    const text =
+      items
+        .map(x =>
+          `${x.category} ${x.title}`
+        )
+        .join(" ")
+        .toLowerCase();
+
+    const highKeywords = [
+      "fomc",
+      "fed decision",
+      "interest rate decision",
+      "rate decision",
+      "cpi",
+      "nonfarm",
+      "non-farm",
+      "nfp",
+      "payrolls",
+      "fed meeting",
+      "powell",
+      "rate cut",
+      "rate hike"
+    ];
+
+    const mediumKeywords = [
+      "inflation",
+      "jobs",
+      "employment",
+      "unemployment",
+      "treasury yield",
+      "dxy",
+      "dollar",
+      "gold",
+      "bullion"
+    ];
+
+    const high =
+      highKeywords.some(k =>
+        text.includes(k)
       );
 
     const medium =
-      news.filter(
-        (n) =>
-          n.impact ===
-          "MEDIUM"
+      mediumKeywords.some(k =>
+        text.includes(k)
       );
 
+    let level = "LOW";
     let status = "CLEAR";
-    let risk = "LOW";
+    let score = 10;
 
-    if (high.length) {
+    if (high) {
+      level = "HIGH";
       status = "RISK";
-      risk = "HIGH";
-    } else if (medium.length) {
+      score = 80;
+    } else if (medium) {
+      level = "MEDIUM";
       status = "WATCH";
-      risk = "MEDIUM";
+      score = 45;
+    }
+
+    if (!items.length) {
+      level = "UNKNOWN";
+      status = "UNKNOWN";
+      score = 35;
+    }
+
+    const result = {
+      status,
+      level,
+      score,
+      items,
+      source:
+        items.length
+          ? "Google News RSS"
+          : "RSS unavailable",
+      note:
+        "News filter detects published news headlines. It is not a full economic calendar."
+    };
+
+    await cacheSet(
+      "xau:news",
+      {
+        result,
+        fetchedAt: Date.now()
+      },
+      CFG.newsTTL
+    );
+
+    return {
+      ...result,
+      source: "Google News RSS"
+    };
+  }
+
+  // ---------------------------------------------------------
+  // SIGNAL
+  // ---------------------------------------------------------
+
+  function buildSignal(
+    m5Analysis,
+    m15Analysis
+  ) {
+    const m5 =
+      m5Analysis.direction;
+
+    const m15 =
+      m15Analysis.direction;
+
+    if (
+      m5 === "BUY" &&
+      m15 === "BUY"
+    ) {
+      return {
+        signal: "BUY",
+        direction: "BUY",
+        scalpSignal: "BUY",
+        confirmed: true,
+        reason:
+          "M5 + M15 searah bullish",
+        alignment: "M5/M15 BUY"
+      };
+    }
+
+    if (
+      m5 === "SELL" &&
+      m15 === "SELL"
+    ) {
+      return {
+        signal: "SELL",
+        direction: "SELL",
+        scalpSignal: "SELL",
+        confirmed: true,
+        reason:
+          "M5 + M15 searah bearish",
+        alignment: "M5/M15 SELL"
+      };
     }
 
     return {
-      enabled: true,
-      status,
-      risk,
-      source: "Google News RSS",
-      count: news.length,
-      highImpact: high.length,
-      mediumImpact: medium.length,
-      news,
-      checkedAt:
-        new Date().toISOString(),
-
-      message:
-        status === "RISK"
-          ? "High-impact market news detected"
-          : status === "WATCH"
-            ? "Relevant market news detected"
-            : "No major XAU/USD news detected",
-    };
-  } catch (error) {
-    return {
-      enabled: true,
-      status: "UNKNOWN",
-      risk: "UNKNOWN",
-      source: "Google News RSS",
-      count: 0,
-      highImpact: 0,
-      mediumImpact: 0,
-      news: [],
-      checkedAt:
-        new Date().toISOString(),
-
-      message:
-        "News feed unavailable",
-
-      error:
-        error?.message ||
-        "News error",
+      signal: "WAIT",
+      direction: "NEUTRAL",
+      scalpSignal: "WAIT",
+      confirmed: false,
+      reason:
+        "M5 + M15 belum searah",
+      alignment: "NO ALIGNMENT"
     };
   }
-}
 
-// ============================================================
-// SCALP SIGNAL
-//
-// M5 + M15 MUST ALIGN
-//
-// H1 DOES NOT BLOCK SCALP
-// ============================================================
+  // ---------------------------------------------------------
+  // CONFLUENCE
+  // ---------------------------------------------------------
 
-function buildScalpSignal(
-  m5Analysis,
-  m15Analysis,
-  h1Analysis,
-  news
-) {
-  const aligned =
-    m5Analysis.direction !==
-      "NEUTRAL" &&
-    m15Analysis.direction !==
-      "NEUTRAL" &&
-    m5Analysis.direction ===
-      m15Analysis.direction;
-
-  let signal = "WAIT";
-
-  if (aligned) {
-    signal =
-      m5Analysis.direction ===
-      "BUY"
-        ? "BUY"
-        : "SELL";
-  }
-
-  let confidence =
-    avg([
-      m5Analysis.strength,
-      m15Analysis.strength,
-    ]);
-
-  if (aligned) {
-    confidence += 10;
-  }
-
-  if (
-    h1Analysis.direction ===
-    signal &&
-    signal !== "WAIT"
-  ) {
-    confidence += 5;
-  }
-
-  if (
-    news?.risk === "HIGH"
-  ) {
-    confidence -= 15;
-  }
-
-  if (
-    news?.risk === "MEDIUM"
-  ) {
-    confidence -= 5;
-  }
-
-  confidence = clamp(
-    round(confidence),
-    0,
-    100
-  );
-
-  return {
+  function buildConfluence(
     signal,
-    scalpSignal: signal,
-
-    aligned,
-
-    m5:
-      m5Analysis.direction,
-
-    m15:
-      m15Analysis.direction,
-
-    h1:
-      h1Analysis.direction,
-
-    confidence,
-
-    newsRisk:
-      news?.risk ||
-      "UNKNOWN",
-
-    holdContext:
-      h1Analysis.direction ===
-        signal &&
-      signal !== "WAIT",
-
-    note:
-      signal === "WAIT"
-        ? "Wait for M5 + M15 alignment"
-        : news?.risk === "HIGH"
-          ? "M5 + M15 aligned but high news risk"
-          : h1Analysis.direction ===
-              signal
-            ? "M5 + M15 aligned; H1 supports hold context"
-            : "M5 + M15 aligned; H1 is scalp context only",
-  };
-}
-
-// ============================================================
-// TRADE PLAN
-//
-// Uses H1 confirmed swing levels when available.
-// ============================================================
-
-function tradePlan(
-  price,
-  signal,
-  candles,
-  h1Structure
-) {
-  const a = atr(
-    candles,
-    14
-  );
-
-  if (
-    !price ||
-    signal === "WAIT" ||
-    !a
+    m5,
+    m15,
+    h1,
+    news
   ) {
+    let score = 0;
+    const reasons = [];
+
+    if (
+      signal.direction === "BUY" ||
+      signal.direction === "SELL"
+    ) {
+      score += 40;
+      reasons.push(
+        "M5 + M15 aligned"
+      );
+    }
+
+    if (
+      h1.bias === signal.direction
+    ) {
+      score += 20;
+      reasons.push(
+        "H1 agrees with scalp direction"
+      );
+    } else if (
+      h1.bias !== "NEUTRAL"
+    ) {
+      reasons.push(
+        "H1 differs - treated as higher-timeframe context only"
+      );
+    }
+
+    if (
+      signal.direction === "BUY" &&
+      m5.rsi >= 50 &&
+      m5.rsi < 75
+    ) {
+      score += 10;
+      reasons.push(
+        "M5 RSI supports BUY"
+      );
+    }
+
+    if (
+      signal.direction === "SELL" &&
+      m5.rsi <= 50 &&
+      m5.rsi > 25
+    ) {
+      score += 10;
+      reasons.push(
+        "M5 RSI supports SELL"
+      );
+    }
+
+    if (
+      news.level === "HIGH"
+    ) {
+      score -= 20;
+      reasons.push(
+        "High news risk"
+      );
+    } else if (
+      news.level === "MEDIUM"
+    ) {
+      score -= 8;
+      reasons.push(
+        "Medium news risk"
+      );
+    }
+
+    score =
+      Math.max(
+        0,
+        Math.min(100, score)
+      );
+
+    let quality =
+      "LOW";
+
+    if (score >= 75) {
+      quality = "HIGH";
+    } else if (score >= 55) {
+      quality = "MEDIUM";
+    }
+
     return {
-      active: false,
-      direction: "WAIT",
-      entry: price || 0,
-      stopLoss: 0,
-      takeProfit1: 0,
-      takeProfit2: 0,
-      riskDistance: 0,
-      support: h1Structure.support,
-      resistance:
-        h1Structure.resistance,
+      score,
+      quality,
+      reasons
     };
   }
 
-  const atrRisk =
-    Math.max(
-      a * 1.2,
-      price * 0.001
-    );
+  // ---------------------------------------------------------
+  // TRADE PLAN
+  // ---------------------------------------------------------
 
-  if (signal === "BUY") {
-    let stop =
-      price - atrRisk;
-
-    // If confirmed H1 support exists below entry,
-    // use it as structural reference.
+  function buildTradePlan(
+    signal,
+    price,
+    m5,
+    h1Support,
+    h1Resistance
+  ) {
     if (
-      h1Structure.support &&
-      h1Structure.support < price
+      signal.direction !== "BUY" &&
+      signal.direction !== "SELL"
     ) {
-      const structureStop =
-        h1Structure.support -
+      return {
+        status: "WAIT",
+        direction: "WAIT",
+        entry: null,
+        stopLoss: null,
+        takeProfit1: null,
+        takeProfit2: null,
+        riskDistance: null
+      };
+    }
+
+    const atrValue =
+      Number(m5.atr) || 0;
+
+    const safeATR =
+      atrValue > 0
+        ? atrValue
+        : 3;
+
+    if (signal.direction === "BUY") {
+      const structuralSL =
+        h1Support?.price ?? null;
+
+      const atrSL =
+        price -
+        safeATR * 1.2;
+
+      let stopLoss =
+        structuralSL &&
+        structuralSL < price &&
+        price - structuralSL <= safeATR * 4
+          ? structuralSL
+          : atrSL;
+
+      const risk =
         Math.max(
-          a * 0.15,
-          price * 0.00015
+          price - stopLoss,
+          safeATR * 0.8
         );
 
-      // Don't put the stop absurdly far away.
+      const tp1 =
+        price + risk * 1.2;
+
+      const tp2 =
+        price + risk * 2;
+
+      return {
+        status: "ACTIVE",
+        direction: "BUY",
+        entry: round(price),
+        stopLoss: round(stopLoss),
+        takeProfit1: round(tp1),
+        takeProfit2: round(tp2),
+        riskDistance: round(risk),
+        structuralReference:
+          h1Support
+            ? {
+                type: "H1_CONFIRMED_SWING_LOW",
+                price: round(h1Support.price),
+                time: h1Support.time
+              }
+            : null
+      };
+    }
+
+    const structuralSL =
+      h1Resistance?.price ?? null;
+
+    const atrSL =
+      price +
+      safeATR * 1.2;
+
+    let stopLoss =
+      structuralSL &&
+      structuralSL > price &&
+      structuralSL - price <= safeATR * 4
+        ? structuralSL
+        : atrSL;
+
+    const risk =
+      Math.max(
+        stopLoss - price,
+        safeATR * 0.8
+      );
+
+    const tp1 =
+      price - risk * 1.2;
+
+    const tp2 =
+      price - risk * 2;
+
+    return {
+      status: "ACTIVE",
+      direction: "SELL",
+      entry: round(price),
+      stopLoss: round(stopLoss),
+      takeProfit1: round(tp1),
+      takeProfit2: round(tp2),
+      riskDistance: round(risk),
+      structuralReference:
+        h1Resistance
+          ? {
+              type: "H1_CONFIRMED_SWING_HIGH",
+              price: round(h1Resistance.price),
+              time: h1Resistance.time
+            }
+          : null
+    };
+  }
+
+  // ---------------------------------------------------------
+  // LIQUIDITY MAP
+  // ---------------------------------------------------------
+
+  function buildLiquidity(
+    price,
+    h1Highs,
+    h1Lows,
+    m15Highs,
+    m15Lows,
+    m5Highs,
+    m5Lows
+  ) {
+    return {
+      above: {
+        h1: nearestAbove(
+          h1Highs,
+          price
+        ),
+        m15: nearestAbove(
+          m15Highs,
+          price
+        ),
+        m5: nearestAbove(
+          m5Highs,
+          price
+        )
+      },
+
+      below: {
+        h1: nearestBelow(
+          h1Lows,
+          price
+        ),
+        m15: nearestBelow(
+          m15Lows,
+          price
+        ),
+        m5: nearestBelow(
+          m5Lows,
+          price
+        )
+      }
+    };
+  }
+
+  // ---------------------------------------------------------
+  // ENTRY QUALITY
+  // ---------------------------------------------------------
+
+  function buildEntryQuality(
+    signal,
+    confluence,
+    news,
+    price,
+    support,
+    resistance
+  ) {
+    if (
+      signal.direction !== "BUY" &&
+      signal.direction !== "SELL"
+    ) {
+      return {
+        score: 0,
+        quality: "WAIT",
+        reason:
+          "M5 + M15 belum aligned"
+      };
+    }
+
+    let score =
+      confluence.score;
+
+    if (signal.direction === "BUY") {
       if (
-        price - structureStop <=
-        atrRisk * 2.2
+        resistance?.price &&
+        resistance.price > price
       ) {
-        stop =
-          Math.min(
-            stop,
-            structureStop
-          );
+        const distance =
+          resistance.price - price;
+
+        if (distance < 2) {
+          score -= 15;
+        }
       }
     }
 
-    const risk =
-      price - stop;
+    if (signal.direction === "SELL") {
+      if (
+        support?.price &&
+        support.price < price
+      ) {
+        const distance =
+          price - support.price;
+
+        if (distance < 2) {
+          score -= 15;
+        }
+      }
+    }
+
+    if (news.level === "HIGH") {
+      score -= 15;
+    }
+
+    score =
+      Math.max(
+        0,
+        Math.min(100, score)
+      );
+
+    let quality = "LOW";
+
+    if (score >= 75) {
+      quality = "HIGH";
+    } else if (score >= 55) {
+      quality = "MEDIUM";
+    }
 
     return {
-      active: true,
-      direction: "BUY",
-
-      entry:
-        round(price, 3),
-
-      stopLoss:
-        round(stop, 3),
-
-      takeProfit1:
-        round(
-          price + risk * 1.2,
-          3
-        ),
-
-      takeProfit2:
-        round(
-          price + risk * 2,
-          3
-        ),
-
-      riskDistance:
-        round(risk, 3),
-
-      support:
-        h1Structure.support,
-
-      resistance:
-        h1Structure.resistance,
-
-      stopBasis:
-        h1Structure.support
-          ? "ATR + H1 confirmed swing support"
-          : "ATR",
+      score,
+      quality,
+      reason:
+        quality === "HIGH"
+          ? "Strong scalp confluence"
+          : quality === "MEDIUM"
+          ? "Moderate scalp confluence"
+          : "Weak scalp confluence"
     };
   }
 
-  let stop =
-    price + atrRisk;
+  // ---------------------------------------------------------
+  // HELPERS
+  // ---------------------------------------------------------
 
-  if (
-    h1Structure.resistance &&
-    h1Structure.resistance > price
-  ) {
-    const structureStop =
-      h1Structure.resistance +
-      Math.max(
-        a * 0.15,
-        price * 0.00015
-      );
-
-    if (
-      structureStop - price <=
-      atrRisk * 2.2
-    ) {
-      stop =
-        Math.max(
-          stop,
-          structureStop
-        );
+  function round(value, decimals = 2) {
+    if (!Number.isFinite(Number(value))) {
+      return null;
     }
+
+    const p =
+      10 ** decimals;
+
+    return (
+      Math.round(
+        Number(value) * p
+      ) / p
+    );
   }
 
-  const risk =
-    stop - price;
-
-  return {
-    active: true,
-    direction: "SELL",
-
-    entry:
-      round(price, 3),
-
-    stopLoss:
-      round(stop, 3),
-
-    takeProfit1:
-      round(
-        price - risk * 1.2,
-        3
-      ),
-
-    takeProfit2:
-      round(
-        price - risk * 2,
-        3
-      ),
-
-    riskDistance:
-      round(risk, 3),
-
-    support:
-      h1Structure.support,
-
-    resistance:
-      h1Structure.resistance,
-
-    stopBasis:
-      h1Structure.resistance
-        ? "ATR + H1 confirmed swing resistance"
-        : "ATR",
-  };
-}
-
-// ============================================================
-// ENTRY QUALITY
-// ============================================================
-
-function entryQuality(
-  m5,
-  m15,
-  h1,
-  news
-) {
-  let score = 0;
-
-  if (
-    m5.direction !==
-    "NEUTRAL"
-  ) {
-    score += 25;
+  function decodeXml(value = "") {
+    return String(value)
+      .replace(
+        /<!\[CDATA\[([\s\S]*?)\]\]>/g,
+        "$1"
+      )
+      .replace(
+        /&amp;/g,
+        "&"
+      )
+      .replace(
+        /&lt;/g,
+        "<"
+      )
+      .replace(
+        /&gt;/g,
+        ">"
+      )
+      .replace(
+        /&quot;/g,
+        '"'
+      )
+      .replace(
+        /&#39;/g,
+        "'"
+      );
   }
 
-  if (
-    m15.direction !==
-    "NEUTRAL"
-  ) {
-    score += 25;
-  }
-
-  if (
-    m5.direction ===
-    m15.direction
-  ) {
-    score += 30;
-  }
-
-  if (
-    h1.direction ===
-    m5.direction
-  ) {
-    score += 10;
-  }
-
-  if (
-    news.risk === "HIGH"
-  ) {
-    score -= 25;
-  }
-
-  if (
-    news.risk === "MEDIUM"
-  ) {
-    score -= 10;
-  }
-
-  score = clamp(
-    score,
-    0,
-    100
-  );
-
-  let label = "LOW";
-
-  if (score >= 75) {
-    label = "HIGH";
-  } else if (score >= 50) {
-    label = "MEDIUM";
-  }
-
-  return {
-    score,
-    label,
-  };
-}
-
-// ============================================================
-// HANDLER
-// ============================================================
-
-export default async function handler(
-  req,
-  res
-) {
-  res.setHeader(
-    "Access-Control-Allow-Origin",
-    "*"
-  );
-
-  res.setHeader(
-    "Access-Control-Allow-Methods",
-    "GET,OPTIONS"
-  );
-
-  res.setHeader(
-    "Access-Control-Allow-Headers",
-    "Content-Type"
-  );
-
-  if (req.method === "OPTIONS") {
-    return res
-      .status(200)
-      .end();
-  }
+  // ---------------------------------------------------------
+  // MAIN
+  // ---------------------------------------------------------
 
   try {
-    if (
-      !process.env
-        .TWELVE_DATA_API_KEY
-    ) {
-      return res.status(500).json({
+    // -------------------------------------------------------
+    // M5
+    // -------------------------------------------------------
+
+    const m5Result =
+      await getCachedTimeSeries(
+        "xau:m5",
+        "5min",
+        CFG.m5OutputSize,
+        CFG.m5TTL
+      );
+
+    const m5 =
+      m5Result.candles;
+
+    if (m5.length < 100) {
+      return res.status(422).json({
         ok: false,
         error:
-          "TWELVE_DATA_API_KEY missing",
+          "M5 candle tidak mencukupi",
+        count: m5.length
       });
     }
 
-    // --------------------------------------------------------
-    // FETCH
-    // --------------------------------------------------------
+    // -------------------------------------------------------
+    // M15
+    // -------------------------------------------------------
 
-    const [
-      priceResult,
-      m5Result,
-      newsResult,
-    ] =
-      await Promise.allSettled([
-        getPrice(),
-        getM5(),
-        getNewsFilter(),
-      ]);
-
-    if (
-      priceResult.status !==
-      "fulfilled"
-    ) {
-      throw new Error(
-        priceResult.reason?.message ||
-          "Unable to get live price"
+    const m15Result =
+      await getCachedTimeSeries(
+        "xau:m15",
+        "15min",
+        CFG.m15OutputSize,
+        CFG.m15TTL
       );
+
+    const m15 =
+      m15Result.candles;
+
+    if (m15.length < 50) {
+      return res.status(422).json({
+        ok: false,
+        error:
+          "M15 candle tidak mencukupi",
+        count: m15.length
+      });
     }
 
-    if (
-      m5Result.status !==
-      "fulfilled"
-    ) {
-      throw new Error(
-        m5Result.reason?.message ||
-          "Unable to get M5 candles"
+    // -------------------------------------------------------
+    // H1
+    // -------------------------------------------------------
+
+    const h1Result =
+      await getCachedTimeSeries(
+        "xau:h1",
+        "1h",
+        CFG.h1OutputSize,
+        CFG.h1TTL
       );
+
+    const h1 =
+      h1Result.candles;
+
+    if (h1.length < 30) {
+      return res.status(422).json({
+        ok: false,
+        error:
+          "H1 candle tidak mencukupi",
+        count: h1.length
+      });
     }
+
+    // -------------------------------------------------------
+    // PRICE
+    // -------------------------------------------------------
+
+    const candlePrice =
+      m5.at(-1)?.close ??
+      null;
+
+    const priceResult =
+      await getCachedPrice(
+        candlePrice
+      );
 
     const price =
-      priceResult.value;
+      priceResult.price;
 
-    const m5Candles =
-      m5Result.value;
-
-    const news =
-      newsResult.status ===
-      "fulfilled"
-        ? newsResult.value
-        : {
-            enabled: true,
-            status: "UNKNOWN",
-            risk: "UNKNOWN",
-            source:
-              "Google News RSS",
-            count: 0,
-            highImpact: 0,
-            mediumImpact: 0,
-            news: [],
-            checkedAt:
-              new Date().toISOString(),
-            message:
-              "News feed unavailable",
-          };
-
-    // --------------------------------------------------------
-    // TIMEFRAMES
-    // --------------------------------------------------------
-
-    const m15Candles =
-      aggregateCandles(
-        m5Candles,
-        15
-      );
-
-    const h1Candles =
-      aggregateCandles(
-        m5Candles,
-        60
-      );
+    // -------------------------------------------------------
+    // ANALYSIS
+    // -------------------------------------------------------
 
     const m5Analysis =
-      timeframeAnalysis(
-        m5Candles
+      analyzeTimeframe(
+        m5,
+        "M5"
       );
 
     const m15Analysis =
-      timeframeAnalysis(
-        m15Candles
+      analyzeTimeframe(
+        m15,
+        "M15"
       );
 
     const h1Analysis =
-      timeframeAnalysis(
-        h1Candles
+      analyzeTimeframe(
+        h1,
+        "H1"
       );
 
-    // --------------------------------------------------------
-    // H1 STRUCTURE
-    // --------------------------------------------------------
+    // -------------------------------------------------------
+    // CLOSED H1 ONLY FOR STRUCTURE
+    // -------------------------------------------------------
 
-    const h1Structure =
-      getH1Structure(
-        h1Candles,
+    const closedH1 =
+      h1.length > 1
+        ? h1.slice(0, -1)
+        : h1;
+
+    const h1Swings =
+      findConfirmedSwings(
+        closedH1,
+        CFG.pivotLeft,
+        CFG.pivotRight
+      );
+
+    const h1Highs =
+      h1Swings.highs;
+
+    const h1Lows =
+      h1Swings.lows;
+
+    // -------------------------------------------------------
+    // H1 CONFIRMED SUPPORT / RESISTANCE
+    // -------------------------------------------------------
+
+    const support =
+      nearestBelow(
+        h1Lows,
         price
       );
 
-    // M15 / M5 structures
-    const m15Structure =
-      getStructureLevels(
-        m15Candles
+    const resistance =
+      nearestAbove(
+        h1Highs,
+        price
       );
 
-    const m5Structure =
-      getStructureLevels(
-        m5Candles
+    const previousSupport =
+      latestBelow(
+        h1Lows,
+        price
       );
 
-    // --------------------------------------------------------
+    const previousResistance =
+      latestAbove(
+        h1Highs,
+        price
+      );
+
+    const h1Structure =
+      classifyStructure(
+        h1Highs,
+        h1Lows
+      );
+
+    const h1Event =
+      detectStructureEvent(
+        closedH1,
+        h1Highs,
+        h1Lows,
+        h1Structure
+      );
+
+    // -------------------------------------------------------
+    // M15 / M5 SWINGS
+    // -------------------------------------------------------
+
+    const m15Swings =
+      findConfirmedSwings(
+        m15.slice(0, -1),
+        2,
+        2
+      );
+
+    const m5Swings =
+      findConfirmedSwings(
+        m5.slice(0, -1),
+        2,
+        2
+      );
+
+    // -------------------------------------------------------
     // SIGNAL
-    // --------------------------------------------------------
+    // -------------------------------------------------------
 
-    const scalp =
-      buildScalpSignal(
+    const signal =
+      buildSignal(
+        m5Analysis,
+        m15Analysis
+      );
+
+    // -------------------------------------------------------
+    // NEWS
+    // -------------------------------------------------------
+
+    const newsFilter =
+      await getNewsFilter();
+
+    // -------------------------------------------------------
+    // CONFLUENCE
+    // -------------------------------------------------------
+
+    const confluence =
+      buildConfluence(
+        signal,
         m5Analysis,
         m15Analysis,
         h1Analysis,
-        news
+        newsFilter
       );
 
-    // --------------------------------------------------------
+    // -------------------------------------------------------
+    // ENTRY QUALITY
+    // -------------------------------------------------------
+
+    const entryQuality =
+      buildEntryQuality(
+        signal,
+        confluence,
+        newsFilter,
+        price,
+        support,
+        resistance
+      );
+
+    // -------------------------------------------------------
+    // TRADE PLAN
+    // -------------------------------------------------------
+
+    const tradePlan =
+      buildTradePlan(
+        signal,
+        price,
+        m5Analysis,
+        support,
+        resistance
+      );
+
+    // -------------------------------------------------------
     // LIQUIDITY
-    // --------------------------------------------------------
+    // -------------------------------------------------------
 
     const liquidity =
-      liquidityMap(
-        m5Candles,
+      buildLiquidity(
         price,
-        h1Structure
+        h1Highs,
+        h1Lows,
+        m15Swings.highs,
+        m15Swings.lows,
+        m5Swings.highs,
+        m5Swings.lows
       );
 
-    // --------------------------------------------------------
-    // TRADE PLAN
-    // --------------------------------------------------------
-
-    const plan =
-      tradePlan(
-        price,
-        scalp.signal,
-        m5Candles,
-        h1Structure
-      );
-
-    // --------------------------------------------------------
-    // ENTRY QUALITY
-    // --------------------------------------------------------
-
-    const quality =
-      entryQuality(
-        m5Analysis,
-        m15Analysis,
-        h1Analysis,
-        news
-      );
-
-    // --------------------------------------------------------
-    // CONFLUENCE
-    // --------------------------------------------------------
-
-    const confluence = [
-      {
-        name: "M5 Direction",
-        value:
-          m5Analysis.direction,
-        pass:
-          m5Analysis.direction !==
-          "NEUTRAL",
-      },
-
-      {
-        name: "M15 Direction",
-        value:
-          m15Analysis.direction,
-        pass:
-          m15Analysis.direction !==
-          "NEUTRAL",
-      },
-
-      {
-        name:
-          "M5 + M15 Alignment",
-        value:
-          scalp.aligned
-            ? "ALIGNED"
-            : "WAIT",
-        pass:
-          scalp.aligned,
-      },
-
-      {
-        name: "H1 Context",
-        value:
-          h1Analysis.direction,
-        pass:
-          h1Analysis.direction ===
-            scalp.signal &&
-          scalp.signal !==
-            "WAIT",
-      },
-
-      {
-        name: "H1 Support",
-        value:
-          h1Structure.support,
-        pass:
-          !!h1Structure.support,
-      },
-
-      {
-        name: "H1 Resistance",
-        value:
-          h1Structure.resistance,
-        pass:
-          !!h1Structure.resistance,
-      },
-
-      {
-        name: "News Filter",
-        value:
-          news.status,
-        pass:
-          news.risk !== "HIGH",
-      },
-    ];
-
-    // --------------------------------------------------------
+    // -------------------------------------------------------
     // MARKET FILTER
-    // --------------------------------------------------------
+    // -------------------------------------------------------
 
-    let marketFilter =
-      "NEUTRAL";
+    const marketFilter = {
+      status:
+        signal.confirmed
+          ? "SCALP_READY"
+          : "WAIT",
+      m5:
+        m5Analysis.direction,
+      m15:
+        m15Analysis.direction,
+      h1:
+        h1Analysis.direction,
+      h1Context:
+        h1Analysis.direction ===
+        signal.direction
+          ? "ALIGNED"
+          : h1Analysis.direction ===
+            "NEUTRAL"
+          ? "NEUTRAL"
+          : "HIGHER_TF_DIFFERENT",
+      note:
+        "H1 disagreement does not cancel M5/M15 scalp signal."
+    };
 
-    if (
-      news.risk === "HIGH"
-    ) {
-      marketFilter =
-        "NEWS RISK";
-    } else if (
-      scalp.signal !==
-      "WAIT"
-    ) {
-      marketFilter =
-        scalp.signal;
-    }
+    // -------------------------------------------------------
+    // CACHE STATUS
+    // -------------------------------------------------------
 
-    // --------------------------------------------------------
+    const now =
+      Date.now();
+
+    const m5Cache =
+      await cacheGet("xau:m5");
+
+    const m15Cache =
+      await cacheGet("xau:m15");
+
+    const h1Cache =
+      await cacheGet("xau:h1");
+
+    // -------------------------------------------------------
     // RESPONSE
-    // --------------------------------------------------------
+    // -------------------------------------------------------
 
     return res.status(200).json({
       ok: true,
 
-      symbol: SYMBOL,
+      version:
+        "XAUUSDSNIPER-CACHED-MTF-SCALP-V2",
+
+      symbol:
+        CFG.symbol,
 
       timestamp:
-        Date.now(),
+        now,
 
       price,
 
       livePrice: {
         price,
         source:
-          "Twelve Data REST",
+          priceResult.source,
+        ageSeconds:
+          priceResult.ageSeconds
       },
 
-      // Raw M5 candles
-      candles:
-        m5Candles,
-
-      // ------------------------------------------------------
-      // M5
-      // ------------------------------------------------------
+      candles: m5.map(c => ({
+        datetime:
+          c.datetime,
+        open:
+          c.open,
+        high:
+          c.high,
+        low:
+          c.low,
+        close:
+          c.close,
+        volume:
+          c.volume
+      })),
 
       m5: {
-        candles:
-          m5Candles,
-
         ...m5Analysis,
-
-        structure:
-          m5Structure,
+        candles:
+          m5.length,
+        source:
+          m5Result.source,
+        confirmedSwings: {
+          highs:
+            m5Swings.highs
+              .slice(-8)
+              .map(x => ({
+                price:
+                  round(x.price),
+                time:
+                  x.time
+              })),
+          lows:
+            m5Swings.lows
+              .slice(-8)
+              .map(x => ({
+                price:
+                  round(x.price),
+                time:
+                  x.time
+              }))
+        }
       },
-
-      // ------------------------------------------------------
-      // M15
-      // ------------------------------------------------------
 
       m15: {
-        candles:
-          m15Candles,
-
         ...m15Analysis,
-
-        structure:
-          m15Structure,
+        candles:
+          m15.length,
+        source:
+          m15Result.source,
+        confirmedSwings: {
+          highs:
+            m15Swings.highs
+              .slice(-8)
+              .map(x => ({
+                price:
+                  round(x.price),
+                time:
+                  x.time
+              })),
+          lows:
+            m15Swings.lows
+              .slice(-8)
+              .map(x => ({
+                price:
+                  round(x.price),
+                time:
+                  x.time
+              }))
+        }
       },
 
-      // ------------------------------------------------------
-      // H1
-      // ------------------------------------------------------
-
       h1: {
-        candles:
-          h1Candles,
-
         ...h1Analysis,
+
+        candles:
+          h1.length,
+
+        closedCandles:
+          closedH1.length,
+
+        source:
+          h1Result.source,
+
+        lastClosedTime:
+          closedH1.at(-1)
+            ?.datetime ??
+          null,
 
         structure:
           h1Structure,
 
-        support:
-          h1Structure.support,
-
-        resistance:
-          h1Structure.resistance,
-
-        supportDatetime:
-          h1Structure.supportDatetime,
-
-        resistanceDatetime:
-          h1Structure.resistanceDatetime,
-
-        previousSupport:
-          h1Structure.previousSupport,
-
-        previousResistance:
-          h1Structure.previousResistance,
-
-        swingMethod:
-          h1Structure.method,
-      },
-
-      // ------------------------------------------------------
-      // SIGNAL
-      // ------------------------------------------------------
-
-      signal:
-        scalp.signal,
-
-      scalpSignal:
-        scalp,
-
-      marketFilter,
-
-      // ------------------------------------------------------
-      // STRUCTURE / LIQUIDITY
-      // ------------------------------------------------------
-
-      supportResistance: {
-        timeframe: "H1",
-
-        method:
+        structureMethod:
           "Confirmed H1 swing high/low",
 
         support:
-          h1Structure.support,
+          support
+            ? {
+                price:
+                  round(support.price),
+                time:
+                  support.time,
+                distance:
+                  round(
+                    price -
+                    support.price
+                  )
+              }
+            : null,
 
         resistance:
-          h1Structure.resistance,
+          resistance
+            ? {
+                price:
+                  round(
+                    resistance.price
+                  ),
+                time:
+                  resistance.time,
+                distance:
+                  round(
+                    resistance.price -
+                    price
+                  )
+              }
+            : null,
 
         previousSupport:
-          h1Structure.previousSupport,
+          previousSupport
+            ? {
+                price:
+                  round(
+                    previousSupport.price
+                  ),
+                time:
+                  previousSupport.time
+              }
+            : null,
 
         previousResistance:
-          h1Structure.previousResistance,
+          previousResistance
+            ? {
+                price:
+                  round(
+                    previousResistance.price
+                  ),
+                time:
+                  previousResistance.time
+              }
+            : null,
+
+        swings: {
+          highs:
+            h1Highs
+              .slice(-15)
+              .map(x => ({
+                price:
+                  round(x.price),
+                time:
+                  x.time
+              })),
+
+          lows:
+            h1Lows
+              .slice(-15)
+              .map(x => ({
+                price:
+                  round(x.price),
+                time:
+                  x.time
+              }))
+        },
+
+        bos:
+          h1Event.type === "BOS"
+            ? h1Event
+            : null,
+
+        choch:
+          h1Event.type === "CHOCH"
+            ? h1Event
+            : null
+      },
+
+      signal,
+
+      scalpSignal:
+        signal.scalpSignal,
+
+      marketFilter,
+
+      supportResistance: {
+        method:
+          "H1 confirmed swing high/low",
+
+        support:
+          support
+            ? round(
+                support.price
+              )
+            : null,
+
+        supportTime:
+          support?.time ??
+          null,
+
+        resistance:
+          resistance
+            ? round(
+                resistance.price
+              )
+            : null,
+
+        resistanceTime:
+          resistance?.time ??
+          null,
+
+        previousSupport:
+          previousSupport
+            ? round(
+                previousSupport.price
+              )
+            : null,
+
+        previousResistance:
+          previousResistance
+            ? round(
+                previousResistance.price
+              )
+            : null
       },
 
       liquidity,
 
-      // ------------------------------------------------------
-      // CONFLUENCE
-      // ------------------------------------------------------
-
       confluence,
 
-      entryQuality:
-        quality,
+      entryQuality,
 
-      // ------------------------------------------------------
-      // TRADE PLAN
-      // ------------------------------------------------------
+      tradePlan,
 
-      tradePlan:
-        plan,
+      newsFilter,
 
-      // ------------------------------------------------------
-      // NEWS
-      // ------------------------------------------------------
-
-      newsFilter:
-        news,
-
-      news,
-
-      // ------------------------------------------------------
-      // FILTERS
-      // ------------------------------------------------------
+      news:
+        newsFilter.items,
 
       filters: {
+        scalp:
+          "M5 + M15 alignment required",
+
+        h1:
+          "Context / hold only",
+
+        h1Conflict:
+          "Does not block scalp",
+
         news:
-          news.status,
-
-        market:
-          marketFilter,
-
-        m5m15Aligned:
-          scalp.aligned,
-
-        h1Support:
-          h1Structure.support,
-
-        h1Resistance:
-          h1Structure.resistance,
+          "Risk adjustment only"
       },
 
-      // ------------------------------------------------------
-      // ENGINE
-      // ------------------------------------------------------
+      cache: {
+        storage:
+          REDIS_URL
+            ? "KV/REDIS + MEMORY FALLBACK"
+            : "MEMORY FALLBACK",
+
+        m5: {
+          source:
+            m5Result.source,
+          ttlSeconds:
+            CFG.m5TTL / 1000,
+          ageSeconds:
+            m5Cache?.fetchedAt
+              ? Math.round(
+                  (now -
+                    m5Cache.fetchedAt) /
+                  1000
+                )
+              : null
+        },
+
+        m15: {
+          source:
+            m15Result.source,
+          ttlSeconds:
+            CFG.m15TTL / 1000,
+          ageSeconds:
+            m15Cache?.fetchedAt
+              ? Math.round(
+                  (now -
+                    m15Cache.fetchedAt) /
+                  1000
+                )
+              : null
+        },
+
+        h1: {
+          source:
+            h1Result.source,
+          ttlSeconds:
+            CFG.h1TTL / 1000,
+          ageSeconds:
+            h1Cache?.fetchedAt
+              ? Math.round(
+                  (now -
+                    h1Cache.fetchedAt) /
+                  1000
+                )
+              : null
+        },
+
+        priceTTLSeconds:
+          CFG.priceTTL / 1000,
+
+        newsTTLSeconds:
+          CFG.newsTTL / 1000
+      },
 
       engine: {
-        scalpDirection:
-          scalp.signal,
+        timeframe:
+          "M5 + M15 + H1",
 
-        m5Direction:
-          m5Analysis.direction,
+        scalpLogic:
+          "M5 and M15 must align",
 
-        m15Direction:
-          m15Analysis.direction,
+        h1Logic:
+          "H1 is context/hold",
 
-        h1Direction:
-          h1Analysis.direction,
+        supportResistance:
+          "Confirmed H1 swing highs/lows",
 
-        h1Hold:
-          scalp.holdContext,
+        cache:
+          "Enabled",
 
-        h1Support:
-          h1Structure.support,
-
-        h1Resistance:
-          h1Structure.resistance,
-
-        newsRisk:
-          news.risk,
-
-        swingMethod:
-          "Confirmed swing high/low",
-      },
+        twelveDataOptimization:
+          "M5 5m / Price 5m / M15 15m / H1 60m"
+      }
     });
+
   } catch (error) {
     console.error(
-      "SCALP API ERROR:",
+      "XAU SCALP ENGINE ERROR",
       error
     );
 
@@ -1916,7 +2170,7 @@ export default async function handler(
       ok: false,
       error:
         error?.message ||
-        "API error",
+        "Scalp engine error"
     });
   }
 }
