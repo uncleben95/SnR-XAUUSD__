@@ -1,4657 +1,4064 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta
-    name="viewport"
-    content="width=device-width, initial-scale=1, viewport-fit=cover"
-  />
-
-  <meta name="theme-color" content="#0b0e12" />
-  <meta name="color-scheme" content="dark" />
-
-  <meta
-    name="description"
-    content="Institutional Gold Terminal — XAU/USD M15 + M5 scalp intelligence."
-  />
-
-  <link rel="manifest" href="/manifest.json" />
-
-  <title>XAU/USD — Institutional Gold Terminal</title>
-
-  <style>
-    :root {
-      --bg: #07090c;
-      --bg2: #0b0e12;
-      --panel: #10141a;
-      --panel2: #141922;
-      --panel3: #0d1117;
-
-      --border: rgba(255,255,255,.08);
-      --border2: rgba(212,175,92,.22);
-
-      --text: #f4f1e8;
-      --muted: #8f98a5;
-      --dim: #5f6875;
-
-      --gold: #d6b15e;
-      --gold2: #f0d48a;
-
-      --green: #20c982;
-      --green2: #58e0a5;
-
-      --red: #ef5262;
-      --red2: #ff7b88;
-
-      --amber: #e9a83b;
-      --blue: #5fa8ff;
-
-      --shadow:
-        0 18px 50px rgba(0,0,0,.35);
-
-      --radius: 16px;
-    }
-
-    * {
-      box-sizing: border-box;
-    }
-
-    html {
-      background: var(--bg);
-      scroll-behavior: smooth;
-    }
-
-    body {
-      margin: 0;
-      min-height: 100vh;
-      background:
-        radial-gradient(
-          circle at 50% -10%,
-          rgba(214,175,94,.09),
-          transparent 35%
-        ),
-        linear-gradient(
-          180deg,
-          #07090c 0%,
-          #090c11 45%,
-          #07090c 100%
-        );
-      color: var(--text);
-      font-family:
-        Inter,
-        -apple-system,
-        BlinkMacSystemFont,
-        "Segoe UI",
-        Roboto,
-        Arial,
-        sans-serif;
-      -webkit-font-smoothing: antialiased;
-    }
-
-    button {
-      font: inherit;
-    }
-
-    .app {
-      width: min(1180px, 100%);
-      margin: auto;
-      padding:
-        max(14px, env(safe-area-inset-top))
-        14px
-        calc(30px + env(safe-area-inset-bottom));
-    }
-
-    /* =========================================================
-       TOP BAR
-       ========================================================= */
-
-    .topbar {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 14px;
-
-      padding: 14px 2px 18px;
-
-      border-bottom: 1px solid var(--border);
-    }
-
-    .brand {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      min-width: 0;
-    }
-
-    .brand-mark {
-      width: 42px;
-      height: 42px;
-
-      border-radius: 12px;
-
-      display: grid;
-      place-items: center;
-
-      background:
-        linear-gradient(
-          145deg,
-          rgba(240,212,138,.18),
-          rgba(214,175,94,.04)
-        );
-
-      border: 1px solid var(--border2);
-
-      color: var(--gold2);
-      font-size: 20px;
-
-      box-shadow:
-        inset 0 0 20px rgba(214,175,94,.04),
-        0 8px 24px rgba(0,0,0,.25);
-    }
-
-    .brand h1 {
-      margin: 0;
-      font-size: 15px;
-      letter-spacing: .16em;
-      text-transform: uppercase;
-      font-weight: 800;
-    }
-
-    .brand p {
-      margin: 4px 0 0;
-      color: var(--muted);
-      font-size: 11px;
-      letter-spacing: .06em;
-    }
-
-    .top-actions {
-      display: flex;
-      align-items: center;
-      gap: 7px;
-    }
-
-    .icon-btn {
-      width: 40px;
-      height: 40px;
-
-      border: 1px solid var(--border);
-      border-radius: 11px;
-
-      background: var(--panel);
-      color: var(--muted);
-
-      cursor: pointer;
-    }
-
-    .icon-btn:hover {
-      color: var(--gold2);
-      border-color: var(--border2);
-    }
-
-    /* =========================================================
-       STATUS STRIP
-       ========================================================= */
-
-    .status-strip {
-      display: grid;
-      grid-template-columns:
-        repeat(4, minmax(0,1fr));
-
-      gap: 8px;
-      margin: 12px 0;
-    }
-
-    .status-item {
-      min-width: 0;
-
-      padding: 10px 11px;
-
-      border:
-        1px solid var(--border);
-
-      border-radius: 12px;
-
-      background:
-        linear-gradient(
-          180deg,
-          rgba(255,255,255,.025),
-          rgba(255,255,255,.01)
-        );
-    }
-
-    .status-label {
-      display: block;
-      color: var(--dim);
-      font-size: 9px;
-      text-transform: uppercase;
-      letter-spacing: .12em;
-      margin-bottom: 4px;
-    }
-
-    .status-value {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-
-      min-width: 0;
-
-      color: var(--text);
-      font-size: 11px;
-      font-weight: 700;
-
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    .dot {
-      width: 7px;
-      height: 7px;
-      border-radius: 50%;
-      background: var(--dim);
-      flex: 0 0 auto;
-    }
-
-    .dot.live {
-      background: var(--green);
-      box-shadow: 0 0 9px rgba(32,201,130,.65);
-    }
-
-    .dot.warn {
-      background: var(--amber);
-      box-shadow: 0 0 9px rgba(233,168,59,.55);
-    }
-
-    .dot.bad {
-      background: var(--red);
-      box-shadow: 0 0 9px rgba(239,82,98,.55);
-    }
-
-    /* =========================================================
-       HERO
-       ========================================================= */
-
-    .hero {
-      position: relative;
-      overflow: hidden;
-
-      border:
-        1px solid rgba(214,175,94,.18);
-
-      border-radius: 22px;
-
-      background:
-        radial-gradient(
-          circle at 80% 20%,
-          rgba(214,175,94,.08),
-          transparent 35%
-        ),
-        linear-gradient(
-          145deg,
-          #11161d,
-          #0c1015
-        );
-
-      box-shadow: var(--shadow);
-
-      padding: 20px;
-    }
-
-    .hero::before {
-      content: "";
-
-      position: absolute;
-      left: 0;
-      top: 0;
-      bottom: 0;
-
-      width: 3px;
-
-      background:
-        linear-gradient(
-          180deg,
-          var(--gold2),
-          transparent
-        );
-
-      opacity: .75;
-    }
-
-    .hero-top {
-      display: flex;
-      align-items: flex-start;
-      justify-content: space-between;
-      gap: 20px;
-    }
-
-    .instrument {
-      color: var(--muted);
-      font-size: 10px;
-      letter-spacing: .16em;
-      text-transform: uppercase;
-    }
-
-    .price {
-      margin-top: 5px;
-
-      font-size:
-        clamp(36px, 8vw, 62px);
-
-      line-height: 1;
-
-      font-weight: 800;
-      letter-spacing: -.04em;
-
-      color: var(--text);
-    }
-
-    .price-meta {
-      margin-top: 9px;
-
-      display: flex;
-      align-items: center;
-      gap: 8px;
-
-      flex-wrap: wrap;
-
-      color: var(--muted);
-      font-size: 11px;
-    }
-
-    .source-badge,
-    .tiny-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
-
-      padding: 5px 8px;
-
-      border-radius: 7px;
-
-      border: 1px solid var(--border);
-
-      background: rgba(255,255,255,.025);
-
-      color: var(--muted);
-
-      font-size: 9px;
-      font-weight: 800;
-      letter-spacing: .08em;
-      text-transform: uppercase;
-    }
-
-    .hero-signal {
-      text-align: right;
-      min-width: 120px;
-    }
-
-    .signal-caption {
-      color: var(--dim);
-      font-size: 9px;
-      text-transform: uppercase;
-      letter-spacing: .14em;
-    }
-
-    .signal {
-      margin-top: 6px;
-
-      font-size: 27px;
-      font-weight: 900;
-      letter-spacing: .08em;
-    }
-
-    .signal.buy {
-      color: var(--green2);
-      text-shadow: 0 0 22px rgba(32,201,130,.18);
-    }
-
-    .signal.sell {
-      color: var(--red2);
-      text-shadow: 0 0 22px rgba(239,82,98,.18);
-    }
-
-    .signal.wait {
-      color: var(--amber);
-    }
-
-    .score-row {
-      display: flex;
-      align-items: center;
-      justify-content: flex-end;
-      gap: 6px;
-
-      margin-top: 8px;
-    }
-
-    .score {
-      color: var(--gold2);
-      font-size: 12px;
-      font-weight: 800;
-    }
-
-    /* =========================================================
-       HERO GRID
-       ========================================================= */
-
-    .hero-grid {
-      display: grid;
-      grid-template-columns:
-        1.25fr .75fr;
-
-      gap: 12px;
-      margin-top: 18px;
-    }
-
-    .mini-panel {
-      border:
-        1px solid var(--border);
-
-      background:
-        rgba(255,255,255,.018);
-
-      border-radius: 13px;
-
-      padding: 13px;
-    }
-
-    .mini-title {
-      color: var(--dim);
-      font-size: 9px;
-      text-transform: uppercase;
-      letter-spacing: .13em;
-      margin-bottom: 8px;
-    }
-
-    .mini-value {
-      font-size: 16px;
-      font-weight: 800;
-    }
-
-    .mini-sub {
-      color: var(--muted);
-      font-size: 10px;
-      margin-top: 4px;
-    }
-
-    /* =========================================================
-       MAIN GRID
-       ========================================================= */
-
-    .section {
-      margin-top: 14px;
-    }
-
-    .section-head {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-
-      margin: 22px 2px 9px;
-    }
-
-    .section-title {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-
-      font-size: 11px;
-      font-weight: 900;
-
-      text-transform: uppercase;
-      letter-spacing: .13em;
-    }
-
-    .section-title::before {
-      content: "";
-
-      width: 3px;
-      height: 14px;
-
-      border-radius: 2px;
-
-      background: var(--gold);
-    }
-
-    .section-note {
-      color: var(--dim);
-      font-size: 9px;
-      letter-spacing: .06em;
-    }
-
-    .grid-3 {
-      display: grid;
-      grid-template-columns:
-        repeat(3, minmax(0,1fr));
-      gap: 10px;
-    }
-
-    .grid-2 {
-      display: grid;
-      grid-template-columns:
-        repeat(2, minmax(0,1fr));
-      gap: 10px;
-    }
-
-    .card {
-      min-width: 0;
-
-      border:
-        1px solid var(--border);
-
-      border-radius: var(--radius);
-
-      background:
-        linear-gradient(
-          180deg,
-          rgba(255,255,255,.025),
-          rgba(255,255,255,.012)
-        );
-
-      box-shadow:
-        0 10px 30px rgba(0,0,0,.12);
-
-      padding: 15px;
-    }
-
-    .card.gold {
-      border-color: rgba(214,175,94,.20);
-    }
-
-    .card-title {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 10px;
-
-      margin-bottom: 14px;
-    }
-
-    .card-title strong {
-      font-size: 11px;
-      text-transform: uppercase;
-      letter-spacing: .1em;
-    }
-
-    .card-title span {
-      color: var(--dim);
-      font-size: 9px;
-    }
-
-    /* =========================================================
-       TIMEFRAME CARDS
-       ========================================================= */
-
-    .tf-card {
-      position: relative;
-      overflow: hidden;
-    }
-
-    .tf-card.buy {
-      border-color: rgba(32,201,130,.24);
-    }
-
-    .tf-card.sell {
-      border-color: rgba(239,82,98,.24);
-    }
-
-    .tf-card.wait {
-      border-color: rgba(233,168,59,.20);
-    }
-
-    .tf-top {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 10px;
-    }
-
-    .tf-name {
-      font-size: 18px;
-      font-weight: 900;
-      letter-spacing: .02em;
-    }
-
-    .tf-direction {
-      padding: 5px 8px;
-      border-radius: 7px;
-
-      font-size: 9px;
-      font-weight: 900;
-      letter-spacing: .1em;
-
-      border: 1px solid var(--border);
-    }
-
-    .tf-direction.buy {
-      color: var(--green2);
-      background: rgba(32,201,130,.07);
-      border-color: rgba(32,201,130,.18);
-    }
-
-    .tf-direction.sell {
-      color: var(--red2);
-      background: rgba(239,82,98,.07);
-      border-color: rgba(239,82,98,.18);
-    }
-
-    .tf-direction.wait {
-      color: var(--amber);
-      background: rgba(233,168,59,.07);
-      border-color: rgba(233,168,59,.18);
-    }
-
-    .bar {
-      height: 5px;
-      margin: 15px 0;
-
-      border-radius: 99px;
-
-      background: #080b0f;
-      overflow: hidden;
-
-      display: flex;
-      gap: 2px;
-    }
-
-    .bar-buy {
-      background: var(--green);
-      height: 100%;
-      transition: width .4s ease;
-    }
-
-    .bar-sell {
-      background: var(--red);
-      height: 100%;
-      transition: width .4s ease;
-    }
-
-    .tf-score {
-      display: flex;
-      justify-content: space-between;
-      color: var(--muted);
-      font-size: 10px;
-    }
-
-    .tf-score strong {
-      color: var(--text);
-    }
-
-    .metrics {
-      display: grid;
-      grid-template-columns:
-        repeat(2, minmax(0,1fr));
-
-      gap: 8px;
-
-      margin-top: 12px;
-    }
-
-    .metric {
-      padding: 9px;
-
-      border:
-        1px solid rgba(255,255,255,.055);
-
-      border-radius: 9px;
-
-      background:
-        rgba(0,0,0,.14);
-    }
-
-    .metric-label {
-      color: var(--dim);
-      font-size: 8px;
-      text-transform: uppercase;
-      letter-spacing: .1em;
-    }
-
-    .metric-value {
-      margin-top: 4px;
-
-      color: var(--text);
-      font-size: 11px;
-      font-weight: 800;
-
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    /* =========================================================
-       TRADE PLAN
-       ========================================================= */
-
-    .trade-plan {
-      border:
-        1px solid rgba(214,175,94,.24);
-
-      background:
-        radial-gradient(
-          circle at 100% 0,
-          rgba(214,175,94,.08),
-          transparent 30%
-        ),
-        linear-gradient(
-          145deg,
-          #11161d,
-          #0c1015
-        );
-    }
-
-    .plan-status {
-      display: inline-flex;
-      align-items: center;
-      gap: 7px;
-
-      padding: 7px 10px;
-
-      border-radius: 8px;
-
-      font-size: 9px;
-      font-weight: 900;
-      letter-spacing: .1em;
-      text-transform: uppercase;
-
-      border: 1px solid var(--border);
-    }
-
-    .plan-status.ready {
-      color: var(--green2);
-      border-color: rgba(32,201,130,.22);
-      background: rgba(32,201,130,.06);
-    }
-
-    .plan-status.blocked {
-      color: var(--red2);
-      border-color: rgba(239,82,98,.22);
-      background: rgba(239,82,98,.06);
-    }
-
-    .plan-status.wait {
-      color: var(--amber);
-      border-color: rgba(233,168,59,.22);
-      background: rgba(233,168,59,.06);
-    }
-
-    .plan-main {
-      display: grid;
-      grid-template-columns:
-        1.1fr .9fr;
-
-      gap: 16px;
-    }
-
-    .entry-box {
-      display: flex;
-      align-items: baseline;
-      gap: 10px;
-    }
-
-    .entry-label {
-      color: var(--muted);
-      font-size: 10px;
-      text-transform: uppercase;
-      letter-spacing: .1em;
-    }
-
-    .entry-price {
-      font-size: 35px;
-      font-weight: 900;
-      letter-spacing: -.04em;
-    }
-
-    .plan-side {
-      display: grid;
-      grid-template-columns:
-        repeat(3,1fr);
-
-      gap: 8px;
-    }
-
-    .level {
-      padding: 11px 9px;
-
-      border:
-        1px solid var(--border);
-
-      border-radius: 10px;
-
-      background: rgba(0,0,0,.15);
-    }
-
-    .level small {
-      display: block;
-
-      color: var(--dim);
-      font-size: 8px;
-
-      text-transform: uppercase;
-      letter-spacing: .1em;
-    }
-
-    .level strong {
-      display: block;
-      margin-top: 6px;
-
-      font-size: 14px;
-      font-weight: 900;
-    }
-
-    .level.sl strong {
-      color: var(--red2);
-    }
-
-    .level.tp strong {
-      color: var(--green2);
-    }
-
-    .plan-footer {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 7px;
-
-      margin-top: 14px;
-    }
-
-    /* =========================================================
-       S/R
-       ========================================================= */
-
-    .sr-layout {
-      display: grid;
-      grid-template-columns:
-        repeat(2,minmax(0,1fr));
-
-      gap: 10px;
-    }
-
-    .sr-box {
-      padding: 16px;
-
-      border-radius: 13px;
-
-      border: 1px solid var(--border);
-
-      background: rgba(0,0,0,.14);
-    }
-
-    .sr-box.support {
-      border-color: rgba(32,201,130,.18);
-    }
-
-    .sr-box.resistance {
-      border-color: rgba(239,82,98,.18);
-    }
-
-    .sr-label {
-      color: var(--dim);
-      font-size: 9px;
-      text-transform: uppercase;
-      letter-spacing: .12em;
-    }
-
-    .sr-price {
-      margin-top: 7px;
-
-      font-size: 27px;
-      font-weight: 900;
-    }
-
-    .support .sr-price {
-      color: var(--green2);
-    }
-
-    .resistance .sr-price {
-      color: var(--red2);
-    }
-
-    .sr-distance {
-      margin-top: 4px;
-      color: var(--muted);
-      font-size: 10px;
-    }
-
-    .sr-position {
-      margin-top: 12px;
-
-      padding: 10px;
-
-      border:
-        1px solid var(--border);
-
-      border-radius: 9px;
-
-      background: rgba(255,255,255,.018);
-
-      color: var(--text);
-
-      font-size: 10px;
-      font-weight: 800;
-
-      text-transform: uppercase;
-      letter-spacing: .07em;
-    }
-
-    /* =========================================================
-       HOLD / CONTEXT
-       ========================================================= */
-
-    .hold-card {
-      display: grid;
-      grid-template-columns:
-        1fr auto;
-
-      align-items: center;
-      gap: 15px;
-    }
-
-    .hold-big {
-      font-size: 25px;
-      font-weight: 900;
-    }
-
-    .hold-big.buy {
-      color: var(--green2);
-    }
-
-    .hold-big.sell {
-      color: var(--red2);
-    }
-
-    .hold-big.neutral {
-      color: var(--amber);
-    }
-
-    .hold-permission {
-      color: var(--muted);
-      font-size: 10px;
-      margin-top: 5px;
-    }
-
-    .context-pill {
-      padding: 10px 12px;
-
-      border-radius: 10px;
-
-      border: 1px solid var(--border);
-
-      color: var(--gold2);
-
-      font-size: 10px;
-      font-weight: 900;
-      letter-spacing: .08em;
-    }
-
-    /* =========================================================
-       ROADBLOCK
-       ========================================================= */
-
-    .roadblock {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 10px;
-
-      padding: 12px 13px;
-
-      border:
-        1px solid var(--border);
-
-      border-radius: 11px;
-
-      background: rgba(0,0,0,.14);
-    }
-
-    .roadblock-left {
-      min-width: 0;
-    }
-
-    .roadblock-name {
-      color: var(--muted);
-      font-size: 9px;
-      text-transform: uppercase;
-      letter-spacing: .1em;
-    }
-
-    .roadblock-price {
-      margin-top: 4px;
-      font-size: 15px;
-      font-weight: 900;
-    }
-
-    .roadblock-clear {
-      color: var(--green2);
-    }
-
-    .roadblock-warning {
-      color: var(--amber);
-    }
-
-    /* =========================================================
-       SETUP
-       ========================================================= */
-
-    .setup {
-      display: grid;
-      grid-template-columns:
-        repeat(2,minmax(0,1fr));
-
-      gap: 10px;
-    }
-
-    .setup-box {
-      border:
-        1px solid var(--border);
-
-      border-radius: 12px;
-
-      padding: 14px;
-
-      background: rgba(0,0,0,.13);
-    }
-
-    .setup-head {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-
-    .setup-dir {
-      font-size: 12px;
-      font-weight: 900;
-      letter-spacing: .1em;
-    }
-
-    .setup-dir.buy {
-      color: var(--green2);
-    }
-
-    .setup-dir.sell {
-      color: var(--red2);
-    }
-
-    .setup-type {
-      color: var(--gold2);
-      font-size: 9px;
-      font-weight: 800;
-    }
-
-    .setup-list {
-      margin: 12px 0 0;
-      padding: 0;
-
-      list-style: none;
-    }
-
-    .setup-list li {
-      display: flex;
-      justify-content: space-between;
-      gap: 12px;
-
-      padding: 8px 0;
-
-      border-bottom:
-        1px solid rgba(255,255,255,.045);
-
-      color: var(--muted);
-
-      font-size: 10px;
-    }
-
-    .setup-list li:last-child {
-      border-bottom: 0;
-    }
-
-    .setup-list b {
-      color: var(--text);
-      text-align: right;
-    }
-
-    /* =========================================================
-       REASONS
-       ========================================================= */
-
-    .reasons {
-      display: grid;
-      gap: 6px;
-    }
-
-    .reason {
-      display: flex;
-      align-items: flex-start;
-      gap: 8px;
-
-      padding: 9px 10px;
-
-      border:
-        1px solid rgba(255,255,255,.045);
-
-      border-radius: 9px;
-
-      background: rgba(0,0,0,.13);
-
-      color: var(--muted);
-      font-size: 10px;
-      line-height: 1.4;
-    }
-
-    .reason::before {
-      content: "•";
-      color: var(--gold);
-      font-weight: 900;
-    }
-
-    /* =========================================================
-       CHART
-       ========================================================= */
-
-    .chart-wrap {
-      position: relative;
-
-      height: 260px;
-
-      border:
-        1px solid var(--border);
-
-      border-radius: 13px;
-
-      overflow: hidden;
-
-      background:
-        linear-gradient(
-          180deg,
-          #0b0f14,
-          #080b0f
-        );
-    }
-
-    canvas {
-      display: block;
-      width: 100%;
-      height: 100%;
-    }
-
-    .chart-overlay {
-      position: absolute;
-
-      top: 10px;
-      left: 10px;
-
-      display: flex;
-      gap: 6px;
-
-      pointer-events: none;
-    }
-
-    /* =========================================================
-       DIAGNOSTICS
-       ========================================================= */
-
-    .diagnostics {
-      display: grid;
-      grid-template-columns:
-        repeat(4,minmax(0,1fr));
-
-      gap: 7px;
-    }
-
-    .diag {
-      padding: 10px;
-
-      border:
-        1px solid rgba(255,255,255,.05);
-
-      border-radius: 9px;
-
-      background: rgba(0,0,0,.13);
-    }
-
-    .diag-label {
-      color: var(--dim);
-      font-size: 8px;
-      text-transform: uppercase;
-      letter-spacing: .1em;
-    }
-
-    .diag-value {
-      margin-top: 5px;
-
-      color: var(--text);
-      font-size: 10px;
-      font-weight: 800;
-
-      word-break: break-word;
-    }
-
-    /* =========================================================
-       PUSH
-       ========================================================= */
-
-    .push-card {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-
-      gap: 15px;
-    }
-
-    .push-copy strong {
-      display: block;
-
-      font-size: 11px;
-      text-transform: uppercase;
-      letter-spacing: .1em;
-    }
-
-    .push-copy p {
-      margin: 5px 0 0;
-
-      color: var(--muted);
-      font-size: 10px;
-      line-height: 1.45;
-    }
-
-    .push-btn {
-      border: 0;
-
-      padding: 11px 15px;
-
-      border-radius: 10px;
-
-      cursor: pointer;
-
-      color: #080a0d;
-
-      background:
-        linear-gradient(
-          135deg,
-          var(--gold2),
-          var(--gold)
-        );
-
-      font-size: 10px;
-      font-weight: 900;
-      letter-spacing: .08em;
-      text-transform: uppercase;
-
-      white-space: nowrap;
-    }
-
-    .push-btn:disabled {
-      opacity: .5;
-      cursor: not-allowed;
-    }
-
-    .push-status {
-      margin-top: 8px;
-
-      color: var(--dim);
-      font-size: 9px;
-    }
-
-    /* =========================================================
-       FOOTER
-       ========================================================= */
-
-    footer {
-      padding: 28px 3px 10px;
-
-      text-align: center;
-
-      color: var(--dim);
-
-      font-size: 9px;
-      line-height: 1.6;
-
-      letter-spacing: .04em;
-    }
-
-    /* =========================================================
-       TOAST
-       ========================================================= */
-
-    .toast {
-      position: fixed;
-
-      left: 50%;
-      bottom:
-        calc(
-          18px +
-          env(safe-area-inset-bottom)
-        );
-
-      transform:
-        translate(-50%, 20px);
-
-      opacity: 0;
-
-      pointer-events: none;
-
-      z-index: 9999;
-
-      max-width:
-        min(92vw, 420px);
-
-      padding: 11px 14px;
-
-      border:
-        1px solid var(--border2);
-
-      border-radius: 10px;
-
-      background: #11161d;
-
-      color: var(--text);
-
-      box-shadow: var(--shadow);
-
-      font-size: 10px;
-      font-weight: 700;
-
-      transition:
-        opacity .2s ease,
-        transform .2s ease;
-    }
-
-    .toast.show {
-      opacity: 1;
-      transform:
-        translate(-50%, 0);
-    }
-
-    /* =========================================================
-       RESPONSIVE
-       ========================================================= */
-
-    @media (max-width: 820px) {
-      .grid-3 {
-        grid-template-columns:
-          1fr;
-      }
-
-      .hero-grid {
-        grid-template-columns:
-          1fr 1fr;
-      }
-
-      .plan-main {
-        grid-template-columns:
-          1fr;
-      }
-
-      .diagnostics {
-        grid-template-columns:
-          repeat(2,1fr);
-      }
-    }
-
-    @media (max-width: 620px) {
-      .app {
-        padding-left: 10px;
-        padding-right: 10px;
-      }
-
-      .topbar {
-        align-items: flex-start;
-      }
-
-      .brand-mark {
-        width: 38px;
-        height: 38px;
-      }
-
-      .brand h1 {
-        font-size: 12px;
-      }
-
-      .brand p {
-        font-size: 9px;
-      }
-
-      .status-strip {
-        grid-template-columns:
-          repeat(2,1fr);
-      }
-
-      .hero {
-        padding: 16px;
-        border-radius: 18px;
-      }
-
-      .hero-top {
-        flex-direction: column;
-      }
-
-      .hero-signal {
-        width: 100%;
-        text-align: left;
-      }
-
-      .score-row {
-        justify-content: flex-start;
-      }
-
-      .hero-grid {
-        grid-template-columns:
-          1fr;
-      }
-
-      .sr-layout,
-      .setup {
-        grid-template-columns:
-          1fr;
-      }
-
-      .plan-side {
-        grid-template-columns:
-          repeat(3,1fr);
-      }
-
-      .hold-card {
-        grid-template-columns:
-          1fr;
-      }
-
-      .context-pill {
-        width: fit-content;
-      }
-
-      .push-card {
-        align-items: flex-start;
-        flex-direction: column;
-      }
-
-      .push-btn {
-        width: 100%;
-      }
-
-      .chart-wrap {
-        height: 220px;
-      }
-    }
-  </style>
-</head>
-
-<body>
-
-<div class="app">
-
-  <!-- =======================================================
-       TOP
-       ======================================================== -->
-
-  <header class="topbar">
-
-    <div class="brand">
-
-      <div class="brand-mark">
-        ✦
-      </div>
-
-      <div>
-        <h1>Institutional Gold Terminal</h1>
-        <p>
-          XAU/USD · M15 confirmation · M5 trigger · H1 context
-        </p>
-      </div>
-
-    </div>
-
-    <div class="top-actions">
-
-      <button
-        class="icon-btn"
-        id="refreshBtn"
-        title="Refresh"
-      >
-        ↻
-      </button>
-
-    </div>
-
-  </header>
-
-  <!-- =======================================================
-       STATUS
-       ======================================================== -->
-
-  <section class="status-strip">
-
-    <div class="status-item">
-      <span class="status-label">System</span>
-      <span class="status-value">
-        <i class="dot" id="systemDot"></i>
-        <span id="systemStatus">Starting</span>
-      </span>
-    </div>
-
-    <div class="status-item">
-      <span class="status-label">Market Data</span>
-      <span class="status-value">
-        <i class="dot" id="apiDot"></i>
-        <span id="apiStatus">Checking</span>
-      </span>
-    </div>
-
-    <div class="status-item">
-      <span class="status-label">Signal</span>
-      <span class="status-value">
-        <i class="dot" id="signalDot"></i>
-        <span id="signalStatus">WAIT</span>
-      </span>
-    </div>
-
-    <div class="status-item">
-      <span class="status-label">MYT</span>
-      <span class="status-value" id="clock">
-        --
-      </span>
-    </div>
-
-  </section>
-
-  <!-- =======================================================
-       HERO
-       ======================================================== -->
-
-  <section class="hero">
-
-    <div class="hero-top">
-
-      <div>
-
-        <div class="instrument">
-          XAU / USD · SPOT GOLD
-        </div>
-
-        <div
-          class="price"
-          id="price"
-        >
-          --
-        </div>
-
-        <div class="price-meta">
-
-          <span
-            class="source-badge"
-            id="sourceBadge"
-          >
-            DATA --
-          </span>
-
-          <span id="priceAge">
-            --
-          </span>
-
-          <span>•</span>
-
-          <span id="lastUpdate">
-            --
-          </span>
-
-        </div>
-
-      </div>
-
-      <div class="hero-signal">
-
-        <div class="signal-caption">
-          SCALP SIGNAL
-        </div>
-
-        <div
-          class="signal wait"
-          id="heroSignal"
-        >
-          WAIT
-        </div>
-
-        <div class="score-row">
-
-          <span class="score">
-            SCORE
-            <span id="heroScore">0</span>/100
-          </span>
-
-        </div>
-
-      </div>
-
-    </div>
-
-    <div class="hero-grid">
-
-      <div class="mini-panel">
-
-        <div class="mini-title">
-          Execution
-        </div>
-
-        <div
-          class="mini-value"
-          id="execution"
-        >
-          WAIT
-        </div>
-
-        <div
-          class="mini-sub"
-          id="setupType"
-        >
-          NO ALIGNMENT
-        </div>
-
-      </div>
-
-      <div class="mini-panel">
-
-        <div class="mini-title">
-          Context
-        </div>
-
-        <div
-          class="mini-value"
-          id="context"
-        >
-          NEUTRAL
-        </div>
-
-        <div
-          class="mini-sub"
-          id="holdPermission"
-        >
-          NO HOLD
-        </div>
-
-      </div>
-
-    </div>
-
-  </section>
-
-  <!-- =======================================================
-       TIMEFRAME ENGINE
-       ======================================================== -->
-
-  <section class="section">
-
-    <div class="section-head">
-
-      <div class="section-title">
-        Timeframe Engine
-      </div>
-
-      <div class="section-note">
-        M15 → M5 alignment
-      </div>
-
-    </div>
-
-    <div class="grid-3">
-
-      <!-- H1 -->
-
-      <article
-        class="card tf-card"
-        id="h1Card"
-      >
-
-        <div class="tf-top">
-
-          <div class="tf-name">
-            H1
-          </div>
-
-          <div
-            class="tf-direction wait"
-            id="h1Direction"
-          >
-            WAIT
-          </div>
-
-        </div>
-
-        <div class="bar">
-          <div
-            class="bar-buy"
-            id="h1Bar"
-            style="width:50%"
-          ></div>
-        </div>
-
-        <div class="tf-score">
-
-          <span>
-            HOLD BIAS
-          </span>
-
-          <strong id="h1HoldBias">
-            NEUTRAL
-          </strong>
-
-        </div>
-
-        <div class="metrics">
-
-          <div class="metric">
-            <div class="metric-label">
-              EMA50
-            </div>
-            <div
-              class="metric-value"
-              id="h1Ema50"
-            >
-              --
-            </div>
-          </div>
-
-          <div class="metric">
-            <div class="metric-label">
-              EMA200
-            </div>
-            <div
-              class="metric-value"
-              id="h1Ema200"
-            >
-              --
-            </div>
-          </div>
-
-          <div class="metric">
-            <div class="metric-label">
-              ATR
-            </div>
-            <div
-              class="metric-value"
-              id="h1Atr"
-            >
-              --
-            </div>
-          </div>
-
-          <div class="metric">
-            <div class="metric-label">
-              Permission
-            </div>
-            <div
-              class="metric-value"
-              id="h1Permission"
-            >
-              NO HOLD
-            </div>
-          </div>
-
-        </div>
-
-      </article>
-
-      <!-- M15 -->
-
-      <article
-        class="card tf-card"
-        id="m15Card"
-      >
-
-        <div class="tf-top">
-
-          <div class="tf-name">
-            M15
-          </div>
-
-          <div
-            class="tf-direction wait"
-            id="m15Direction"
-          >
-            WAIT
-          </div>
-
-        </div>
-
-        <div class="bar">
-
-          <div
-            class="bar-buy"
-            id="m15BuyBar"
-            style="width:0%"
-          ></div>
-
-          <div
-            class="bar-sell"
-            id="m15SellBar"
-            style="width:0%"
-          ></div>
-
-        </div>
-
-        <div class="tf-score">
-
-          <span>
-            BUY
-            <strong id="m15Buy">
-              0
-            </strong>
-          </span>
-
-          <span>
-            SELL
-            <strong id="m15Sell">
-              0
-            </strong>
-          </span>
-
-        </div>
-
-        <div class="metrics">
-
-          <div class="metric">
-            <div class="metric-label">
-              EMA20
-            </div>
-            <div
-              class="metric-value"
-              id="m15Ema20"
-            >
-              --
-            </div>
-          </div>
-
-          <div class="metric">
-            <div class="metric-label">
-              EMA50
-            </div>
-            <div
-              class="metric-value"
-              id="m15Ema50"
-            >
-              --
-            </div>
-          </div>
-
-          <div class="metric">
-            <div class="metric-label">
-              RSI
-            </div>
-            <div
-              class="metric-value"
-              id="m15Rsi"
-            >
-              --
-            </div>
-          </div>
-
-          <div class="metric">
-            <div class="metric-label">
-              BOS
-            </div>
-            <div
-              class="metric-value"
-              id="m15Bos"
-            >
-              --
-            </div>
-          </div>
-
-          <div class="metric">
-            <div class="metric-label">
-              CHOCH
-            </div>
-            <div
-              class="metric-value"
-              id="m15Choch"
-            >
-              --
-            </div>
-          </div>
-
-          <div class="metric">
-            <div class="metric-label">
-              Momentum
-            </div>
-            <div
-              class="metric-value"
-              id="m15Momentum"
-            >
-              --
-            </div>
-          </div>
-
-        </div>
-
-      </article>
-
-      <!-- M5 -->
-
-      <article
-        class="card tf-card"
-        id="m5Card"
-      >
-
-        <div class="tf-top">
-
-          <div class="tf-name">
-            M5
-          </div>
-
-          <div
-            class="tf-direction wait"
-            id="m5Direction"
-          >
-            WAIT
-          </div>
-
-        </div>
-
-        <div class="bar">
-
-          <div
-            class="bar-buy"
-            id="m5BuyBar"
-            style="width:0%"
-          ></div>
-
-          <div
-            class="bar-sell"
-            id="m5SellBar"
-            style="width:0%"
-          ></div>
-
-        </div>
-
-        <div class="tf-score">
-
-          <span>
-            BUY
-            <strong id="m5Buy">
-              0
-            </strong>
-          </span>
-
-          <span>
-            SELL
-            <strong id="m5Sell">
-              0
-            </strong>
-          </span>
-
-        </div>
-
-        <div class="metrics">
-
-          <div class="metric">
-            <div class="metric-label">
-              EMA9
-            </div>
-            <div
-              class="metric-value"
-              id="m5Ema9"
-            >
-              --
-            </div>
-          </div>
-
-          <div class="metric">
-            <div class="metric-label">
-              EMA20
-            </div>
-            <div
-              class="metric-value"
-              id="m5Ema20"
-            >
-              --
-            </div>
-          </div>
-
-          <div class="metric">
-            <div class="metric-label">
-              RSI
-            </div>
-            <div
-              class="metric-value"
-              id="m5Rsi"
-            >
-              --
-            </div>
-          </div>
-
-          <div class="metric">
-            <div class="metric-label">
-              BOS
-            </div>
-            <div
-              class="metric-value"
-              id="m5Bos"
-            >
-              --
-            </div>
-          </div>
-
-          <div class="metric">
-            <div class="metric-label">
-              CHOCH
-            </div>
-            <div
-              class="metric-value"
-              id="m5Choch"
-            >
-              --
-            </div>
-          </div>
-
-          <div class="metric">
-            <div class="metric-label">
-              Momentum
-            </div>
-            <div
-              class="metric-value"
-              id="m5Momentum"
-            >
-              --
-            </div>
-          </div>
-
-        </div>
-
-      </article>
-
-    </div>
-
-  </section>
-
-  <!-- =======================================================
-       TRADE PLAN
-       ======================================================== -->
-
-  <section class="section">
-
-    <div class="section-head">
-
-      <div class="section-title">
-        Fixed Trade Plan
-      </div>
-
-      <div
-        class="section-note"
-        id="planSource"
-      >
-        NO PLAN
-      </div>
-
-    </div>
-
-    <article class="card trade-plan">
-
-      <div class="card-title">
-
-        <strong>
-          Execution Matrix
-        </strong>
-
-        <div
-          class="plan-status wait"
-          id="planStatus"
-        >
-          WAIT
-        </div>
-
-      </div>
-
-      <div class="plan-main">
-
-        <div>
-
-          <div class="entry-box">
-
-            <span class="entry-label">
-              Entry
-            </span>
-
-            <span
-              class="entry-price"
-              id="entry"
-            >
-              --
-            </span>
-
-          </div>
-
-          <div class="plan-footer">
-
-            <span
-              class="tiny-badge"
-              id="planSetup"
-            >
-              NO SETUP
-            </span>
-
-            <span
-              class="tiny-badge"
-              id="planRR"
-            >
-              RR --
-            </span>
-
-            <span
-              class="tiny-badge"
-              id="planRisk"
-            >
-              RISK --
-            </span>
-
-          </div>
-
-        </div>
-
-        <div class="plan-side">
-
-          <div class="level sl">
-
-            <small>
-              Stop Loss
-            </small>
-
-            <strong id="sl">
-              --
-            </strong>
-
-          </div>
-
-          <div class="level tp">
-
-            <small>
-              TP1
-            </small>
-
-            <strong id="tp1">
-              --
-            </strong>
-
-          </div>
-
-          <div class="level tp">
-
-            <small>
-              TP2
-            </small>
-
-            <strong id="tp2">
-              --
-            </strong>
-
-          </div>
-
-        </div>
-
-      </div>
-
-      <div class="plan-footer">
-
-        <span
-          class="tiny-badge"
-          id="tp3Badge"
-        >
-          TP3 --
-        </span>
-
-        <span
-          class="tiny-badge"
-          id="targetBadge"
-        >
-          H1 TARGET --
-        </span>
-
-        <span
-          class="tiny-badge"
-          id="targetValidBadge"
-        >
-          TARGET --
-        </span>
-
-        <span
-          class="tiny-badge"
-          id="lockedBadge"
-        >
-          NOT LOCKED
-        </span>
-
-      </div>
-
-    </article>
-
-  </section>
-
-  <!-- =======================================================
-       H1 S/R
-       ======================================================== -->
-
-  <section class="section">
-
-    <div class="section-head">
-
-      <div class="section-title">
-        H1 Structural Map
-      </div>
-
-      <div
-        class="section-note"
-        id="srContext"
-      >
-        --
-      </div>
-
-    </div>
-
-    <div class="sr-layout">
-
-      <article class="card sr-box support">
-
-        <div class="sr-label">
-          H1 Support
-        </div>
-
-        <div
-          class="sr-price"
-          id="support"
-        >
-          --
-        </div>
-
-        <div
-          class="sr-distance"
-          id="supportDistance"
-        >
-          --
-        </div>
-
-        <div
-          class="sr-position"
-          id="buyFilter"
-        >
-          BUY FILTER --
-        </div>
-
-      </article>
-
-      <article class="card sr-box resistance">
-
-        <div class="sr-label">
-          H1 Resistance
-        </div>
-
-        <div
-          class="sr-price"
-          id="resistance"
-        >
-          --
-        </div>
-
-        <div
-          class="sr-distance"
-          id="resistanceDistance"
-        >
-          --
-        </div>
-
-        <div
-          class="sr-position"
-          id="sellFilter"
-        >
-          SELL FILTER --
-        </div>
-
-      </article>
-
-    </div>
-
-  </section>
-
-  <!-- =======================================================
-       HOLD
-       ======================================================== -->
-
-  <section class="section">
-
-    <div class="section-head">
-
-      <div class="section-title">
-        H1 Hold Context
-      </div>
-
-      <div class="section-note">
-        Context only
-      </div>
-
-    </div>
-
-    <article class="card hold-card">
-
-      <div>
-
-        <div
-          class="hold-big neutral"
-          id="holdBias"
-        >
-          NEUTRAL
-        </div>
-
-        <div
-          class="hold-permission"
-          id="holdText"
-        >
-          H1 is context for holding; M15 + M5 drive scalp entry.
-        </div>
-
-      </div>
-
-      <div
-        class="context-pill"
-        id="contextPill"
-      >
-        NEUTRAL
-      </div>
-
-    </article>
-
-  </section>
-
-  <!-- =======================================================
-       ROADBLOCK
-       ======================================================== -->
-
-  <section class="section">
-
-    <div class="section-head">
-
-      <div class="section-title">
-        Target Roadblock
-      </div>
-
-      <div class="section-note">
-        M15 / M5
-      </div>
-
-    </div>
-
-    <article class="card">
-
-      <div
-        class="roadblock"
-        id="roadblockBox"
-      >
-
-        <div class="roadblock-left">
-
-          <div class="roadblock-name">
-            Nearest obstacle
-          </div>
-
-          <div
-            class="roadblock-price roadblock-clear"
-            id="roadblockPrice"
-          >
-            CLEAR
-          </div>
-
-        </div>
-
-        <span
-          class="tiny-badge"
-          id="roadblockBadge"
-        >
-          NO ROADBLOCK
-        </span>
-
-      </div>
-
-    </article>
-
-  </section>
-
-  <!-- =======================================================
-       SETUP ANALYSIS
-       ======================================================== -->
-
-  <section class="section">
-
-    <div class="section-head">
-
-      <div class="section-title">
-        Setup Analysis
-      </div>
-
-      <div class="section-note">
-        Continuation / reversal
-      </div>
-
-    </div>
-
-    <div class="setup">
-
-      <article class="setup-box">
-
-        <div class="setup-head">
-
-          <div
-            class="setup-dir buy"
-          >
-            BUY
-          </div>
-
-          <div
-            class="setup-type"
-            id="buySetupType"
-          >
-            NONE
-          </div>
-
-        </div>
-
-        <ul class="setup-list">
-
-          <li>
-            <span>Aligned</span>
-            <b id="buyAligned">NO</b>
-          </li>
-
-          <li>
-            <span>Continuation</span>
-            <b id="buyContinuation">NO</b>
-          </li>
-
-          <li>
-            <span>Reversal</span>
-            <b id="buyReversal">NO</b>
-          </li>
-
-          <li>
-            <span>Location</span>
-            <b id="buyLocation">--</b>
-          </li>
-
-          <li>
-            <span>H1 Bias</span>
-            <b id="buyH1Bias">--</b>
-          </li>
-
-          <li>
-            <span>Target</span>
-            <b id="buyTarget">--</b>
-          </li>
-
-        </ul>
-
-      </article>
-
-      <article class="setup-box">
-
-        <div class="setup-head">
-
-          <div
-            class="setup-dir sell"
-          >
-            SELL
-          </div>
-
-          <div
-            class="setup-type"
-            id="sellSetupType"
-          >
-            NONE
-          </div>
-
-        </div>
-
-        <ul class="setup-list">
-
-          <li>
-            <span>Aligned</span>
-            <b id="sellAligned">NO</b>
-          </li>
-
-          <li>
-            <span>Continuation</span>
-            <b id="sellContinuation">NO</b>
-          </li>
-
-          <li>
-            <span>Reversal</span>
-            <b id="sellReversal">NO</b>
-          </li>
-
-          <li>
-            <span>Location</span>
-            <b id="sellLocation">--</b>
-          </li>
-
-          <li>
-            <span>H1 Bias</span>
-            <b id="sellH1Bias">--</b>
-          </li>
-
-          <li>
-            <span>Target</span>
-            <b id="sellTarget">--</b>
-          </li>
-
-        </ul>
-
-      </article>
-
-    </div>
-
-  </section>
-
-  <!-- =======================================================
-       REASONS
-       ======================================================== -->
-
-  <section class="section">
-
-    <div class="section-head">
-
-      <div class="section-title">
-        Signal Intelligence
-      </div>
-
-      <div class="section-note">
-        Engine reasoning
-      </div>
-
-    </div>
-
-    <article class="card">
-
-      <div
-        class="reasons"
-        id="reasons"
-      >
-
-        <div class="reason">
-          Waiting for market data...
-        </div>
-
-      </div>
-
-    </article>
-
-  </section>
-
-  <!-- =======================================================
-       CHART
-       ======================================================== -->
-
-  <section class="section">
-
-    <div class="section-head">
-
-      <div class="section-title">
-        M5 Price Structure
-      </div>
-
-      <div
-        class="section-note"
-        id="chartInfo"
-      >
-        Last 60 candles
-      </div>
-
-    </div>
-
-    <article class="chart-wrap">
-
-      <div class="chart-overlay">
-
-        <span class="tiny-badge">
-          M5
-        </span>
-
-        <span
-          class="tiny-badge"
-          id="chartSignal"
-        >
-          WAIT
-        </span>
-
-      </div>
-
-      <canvas id="chart"></canvas>
-
-    </article>
-
-  </section>
-
-  <!-- =======================================================
-       DIAGNOSTICS
-       ======================================================== -->
-
-  <section class="section">
-
-    <div class="section-head">
-
-      <div class="section-title">
-        Diagnostics
-      </div>
-
-      <div class="section-note">
-        Data integrity
-      </div>
-
-    </div>
-
-    <article class="card">
-
-      <div class="diagnostics">
-
-        <div class="diag">
-          <div class="diag-label">
-            M5 Candles
-          </div>
-          <div
-            class="diag-value"
-            id="diagM5"
-          >
-            --
-          </div>
-        </div>
-
-        <div class="diag">
-          <div class="diag-label">
-            M15 Candles
-          </div>
-          <div
-            class="diag-value"
-            id="diagM15"
-          >
-            --
-          </div>
-        </div>
-
-        <div class="diag">
-          <div class="diag-label">
-            H1 Candles
-          </div>
-          <div
-            class="diag-value"
-            id="diagH1"
-          >
-            --
-          </div>
-        </div>
-
-        <div class="diag">
-          <div class="diag-label">
-            Data Source
-          </div>
-          <div
-            class="diag-value"
-            id="diagSource"
-          >
-            --
-          </div>
-        </div>
-
-        <div class="diag">
-          <div class="diag-label">
-            M5 Cache
-          </div>
-          <div
-            class="diag-value"
-            id="diagCacheM5"
-          >
-            --
-          </div>
-        </div>
-
-        <div class="diag">
-          <div class="diag-label">
-            M15 Cache
-          </div>
-          <div
-            class="diag-value"
-            id="diagCacheM15"
-          >
-            --
-          </div>
-        </div>
-
-        <div class="diag">
-          <div class="diag-label">
-            H1 Cache
-          </div>
-          <div
-            class="diag-value"
-            id="diagCacheH1"
-          >
-            --
-          </div>
-        </div>
-
-        <div class="diag">
-          <div class="diag-label">
-            Signal Candle
-          </div>
-          <div
-            class="diag-value"
-            id="diagCandle"
-          >
-            --
-          </div>
-        </div>
-
-      </div>
-
-    </article>
-
-  </section>
-
-  <!-- =======================================================
-       PUSH
-       ======================================================== -->
-
-  <section class="section">
-
-    <div class="section-head">
-
-      <div class="section-title">
-        Server Push
-      </div>
-
-      <div class="section-note">
-        Background alerts
-      </div>
-
-    </div>
-
-    <article class="card">
-
-      <div class="push-card">
-
-        <div class="push-copy">
-
-          <strong>
-            XAU/USD Entry Alerts
-          </strong>
-
-          <p>
-            Receive BUY / SELL entry alerts from the server
-            even when the dashboard is not open.
-          </p>
-
-          <div
-            class="push-status"
-            id="pushStatus"
-          >
-            Push not enabled.
-          </div>
-
-        </div>
-
-        <button
-          class="push-btn"
-          id="pushBtn"
-        >
-          ENABLE PUSH
-        </button>
-
-      </div>
-
-    </article>
-
-  </section>
-
-  <footer>
-
-    INSTITUTIONAL GOLD TERMINAL<br />
-
-    M15 + M5 alignment drives scalp signal.
-    H1 provides hold/context and structural target.
-
-    <br /><br />
-
-    Data source: Twelve Data · Cache: Redis + local
-
-  </footer>
-
-</div>
-
-<div
-  class="toast"
-  id="toast"
->
-  --
-</div>
-
-<script>
-"use strict";
-
-/* ============================================================
-   CONFIG
-   ============================================================ */
-
-const API = "/api/scalp";
-
-const REFRESH_MS = 15000;
-
-let lastData = null;
-let refreshTimer = null;
-
-let pushRegistration = null;
-
-/* ============================================================
-   HELPERS
-   ============================================================ */
-
-const $ = id =>
-  document.getElementById(id);
-
-function text(id, value) {
-  const el = $(id);
-  if (el) el.textContent = value ?? "--";
-}
-
-function num(value, digits = 2) {
-  if (
-    value === null ||
-    value === undefined ||
-    !Number.isFinite(Number(value))
-  ) {
-    return "--";
-  }
-
-  return Number(value).toFixed(digits);
-}
-
-function yesNo(value) {
-  return value ? "YES" : "NO";
-}
-
-function directionClass(value) {
-  const v = String(value || "").toUpperCase();
-
-  if (v === "BUY") return "buy";
-  if (v === "SELL") return "sell";
-
-  return "wait";
-}
-
-function toast(message) {
-  const el = $("toast");
-
-  el.textContent = message;
-  el.classList.add("show");
-
-  clearTimeout(toast.timer);
-
-  toast.timer = setTimeout(() => {
-    el.classList.remove("show");
-  }, 2800);
-}
-
-function setDot(id, state) {
-  const el = $(id);
-
-  el.className = "dot";
-
-  if (state === "live") {
-    el.classList.add("live");
-  } else if (state === "warn") {
-    el.classList.add("warn");
-  } else if (state === "bad") {
-    el.classList.add("bad");
-  }
-}
-
-/* ============================================================
-   CLOCK
-   ============================================================ */
-
-function updateClock() {
-  const now = new Date();
-
-  const formatter =
-    new Intl.DateTimeFormat(
-      "en-MY",
-      {
-        timeZone: "Asia/Kuala_Lumpur",
-        hour: "2-digit",
-        minute: "2-digit",
-        second: "2-digit",
-        hour12: false
-      }
-    );
-
-  text("clock", formatter.format(now));
-}
-
-setInterval(updateClock, 1000);
-updateClock();
-
-/* ============================================================
-   GENERIC DIRECTION UI
-   ============================================================ */
-
-function setDirection(id, value) {
-  const el = $(id);
-
-  el.textContent = value || "WAIT";
-
-  el.classList.remove(
-    "buy",
-    "sell",
-    "wait"
-  );
-
-  el.classList.add(
-    directionClass(value)
-  );
-}
-
-function setCardDirection(id, value) {
-  const el = $(id);
-
-  el.classList.remove(
-    "buy",
-    "sell",
-    "wait"
-  );
-
-  el.classList.add(
-    directionClass(value)
-  );
-}
-
-/* ============================================================
-   API FETCH
-   ============================================================ */
-
-async function loadData() {
-
-  try {
-
-    text(
-      "systemStatus",
-      "Updating"
-    );
-
-    setDot(
-      "systemDot",
-      "warn"
-    );
-
-    const response =
-      await fetch(
-        `${API}?ts=${Date.now()}`,
-        {
-          cache: "no-store",
-          headers: {
-            "cache-control": "no-cache"
-          }
-        }
-      );
-
-    const data =
-      await response.json();
-
-    if (
-      !response.ok ||
-      data?.ok === false
-    ) {
-      throw new Error(
-        data?.error ||
-        `HTTP ${response.status}`
-      );
-    }
-
-    lastData = data;
-
-    render(data);
-
-    text(
-      "systemStatus",
-      "Online"
-    );
-
-    setDot(
-      "systemDot",
-      "live"
-    );
-
-    text(
-      "apiStatus",
-      data.stale
-        ? "CACHE"
-        : "LIVE"
-    );
-
-    setDot(
-      "apiDot",
-      data.stale
-        ? "warn"
-        : "live"
-    );
-
-  } catch (error) {
-
-    console.error(
-      "Dashboard API error:",
-      error
-    );
-
-    text(
-      "systemStatus",
-      "API Error"
-    );
-
-    text(
-      "apiStatus",
-      "ERROR"
-    );
-
-    setDot(
-      "systemDot",
-      "bad"
-    );
-
-    setDot(
-      "apiDot",
-      "bad"
-    );
-  }
-}
-
-/* ============================================================
-   RENDER
-   ============================================================ */
-
-function render(d) {
-
-  const live =
-    d.livePrice ||
-    {};
-
-  const price =
-    Number(
-      live.price ??
-      d.price
-    );
-
-  const signal =
-    String(
-      d.signal ||
-      "WAIT"
-    ).toUpperCase();
-
-  const score =
-    Number(
-      d.score || 0
-    );
-
-  const h1 =
-    d.h1 ||
-    {};
-
-  const m15 =
-    d.m15 ||
-    {};
-
-  const m5 =
-    d.m5 ||
-    {};
-
-  const plan =
-    d.tradePlan ||
-    {};
-
-  const sr =
-    d.srAnalysis ||
-    {};
-
-  const setup =
-    d.setupAnalysis ||
-    {};
-
-  const roadblocks =
-    d.roadblocks ||
-    {};
-
-  /* ========================================================
-     HERO
-     ======================================================== */
-
-  text(
-    "price",
-    Number.isFinite(price)
-      ? price.toFixed(2)
-      : "--"
-  );
-
-  const source =
-    live.source ||
-    d.dataSource ||
-    "UNKNOWN";
-
-  text(
-    "sourceBadge",
-    `DATA ${source}`
-  );
-
-  text(
-    "priceAge",
-    live.ageSeconds != null
-      ? `${live.ageSeconds}s age`
-      : "--"
-  );
-
-  text(
-    "lastUpdate",
-    d.timestamp
-      ? new Date(d.timestamp)
-          .toLocaleTimeString(
-            "en-MY",
-            {
-              hour12: false
-            }
-          )
-      : "--"
-  );
-
-  setDirection(
-    "heroSignal",
-    signal
-  );
-
-  text(
-    "heroScore",
-    score
-  );
-
-  text(
-    "execution",
-    d.execution ||
-    "WAIT"
-  );
-
-  text(
-    "setupType",
-    d.setupType ||
-    "NO ALIGNMENT"
-  );
-
-  text(
-    "context",
-    d.context ||
-    "NEUTRAL"
-  );
-
-  text(
-    "holdPermission",
-    h1.holdPermission ||
-    "NO HOLD"
-  );
-
-  /* ========================================================
-     SIGNAL DOT
-     ======================================================== */
-
-  text(
-    "signalStatus",
-    signal
-  );
-
-  setDot(
-    "signalDot",
-    signal === "BUY" ||
-    signal === "SELL"
-      ? "live"
-      : "warn"
-  );
-
-  /* ========================================================
-     H1
-     ======================================================== */
-
-  setDirection(
-    "h1Direction",
-    h1.direction
-  );
-
-  setCardDirection(
-    "h1Card",
-    h1.direction
-  );
-
-  text(
-    "h1HoldBias",
-    h1.holdBias ||
-    "NEUTRAL"
-  );
-
-  text(
-    "h1Ema50",
-    num(h1.ema50)
-  );
-
-  text(
-    "h1Ema200",
-    num(h1.ema200)
-  );
-
-  text(
-    "h1Atr",
-    num(h1.atr)
-  );
-
-  text(
-    "h1Permission",
-    h1.holdPermission ||
-    "NO HOLD"
-  );
-
-  const h1Direction =
-    String(
-      h1.direction ||
-      "WAIT"
-    ).toUpperCase();
-
-  const h1Bar =
-    $("h1Bar");
-
-  if (h1Direction === "BUY") {
-    h1Bar.style.width = "100%";
-  } else if (h1Direction === "SELL") {
-    h1Bar.style.width = "20%";
-  } else {
-    h1Bar.style.width = "50%";
-  }
-
-  /* ========================================================
-     M15
-     ======================================================== */
-
-  setDirection(
-    "m15Direction",
-    m15.confirmation ||
-    m15.direction
-  );
-
-  setCardDirection(
-    "m15Card",
-    m15.confirmation ||
-    m15.direction
-  );
-
-  text(
-    "m15Buy",
-    Math.round(
-      m15.buyScore || 0
-    )
-  );
-
-  text(
-    "m15Sell",
-    Math.round(
-      m15.sellScore || 0
-    )
-  );
-
-  $("m15BuyBar").style.width =
-    `${Math.min(
-      100,
-      Number(m15.buyScore || 0)
-    )}%`;
-
-  $("m15SellBar").style.width =
-    `${Math.min(
-      100,
-      Number(m15.sellScore || 0)
-    )}%`;
-
-  text(
-    "m15Ema20",
-    num(m15.ema20)
-  );
-
-  text(
-    "m15Ema50",
-    num(m15.ema50)
-  );
-
-  text(
-    "m15Rsi",
-    num(m15.rsi, 1)
-  );
-
-  text(
-    "m15Bos",
-    boolSignal(m15.bos)
-  );
-
-  text(
-    "m15Choch",
-    boolSignal(m15.choch)
-  );
-
-  text(
-    "m15Momentum",
-    momentumText(
-      m15.momentum
-    )
-  );
-
-  /* ========================================================
-     M5
-     ======================================================== */
-
-  setDirection(
-    "m5Direction",
-    m5.trigger ||
-    m5.confirmation
-  );
-
-  setCardDirection(
-    "m5Card",
-    m5.trigger ||
-    m5.confirmation
-  );
-
-  text(
-    "m5Buy",
-    Math.round(
-      m5.buyScore || 0
-    )
-  );
-
-  text(
-    "m5Sell",
-    Math.round(
-      m5.sellScore || 0
-    )
-  );
-
-  $("m5BuyBar").style.width =
-    `${Math.min(
-      100,
-      Number(m5.buyScore || 0)
-    )}%`;
-
-  $("m5SellBar").style.width =
-    `${Math.min(
-      100,
-      Number(m5.sellScore || 0)
-    )}%`;
-
-  text(
-    "m5Ema9",
-    num(m5.ema9)
-  );
-
-  text(
-    "m5Ema20",
-    num(m5.ema20)
-  );
-
-  text(
-    "m5Rsi",
-    num(m5.rsi, 1)
-  );
-
-  text(
-    "m5Bos",
-    boolSignal(m5.bos)
-  );
-
-  text(
-    "m5Choch",
-    boolSignal(m5.choch)
-  );
-
-  text(
-    "m5Momentum",
-    momentumText(
-      m5.momentum
-    )
-  );
-
-  /* ========================================================
-     TRADE PLAN
-     ======================================================== */
-
-  const planReady =
-    d.status === "ENTRY" &&
-    d.execution === "READY";
-
-  const planBlocked =
-    d.execution === "BLOCKED";
-
-  const planStatus =
-    $("planStatus");
-
-  planStatus.className =
-    "plan-status";
-
-  if (planReady) {
-    planStatus.classList.add(
-      "ready"
-    );
-
-    planStatus.textContent =
-      signal === "BUY"
-        ? "BUY READY"
-        : "SELL READY";
-
-  } else if (planBlocked) {
-
-    planStatus.classList.add(
-      "blocked"
-    );
-
-    planStatus.textContent =
-      "BLOCKED";
-
-  } else {
-
-    planStatus.classList.add(
-      "wait"
-    );
-
-    planStatus.textContent =
-      "WAIT";
-  }
-
-  text(
-    "entry",
-    num(plan.entry)
-  );
-
-  text(
-    "sl",
-    num(plan.stopLoss)
-  );
-
-  text(
-    "tp1",
-    num(plan.tp1)
-  );
-
-  text(
-    "tp2",
-    num(plan.tp2)
-  );
-
-  text(
-    "tp3Badge",
-    `TP3 ${num(plan.tp3)}`
-  );
-
-  text(
-    "planRR",
-    `RR ${plan.rr || "--"}`
-  );
-
-  text(
-    "planRisk",
-    `RISK ${num(plan.risk)}`
-  );
-
-  text(
-    "planSetup",
-    d.setupType ||
-    "NO SETUP"
-  );
-
-  text(
-    "planSource",
-    plan.source ||
-    "NO PLAN"
-  );
-
-  text(
-    "targetBadge",
-    plan.targetSR != null
-      ? `${plan.targetSRType || "H1 TARGET"} ${num(plan.targetSR)}`
-      : "H1 TARGET --"
-  );
-
-  text(
-    "targetValidBadge",
-    plan.targetSRValid
-      ? "TARGET VALID"
-      : "TARGET INVALID"
-  );
-
-  text(
-    "lockedBadge",
-    plan.locked
-      ? "REDIS LOCKED"
-      : "NOT LOCKED"
-  );
-
-  /* ========================================================
-     S/R
-     ======================================================== */
-
-  const support =
-    sr.support?.price;
-
-  const resistance =
-    sr.resistance?.price;
-
-  text(
-    "support",
-    num(support)
-  );
-
-  text(
-    "resistance",
-    num(resistance)
-  );
-
-  text(
-    "supportDistance",
-    sr.supportDistance != null
-      ? `${num(sr.supportDistance)} points`
-      : "--"
-  );
-
-  text(
-    "resistanceDistance",
-    sr.resistanceDistance != null
-      ? `${num(sr.resistanceDistance)} points`
-      : "--"
-  );
-
-  text(
-    "srContext",
-    sr.signalContext ||
-    sr.position ||
-    "--"
-  );
-
-  text(
-    "buyFilter",
-    sr.buyAllowed
-      ? "BUY FILTER: OPEN"
-      : "BUY FILTER: BLOCKED"
-  );
-
-  text(
-    "sellFilter",
-    sr.sellAllowed
-      ? "SELL FILTER: OPEN"
-      : "SELL FILTER: BLOCKED"
-  );
-
-  /* ========================================================
-     HOLD
-     ======================================================== */
-
-  const holdBias =
-    String(
-      h1.holdBias ||
-      "NEUTRAL"
-    ).toUpperCase();
-
-  const holdEl =
-    $("holdBias");
-
-  holdEl.className =
-    "hold-big " +
-    directionClass(
-      holdBias
-    );
-
-  holdEl.textContent =
-    holdBias;
-
-  text(
-    "holdText",
-    `${h1.holdPermission || "NO HOLD"} · H1 is context; M15 + M5 drive scalp entry.`
-  );
-
-  text(
-    "contextPill",
-    d.context ||
-    "NEUTRAL"
-  );
-
-  /* ========================================================
-     ROADBLOCK
-     ======================================================== */
-
-  const nearest =
-    roadblocks.nearest ||
-    null;
-
-  if (nearest) {
-
-    text(
-      "roadblockPrice",
-      `${nearest.timeframe} · ${num(nearest.price)}`
-    );
-
-    $("roadblockPrice")
-      .className =
-      "roadblock-price roadblock-warning";
-
-    text(
-      "roadblockBadge",
-      `${nearest.type || "ROADBLOCK"} · ${num(nearest.distance)}`
-    );
-
-  } else {
-
-    text(
-      "roadblockPrice",
-      "CLEAR"
-    );
-
-    $("roadblockPrice")
-      .className =
-      "roadblock-price roadblock-clear";
-
-    text(
-      "roadblockBadge",
-      "NO ROADBLOCK"
-    );
-  }
-
-  /* ========================================================
-     SETUPS
-     ======================================================== */
-
-  const buy =
-    setup.buy ||
-    {};
-
-  const sell =
-    setup.sell ||
-    {};
-
-  text(
-    "buySetupType",
-    buy.type ||
-    "NONE"
-  );
-
-  text(
-    "buyAligned",
-    yesNo(buy.aligned)
-  );
-
-  text(
-    "buyContinuation",
-    yesNo(buy.continuation)
-  );
-
-  text(
-    "buyReversal",
-    yesNo(buy.reversal)
-  );
-
-  text(
-    "buyLocation",
-    buy.location ||
-    "--"
-  );
-
-  text(
-    "buyH1Bias",
-    buy.h1Bias ||
-    "--"
-  );
-
-  text(
-    "buyTarget",
-    buy.targetSR?.price != null
-      ? num(
-          buy.targetSR.price
-        )
-      : "--"
-  );
-
-  text(
-    "sellSetupType",
-    sell.type ||
-    "NONE"
-  );
-
-  text(
-    "sellAligned",
-    yesNo(sell.aligned)
-  );
-
-  text(
-    "sellContinuation",
-    yesNo(sell.continuation)
-  );
-
-  text(
-    "sellReversal",
-    yesNo(sell.reversal)
-  );
-
-  text(
-    "sellLocation",
-    sell.location ||
-    "--"
-  );
-
-  text(
-    "sellH1Bias",
-    sell.h1Bias ||
-    "--"
-  );
-
-  text(
-    "sellTarget",
-    sell.targetSR?.price != null
-      ? num(
-          sell.targetSR.price
-        )
-      : "--"
-  );
-
-  /* ========================================================
-     REASONS
-     ======================================================== */
-
-  const reasons =
-    Array.isArray(d.reasons)
-      ? d.reasons
-      : [];
-
-  const reasonsEl =
-    $("reasons");
-
-  reasonsEl.innerHTML = "";
-
-  if (!reasons.length) {
-
-    const el =
-      document.createElement(
-        "div"
-      );
-
-    el.className =
-      "reason";
-
-    el.textContent =
-      "No signal reasoning available.";
-
-    reasonsEl.appendChild(el);
-
-  } else {
-
-    reasons.forEach(reason => {
-
-      const el =
-        document.createElement(
-          "div"
-        );
-
-      el.className =
-        "reason";
-
-      el.textContent =
-        reason;
-
-      reasonsEl.appendChild(el);
+import { sendPushToAll, redis } from "./push-lib.js";
+
+export default async function handler(req, res) {
+  const API_KEY = process.env.TWELVE_DATA_API_KEY;
+
+  if (!API_KEY) {
+    return res.status(500).json({
+      ok: false,
+      error: "TWELVE_DATA_API_KEY belum diset"
     });
   }
 
-  /* ========================================================
-     CHART
-     ======================================================== */
-
-  drawChart(
-    Array.isArray(d.candles)
-      ? d.candles
-      : [],
-    price,
-    signal
-  );
-
-  text(
-    "chartSignal",
-    signal
-  );
-
-  text(
-    "chartInfo",
-    `${Array.isArray(d.candles) ? d.candles.length : 0} M5 candles`
-  );
-
-  /* ========================================================
-     DIAGNOSTICS
-     ======================================================== */
-
-  text(
-    "diagM5",
-    d.data?.m5Candles ??
-    "--"
-  );
-
-  text(
-    "diagM15",
-    d.data?.m15Candles ??
-    "--"
-  );
-
-  text(
-    "diagH1",
-    d.data?.h1Candles ??
-    "--"
-  );
-
-  text(
-    "diagSource",
-    d.dataSource ||
-    "--"
-  );
-
-  text(
-    "diagCacheM5",
-    ageText(
-      d.cache?.ageSeconds?.m5
-    )
-  );
-
-  text(
-    "diagCacheM15",
-    ageText(
-      d.cache?.ageSeconds?.m15
-    )
-  );
-
-  text(
-    "diagCacheH1",
-    ageText(
-      d.cache?.ageSeconds?.h1
-    )
-  );
-
-  text(
-    "diagCandle",
-    d.signalCandle ||
-    "--"
-  );
-}
-
-/* ============================================================
-   INDICATOR DISPLAY HELPERS
-   ============================================================ */
-
-function boolSignal(obj) {
-
-  if (!obj) {
-    return "--";
-  }
-
-  if (obj.bullish) {
-    return "BULLISH";
-  }
-
-  if (obj.bearish) {
-    return "BEARISH";
-  }
-
-  return "NEUTRAL";
-}
-
-function momentumText(obj) {
-
-  if (!obj) {
-    return "--";
-  }
-
-  if (obj.bullish) {
-    return `BULL ${obj.strength ?? 0}`;
-  }
-
-  if (obj.bearish) {
-    return `BEAR ${obj.strength ?? 0}`;
-  }
-
-  return `${obj.strength ?? 0}`;
-}
-
-function ageText(value) {
-
-  if (
-    value === null ||
-    value === undefined
-  ) {
-    return "--";
-  }
-
-  const n =
-    Number(value);
-
-  if (!Number.isFinite(n)) {
-    return "--";
-  }
-
-  if (n < 60) {
-    return `${n}s`;
-  }
-
-  if (n < 3600) {
-    return `${Math.floor(n / 60)}m`;
-  }
-
-  return `${Math.floor(n / 3600)}h`;
-}
-
-/* ============================================================
-   CHART
-   ============================================================ */
-
-function drawChart(
-  candles,
-  currentPrice,
-  signal
-) {
-
-  const canvas =
-    $("chart");
-
-  const rect =
-    canvas.getBoundingClientRect();
-
-  const dpr =
-    window.devicePixelRatio ||
-    1;
-
-  const width =
-    Math.max(
-      1,
-      Math.floor(
-        rect.width * dpr
-      )
-    );
-
-  const height =
-    Math.max(
-      1,
-      Math.floor(
-        rect.height * dpr
-      )
-    );
-
-  canvas.width = width;
-  canvas.height = height;
-
-  const ctx =
-    canvas.getContext("2d");
-
-  ctx.clearRect(
-    0,
-    0,
-    width,
-    height
-  );
-
-  if (
-    !candles ||
-    candles.length < 2
-  ) {
-    return;
-  }
-
-  const data =
-    candles.slice(-60);
-
-  const highs =
-    data.map(
-      x => Number(x.high)
-    );
-
-  const lows =
-    data.map(
-      x => Number(x.low)
-    );
-
-  let max =
-    Math.max(...highs);
-
-  let min =
-    Math.min(...lows);
-
-  if (
-    Number.isFinite(currentPrice)
-  ) {
-    max =
-      Math.max(
-        max,
-        currentPrice
-      );
-
-    min =
-      Math.min(
-        min,
-        currentPrice
-      );
-  }
-
-  const range =
-    Math.max(
-      max - min,
-      .01
-    );
-
-  const padX =
-    15 * dpr;
-
-  const padY =
-    20 * dpr;
-
-  const chartW =
-    width -
-    padX * 2;
-
-  const chartH =
-    height -
-    padY * 2;
-
-  function x(i) {
-    return (
-      padX +
-      (
-        i /
-        Math.max(
-          1,
-          data.length - 1
-        )
-      ) *
-      chartW
-    );
-  }
-
-  function y(price) {
-    return (
-      padY +
-      (
-        1 -
-        (
-          price - min
-        ) /
-        range
-      ) *
-      chartH
-    );
-  }
-
-  /* grid */
-
-  ctx.lineWidth =
-    1 * dpr;
-
-  ctx.strokeStyle =
-    "rgba(255,255,255,.045)";
-
-  for (
-    let i = 1;
-    i < 5;
-    i++
-  ) {
-
-    const yy =
-      padY +
-      (
-        i / 5
-      ) *
-      chartH;
-
-    ctx.beginPath();
-
-    ctx.moveTo(
-      padX,
-      yy
-    );
-
-    ctx.lineTo(
-      width - padX,
-      yy
-    );
-
-    ctx.stroke();
-  }
-
-  /* area */
-
-  const gradient =
-    ctx.createLinearGradient(
-      0,
-      padY,
-      0,
-      height
-    );
-
-  gradient.addColorStop(
-    0,
-    "rgba(214,175,94,.16)"
-  );
-
-  gradient.addColorStop(
-    1,
-    "rgba(214,175,94,0)"
-  );
-
-  ctx.beginPath();
-
-  data.forEach(
-    (c, i) => {
-
-      const xx =
-        x(i);
-
-      const yy =
-        y(c.close);
-
-      if (i === 0) {
-        ctx.moveTo(
-          xx,
-          yy
-        );
-      } else {
-        ctx.lineTo(
-          xx,
-          yy
-        );
-      }
+  const CFG = {
+    symbol: "XAU/USD",
+
+    m5Size: 1500,
+    m15Size: 500,
+    h1Size: 300,
+
+    /*
+     * ==========================================================
+     * CANDLE CACHE
+     * ==========================================================
+     *
+     * M5  = 5 min
+     * M15 = 15 min
+     * H1  = 1 hour
+     *
+     * Ini bermaksud refresh dashboard tidak semestinya
+     * menyebabkan Twelve Data dipanggil semula.
+     */
+
+    m5CacheTTL: 5 * 60_000,
+    m15CacheTTL: 15 * 60_000,
+    h1CacheTTL: 60 * 60_000,
+
+    /*
+     * LIVE PRICE
+     *
+     * Harga semasa kekal lebih cepat.
+     */
+
+    priceTTL: 15_000,
+
+    minM5: 250,
+    minM15: 100,
+    minH1: 210,
+
+    /*
+     * H1 SUPPORT / RESISTANCE
+     */
+
+    srLookback: 80,
+    srSwingStrength: 2,
+    srMaxLevels: 12,
+    srATRMultiplier: 0.50,
+    srMinDistance: 2.0,
+
+    reversalZoneMultiplier: 1.0,
+
+    minTargetR: 1.0,
+
+    requireValidSRTarget: true,
+
+    /*
+     * ROADBLOCK
+     *
+     * M15/M5 digunakan untuk mencari halangan
+     * antara entry dan H1 target.
+     */
+
+    roadblockLookbackM15: 80,
+    roadblockLookbackM5: 80,
+
+    roadblockSwingStrength: 2,
+
+    roadblockGroupATRMultiplier: 0.20,
+    roadblockMinGroupDistance: 1.5,
+
+    roadblockMaxLevels: 8,
+
+    /*
+     * TRADE LOCK
+     */
+
+    tradeLockTTL: 21600,
+
+    /*
+     * REDIS
+     */
+
+    redisCacheTTL: 86400 * 7,
+
+    redisKeys: {
+      m5: "xau_scalp_cache_m5",
+      m15: "xau_scalp_cache_m15",
+      h1: "xau_scalp_cache_h1",
+      price: "xau_scalp_cache_price"
     }
-  );
+  };
 
-  ctx.lineTo(
-    x(data.length - 1),
-    height - padY
-  );
+  /*
+   * ============================================================
+   * LOCAL MEMORY CACHE
+   * ============================================================
+   */
 
-  ctx.lineTo(
-    x(0),
-    height - padY
-  );
+  globalThis.__XAU_SCALP_CACHE__ ??= {
+    candles: {},
+    price: null,
+    priceAt: 0,
 
-  ctx.closePath();
+    dataSource: {
+      m5: "NONE",
+      m15: "NONE",
+      h1: "NONE",
+      price: "NONE"
+    },
 
-  ctx.fillStyle =
-    gradient;
-
-  ctx.fill();
-
-  /* line */
-
-  ctx.beginPath();
-
-  data.forEach(
-    (c, i) => {
-
-      const xx =
-        x(i);
-
-      const yy =
-        y(c.close);
-
-      if (i === 0) {
-        ctx.moveTo(
-          xx,
-          yy
-        );
-      } else {
-        ctx.lineTo(
-          xx,
-          yy
-        );
-      }
+    cacheAt: {
+      m5: 0,
+      m15: 0,
+      h1: 0,
+      price: 0
     }
-  );
+  };
 
-  if (
-    signal === "BUY"
-  ) {
-    ctx.strokeStyle =
-      "#58e0a5";
-  } else if (
-    signal === "SELL"
-  ) {
-    ctx.strokeStyle =
-      "#ff7b88";
-  } else {
-    ctx.strokeStyle =
-      "#d6b15e";
+  const C = globalThis.__XAU_SCALP_CACHE__;
+
+  const now = Date.now();
+
+  /*
+   * ============================================================
+   * HELPERS
+   * ============================================================
+   */
+
+  const avg = a =>
+    a.length
+      ? a.reduce((x, y) => x + y, 0) / a.length
+      : null;
+
+  const clamp = (n, a, b) =>
+    Math.max(a, Math.min(b, n));
+
+  function getCandleTTL(key) {
+    if (key === "m5") {
+      return CFG.m5CacheTTL;
+    }
+
+    if (key === "m15") {
+      return CFG.m15CacheTTL;
+    }
+
+    if (key === "h1") {
+      return CFG.h1CacheTTL;
+    }
+
+    return 60_000;
   }
 
-  ctx.lineWidth =
-    2 * dpr;
+  /*
+   * ============================================================
+   * REDIS
+   * ============================================================
+   */
 
-  ctx.stroke();
-
-  /* live price */
-
-  if (
-    Number.isFinite(currentPrice)
-  ) {
-
-    const yy =
-      y(currentPrice);
-
-    ctx.setLineDash([
-      5 * dpr,
-      5 * dpr
-    ]);
-
-    ctx.strokeStyle =
-      "rgba(240,212,138,.55)";
-
-    ctx.lineWidth =
-      1 * dpr;
-
-    ctx.beginPath();
-
-    ctx.moveTo(
-      padX,
-      yy
-    );
-
-    ctx.lineTo(
-      width - padX,
-      yy
-    );
-
-    ctx.stroke();
-
-    ctx.setLineDash([]);
-
-    ctx.fillStyle =
-      "#f0d48a";
-
-    ctx.font =
-      `${10 * dpr}px Arial`;
-
-    ctx.textAlign =
-      "right";
-
-    ctx.fillText(
-      Number(
-        currentPrice
-      ).toFixed(2),
-      width - padX,
-      yy - 5 * dpr
-    );
-  }
-}
-
-/* ============================================================
-   PUSH
-   ============================================================ */
-
-function urlBase64ToUint8Array(
-  base64String
-) {
-
-  const padding =
-    "=".repeat(
-      (
-        4 -
-        base64String.length % 4
-      ) % 4
-    );
-
-  const base64 =
-    (
-      base64String +
-      padding
-    )
-      .replace(
-        /-/g,
-        "+"
-      )
-      .replace(
-        /_/g,
-        "/"
+  async function redisGet(key) {
+    try {
+      return await redis.get(key);
+    } catch (e) {
+      console.error(
+        `Redis GET error [${key}]:`,
+        e?.message || e
       );
 
-  const rawData =
-    window.atob(
-      base64
-    );
-
-  return Uint8Array.from(
-    [...rawData].map(
-      char => char.charCodeAt(0)
-    )
-  );
-}
-
-async function getPushConfig() {
-
-  const response =
-    await fetch(
-      `/api/push-config?ts=${Date.now()}`,
-      {
-        cache: "no-store"
-      }
-    );
-
-  const data =
-    await response.json();
-
-  if (
-    !response.ok ||
-    !data.publicKey
-  ) {
-    throw new Error(
-      "VAPID public key unavailable"
-    );
+      return null;
+    }
   }
 
-  return data.publicKey;
-}
-
-async function saveSubscription(
-  subscription
-) {
-
-  const response =
-    await fetch(
-      "/api/push-subscribe",
-      {
-        method: "POST",
-
-        headers: {
-          "content-type":
-            "application/json"
-        },
-
-        body:
-          JSON.stringify(
-            subscription
-          )
-      }
-    );
-
-  const data =
-    await response.json();
-
-  if (
-    !response.ok
-  ) {
-    throw new Error(
-      data?.error ||
-      "Push subscription failed"
-    );
-  }
-
-  return data;
-}
-
-async function enablePush() {
-
-  const btn =
-    $("pushBtn");
-
-  if (
-    !("serviceWorker" in navigator)
-  ) {
-    toast(
-      "Service Worker not supported."
-    );
-
-    return;
-  }
-
-  if (
-    !("PushManager" in window)
-  ) {
-    toast(
-      "Push notifications not supported."
-    );
-
-    return;
-  }
-
-  btn.disabled = true;
-  btn.textContent = "CONNECTING...";
-
-  try {
-
-    pushRegistration =
-      await navigator.serviceWorker.register(
-        "/sw.js",
+  async function redisSet(key, value, ttl) {
+    try {
+      await redis.set(
+        key,
+        JSON.stringify(value),
         {
-          scope: "/"
+          ex: ttl
         }
       );
 
-    await navigator.serviceWorker.ready;
+      return true;
+    } catch (e) {
+      console.error(
+        `Redis SET error [${key}]:`,
+        e?.message || e
+      );
 
-    const permission =
-      await Notification.requestPermission();
+      return false;
+    }
+  }
 
-    if (
-      permission !== "granted"
+  function parseRedisValue(value) {
+    if (value == null) {
+      return null;
+    }
+
+    if (typeof value === "object") {
+      return value;
+    }
+
+    if (typeof value === "string") {
+      try {
+        return JSON.parse(value);
+      } catch {
+        return null;
+      }
+    }
+
+    return null;
+  }
+
+  /*
+   * ============================================================
+   * TECHNICAL INDICATORS
+   * ============================================================
+   */
+
+  function ema(v, p) {
+    if (v.length < p) {
+      return null;
+    }
+
+    const k = 2 / (p + 1);
+
+    let e = avg(v.slice(0, p));
+
+    for (let i = p; i < v.length; i++) {
+      e =
+        v[i] * k +
+        e * (1 - k);
+    }
+
+    return e;
+  }
+
+  function rsi(v, p = 14) {
+    if (v.length < p + 1) {
+      return null;
+    }
+
+    let gains = 0;
+    let losses = 0;
+
+    for (
+      let i = v.length - p;
+      i < v.length;
+      i++
     ) {
-      throw new Error(
-        "Notification permission not granted."
+      const d = v[i] - v[i - 1];
+
+      if (d > 0) {
+        gains += d;
+      } else {
+        losses -= d;
+      }
+    }
+
+    if (losses === 0) {
+      return 100;
+    }
+
+    const rs =
+      (gains / p) /
+      (losses / p);
+
+    return 100 - 100 / (1 + rs);
+  }
+
+  function atr(d, p = 14) {
+    if (d.length < p + 1) {
+      return null;
+    }
+
+    const tr = [];
+
+    for (let i = 1; i < d.length; i++) {
+      const c = d[i];
+      const pc = d[i - 1].close;
+
+      tr.push(
+        Math.max(
+          c.high - c.low,
+          Math.abs(c.high - pc),
+          Math.abs(c.low - pc)
+        )
       );
     }
 
-    const publicKey =
-      await getPushConfig();
+    return avg(tr.slice(-p));
+  }
 
-    const existing =
-      await pushRegistration
-        .pushManager
-        .getSubscription();
-
-    let subscription =
-      existing;
-
-    if (!subscription) {
-
-      subscription =
-        await pushRegistration
-          .pushManager
-          .subscribe({
-            userVisibleOnly: true,
-            applicationServerKey:
-              urlBase64ToUint8Array(
-                publicKey
-              )
-          });
+  function macd(v) {
+    if (v.length < 35) {
+      return null;
     }
 
-    await saveSubscription(
-      subscription.toJSON()
-    );
+    const e12 = ema(v, 12);
+    const e26 = ema(v, 26);
 
-    localStorage.setItem(
-      "xau_push_enabled",
-      "1"
-    );
+    if (e12 == null || e26 == null) {
+      return null;
+    }
 
-    btn.textContent =
-      "PUSH ENABLED";
+    const line = e12 - e26;
 
-    text(
-      "pushStatus",
-      "Push is active on this device."
-    );
+    const lines = [];
 
-    toast(
-      "XAU/USD push alerts enabled."
-    );
+    for (let i = 26; i <= v.length; i++) {
+      const a = ema(v.slice(0, i), 12);
+      const b = ema(v.slice(0, i), 26);
 
-  } catch (error) {
+      if (a != null && b != null) {
+        lines.push(a - b);
+      }
+    }
 
-    console.error(
-      "Push setup error:",
-      error
-    );
+    const signal = ema(lines, 9);
 
-    btn.textContent =
-      "ENABLE PUSH";
+    if (signal == null) {
+      return null;
+    }
 
-    text(
-      "pushStatus",
-      error?.message ||
-      "Push setup failed."
-    );
-
-    toast(
-      error?.message ||
-      "Push setup failed."
-    );
-
-  } finally {
-
-    btn.disabled = false;
+    return {
+      line,
+      signal,
+      histogram: line - signal,
+      bullish: line > signal,
+      bearish: line < signal
+    };
   }
-}
 
-async function restorePushState() {
+  function structure(d, lookback = 20) {
+    if (d.length < lookback * 2) {
+      return {
+        bullish: false,
+        bearish: false,
+        high: null,
+        low: null,
+        previousHigh: null,
+        previousLow: null
+      };
+    }
 
-  try {
+    const r = d.slice(-lookback);
+
+    const p = d.slice(
+      -lookback * 2,
+      -lookback
+    );
+
+    const last = d.at(-1);
+
+    const high = Math.max(
+      ...r.map(x => x.high)
+    );
+
+    const low = Math.min(
+      ...r.map(x => x.low)
+    );
+
+    const previousHigh = Math.max(
+      ...p.map(x => x.high)
+    );
+
+    const previousLow = Math.min(
+      ...p.map(x => x.low)
+    );
+
+    return {
+      bullish:
+        last.close > previousHigh,
+
+      bearish:
+        last.close < previousLow,
+
+      high,
+      low,
+      previousHigh,
+      previousLow
+    };
+  }
+
+  function bos(d, lookback = 10) {
+    if (d.length < lookback + 2) {
+      return {
+        bullish: false,
+        bearish: false
+      };
+    }
+
+    const last = d.at(-1);
+
+    const p = d.slice(
+      -lookback - 1,
+      -1
+    );
+
+    return {
+      bullish:
+        last.close >
+        Math.max(...p.map(x => x.high)),
+
+      bearish:
+        last.close <
+        Math.min(...p.map(x => x.low))
+    };
+  }
+
+  function choch(d, lookback = 8) {
+    if (d.length < lookback * 2 + 2) {
+      return {
+        bullish: false,
+        bearish: false
+      };
+    }
+
+    const r = d.slice(-lookback);
+
+    const p = d.slice(
+      -lookback * 2,
+      -lookback
+    );
+
+    const last = d.at(-1);
+
+    const rh = Math.max(
+      ...r.map(x => x.high)
+    );
+
+    const rl = Math.min(
+      ...r.map(x => x.low)
+    );
+
+    const ph = Math.max(
+      ...p.map(x => x.high)
+    );
+
+    const pl = Math.min(
+      ...p.map(x => x.low)
+    );
+
+    return {
+      bullish:
+        rh > ph &&
+        last.close > ph,
+
+      bearish:
+        rl < pl &&
+        last.close < pl
+    };
+  }
+
+  function sweep(d, lookback = 10) {
+    if (d.length < lookback + 2) {
+      return {
+        bullish: false,
+        bearish: false
+      };
+    }
+
+    const c = d.at(-1);
+
+    const p = d.slice(
+      -lookback - 1,
+      -1
+    );
+
+    const h = Math.max(
+      ...p.map(x => x.high)
+    );
+
+    const l = Math.min(
+      ...p.map(x => x.low)
+    );
+
+    return {
+      bullish:
+        c.low < l &&
+        c.close > l,
+
+      bearish:
+        c.high > h &&
+        c.close < h
+    };
+  }
+
+  function momentum(d) {
+    const c = d.at(-1);
+
+    if (!c) {
+      return {
+        bullish: false,
+        bearish: false,
+        strength: 0
+      };
+    }
+
+    const range =
+      c.high - c.low ||
+      1e-9;
+
+    const ratio =
+      Math.abs(c.close - c.open) /
+      range;
+
+    return {
+      bullish:
+        c.close > c.open &&
+        ratio >= 0.45,
+
+      bearish:
+        c.close < c.open &&
+        ratio >= 0.45,
+
+      strength:
+        Math.round(ratio * 100)
+    };
+  }
+
+  /*
+   * ============================================================
+   * H1 SUPPORT / RESISTANCE
+   *
+   * INI KEKAL LOGIC LAMA KAU
+   * ============================================================
+   */
+
+  function findH1SupportResistance(
+    data,
+    price,
+    h1ATR
+  ) {
+    const source = data.slice(
+      -CFG.srLookback
+    );
+
+    if (source.length < 20) {
+      return {
+        support: null,
+        resistance: null,
+        levels: [],
+        supportDistance: null,
+        resistanceDistance: null,
+        threshold: null,
+        reversalThreshold: null,
+        position: "UNKNOWN",
+        zone: "UNKNOWN",
+        nearSupport: false,
+        nearResistance: false,
+        atSupport: false,
+        atResistance: false,
+        reversalAtSupport: false,
+        reversalAtResistance: false,
+        signalContext: "NO S/R DATA"
+      };
+    }
+
+    const levels = [];
+
+    /*
+     * Swing highs
+     */
+
+    for (
+      let i = CFG.srSwingStrength;
+      i <
+        source.length -
+          CFG.srSwingStrength;
+      i++
+    ) {
+      const c = source[i];
+
+      let isHigh = true;
+
+      for (
+        let j = 1;
+        j <= CFG.srSwingStrength;
+        j++
+      ) {
+        if (
+          c.high <= source[i - j].high ||
+          c.high <= source[i + j].high
+        ) {
+          isHigh = false;
+          break;
+        }
+      }
+
+      if (isHigh) {
+        levels.push({
+          price: c.high,
+          type: "RESISTANCE"
+        });
+      }
+    }
+
+    /*
+     * Swing lows
+     */
+
+    for (
+      let i = CFG.srSwingStrength;
+      i <
+        source.length -
+          CFG.srSwingStrength;
+      i++
+    ) {
+      const c = source[i];
+
+      let isLow = true;
+
+      for (
+        let j = 1;
+        j <= CFG.srSwingStrength;
+        j++
+      ) {
+        if (
+          c.low >= source[i - j].low ||
+          c.low >= source[i + j].low
+        ) {
+          isLow = false;
+          break;
+        }
+      }
+
+      if (isLow) {
+        levels.push({
+          price: c.low,
+          type: "SUPPORT"
+        });
+      }
+    }
+
+    /*
+     * Extreme high
+     */
+
+    levels.push({
+      price: Math.max(
+        ...source.map(x => x.high)
+      ),
+      type: "RESISTANCE"
+    });
+
+    /*
+     * Extreme low
+     */
+
+    levels.push({
+      price: Math.min(
+        ...source.map(x => x.low)
+      ),
+      type: "SUPPORT"
+    });
+
+    /*
+     * Group nearby levels
+     */
+
+    const grouped = [];
+
+    const groupingDistance =
+      Math.max(
+        (h1ATR || 10) * 0.20,
+        1.5
+      );
+
+    for (const level of levels) {
+      const existing =
+        grouped.find(
+          x =>
+            x.type === level.type &&
+            Math.abs(
+              x.price - level.price
+            ) <= groupingDistance
+        );
+
+      if (existing) {
+        existing.prices.push(
+          level.price
+        );
+
+        existing.touches += 1;
+
+        existing.price =
+          existing.prices.reduce(
+            (a, b) => a + b,
+            0
+          ) /
+          existing.prices.length;
+      } else {
+        grouped.push({
+          type: level.type,
+          price: level.price,
+          prices: [level.price],
+          touches: 1
+        });
+      }
+    }
+
+    const supports =
+      grouped
+        .filter(
+          x =>
+            x.type === "SUPPORT" &&
+            x.price < price
+        )
+        .sort(
+          (a, b) =>
+            b.price - a.price
+        );
+
+    const resistances =
+      grouped
+        .filter(
+          x =>
+            x.type === "RESISTANCE" &&
+            x.price > price
+        )
+        .sort(
+          (a, b) =>
+            a.price - b.price
+        );
+
+    const support =
+      supports[0] || null;
+
+    const resistance =
+      resistances[0] || null;
+
+    const supportDistance =
+      support
+        ? price - support.price
+        : null;
+
+    const resistanceDistance =
+      resistance
+        ? resistance.price - price
+        : null;
+
+    const threshold =
+      Math.max(
+        (h1ATR || 10) *
+          CFG.srATRMultiplier,
+        CFG.srMinDistance
+      );
+
+    const reversalThreshold =
+      threshold *
+      CFG.reversalZoneMultiplier;
+
+    const nearSupport =
+      supportDistance != null &&
+      supportDistance <= threshold;
+
+    const nearResistance =
+      resistanceDistance != null &&
+      resistanceDistance <= threshold;
+
+    const atSupport =
+      supportDistance != null &&
+      supportDistance <= threshold * 0.35;
+
+    const atResistance =
+      resistanceDistance != null &&
+      resistanceDistance <= threshold * 0.35;
+
+    const reversalAtSupport =
+      supportDistance != null &&
+      supportDistance <= reversalThreshold;
+
+    const reversalAtResistance =
+      resistanceDistance != null &&
+      resistanceDistance <= reversalThreshold;
+
+    let position = "BETWEEN S/R";
+    let zone = "NEUTRAL";
+
+    if (atSupport) {
+      position = "AT SUPPORT";
+      zone = "SUPPORT";
+    } else if (atResistance) {
+      position = "AT RESISTANCE";
+      zone = "RESISTANCE";
+    } else if (
+      nearSupport &&
+      nearResistance
+    ) {
+      position = "BETWEEN S/R";
+      zone = "TIGHT RANGE";
+    } else if (nearSupport) {
+      position = "NEAR SUPPORT";
+      zone = "SUPPORT";
+    } else if (nearResistance) {
+      position = "NEAR RESISTANCE";
+      zone = "RESISTANCE";
+    }
+
+    let signalContext =
+      "NO S/R WARNING";
+
+    if (nearResistance) {
+      signalContext =
+        "RESISTANCE NEARBY";
+    }
+
+    if (nearSupport) {
+      signalContext =
+        "SUPPORT NEARBY";
+    }
 
     if (
-      !("serviceWorker" in navigator)
+      nearSupport &&
+      nearResistance
     ) {
+      signalContext =
+        "TIGHT S/R RANGE";
+    }
+
+    return {
+      support:
+        support
+          ? {
+              price:
+                Number(
+                  support.price.toFixed(2)
+                ),
+              strength:
+                support.touches
+            }
+          : null,
+
+      resistance:
+        resistance
+          ? {
+              price:
+                Number(
+                  resistance.price.toFixed(2)
+                ),
+              strength:
+                resistance.touches
+            }
+          : null,
+
+      levels:
+        grouped
+          .sort(
+            (a, b) =>
+              Math.abs(a.price - price) -
+              Math.abs(b.price - price)
+          )
+          .slice(
+            0,
+            CFG.srMaxLevels
+          )
+          .map(x => ({
+            price:
+              Number(
+                x.price.toFixed(2)
+              ),
+            type: x.type,
+            strength: x.touches
+          })),
+
+      supportDistance:
+        supportDistance != null
+          ? Number(
+              supportDistance.toFixed(2)
+            )
+          : null,
+
+      resistanceDistance:
+        resistanceDistance != null
+          ? Number(
+              resistanceDistance.toFixed(2)
+            )
+          : null,
+
+      supportDistancePct:
+        supportDistance != null
+          ? Number(
+              (
+                supportDistance /
+                price *
+                100
+              ).toFixed(3)
+            )
+          : null,
+
+      resistanceDistancePct:
+        resistanceDistance != null
+          ? Number(
+              (
+                resistanceDistance /
+                price *
+                100
+              ).toFixed(3)
+            )
+          : null,
+
+      threshold:
+        Number(
+          threshold.toFixed(2)
+        ),
+
+      reversalThreshold:
+        Number(
+          reversalThreshold.toFixed(2)
+        ),
+
+      position,
+      zone,
+
+      nearSupport,
+      nearResistance,
+
+      atSupport,
+      atResistance,
+
+      reversalAtSupport,
+      reversalAtResistance,
+
+      signalContext
+    };
+  }
+
+  /*
+   * ============================================================
+   * M15 / M5 ROADBLOCK DETECTION
+   * ============================================================
+   *
+   * Roadblock = short timeframe support/resistance yang berada
+   * di antara current entry dan H1 target.
+   *
+   * Ia TIDAK block signal.
+   */
+
+  function findRoadblocks(
+    data,
+    price,
+    target,
+    targetType,
+    timeframe,
+    atrValue
+  ) {
+    const lookback =
+      timeframe === "M15"
+        ? CFG.roadblockLookbackM15
+        : CFG.roadblockLookbackM5;
+
+    const source =
+      data.slice(-lookback);
+
+    if (
+      !source.length ||
+      target == null ||
+      price == null
+    ) {
+      return {
+        timeframe,
+        target,
+        targetType,
+        roadblocks: [],
+        nearest: null,
+        count: 0,
+        hasRoadblock: false,
+        status: "NONE"
+      };
+    }
+
+    const levels = [];
+
+    const strength =
+      CFG.roadblockSwingStrength;
+
+    /*
+     * Swing highs = resistance
+     */
+
+    for (
+      let i = strength;
+      i < source.length - strength;
+      i++
+    ) {
+      const c = source[i];
+
+      let isHigh = true;
+
+      for (
+        let j = 1;
+        j <= strength;
+        j++
+      ) {
+        if (
+          c.high <= source[i - j].high ||
+          c.high <= source[i + j].high
+        ) {
+          isHigh = false;
+          break;
+        }
+      }
+
+      if (isHigh) {
+        levels.push({
+          price: c.high,
+          type: "RESISTANCE",
+          index: i
+        });
+      }
+    }
+
+    /*
+     * Swing lows = support
+     */
+
+    for (
+      let i = strength;
+      i < source.length - strength;
+      i++
+    ) {
+      const c = source[i];
+
+      let isLow = true;
+
+      for (
+        let j = 1;
+        j <= strength;
+        j++
+      ) {
+        if (
+          c.low >= source[i - j].low ||
+          c.low >= source[i + j].low
+        ) {
+          isLow = false;
+          break;
+        }
+      }
+
+      if (isLow) {
+        levels.push({
+          price: c.low,
+          type: "SUPPORT",
+          index: i
+        });
+      }
+    }
+
+    /*
+     * Grouping
+     */
+
+    const grouped = [];
+
+    const groupingDistance =
+      Math.max(
+        (atrValue || 5) *
+          CFG.roadblockGroupATRMultiplier,
+        CFG.roadblockMinGroupDistance
+      );
+
+    for (const level of levels) {
+      const existing =
+        grouped.find(
+          x =>
+            x.type === level.type &&
+            Math.abs(
+              x.price - level.price
+            ) <= groupingDistance
+        );
+
+      if (existing) {
+        existing.prices.push(
+          level.price
+        );
+
+        existing.touches += 1;
+
+        existing.price =
+          existing.prices.reduce(
+            (a, b) => a + b,
+            0
+          ) /
+          existing.prices.length;
+      } else {
+        grouped.push({
+          type: level.type,
+          price: level.price,
+          prices: [level.price],
+          touches: 1
+        });
+      }
+    }
+
+    /*
+     * BUY:
+     *
+     * Roadblock mestilah resistance
+     * selepas price tetapi sebelum H1 target.
+     *
+     * SELL:
+     *
+     * Roadblock mestilah support
+     * selepas price tetapi sebelum H1 target.
+     */
+
+    const isBuy =
+      targetType === "BUY TARGET" ||
+      targetType === "H1 RESISTANCE";
+
+    const isSell =
+      targetType === "SELL TARGET" ||
+      targetType === "H1 SUPPORT";
+
+    let candidates = [];
+
+    if (isBuy) {
+      candidates =
+        grouped.filter(
+          x =>
+            x.type === "RESISTANCE" &&
+            x.price > price &&
+            x.price < target
+        );
+    }
+
+    if (isSell) {
+      candidates =
+        grouped.filter(
+          x =>
+            x.type === "SUPPORT" &&
+            x.price < price &&
+            x.price > target
+        );
+    }
+
+    /*
+     * Buang level terlalu dekat dengan current price.
+     *
+     * Ini elakkan noise kecil dianggap roadblock.
+     */
+
+    const minimumDistance =
+      Math.max(
+        (atrValue || 5) * 0.15,
+        0.8
+      );
+
+    candidates =
+      candidates.filter(
+        x =>
+          Math.abs(
+            x.price - price
+          ) >= minimumDistance
+      );
+
+    /*
+     * Sort ikut jarak dari current price.
+     */
+
+    candidates.sort(
+      (a, b) =>
+        Math.abs(a.price - price) -
+        Math.abs(b.price - price)
+    );
+
+    const roadblocks =
+      candidates
+        .slice(
+          0,
+          CFG.roadblockMaxLevels
+        )
+        .map(x => {
+          const distance =
+            Math.abs(
+              x.price - price
+            );
+
+          const targetDistance =
+            Math.abs(
+              target - price
+            );
+
+          const percentage =
+            targetDistance > 0
+              ? (
+                  distance /
+                  targetDistance *
+                  100
+                )
+              : 0;
+
+          return {
+            price:
+              Number(
+                x.price.toFixed(2)
+              ),
+
+            type:
+              x.type,
+
+            strength:
+              x.touches,
+
+            distance:
+              Number(
+                distance.toFixed(2)
+              ),
+
+            targetProgressPct:
+              Number(
+                percentage.toFixed(1)
+              )
+          };
+        });
+
+    const nearest =
+      roadblocks[0] || null;
+
+    return {
+      timeframe,
+
+      target:
+        Number(
+          target.toFixed(2)
+        ),
+
+      targetType,
+
+      roadblocks,
+
+      nearest,
+
+      count:
+        roadblocks.length,
+
+      hasRoadblock:
+        roadblocks.length > 0,
+
+      status:
+        roadblocks.length
+          ? "ROADBLOCK"
+          : "CLEAR"
+    };
+  }
+
+  /*
+   * ============================================================
+   * TWELVE DATA CANDLE CACHE
+   * ============================================================
+   */
+
+  async function series(
+    interval,
+    outputsize,
+    key
+  ) {
+    const localCache =
+      C.candles[key];
+
+    const candleTTL =
+      getCandleTTL(key);
+
+    /*
+     * ----------------------------------------------------------
+     * 1. LOCAL CACHE
+     * ----------------------------------------------------------
+     */
+
+    if (
+      localCache &&
+      now - localCache.at <
+        candleTTL
+    ) {
+      C.dataSource[key] =
+        "LOCAL_CACHE";
+
+      return localCache.data;
+    }
+
+    /*
+     * ----------------------------------------------------------
+     * 2. TWELVE DATA
+     * ----------------------------------------------------------
+     */
+
+    try {
+      const controller =
+        new AbortController();
+
+      const timeout =
+        setTimeout(
+          () =>
+            controller.abort(),
+          10_000
+        );
+
+      const url =
+        `https://api.twelvedata.com/time_series` +
+        `?symbol=${encodeURIComponent(
+          CFG.symbol
+        )}` +
+        `&interval=${interval}` +
+        `&outputsize=${outputsize}` +
+        `&apikey=${API_KEY}`;
+
+      const r =
+        await fetch(
+          url,
+          {
+            signal:
+              controller.signal
+          }
+        );
+
+      clearTimeout(timeout);
+
+      const j =
+        await r.json();
+
+      if (
+        !r.ok ||
+        j.status === "error"
+      ) {
+        throw new Error(
+          j.message ||
+            `Twelve Data ${interval} error`
+        );
+      }
+
+      const data =
+        (j.values || [])
+          .reverse()
+          .map(x => ({
+            time: x.datetime,
+            open: +x.open,
+            high: +x.high,
+            low: +x.low,
+            close: +x.close,
+            volume:
+              +x.volume || 0
+          }))
+          .filter(x =>
+            [
+              x.open,
+              x.high,
+              x.low,
+              x.close
+            ].every(
+              Number.isFinite
+            )
+          );
+
+      const minRequired =
+        {
+          "5min":
+            CFG.minM5,
+
+          "15min":
+            CFG.minM15,
+
+          "1h":
+            CFG.minH1
+        }[interval];
+
+      if (
+        data.length <
+        minRequired
+      ) {
+        throw new Error(
+          `Data ${interval} tak cukup: ${data.length}`
+        );
+      }
+
+      const savedAt =
+        Date.now();
+
+      C.candles[key] = {
+        at: savedAt,
+        data
+      };
+
+      C.dataSource[key] =
+        "TWELVE_DATA";
+
+      C.cacheAt[key] =
+        savedAt;
+
+      /*
+       * Redis persistent cache
+       */
+
+      await redisSet(
+        CFG.redisKeys[key],
+        {
+          savedAt,
+          interval,
+          outputsize,
+          data
+        },
+        CFG.redisCacheTTL
+      );
+
+      return data;
+
+    } catch (apiError) {
+      console.error(
+        `Twelve Data ${interval} failed:`,
+        apiError?.message ||
+          apiError
+      );
+
+      /*
+       * --------------------------------------------------------
+       * 3. REDIS FALLBACK
+       * --------------------------------------------------------
+       */
+
+      const redisRaw =
+        await redisGet(
+          CFG.redisKeys[key]
+        );
+
+      const redisCache =
+        parseRedisValue(
+          redisRaw
+        );
+
+      if (
+        redisCache?.data &&
+        Array.isArray(
+          redisCache.data
+        ) &&
+        redisCache.data.length
+      ) {
+        const minRequired =
+          {
+            "5min":
+              CFG.minM5,
+
+            "15min":
+              CFG.minM15,
+
+            "1h":
+              CFG.minH1
+          }[interval];
+
+        if (
+          redisCache.data.length >=
+          minRequired
+        ) {
+          C.candles[key] = {
+            at:
+              redisCache.savedAt ||
+              Date.now(),
+
+            data:
+              redisCache.data
+          };
+
+          C.dataSource[key] =
+            "REDIS_CACHE";
+
+          C.cacheAt[key] =
+            redisCache.savedAt ||
+            Date.now();
+
+          return redisCache.data;
+        }
+      }
+
+      /*
+       * --------------------------------------------------------
+       * 4. STALE LOCAL
+       * --------------------------------------------------------
+       */
+
+      if (
+        localCache?.data &&
+        Array.isArray(
+          localCache.data
+        ) &&
+        localCache.data.length
+      ) {
+        C.dataSource[key] =
+          "STALE_LOCAL_CACHE";
+
+        return localCache.data;
+      }
+
+      throw new Error(
+        `${interval}: Twelve Data gagal dan cache terakhir tidak tersedia. ` +
+        `${apiError?.message || ""}`
+      );
+    }
+  }
+
+  /*
+   * ============================================================
+   * LIVE PRICE
+   * ============================================================
+   */
+
+  async function getLivePrice() {
+    /*
+     * LOCAL PRICE CACHE
+     */
+
+    if (
+      C.price != null &&
+      now - C.priceAt <
+        CFG.priceTTL
+    ) {
+      C.dataSource.price =
+        "LOCAL_CACHE";
+
+      return {
+        price: C.price,
+        savedAt: C.priceAt,
+        source: "LOCAL_CACHE"
+      };
+    }
+
+    /*
+     * TWELVE DATA PRICE
+     */
+
+    try {
+      const controller =
+        new AbortController();
+
+      const timeout =
+        setTimeout(
+          () =>
+            controller.abort(),
+          10_000
+        );
+
+      const pr =
+        await fetch(
+          `https://api.twelvedata.com/price` +
+          `?symbol=${encodeURIComponent(
+            CFG.symbol
+          )}` +
+          `&apikey=${API_KEY}`,
+          {
+            signal:
+              controller.signal
+          }
+        );
+
+      clearTimeout(timeout);
+
+      const pj =
+        await pr.json();
+
+      const p =
+        Number(
+          pj?.price
+        );
+
+      if (
+        !pr.ok ||
+        pj.status === "error" ||
+        !Number.isFinite(p)
+      ) {
+        throw new Error(
+          pj.message ||
+            "Live price error"
+        );
+      }
+
+      const savedAt =
+        Date.now();
+
+      C.price = p;
+      C.priceAt = savedAt;
+
+      C.dataSource.price =
+        "TWELVE_DATA";
+
+      C.cacheAt.price =
+        savedAt;
+
+      await redisSet(
+        CFG.redisKeys.price,
+        {
+          price: p,
+          savedAt
+        },
+        CFG.redisCacheTTL
+      );
+
+      return {
+        price: p,
+        savedAt,
+        source: "TWELVE_DATA"
+      };
+
+    } catch (priceError) {
+      console.error(
+        "Twelve Data price failed:",
+        priceError?.message ||
+          priceError
+      );
+
+      /*
+       * REDIS
+       */
+
+      const redisRaw =
+        await redisGet(
+          CFG.redisKeys.price
+        );
+
+      const redisPrice =
+        parseRedisValue(
+          redisRaw
+        );
+
+      const cachedPrice =
+        Number(
+          redisPrice?.price
+        );
+
+      if (
+        Number.isFinite(
+          cachedPrice
+        )
+      ) {
+        C.price =
+          cachedPrice;
+
+        C.priceAt =
+          redisPrice.savedAt ||
+          Date.now();
+
+        C.dataSource.price =
+          "REDIS_CACHE";
+
+        C.cacheAt.price =
+          redisPrice.savedAt ||
+          Date.now();
+
+        return {
+          price:
+            cachedPrice,
+
+          savedAt:
+            redisPrice.savedAt ||
+            Date.now(),
+
+          source:
+            "REDIS_CACHE"
+        };
+      }
+
+      /*
+       * STALE LOCAL
+       */
+
+      if (
+        Number.isFinite(
+          C.price
+        )
+      ) {
+        C.dataSource.price =
+          "STALE_LOCAL_CACHE";
+
+        return {
+          price:
+            C.price,
+
+          savedAt:
+            C.priceAt,
+
+          source:
+            "STALE_LOCAL_CACHE"
+        };
+      }
+
+      throw new Error(
+        `Live price gagal dan cache price tidak tersedia. ` +
+        `${priceError?.message || ""}`
+      );
+    }
+  }
+
+  /*
+   * ============================================================
+   * FIXED TRADE PLAN
+   * ============================================================
+   */
+
+  async function getLockedTradePlan(
+    signalKey
+  ) {
+    if (!signalKey) {
+      return null;
+    }
+
+    try {
+      const key =
+        `xau_trade_plan:${signalKey}`;
+
+      const raw =
+        await redis.get(key);
+
+      if (!raw) {
+        return null;
+      }
+
+      if (typeof raw === "string") {
+        return JSON.parse(raw);
+      }
+
+      return raw;
+
+    } catch (e) {
+      console.error(
+        "Trade plan read error:",
+        e
+      );
+
+      return null;
+    }
+  }
+
+  async function saveLockedTradePlan(
+    signalKey,
+    plan
+  ) {
+    if (!signalKey || !plan) {
       return;
     }
 
-    pushRegistration =
-      await navigator.serviceWorker.register(
-        "/sw.js",
+    try {
+      await redis.set(
+        `xau_trade_plan:${signalKey}`,
+        JSON.stringify(plan),
         {
-          scope: "/"
+          ex:
+            CFG.tradeLockTTL
         }
       );
 
-    const subscription =
-      await pushRegistration
-        .pushManager
-        .getSubscription();
-
-    if (subscription) {
-
-      text(
-        "pushStatus",
-        "Push subscription detected on this device."
-      );
-
-      $("pushBtn").textContent =
-        "PUSH ENABLED";
-
-      /*
-       * Keep server synchronized.
-       */
-
-      await saveSubscription(
-        subscription.toJSON()
+    } catch (e) {
+      console.error(
+        "Trade plan save error:",
+        e
       );
     }
-
-  } catch (error) {
-
-    console.warn(
-      "Push restore:",
-      error
-    );
   }
-}
 
-$("pushBtn")
-  .addEventListener(
-    "click",
-    enablePush
-  );
+  /*
+   * ============================================================
+   * MAIN
+   * ============================================================
+   */
 
-/* ============================================================
-   REFRESH BUTTON
-   ============================================================ */
+  let m5;
+  let m15;
+  let h1;
 
-$("refreshBtn")
-  .addEventListener(
-    "click",
-    async () => {
+  let livePrice;
+  let candlePrice;
 
-      $("refreshBtn")
-        .style.transform =
-        "rotate(180deg)";
+  let priceSource = "NONE";
 
-      await loadData();
+  try {
+    /*
+     * ==========================================================
+     * LOAD CANDLES
+     * ==========================================================
+     *
+     * Setiap timeframe ada cache sendiri.
+     */
 
-      setTimeout(
-        () => {
-          $("refreshBtn")
-            .style.transform =
-            "";
-        },
-        300
+    [
+      m5,
+      m15,
+      h1
+    ] = await Promise.all([
+      series(
+        "5min",
+        CFG.m5Size,
+        "m5"
+      ),
+
+      series(
+        "15min",
+        CFG.m15Size,
+        "m15"
+      ),
+
+      series(
+        "1h",
+        CFG.h1Size,
+        "h1"
+      )
+    ]);
+
+    /*
+     * ==========================================================
+     * LIVE PRICE
+     * ==========================================================
+     */
+
+    const priceResult =
+      await getLivePrice();
+
+    livePrice =
+      priceResult.price;
+
+    priceSource =
+      priceResult.source;
+
+    candlePrice =
+      m5.at(-1).close;
+
+    /*
+     * ==========================================================
+     * H1
+     * ==========================================================
+     */
+
+    const c1 =
+      h1.map(
+        x => x.close
       );
-    }
-  );
 
-/* ============================================================
-   AUTO REFRESH
-   ============================================================ */
+    const h1EMA50 =
+      ema(c1, 50);
 
-function startRefresh() {
+    const h1EMA200 =
+      ema(c1, 200);
 
-  clearInterval(
-    refreshTimer
-  );
+    const h1ATR =
+      atr(h1);
 
-  refreshTimer =
-    setInterval(
-      loadData,
-      REFRESH_MS
-    );
-}
+    const h1Struct =
+      structure(
+        h1,
+        20
+      );
 
-/* ============================================================
-   RESIZE
-   ============================================================ */
-
-window.addEventListener(
-  "resize",
-  () => {
+    let h1Direction =
+      "WAIT";
 
     if (
-      lastData
+      h1EMA50 != null &&
+      h1EMA200 != null
     ) {
+      if (
+        livePrice >
+          h1EMA200 &&
+        h1EMA50 >
+          h1EMA200
+      ) {
+        h1Direction =
+          "BUY";
 
-      drawChart(
-        lastData.candles || [],
-        Number(
-          lastData.price
-        ),
-        lastData.signal
+      } else if (
+        livePrice <
+          h1EMA200 &&
+        h1EMA50 <
+          h1EMA200
+      ) {
+        h1Direction =
+          "SELL";
+      }
+    }
+
+    /*
+     * H1 S/R
+     *
+     * S/R levels berasal daripada H1 candle.
+     * Tetapi jarak / position menggunakan LIVE PRICE.
+     */
+
+    const h1SupportResistance =
+      findH1SupportResistance(
+        h1,
+        livePrice,
+        h1ATR
+      );
+
+    /*
+     * ==========================================================
+     * M15
+     * ==========================================================
+     */
+
+    const c15 =
+      m15.map(
+        x => x.close
+      );
+
+    const m15EMA20 =
+      ema(c15, 20);
+
+    const m15EMA50 =
+      ema(c15, 50);
+
+    const m15RSI =
+      rsi(c15);
+
+    const m15MACD =
+      macd(c15);
+
+    const m15ATR =
+      atr(m15);
+
+    const m15Struct =
+      structure(
+        m15,
+        20
+      );
+
+    const m15BOS =
+      bos(
+        m15,
+        12
+      );
+
+    const m15CHOCH =
+      choch(
+        m15,
+        10
+      );
+
+    const m15Sweep =
+      sweep(
+        m15,
+        12
+      );
+
+    const m15Mom =
+      momentum(m15);
+
+    let m15Buy = 0;
+    let m15Sell = 0;
+
+    const rb = [];
+    const rs = [];
+
+    if (
+      m15EMA20 != null &&
+      m15EMA50 != null
+    ) {
+      if (
+        m15EMA20 >
+        m15EMA50
+      ) {
+        m15Buy += 20;
+        rb.push(
+          "EMA20 > EMA50"
+        );
+      }
+
+      if (
+        m15EMA20 <
+        m15EMA50
+      ) {
+        m15Sell += 20;
+        rs.push(
+          "EMA20 < EMA50"
+        );
+      }
+    }
+
+    if (
+      m15EMA20 != null
+    ) {
+      if (
+        livePrice >
+        m15EMA20
+      ) {
+        m15Buy += 10;
+        rb.push(
+          "Price > EMA20"
+        );
+      }
+
+      if (
+        livePrice <
+        m15EMA20
+      ) {
+        m15Sell += 10;
+        rs.push(
+          "Price < EMA20"
+        );
+      }
+    }
+
+    if (
+      m15RSI != null
+    ) {
+      if (
+        m15RSI >= 50 &&
+        m15RSI <= 72
+      ) {
+        m15Buy += 10;
+        rb.push(
+          "RSI bullish"
+        );
+      }
+
+      if (
+        m15RSI >= 28 &&
+        m15RSI < 50
+      ) {
+        m15Sell += 10;
+        rs.push(
+          "RSI bearish"
+        );
+      }
+    }
+
+    if (m15MACD?.bullish) {
+      m15Buy += 15;
+      rb.push(
+        "MACD bullish"
       );
     }
+
+    if (m15MACD?.bearish) {
+      m15Sell += 15;
+      rs.push(
+        "MACD bearish"
+      );
+    }
+
+    if (m15Struct.bullish) {
+      m15Buy += 15;
+      rb.push(
+        "Structure bullish"
+      );
+    }
+
+    if (m15Struct.bearish) {
+      m15Sell += 15;
+      rs.push(
+        "Structure bearish"
+      );
+    }
+
+    if (m15BOS.bullish) {
+      m15Buy += 15;
+      rb.push(
+        "BOS bullish"
+      );
+    }
+
+    if (m15BOS.bearish) {
+      m15Sell += 15;
+      rs.push(
+        "BOS bearish"
+      );
+    }
+
+    if (m15CHOCH.bullish) {
+      m15Buy += 10;
+      rb.push(
+        "CHOCH bullish"
+      );
+    }
+
+    if (m15CHOCH.bearish) {
+      m15Sell += 10;
+      rs.push(
+        "CHOCH bearish"
+      );
+    }
+
+    if (m15Sweep.bullish) {
+      m15Buy += 10;
+      rb.push(
+        "Sell-side sweep"
+      );
+    }
+
+    if (m15Sweep.bearish) {
+      m15Sell += 10;
+      rs.push(
+        "Buy-side sweep"
+      );
+    }
+
+    if (m15Mom.bullish) {
+      m15Buy += 5;
+      rb.push(
+        "Momentum bullish"
+      );
+    }
+
+    if (m15Mom.bearish) {
+      m15Sell += 5;
+      rs.push(
+        "Momentum bearish"
+      );
+    }
+
+    m15Buy =
+      clamp(
+        m15Buy,
+        0,
+        100
+      );
+
+    m15Sell =
+      clamp(
+        m15Sell,
+        0,
+        100
+      );
+
+    const m15BuyConfirmed =
+      m15Buy >= 55 &&
+      m15Buy >=
+        m15Sell + 15;
+
+    const m15SellConfirmed =
+      m15Sell >= 55 &&
+      m15Sell >=
+        m15Buy + 15;
+
+    const m15Confirmation =
+      m15BuyConfirmed
+        ? "BUY"
+        : m15SellConfirmed
+          ? "SELL"
+          : "WAIT";
+
+    /*
+     * ==========================================================
+     * M5
+     * ==========================================================
+     */
+
+    const c5 =
+      m5.map(
+        x => x.close
+      );
+
+    const m5EMA9 =
+      ema(c5, 9);
+
+    const m5EMA20 =
+      ema(c5, 20);
+
+    const m5EMA50 =
+      ema(c5, 50);
+
+    const m5RSI =
+      rsi(c5);
+
+    const m5MACD =
+      macd(c5);
+
+    const m5ATR =
+      atr(m5);
+
+    const m5Struct =
+      structure(
+        m5,
+        24
+      );
+
+    const m5BOS =
+      bos(
+        m5,
+        10
+      );
+
+    const m5CHOCH =
+      choch(
+        m5,
+        8
+      );
+
+    const m5Sweep =
+      sweep(
+        m5,
+        10
+      );
+
+    const m5Mom =
+      momentum(m5);
+
+    let m5Buy = 0;
+    let m5Sell = 0;
+
+    const r5b = [];
+    const r5s = [];
+
+    if (
+      m5EMA20 != null &&
+      m5EMA50 != null
+    ) {
+      if (
+        m5EMA20 >
+        m5EMA50
+      ) {
+        m5Buy += 20;
+        r5b.push(
+          "EMA20 > EMA50"
+        );
+      }
+
+      if (
+        m5EMA20 <
+        m5EMA50
+      ) {
+        m5Sell += 20;
+        r5s.push(
+          "EMA20 < EMA50"
+        );
+      }
+    }
+
+    if (m5EMA9 != null) {
+      if (
+        livePrice >
+        m5EMA9
+      ) {
+        m5Buy += 8;
+        r5b.push(
+          "Price > EMA9"
+        );
+      }
+
+      if (
+        livePrice <
+        m5EMA9
+      ) {
+        m5Sell += 8;
+        r5s.push(
+          "Price < EMA9"
+        );
+      }
+    }
+
+    if (m5RSI != null) {
+      if (
+        m5RSI >= 50 &&
+        m5RSI < 75
+      ) {
+        m5Buy += 10;
+        r5b.push(
+          "RSI bullish"
+        );
+      }
+
+      if (
+        m5RSI > 25 &&
+        m5RSI < 50
+      ) {
+        m5Sell += 10;
+        r5s.push(
+          "RSI bearish"
+        );
+      }
+    }
+
+    if (m5MACD?.bullish) {
+      m5Buy += 10;
+      r5b.push(
+        "MACD bullish"
+      );
+    }
+
+    if (m5MACD?.bearish) {
+      m5Sell += 10;
+      r5s.push(
+        "MACD bearish"
+      );
+    }
+
+    if (m5Struct.bullish) {
+      m5Buy += 12;
+      r5b.push(
+        "Structure bullish"
+      );
+    }
+
+    if (m5Struct.bearish) {
+      m5Sell += 12;
+      r5s.push(
+        "Structure bearish"
+      );
+    }
+
+    if (m5BOS.bullish) {
+      m5Buy += 15;
+      r5b.push(
+        "BOS bullish"
+      );
+    }
+
+    if (m5BOS.bearish) {
+      m5Sell += 15;
+      r5s.push(
+        "BOS bearish"
+      );
+    }
+
+    if (m5CHOCH.bullish) {
+      m5Buy += 12;
+      r5b.push(
+        "CHOCH bullish"
+      );
+    }
+
+    if (m5CHOCH.bearish) {
+      m5Sell += 12;
+      r5s.push(
+        "CHOCH bearish"
+      );
+    }
+
+    if (m5Sweep.bullish) {
+      m5Buy += 8;
+      r5b.push(
+        "Sell-side sweep"
+      );
+    }
+
+    if (m5Sweep.bearish) {
+      m5Sell += 8;
+      r5s.push(
+        "Buy-side sweep"
+      );
+    }
+
+    if (m5Mom.bullish) {
+      m5Buy += 5;
+      r5b.push(
+        "Momentum bullish"
+      );
+    }
+
+    if (m5Mom.bearish) {
+      m5Sell += 5;
+      r5s.push(
+        "Momentum bearish"
+      );
+    }
+
+    m5Buy =
+      clamp(
+        m5Buy,
+        0,
+        100
+      );
+
+    m5Sell =
+      clamp(
+        m5Sell,
+        0,
+        100
+      );
+
+    const m5BuyTriggered =
+      m5Buy >= 50 &&
+      m5Buy >=
+        m5Sell + 8;
+
+    const m5SellTriggered =
+      m5Sell >= 50 &&
+      m5Sell >=
+        m5Buy + 8;
+
+    const m5Trigger =
+      m5BuyTriggered
+        ? "BUY"
+        : m5SellTriggered
+          ? "SELL"
+          : "WAIT";
+
+    /*
+     * ==========================================================
+     * ALIGNMENT
+     * ==========================================================
+     */
+
+    const rawBuyAlignment =
+      m15BuyConfirmed &&
+      m5BuyTriggered;
+
+    const rawSellAlignment =
+      m15SellConfirmed &&
+      m5SellTriggered;
+
+    /*
+     * ==========================================================
+     * H1 S/R FILTER
+     * ==========================================================
+     */
+
+    let srBuyAllowed = true;
+    let srSellAllowed = true;
+
+    let srBuyContext =
+      "NEUTRAL";
+
+    let srSellContext =
+      "NEUTRAL";
+
+    if (
+      h1SupportResistance
+        .nearResistance
+    ) {
+      srBuyAllowed =
+        false;
+
+      srBuyContext =
+        "BLOCKED_NEAR_RESISTANCE";
+    }
+
+    if (
+      h1SupportResistance
+        .nearSupport
+    ) {
+      srSellAllowed =
+        false;
+
+      srSellContext =
+        "BLOCKED_NEAR_SUPPORT";
+    }
+
+    if (
+      h1SupportResistance
+        .nearSupport
+    ) {
+      srBuyContext =
+        "BUY_NEAR_SUPPORT";
+    }
+
+    if (
+      h1SupportResistance
+        .nearResistance
+    ) {
+      srSellContext =
+        "SELL_NEAR_RESISTANCE";
+    }
+
+    /*
+     * ==========================================================
+     * REVERSAL / CONTINUATION
+     * ==========================================================
+     */
+
+    let buySetupType =
+      "NONE";
+
+    let sellSetupType =
+      "NONE";
+
+    const buyContinuation =
+      rawBuyAlignment &&
+      h1Direction ===
+        "BUY";
+
+    const sellContinuation =
+      rawSellAlignment &&
+      h1Direction ===
+        "SELL";
+
+    const buyReversal =
+      rawBuyAlignment &&
+      h1SupportResistance
+        .reversalAtSupport &&
+      h1Direction !==
+        "BUY";
+
+    const sellReversal =
+      rawSellAlignment &&
+      h1SupportResistance
+        .reversalAtResistance &&
+      h1Direction !==
+        "SELL";
+
+    if (buyContinuation) {
+      buySetupType =
+        "CONTINUATION";
+    } else if (buyReversal) {
+      buySetupType =
+        "REVERSAL";
+    } else if (rawBuyAlignment) {
+      buySetupType =
+        "COUNTER-TREND";
+    }
+
+    if (sellContinuation) {
+      sellSetupType =
+        "CONTINUATION";
+    } else if (sellReversal) {
+      sellSetupType =
+        "REVERSAL";
+    } else if (rawSellAlignment) {
+      sellSetupType =
+        "COUNTER-TREND";
+    }
+
+    /*
+     * ==========================================================
+     * H1 TARGET
+     * ==========================================================
+     */
+
+    let targetSR = null;
+    let targetSRType = null;
+    let targetSRDistance = null;
+
+    if (
+      rawBuyAlignment &&
+      h1SupportResistance
+        .resistance
+    ) {
+      targetSR =
+        h1SupportResistance
+          .resistance.price;
+
+      targetSRType =
+        "H1 RESISTANCE";
+
+      targetSRDistance =
+        Number(
+          (
+            targetSR -
+            livePrice
+          ).toFixed(2)
+        );
+    }
+
+    if (
+      rawSellAlignment &&
+      h1SupportResistance
+        .support
+    ) {
+      targetSR =
+        h1SupportResistance
+          .support.price;
+
+      targetSRType =
+        "H1 SUPPORT";
+
+      targetSRDistance =
+        Number(
+          (
+            livePrice -
+            targetSR
+          ).toFixed(2)
+        );
+    }
+
+    /*
+     * ==========================================================
+     * ROADBLOCKS
+     * ==========================================================
+     */
+
+    const buyM15Roadblocks =
+      targetSR != null &&
+      rawBuyAlignment
+        ? findRoadblocks(
+            m15,
+            livePrice,
+            targetSR,
+            "BUY TARGET",
+            "M15",
+            m15ATR
+          )
+        : {
+            timeframe: "M15",
+            target: targetSR,
+            targetType: "BUY TARGET",
+            roadblocks: [],
+            nearest: null,
+            count: 0,
+            hasRoadblock: false,
+            status: "NONE"
+          };
+
+    const buyM5Roadblocks =
+      targetSR != null &&
+      rawBuyAlignment
+        ? findRoadblocks(
+            m5,
+            livePrice,
+            targetSR,
+            "BUY TARGET",
+            "M5",
+            m5ATR
+          )
+        : {
+            timeframe: "M5",
+            target: targetSR,
+            targetType: "BUY TARGET",
+            roadblocks: [],
+            nearest: null,
+            count: 0,
+            hasRoadblock: false,
+            status: "NONE"
+          };
+
+    const sellM15Roadblocks =
+      targetSR != null &&
+      rawSellAlignment
+        ? findRoadblocks(
+            m15,
+            livePrice,
+            targetSR,
+            "SELL TARGET",
+            "M15",
+            m15ATR
+          )
+        : {
+            timeframe: "M15",
+            target: targetSR,
+            targetType: "SELL TARGET",
+            roadblocks: [],
+            nearest: null,
+            count: 0,
+            hasRoadblock: false,
+            status: "NONE"
+          };
+
+    const sellM5Roadblocks =
+      targetSR != null &&
+      rawSellAlignment
+        ? findRoadblocks(
+            m5,
+            livePrice,
+            targetSR,
+            "SELL TARGET",
+            "M5",
+            m5ATR
+          )
+        : {
+            timeframe: "M5",
+            target: targetSR,
+            targetType: "SELL TARGET",
+            roadblocks: [],
+            nearest: null,
+            count: 0,
+            hasRoadblock: false,
+            status: "NONE"
+          };
+
+    /*
+     * Gabungkan roadblock ikut signal
+     */
+
+    const activeRoadblocks =
+      rawBuyAlignment
+        ? [
+            ...buyM5Roadblocks.roadblocks.map(
+              x => ({
+                ...x,
+                timeframe: "M5"
+              })
+            ),
+
+            ...buyM15Roadblocks.roadblocks.map(
+              x => ({
+                ...x,
+                timeframe: "M15"
+              })
+            )
+          ]
+        : rawSellAlignment
+          ? [
+              ...sellM5Roadblocks.roadblocks.map(
+                x => ({
+                  ...x,
+                  timeframe: "M5"
+                })
+              ),
+
+              ...sellM15Roadblocks.roadblocks.map(
+                x => ({
+                  ...x,
+                  timeframe: "M15"
+                })
+              )
+            ]
+          : [];
+
+    activeRoadblocks.sort(
+      (a, b) =>
+        a.distance - b.distance
+    );
+
+    const nearestRoadblock =
+      activeRoadblocks[0] ||
+      null;
+
+    /*
+     * ==========================================================
+     * FINAL SIGNAL
+     * ==========================================================
+     */
+
+    let signal =
+      "WAIT";
+
+    let status =
+      "WAIT";
+
+    let execution =
+      "WAIT";
+
+    let setupType =
+      "NO ALIGNMENT";
+
+    let score =
+      Math.round(
+        Math.max(
+          m15Buy,
+          m15Sell,
+          m5Buy,
+          m5Sell
+        )
+      );
+
+    let reasons = [];
+
+    /*
+     * BUY
+     */
+
+    if (
+      rawBuyAlignment &&
+      srBuyAllowed
+    ) {
+      signal =
+        "BUY";
+
+      status =
+        "ENTRY";
+
+      execution =
+        "READY";
+
+      setupType =
+        buySetupType;
+
+      score =
+        Math.round(
+          (
+            m15Buy +
+            m5Buy
+          ) / 2
+        );
+
+      reasons = [
+        "M15 BUY confirmed",
+        "M5 BUY trigger confirmed",
+        "M15 + M5 aligned",
+        `SETUP: ${buySetupType}`,
+        `H1 S/R: ${h1SupportResistance.position}`,
+
+        h1SupportResistance
+          .reversalAtSupport
+          ? "Price located at/near H1 support"
+          : "H1 support/resistance location valid"
+      ];
+
+      if (targetSR != null) {
+        reasons.push(
+          `${targetSRType} target ${targetSR}`
+        );
+      }
+
+      /*
+       * Roadblock warning sahaja.
+       */
+
+      if (nearestRoadblock) {
+        reasons.push(
+          `ROADBLOCK ${nearestRoadblock.timeframe} ${nearestRoadblock.price}`
+        );
+      }
+    }
+
+    /*
+     * SELL
+     */
+
+    else if (
+      rawSellAlignment &&
+      srSellAllowed
+    ) {
+      signal =
+        "SELL";
+
+      status =
+        "ENTRY";
+
+      execution =
+        "READY";
+
+      setupType =
+        sellSetupType;
+
+      score =
+        Math.round(
+          (
+            m15Sell +
+            m5Sell
+          ) / 2
+        );
+
+      reasons = [
+        "M15 SELL confirmed",
+        "M5 SELL trigger confirmed",
+        "M15 + M5 aligned",
+        `SETUP: ${sellSetupType}`,
+        `H1 S/R: ${h1SupportResistance.position}`,
+
+        h1SupportResistance
+          .reversalAtResistance
+          ? "Price located at/near H1 resistance"
+          : "H1 support/resistance location valid"
+      ];
+
+      if (targetSR != null) {
+        reasons.push(
+          `${targetSRType} target ${targetSR}`
+        );
+      }
+
+      if (nearestRoadblock) {
+        reasons.push(
+          `ROADBLOCK ${nearestRoadblock.timeframe} ${nearestRoadblock.price}`
+        );
+      }
+    }
+
+    /*
+     * BUY blocked H1 S/R
+     */
+
+    else if (
+      rawBuyAlignment &&
+      !srBuyAllowed
+    ) {
+      reasons = [
+        "M15 BUY confirmed",
+        "M5 BUY trigger confirmed",
+        "BUY BLOCKED",
+        "Too close to H1 resistance",
+
+        `Resistance ${
+          h1SupportResistance
+            .resistance?.price ??
+          "N/A"
+        }`
+      ];
+    }
+
+    /*
+     * SELL blocked H1 S/R
+     */
+
+    else if (
+      rawSellAlignment &&
+      !srSellAllowed
+    ) {
+      reasons = [
+        "M15 SELL confirmed",
+        "M5 SELL trigger confirmed",
+        "SELL BLOCKED",
+        "Too close to H1 support",
+
+        `Support ${
+          h1SupportResistance
+            .support?.price ??
+          "N/A"
+        }`
+      ];
+    }
+
+    /*
+     * Conflict
+     */
+
+    else if (
+      m15BuyConfirmed &&
+      m5SellTriggered
+    ) {
+      reasons = [
+        "M15 BUY vs M5 SELL — conflicting"
+      ];
+    }
+
+    else if (
+      m15SellConfirmed &&
+      m5BuyTriggered
+    ) {
+      reasons = [
+        "M15 SELL vs M5 BUY — conflicting"
+      ];
+    }
+
+    /*
+     * Partial
+     */
+
+    else if (
+      m15BuyConfirmed ||
+      m15SellConfirmed ||
+      m5BuyTriggered ||
+      m5SellTriggered
+    ) {
+      reasons = [
+        "Waiting for timeframe alignment"
+      ];
+    }
+
+    else {
+      reasons = [
+        "M15 + M5 not aligned"
+      ];
+    }
+
+    /*
+     * ==========================================================
+     * H1 HOLD
+     * ==========================================================
+     */
+
+    const holdBias =
+      h1Direction === "BUY"
+        ? "BUY"
+        : h1Direction === "SELL"
+          ? "SELL"
+          : "NEUTRAL";
+
+    const holdPermission =
+      signal === "BUY" &&
+      h1Direction === "BUY"
+
+        ? "HOLD BUY"
+
+        : signal === "SELL" &&
+          h1Direction === "SELL"
+
+          ? "HOLD SELL"
+
+          : signal !== "WAIT"
+
+            ? "SCALP ONLY"
+
+            : "NO HOLD";
+
+    const context =
+      (
+        signal === "BUY" &&
+        h1Direction === "BUY"
+      ) ||
+      (
+        signal === "SELL" &&
+        h1Direction === "SELL"
+      )
+
+        ? "WITH_H1"
+
+        : signal === "WAIT"
+
+          ? "NEUTRAL"
+
+          : "COUNTER_H1";
+
+    /*
+     * ==========================================================
+     * SIGNAL KEY
+     * ==========================================================
+     */
+
+    const signalCandle =
+      m5.at(-1)?.time ||
+      new Date().toISOString();
+
+    const signalKey =
+      signal !== "WAIT"
+        ? `XAUUSD|${signal}|${signalCandle}`
+        : null;
+
+    /*
+     * ==========================================================
+     * FIXED TRADE PLAN
+     * ==========================================================
+     */
+
+    let entry = null;
+    let stopLoss = null;
+    let tp1 = null;
+    let tp2 = null;
+    let tp3 = null;
+    let rr = null;
+
+    let tradePlanLocked =
+      false;
+
+    let tradePlanSource =
+      "NONE";
+
+    let risk = null;
+
+    let targetSRValid =
+      false;
+
+    /*
+     * Existing locked plan
+     */
+
+    if (signalKey) {
+      const locked =
+        await getLockedTradePlan(
+          signalKey
+        );
+
+      if (locked) {
+        entry =
+          locked.entry;
+
+        stopLoss =
+          locked.stopLoss;
+
+        tp1 =
+          locked.tp1;
+
+        tp2 =
+          locked.tp2;
+
+        tp3 =
+          locked.tp3;
+
+        rr =
+          locked.rr;
+
+        risk =
+          locked.risk ??
+          null;
+
+        targetSR =
+          locked.targetSR ??
+          targetSR;
+
+        targetSRType =
+          locked.targetSRType ??
+          targetSRType;
+
+        targetSRDistance =
+          locked.targetSRDistance ??
+          targetSRDistance;
+
+        targetSRValid =
+          locked.targetSRValid ??
+          false;
+
+        tradePlanLocked =
+          true;
+
+        tradePlanSource =
+          "REDIS_LOCK";
+      }
+    }
+
+    /*
+     * ==========================================================
+     * VALIDATE TARGET
+     * ==========================================================
+     */
+
+    let candidateEntry =
+      Number(
+        livePrice.toFixed(2)
+      );
+
+    let candidateRisk =
+      m5ATR != null
+        ? Math.max(
+            m5ATR * 1.25,
+            0.8
+          )
+        : null;
+
+    if (
+      candidateRisk != null &&
+      targetSR != null
+    ) {
+      if (signal === "BUY") {
+        targetSRValid =
+          (
+            targetSR -
+            candidateEntry
+          ) >=
+          candidateRisk *
+            CFG.minTargetR;
+      }
+
+      if (signal === "SELL") {
+        targetSRValid =
+          (
+            candidateEntry -
+            targetSR
+          ) >=
+          candidateRisk *
+            CFG.minTargetR;
+      }
+    }
+
+    /*
+     * Invalid S/R
+     */
+
+    if (
+      status === "ENTRY" &&
+      CFG.requireValidSRTarget &&
+      !targetSRValid
+    ) {
+      execution =
+        "BLOCKED";
+
+      status =
+        "WAIT";
+
+      reasons.push(
+        targetSR == null
+          ? "NO VALID H1 S/R TARGET"
+          : `H1 S/R TARGET TOO CLOSE — minimum ${CFG.minTargetR}R`
+      );
+    }
+
+    /*
+     * ==========================================================
+     * CREATE FIXED PLAN
+     * ==========================================================
+     */
+
+    if (
+      status === "ENTRY" &&
+      execution === "READY" &&
+      m5ATR != null &&
+      signalKey &&
+      !tradePlanLocked
+    ) {
+      entry =
+        candidateEntry;
+
+      risk =
+        candidateRisk;
+
+      if (signal === "BUY") {
+        stopLoss =
+          Number(
+            (
+              entry -
+              risk
+            ).toFixed(2)
+          );
+
+        tp1 =
+          Number(
+            targetSR.toFixed(2)
+          );
+
+        tp2 =
+          Number(
+            (
+              entry +
+              risk * 2.5
+            ).toFixed(2)
+          );
+
+        tp3 =
+          Number(
+            (
+              entry +
+              risk * 4
+            ).toFixed(2)
+          );
+
+      } else {
+        stopLoss =
+          Number(
+            (
+              entry +
+              risk
+            ).toFixed(2)
+          );
+
+        tp1 =
+          Number(
+            targetSR.toFixed(2)
+          );
+
+        tp2 =
+          Number(
+            (
+              entry -
+              risk * 2.5
+            ).toFixed(2)
+          );
+
+        tp3 =
+          Number(
+            (
+              entry -
+              risk * 4
+            ).toFixed(2)
+          );
+      }
+
+      const tp1R =
+        risk > 0
+          ? Math.abs(
+              tp1 - entry
+            ) / risk
+          : 0;
+
+      rr =
+        `1 : ${tp1R.toFixed(2)} / 2.5 / 4.0`;
+
+      const newPlan = {
+        entry,
+        stopLoss,
+        tp1,
+        tp2,
+        tp3,
+
+        rr,
+
+        risk,
+
+        signal,
+
+        signalKey,
+        signalCandle,
+
+        setupType,
+
+        targetSR,
+        targetSRType,
+        targetSRDistance,
+        targetSRValid,
+
+        createdAt:
+          new Date().toISOString()
+      };
+
+      await saveLockedTradePlan(
+        signalKey,
+        newPlan
+      );
+
+      tradePlanLocked =
+        true;
+
+      tradePlanSource =
+        "NEW_REDIS_LOCK";
+    }
+
+    /*
+     * ==========================================================
+     * PUSH
+     * ==========================================================
+     */
+
+    let pushSent =
+      false;
+
+    let pushSkipped =
+      false;
+
+    if (
+      signalKey &&
+      status === "ENTRY" &&
+      execution === "READY"
+    ) {
+      try {
+        const lockKey =
+          "xau_last_entry_notification";
+
+        const alreadyNotified =
+          await redis.get(
+            lockKey
+          );
+
+        if (
+          alreadyNotified !==
+          signalKey
+        ) {
+          const title =
+            signal === "BUY"
+              ? "🟢 XAU/USD BUY ENTRY"
+              : "🔴 XAU/USD SELL ENTRY";
+
+          const srText =
+            targetSR != null
+              ? `TARGET ${targetSRType} ${targetSR}`
+              : "NO H1 S/R TARGET";
+
+          const roadblockText =
+            nearestRoadblock
+              ? `ROADBLOCK ${nearestRoadblock.timeframe} ${nearestRoadblock.price}`
+              : "ROADBLOCK CLEAR";
+
+          const body = [
+            `${signal} • Score ${score}/100`,
+            `Entry ${entry?.toFixed(2)}`,
+            `SL ${stopLoss?.toFixed(2)}`,
+            `TP1 ${tp1?.toFixed(2)}`,
+            `TP2 ${tp2?.toFixed(2)}`,
+            `TP3 ${tp3?.toFixed(2)}`,
+            setupType,
+            srText,
+            roadblockText,
+            `H1 ${h1Direction}`,
+            holdPermission
+          ].join(
+            " • "
+          );
+
+          const delivery =
+            await sendPushToAll({
+              title,
+              body,
+              tag: signalKey,
+              url: "/"
+            });
+
+          pushSent =
+            Number(
+              delivery?.sent || 0
+            ) > 0;
+
+          if (pushSent) {
+            await redis.set(
+              lockKey,
+              signalKey,
+              {
+                ex:
+                  CFG.tradeLockTTL
+              }
+            );
+          }
+
+        } else {
+          pushSkipped =
+            true;
+        }
+
+      } catch (pushError) {
+        console.error(
+          "Automatic push error:",
+          pushError
+        );
+      }
+    }
+
+    /*
+     * ==========================================================
+     * DATA SOURCE STATUS
+     * ==========================================================
+     */
+
+    const sourceValues = [
+      C.dataSource.m5,
+      C.dataSource.m15,
+      C.dataSource.h1,
+      priceSource
+    ];
+
+    const usingCache =
+      sourceValues.some(
+        x =>
+          x === "REDIS_CACHE" ||
+          x === "STALE_LOCAL_CACHE" ||
+          x === "LOCAL_CACHE"
+      );
+
+    const usingLive =
+      sourceValues.some(
+        x =>
+          x === "TWELVE_DATA"
+      );
+
+    const stale =
+      sourceValues.some(
+        x =>
+          x === "REDIS_CACHE" ||
+          x === "STALE_LOCAL_CACHE"
+      );
+
+    const cacheAges = {
+      m5:
+        C.cacheAt.m5
+          ? Math.round(
+              (
+                Date.now() -
+                C.cacheAt.m5
+              ) / 1000
+            )
+          : null,
+
+      m15:
+        C.cacheAt.m15
+          ? Math.round(
+              (
+                Date.now() -
+                C.cacheAt.m15
+              ) / 1000
+            )
+          : null,
+
+      h1:
+        C.cacheAt.h1
+          ? Math.round(
+              (
+                Date.now() -
+                C.cacheAt.h1
+              ) / 1000
+            )
+          : null,
+
+      price:
+        C.cacheAt.price
+          ? Math.round(
+              (
+                Date.now() -
+                C.cacheAt.price
+              ) / 1000
+            )
+          : null
+    };
+
+    let overallDataSource =
+      "LIVE";
+
+    if (stale) {
+      overallDataSource =
+        "CACHE";
+    } else if (usingLive) {
+      overallDataSource =
+        "LIVE";
+    } else if (usingCache) {
+      overallDataSource =
+        "CACHE";
+    }
+
+    /*
+     * ==========================================================
+     * RESPONSE
+     * ==========================================================
+     */
+
+    return res.status(200).json({
+      ok: true,
+
+      version:
+        "V14-SCALP-TF-CACHE-LIVE-PRICE-ROADBLOCK",
+
+      architecture:
+        "M15+M5-ALIGNED-SIGNAL + H1-HOLD + H1-SR-TARGET + M15/M5-ROADBLOCK + FIXED-ENTRY-SL-TP + TIMEFRAME-CACHE + LIVE-PRICE",
+
+      symbol:
+        CFG.symbol,
+
+      price:
+        livePrice,
+
+      candlePrice,
+
+      /*
+       * ========================================================
+       * DATA SOURCE
+       * ========================================================
+       */
+
+      dataSource:
+        overallDataSource,
+
+      stale,
+
+      cache: {
+        enabled: true,
+
+        storage:
+          "REDIS + LOCAL",
+
+        candleTTLSeconds: {
+          m5:
+            CFG.m5CacheTTL /
+            1000,
+
+          m15:
+            CFG.m15CacheTTL /
+            1000,
+
+          h1:
+            CFG.h1CacheTTL /
+            1000
+        },
+
+        priceTTLSeconds:
+          CFG.priceTTL /
+          1000,
+
+        redisTTLSeconds:
+          CFG.redisCacheTTL,
+
+        sources: {
+          m5:
+            C.dataSource.m5,
+
+          m15:
+            C.dataSource.m15,
+
+          h1:
+            C.dataSource.h1,
+
+          price:
+            priceSource
+        },
+
+        ageSeconds:
+          cacheAges
+      },
+
+      livePrice: {
+        price:
+          livePrice,
+
+        source:
+          priceSource,
+
+        ageSeconds:
+          cacheAges.price
+      },
+
+      candles:
+        m5.slice(-60),
+
+      status,
+      signal,
+
+      signalType:
+        signal === "WAIT"
+          ? "NONE"
+          : setupType,
+
+      setupType,
+
+      execution,
+
+      score,
+
+      context,
+
+      reasons,
+
+      signalKey,
+
+      signalCandle,
+
+      push: {
+        attempted:
+          Boolean(
+            signalKey &&
+            status === "ENTRY" &&
+            execution === "READY"
+          ),
+
+        sent:
+          pushSent,
+
+        skipped:
+          pushSkipped
+      },
+
+      /*
+       * ========================================================
+       * H1
+       * ========================================================
+       */
+
+      h1: {
+        direction:
+          h1Direction,
+
+        ema50:
+          h1EMA50,
+
+        ema200:
+          h1EMA200,
+
+        atr:
+          h1ATR,
+
+        holdBias,
+
+        holdPermission,
+
+        structure:
+          h1Struct,
+
+        supportResistance:
+          h1SupportResistance,
+
+        srFilter: {
+          buyAllowed:
+            srBuyAllowed,
+
+          sellAllowed:
+            srSellAllowed,
+
+          buyContext:
+            srBuyContext,
+
+          sellContext:
+            srSellContext,
+
+          buyBlocked:
+            !srBuyAllowed,
+
+          sellBlocked:
+            !srSellAllowed
+        }
+      },
+
+      /*
+       * ========================================================
+       * M15
+       * ========================================================
+       */
+
+      m15: {
+        direction:
+          m15Confirmation,
+
+        confirmation:
+          m15Confirmation,
+
+        buyScore:
+          m15Buy,
+
+        sellScore:
+          m15Sell,
+
+        buyConfirmed:
+          m15BuyConfirmed,
+
+        sellConfirmed:
+          m15SellConfirmed,
+
+        ema20:
+          m15EMA20,
+
+        ema50:
+          m15EMA50,
+
+        rsi:
+          m15RSI,
+
+        macd:
+          m15MACD,
+
+        atr:
+          m15ATR,
+
+        bos:
+          m15BOS,
+
+        choch:
+          m15CHOCH,
+
+        sweep:
+          m15Sweep,
+
+        momentum:
+          m15Mom,
+
+        structure:
+          m15Struct,
+
+        buyReasons:
+          rb,
+
+        sellReasons:
+          rs
+      },
+
+      /*
+       * ========================================================
+       * M5
+       * ========================================================
+       */
+
+      m5: {
+        trigger:
+          m5Trigger,
+
+        confirmation:
+          m5Trigger,
+
+        buyScore:
+          m5Buy,
+
+        sellScore:
+          m5Sell,
+
+        buyTriggered:
+          m5BuyTriggered,
+
+        sellTriggered:
+          m5SellTriggered,
+
+        ema9:
+          m5EMA9,
+
+        ema20:
+          m5EMA20,
+
+        ema50:
+          m5EMA50,
+
+        rsi:
+          m5RSI,
+
+        macd:
+          m5MACD,
+
+        atr:
+          m5ATR,
+
+        bos:
+          m5BOS,
+
+        choch:
+          m5CHOCH,
+
+        sweep:
+          m5Sweep,
+
+        momentum:
+          m5Mom,
+
+        structure:
+          m5Struct,
+
+        buyReasons:
+          r5b,
+
+        sellReasons:
+          r5s
+      },
+
+      /*
+       * ========================================================
+       * SETUP ANALYSIS
+       * ========================================================
+       */
+
+      setupAnalysis: {
+        buy: {
+          aligned:
+            rawBuyAlignment,
+
+          continuation:
+            buyContinuation,
+
+          reversal:
+            buyReversal,
+
+          type:
+            buySetupType,
+
+          location:
+            h1SupportResistance
+              .position,
+
+          h1Bias:
+            h1Direction,
+
+          targetSR:
+            rawBuyAlignment
+              ? h1SupportResistance
+                  .resistance
+              : null
+        },
+
+        sell: {
+          aligned:
+            rawSellAlignment,
+
+          continuation:
+            sellContinuation,
+
+          reversal:
+            sellReversal,
+
+          type:
+            sellSetupType,
+
+          location:
+            h1SupportResistance
+              .position,
+
+          h1Bias:
+            h1Direction,
+
+          targetSR:
+            rawSellAlignment
+              ? h1SupportResistance
+                  .support
+              : null
+        }
+      },
+
+      /*
+       * ========================================================
+       * ROADBLOCK ANALYSIS
+       * ========================================================
+       */
+
+      roadblocks: {
+        active:
+          activeRoadblocks,
+
+        nearest:
+          nearestRoadblock,
+
+        count:
+          activeRoadblocks.length,
+
+        hasRoadblock:
+          activeRoadblocks.length > 0,
+
+        buy: {
+          m5:
+            buyM5Roadblocks,
+
+          m15:
+            buyM15Roadblocks
+        },
+
+        sell: {
+          m5:
+            sellM5Roadblocks,
+
+          m15:
+            sellM15Roadblocks
+        }
+      },
+
+      /*
+       * ========================================================
+       * TRADE PLAN
+       * ========================================================
+       */
+
+      tradePlan: {
+        entry,
+
+        stopLoss,
+
+        tp1,
+
+        tp2,
+
+        tp3,
+
+        rr,
+
+        risk,
+
+        locked:
+          tradePlanLocked,
+
+        source:
+          tradePlanSource,
+
+        fixed:
+          Boolean(
+            signalKey &&
+            entry != null
+          ),
+
+        targetSR,
+
+        targetSRType,
+
+        targetSRDistance,
+
+        targetSRValid,
+
+        targetMode:
+          targetSR != null
+            ? "NEAREST_H1_SR"
+            : "NONE"
+      },
+
+      /*
+       * ========================================================
+       * S/R ANALYSIS
+       * ========================================================
+       */
+
+      srAnalysis: {
+        timeframe:
+          "H1",
+
+        currentPrice:
+          livePrice,
+
+        support:
+          h1SupportResistance
+            .support,
+
+        resistance:
+          h1SupportResistance
+            .resistance,
+
+        position:
+          h1SupportResistance
+            .position,
+
+        zone:
+          h1SupportResistance
+            .zone,
+
+        supportDistance:
+          h1SupportResistance
+            .supportDistance,
+
+        resistanceDistance:
+          h1SupportResistance
+            .resistanceDistance,
+
+        threshold:
+          h1SupportResistance
+            .threshold,
+
+        reversalThreshold:
+          h1SupportResistance
+            .reversalThreshold,
+
+        nearSupport:
+          h1SupportResistance
+            .nearSupport,
+
+        nearResistance:
+          h1SupportResistance
+            .nearResistance,
+
+        atSupport:
+          h1SupportResistance
+            .atSupport,
+
+        atResistance:
+          h1SupportResistance
+            .atResistance,
+
+        reversalAtSupport:
+          h1SupportResistance
+            .reversalAtSupport,
+
+        reversalAtResistance:
+          h1SupportResistance
+            .reversalAtResistance,
+
+        signalContext:
+          h1SupportResistance
+            .signalContext,
+
+        buyAllowed:
+          srBuyAllowed,
+
+        sellAllowed:
+          srSellAllowed,
+
+        buyContext:
+          srBuyContext,
+
+        sellContext:
+          srSellContext,
+
+        scalpTarget:
+          targetSR,
+
+        scalpTargetType:
+          targetSRType,
+
+        scalpTargetDistance:
+          targetSRDistance,
+
+        scalpTargetValid:
+          targetSRValid
+      },
+
+      /*
+       * ========================================================
+       * DATA
+       * ========================================================
+       */
+
+      data: {
+        m5Candles:
+          m5.length,
+
+        m15Candles:
+          m15.length,
+
+        h1Candles:
+          h1.length
+      },
+
+      timestamp:
+        new Date().toISOString()
+    });
+
+  } catch (e) {
+    console.error(
+      "SCALP API ERROR",
+      e
+    );
+
+    return res.status(502).json({
+      ok: false,
+
+      error:
+        e.message ||
+        "SCALP API ERROR",
+
+      dataSource:
+        "NONE",
+
+      stale:
+        false,
+
+      cache: {
+        enabled:
+          true,
+
+        message:
+          "Twelve Data gagal dan cache yang diperlukan tidak tersedia."
+      }
+    });
   }
-);
-
-/* ============================================================
-   START
-   ============================================================ */
-
-(async function init() {
-
-  text(
-    "systemStatus",
-    "Starting"
-  );
-
-  await restorePushState();
-
-  await loadData();
-
-  startRefresh();
-
-})();
-</script>
-
-</body>
-</html>
+}
