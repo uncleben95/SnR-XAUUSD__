@@ -1,3232 +1,1438 @@
-<!doctype html>
-<html lang="ms">
+<!DOCTYPE html>
+<html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#f4f7fb">
-
-<link rel="manifest" href="/manifest.json">
-<link rel="apple-touch-icon" href="/icon.png">
-
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
-
-<title>XAU/USD Pro Sniper — V12 Fixed Trade Plan</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>XAUUSDSNIPER</title>
 
 <style>
-
 :root{
-  --bg:#f4f7fb;
-  --card:#fff;
-  --sub:#f7f9fc;
-  --text:#20252b;
-  --muted:#737b87;
-  --border:#e1e5ea;
-
-  --blue:#2563eb;
-  --green:#15803d;
-  --red:#dc2626;
-  --yellow:#a16207;
-  --purple:#7c3aed;
-
-  --dark:#0f172a;
-
-  --shadow:0 3px 14px rgba(0,0,0,.055);
+  --bg:#070b12;
+  --panel:#0d131d;
+  --panel2:#111925;
+  --border:#1d2a3a;
+  --text:#e8eef7;
+  --muted:#7f8da1;
+  --green:#22c55e;
+  --red:#ef4444;
+  --yellow:#f59e0b;
+  --blue:#38bdf8;
 }
 
-*{
-  box-sizing:border-box;
-}
-
-html{
-  width:100%;
-  min-height:100%;
-}
+*{box-sizing:border-box}
 
 body{
   margin:0;
-  padding:
-    clamp(6px,1.5vw,14px);
-
-  width:100%;
-  min-height:100vh;
-
-  background:var(--bg);
+  background:
+    radial-gradient(circle at top,#101b2c 0,#070b12 42%,#05080d 100%);
   color:var(--text);
-
-  font-family:
-    -apple-system,
-    BlinkMacSystemFont,
-    "Segoe UI",
-    Arial,
-    Helvetica,
-    sans-serif;
-
-  overflow-x:hidden;
-  -webkit-text-size-adjust:100%;
+  font-family:Inter,Arial,sans-serif;
 }
 
-button{
-  -webkit-tap-highlight-color:transparent;
+.container{
+  width:min(1400px,100%);
+  margin:auto;
+  padding:14px;
 }
-
-.wrap{
-  width:100%;
-  max-width:1180px;
-  margin:0 auto;
-}
-
-/* =========================
-   HEADER
-========================= */
 
 header{
-  text-align:center;
-  margin-bottom:clamp(7px,1vw,11px);
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:12px;
+  margin-bottom:14px;
 }
 
-h1{
-  margin:0;
-
-  color:#a87900;
-
-  font-size:
-    clamp(1.05rem,2.7vw,1.55rem);
-
-  line-height:1.2;
-
+.logo{
+  font-size:24px;
   font-weight:900;
 }
 
-header p{
-  margin:4px auto 0;
-
-  max-width:1000px;
-
-  color:var(--muted);
-
-  font-size:
-    clamp(.56rem,1vw,.72rem);
-
-  line-height:1.45;
+.logo span{
+  color:#facc15;
 }
-
-/* =========================
-   COMMON CARD
-========================= */
-
-.card,
-.status,
-.sessions,
-.plan,
-.notify,
-.diag,
-.setupbox{
-
-  background:var(--card);
-
-  border:1px solid var(--border);
-
-  border-radius:
-    clamp(8px,1vw,11px);
-
-  box-shadow:var(--shadow);
-
-  padding:
-    clamp(8px,1.2vw,11px);
-
-  margin-bottom:
-    clamp(7px,1vw,10px);
-
-  min-width:0;
-}
-
-/* =========================
-   STATUS
-========================= */
 
 .status{
-  display:grid;
-
-  grid-template-columns:
-    repeat(4,minmax(0,1fr));
-
-  gap:clamp(5px,.8vw,8px);
-}
-
-.s{
-  text-align:center;
-  min-width:0;
-}
-
-.s small{
-  display:block;
-
-  color:var(--muted);
-
-  font-size:
-    clamp(.52rem,.75vw,.62rem);
-
-  text-transform:uppercase;
-}
-
-.s strong{
-  display:block;
-
-  margin-top:2px;
-
-  font-size:
-    clamp(.68rem,1vw,.84rem);
-
-  white-space:nowrap;
-  overflow:hidden;
-  text-overflow:ellipsis;
-}
-
-.good{
-  color:var(--green);
-}
-
-.bad{
-  color:var(--red);
-}
-
-.wait{
-  color:var(--yellow);
-}
-
-.purple{
-  color:var(--purple);
-}
-
-/* =========================
-   SESSIONS
-========================= */
-
-.sessions{
-  padding:clamp(8px,1vw,10px);
-}
-
-.sessionTitle{
-  font-size:
-    clamp(.57rem,.85vw,.68rem);
-
-  color:var(--muted);
-
-  font-weight:bold;
-
-  margin-bottom:7px;
-}
-
-.sessiongrid{
-  display:grid;
-
-  grid-template-columns:
-    repeat(3,minmax(0,1fr));
-
-  gap:clamp(5px,.8vw,8px);
-}
-
-.pill{
-  padding:
-    clamp(7px,1vw,9px);
-
-  text-align:center;
-
-  border:1px solid var(--border);
-
-  border-radius:7px;
-
-  font-weight:bold;
-
-  font-size:
-    clamp(.61rem,.85vw,.74rem);
-
-  color:#666;
-
-  min-width:0;
-}
-
-.pill div{
-  margin-top:2px;
-
-  font-size:
-    clamp(.52rem,.75vw,.63rem);
-}
-
-.pill.active{
-  background:#dcfce7;
-
-  border-color:#22c55e;
-
-  color:var(--green);
-}
-
-/* =========================
-   NOTIFICATION
-========================= */
-
-.notify{
   display:flex;
-
   align-items:center;
-
-  justify-content:space-between;
-
-  gap:8px;
-}
-
-.notify > div{
-  min-width:0;
-}
-
-.notify b{
-  font-size:
-    clamp(.6rem,.85vw,.7rem);
-}
-
-.notify small{
-  display:block;
-
+  gap:7px;
   color:var(--muted);
-
-  font-size:
-    clamp(.53rem,.75vw,.63rem);
-
-  margin-top:2px;
-
-  overflow:hidden;
-  text-overflow:ellipsis;
+  font-size:12px;
 }
 
-.btn{
-  flex-shrink:0;
-
-  border:0;
-
-  border-radius:7px;
-
-  padding:
-    clamp(7px,1vw,9px)
-    clamp(9px,1.3vw,12px);
-
-  background:var(--blue);
-
-  color:white;
-
-  font-weight:bold;
-
-  font-size:
-    clamp(.58rem,.8vw,.69rem);
-
-  cursor:pointer;
+.dot{
+  width:9px;
+  height:9px;
+  border-radius:50%;
+  background:var(--yellow);
 }
 
-.btn.on{
+.dot.ok{
   background:var(--green);
+  box-shadow:0 0 10px rgba(34,197,94,.6);
 }
 
-.btn.err{
+.dot.error{
   background:var(--red);
 }
 
-/* =========================
-   CHART
-========================= */
-
-.chartbox{
-  width:100%;
-
-  height:
-    clamp(190px,32vw,330px);
-
-  background:var(--dark);
-
-  border-radius:8px;
-
-  position:relative;
-
-  overflow:hidden;
+.card{
+  background:rgba(13,19,29,.94);
+  border:1px solid var(--border);
+  border-radius:16px;
+  padding:15px;
+  box-shadow:0 12px 35px rgba(0,0,0,.2);
 }
 
-.chartbox canvas{
-  display:block;
-
-  width:100%;
-  height:100%;
+.hero{
+  display:grid;
+  grid-template-columns:1.4fr .8fr .8fr;
+  gap:12px;
+  margin-bottom:12px;
 }
 
-.chartprice{
-  position:absolute;
-
-  right:7px;
-  top:7px;
-
-  background:#fff;
-
-  padding:4px 7px;
-
-  border-radius:5px;
-
-  font-weight:bold;
-
-  font-size:
-    clamp(.6rem,.8vw,.72rem);
-
-  color:#a87900;
-
-  max-width:45%;
-
-  overflow:hidden;
-
-  text-overflow:ellipsis;
-
-  white-space:nowrap;
+.priceCard{
+  min-height:145px;
 }
 
-/* =========================
-   MASTER SIGNAL
-========================= */
-
-.master{
-  text-align:center;
-
-  border:2px solid var(--border);
-
-  padding:
-    clamp(10px,1.5vw,15px);
+.label{
+  color:var(--muted);
+  font-size:11px;
+  text-transform:uppercase;
+  letter-spacing:1px;
+  margin-bottom:7px;
 }
 
 .price{
-  font-size:
-    clamp(1.65rem,5vw,2.4rem);
-
-  line-height:1.05;
-
+  font-size:38px;
   font-weight:900;
-
-  color:#a87900;
-
-  margin-top:3px;
 }
 
-.source{
-  font-size:
-    clamp(.52rem,.75vw,.63rem);
-
+.priceSub{
+  margin-top:7px;
   color:var(--muted);
-
-  margin-top:3px;
-
-  overflow:hidden;
-
-  text-overflow:ellipsis;
-
-  white-space:nowrap;
+  font-size:12px;
 }
 
-.badge{
-  display:inline-block;
-
-  margin:
-    7px 0;
-
-  padding:
-    clamp(6px,1vw,8px)
-    clamp(20px,4vw,34px);
-
-  border-radius:8px;
-
-  font-size:
-    clamp(.9rem,2vw,1.2rem);
-
-  font-weight:800;
-
-  border:1px solid;
-
-  max-width:90%;
-
-  overflow:hidden;
-
-  text-overflow:ellipsis;
-
-  white-space:nowrap;
+.signalCard{
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  align-items:center;
+  text-align:center;
 }
 
-.buy{
-  color:var(--green);
-
-  background:#dcfce7;
-
-  border-color:#22c55e;
+.signal{
+  font-size:34px;
+  font-weight:1000;
+  margin:5px 0;
 }
 
-.sell{
-  color:var(--red);
+.signal.buy{color:var(--green)}
+.signal.sell{color:var(--red)}
+.signal.wait{color:var(--yellow)}
 
-  background:#fee2e2;
-
-  border-color:#ef4444;
+.signalReason{
+  color:var(--muted);
+  font-size:12px;
 }
-
-.neutral{
-  color:var(--purple);
-
-  background:#f3e8ff;
-
-  border-color:#a78bfa;
-}
-
-/* =========================
-   GENERAL GRID
-========================= */
 
 .grid{
   display:grid;
-
-  grid-template-columns:
-    repeat(2,minmax(0,1fr));
-
-  gap:
-    clamp(6px,1vw,10px);
+  grid-template-columns:repeat(3,1fr);
+  gap:12px;
+  margin-bottom:12px;
 }
 
-.grid .card{
-  margin-bottom:0;
+.tfHead{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:12px;
 }
 
-/* =========================
-   METRICS
-========================= */
+.tfName{
+  font-size:18px;
+  font-weight:900;
+}
+
+.badge{
+  padding:5px 9px;
+  border-radius:999px;
+  font-size:10px;
+  font-weight:900;
+  border:1px solid var(--border);
+}
+
+.badge.buy{
+  color:var(--green);
+  background:rgba(34,197,94,.08);
+  border-color:rgba(34,197,94,.25);
+}
+
+.badge.sell{
+  color:var(--red);
+  background:rgba(239,68,68,.08);
+  border-color:rgba(239,68,68,.25);
+}
+
+.badge.neutral{
+  color:var(--yellow);
+  background:rgba(245,158,11,.08);
+  border-color:rgba(245,158,11,.25);
+}
+
+.metrics{
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:9px;
+}
 
 .metric{
-  display:flex;
-
-  justify-content:space-between;
-
-  align-items:center;
-
-  gap:10px;
-
-  padding:6px 0;
-
-  border-bottom:1px solid #f0f2f5;
-
-  font-size:
-    clamp(.6rem,.8vw,.75rem);
-
-  min-width:0;
+  background:rgba(255,255,255,.025);
+  border:1px solid rgba(255,255,255,.045);
+  border-radius:10px;
+  padding:9px;
 }
 
-.metric:last-child{
-  border-bottom:0;
-}
-
-.metric span{
+.metricName{
   color:var(--muted);
-
-  min-width:0;
+  font-size:10px;
+  margin-bottom:4px;
 }
 
-.metric strong{
-  text-align:right;
-
-  min-width:0;
-
-  max-width:65%;
-
+.metricValue{
+  font-size:14px;
+  font-weight:800;
   overflow:hidden;
-
   text-overflow:ellipsis;
-
-  white-space:nowrap;
 }
 
-/* =========================
-   TRADE PLAN
-========================= */
-
-.plan{
-  background:var(--sub);
+.section{
+  margin-bottom:12px;
 }
 
-.plangrid{
+.sectionTitle{
+  font-size:15px;
+  font-weight:900;
+  margin-bottom:10px;
+}
+
+.srGrid{
   display:grid;
-
-  grid-template-columns:
-    repeat(3,minmax(0,1fr));
-
-  gap:clamp(5px,.8vw,8px);
+  grid-template-columns:1fr 1fr;
+  gap:12px;
 }
 
-.p{
-  background:#fff;
-
+.level{
+  border-radius:12px;
+  padding:14px;
   border:1px solid var(--border);
-
-  border-radius:6px;
-
-  padding:
-    clamp(7px,1vw,9px);
-
-  font-size:
-    clamp(.58rem,.8vw,.69rem);
-
-  min-width:0;
 }
 
-.p strong{
-  display:block;
-
-  margin-top:3px;
-
-  font-size:
-    clamp(.76rem,1.2vw,.92rem);
-
-  overflow:hidden;
-
-  text-overflow:ellipsis;
-
-  white-space:nowrap;
+.level.support{
+  background:rgba(34,197,94,.055);
 }
 
-/* =========================
-   PROGRESS
-========================= */
+.level.resistance{
+  background:rgba(239,68,68,.055);
+}
 
-.progress{
-  height:8px;
+.levelTitle{
+  color:var(--muted);
+  font-size:11px;
+  text-transform:uppercase;
+  margin-bottom:5px;
+}
 
-  background:#e5e7eb;
+.levelPrice{
+  font-size:24px;
+  font-weight:900;
+}
 
-  border-radius:20px;
-
-  overflow:hidden;
-
+.levelTime{
+  color:var(--muted);
+  font-size:10px;
   margin-top:5px;
 }
 
-.fill{
-  height:100%;
-
-  width:0;
-
-  background:var(--green);
-
-  transition:.2s;
-}
-
-/* =========================
-   SETUP
-========================= */
-
-.setupbox{
-  background:#fff;
-}
-
-.setupgrid{
+.infoGrid{
   display:grid;
-
-  grid-template-columns:
-    repeat(2,minmax(0,1fr));
-
-  gap:
-    clamp(6px,1vw,10px);
+  grid-template-columns:repeat(4,1fr);
+  gap:10px;
 }
 
-.setup{
-  border:1px solid var(--border);
-
-  border-radius:8px;
-
-  padding:
-    clamp(8px,1.1vw,10px);
-
-  background:#fafafa;
-
-  min-width:0;
+.infoBox{
+  padding:12px;
+  border-radius:12px;
+  background:rgba(255,255,255,.025);
+  border:1px solid rgba(255,255,255,.05);
 }
 
-.setup h4{
-  margin:0 0 7px;
-
-  font-size:
-    clamp(.65rem,.85vw,.76rem);
-}
-
-.setup .metric{
-  font-size:
-    clamp(.57rem,.75vw,.69rem);
-}
-
-.target{
-  background:#eff6ff;
-
-  border-color:#93c5fd;
-}
-
-/* =========================
-   DIAGNOSTIC
-========================= */
-
-.diaggrid{
-  display:grid;
-
-  grid-template-columns:
-    repeat(4,minmax(0,1fr));
-
-  gap:6px;
-}
-
-.d{
-  display:flex;
-
-  justify-content:space-between;
-
-  align-items:center;
-
-  gap:8px;
-
-  background:#111827;
-
-  color:#fff;
-
-  border-radius:7px;
-
-  padding:
-    clamp(7px,.9vw,9px);
-
-  font-size:
-    clamp(.55rem,.75vw,.68rem);
-
-  min-width:0;
-}
-
-.d span{
-  color:#cbd5e1;
-
-  min-width:0;
-}
-
-.d strong{
-  text-align:right;
-
-  min-width:0;
-
-  max-width:60%;
-
-  overflow:hidden;
-
-  text-overflow:ellipsis;
-
-  white-space:nowrap;
-}
-
-/* =========================
-   FOOTER
-========================= */
-
-.foot{
-  text-align:center;
-
+.infoTitle{
   color:var(--muted);
-
-  font-size:
-    clamp(.5rem,.7vw,.61rem);
-
-  padding:10px 4px;
+  font-size:10px;
+  text-transform:uppercase;
+  margin-bottom:5px;
 }
 
-/* =========================
-   PHONE
-========================= */
+.infoValue{
+  font-size:15px;
+  font-weight:850;
+}
 
-@media(max-width:650px){
+.news{
+  border-left:3px solid var(--yellow);
+}
 
-  body{
-    padding:
-      7px;
-  }
+.news.risk{
+  border-left-color:var(--red);
+}
 
-  .status{
-    grid-template-columns:
-      repeat(2,minmax(0,1fr));
+.news.clear{
+  border-left-color:var(--green);
+}
+
+.newsHeader{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:10px;
+}
+
+.newsStatus{
+  font-size:12px;
+  font-weight:900;
+}
+
+.newsList{
+  margin-top:10px;
+  display:grid;
+  gap:7px;
+}
+
+.newsItem{
+  padding:9px 10px;
+  background:rgba(255,255,255,.025);
+  border-radius:9px;
+  border:1px solid rgba(255,255,255,.04);
+}
+
+.newsCat{
+  color:var(--yellow);
+  font-size:10px;
+  font-weight:900;
+  margin-bottom:3px;
+}
+
+.newsTitle{
+  font-size:12px;
+  line-height:1.4;
+}
+
+.plan{
+  display:grid;
+  grid-template-columns:repeat(5,1fr);
+  gap:10px;
+}
+
+.planBox{
+  background:rgba(255,255,255,.025);
+  border:1px solid rgba(255,255,255,.05);
+  border-radius:11px;
+  padding:12px;
+}
+
+.planTitle{
+  color:var(--muted);
+  font-size:10px;
+  text-transform:uppercase;
+  margin-bottom:5px;
+}
+
+.planValue{
+  font-size:15px;
+  font-weight:900;
+}
+
+.waitText{
+  color:var(--yellow);
+}
+
+.buyText{
+  color:var(--green);
+}
+
+.sellText{
+  color:var(--red);
+}
+
+.loading{
+  color:var(--muted);
+  text-align:center;
+  padding:30px;
+}
+
+.errorBox{
+  color:#fecaca;
+  border:1px solid rgba(239,68,68,.3);
+  background:rgba(239,68,68,.07);
+  border-radius:12px;
+  padding:14px;
+  font-size:12px;
+  margin-bottom:12px;
+}
+
+.footer{
+  text-align:center;
+  color:var(--muted);
+  font-size:10px;
+  padding:10px 0 20px;
+}
+
+@media(max-width:900px){
+  .hero{
+    grid-template-columns:1fr;
   }
 
   .grid{
     grid-template-columns:1fr;
   }
 
-  .grid .card{
-    margin-bottom:0;
+  .infoGrid{
+    grid-template-columns:repeat(2,1fr);
   }
 
-  .plangrid{
-    grid-template-columns:
-      repeat(2,minmax(0,1fr));
+  .plan{
+    grid-template-columns:repeat(2,1fr);
+  }
+}
+
+@media(max-width:520px){
+  .container{
+    padding:10px;
   }
 
-  .setupgrid{
+  .price{
+    font-size:32px;
+  }
+
+  .srGrid{
     grid-template-columns:1fr;
   }
 
-  .diaggrid{
-    grid-template-columns:
-      repeat(2,minmax(0,1fr));
+  .infoGrid{
+    grid-template-columns:1fr 1fr;
   }
 
+  .plan{
+    grid-template-columns:1fr 1fr;
+  }
 }
-
-/* =========================
-   SMALL PHONE
-========================= */
-
-@media(max-width:430px){
-
-  body{
-    padding:5px;
-  }
-
-  .card,
-  .status,
-  .sessions,
-  .plan,
-  .notify,
-  .diag,
-  .setupbox{
-    border-radius:8px;
-
-    padding:8px;
-
-    margin-bottom:7px;
-  }
-
-  h1{
-    font-size:1.05rem;
-  }
-
-  header p{
-    font-size:.54rem;
-    line-height:1.35;
-  }
-
-  .sessiongrid{
-    gap:4px;
-  }
-
-  .pill{
-    padding:6px 3px;
-  }
-
-  .notify{
-    padding:8px;
-  }
-
-  .metric{
-    padding:5px 0;
-  }
-
-  .chartbox{
-    height:215px;
-  }
-
-  .diaggrid{
-    gap:4px;
-  }
-
-}
-
-/* =========================
-   VERY SMALL PHONE
-========================= */
-
-@media(max-width:350px){
-
-  body{
-    padding:4px;
-  }
-
-  h1{
-    font-size:.98rem;
-  }
-
-  header p{
-    font-size:.5rem;
-  }
-
-  .status{
-    gap:4px;
-  }
-
-  .sessiongrid{
-    grid-template-columns:
-      1fr;
-  }
-
-  .pill{
-    padding:6px;
-  }
-
-  .plangrid{
-    grid-template-columns:
-      repeat(2,minmax(0,1fr));
-  }
-
-  .chartbox{
-    height:195px;
-  }
-
-  .metric{
-    font-size:.57rem;
-  }
-
-  .p strong{
-    font-size:.72rem;
-  }
-
-}
-
-/* =========================
-   TABLET
-========================= */
-
-@media(min-width:651px) and (max-width:900px){
-
-  .grid{
-    grid-template-columns:
-      repeat(2,minmax(0,1fr));
-  }
-
-  .diaggrid{
-    grid-template-columns:
-      repeat(4,minmax(0,1fr));
-  }
-
-}
-
-/* =========================
-   LAPTOP
-========================= */
-
-@media(min-width:901px){
-
-  .wrap{
-    max-width:1180px;
-  }
-
-  .grid{
-    grid-template-columns:
-      repeat(2,minmax(0,1fr));
-  }
-
-  .diaggrid{
-    grid-template-columns:
-      repeat(4,minmax(0,1fr));
-  }
-
-}
-
-/* =========================
-   LARGE DESKTOP
-========================= */
-
-@media(min-width:1200px){
-
-  .wrap{
-    max-width:1250px;
-  }
-
-}
-
-/* =========================
-   LANDSCAPE PHONE
-========================= */
-
-@media(
-  max-height:520px
-) and (
-  orientation:landscape
-){
-
-  body{
-    padding:5px;
-  }
-
-  .chartbox{
-    height:190px;
-  }
-
-  header{
-    margin-bottom:5px;
-  }
-
-}
-
-/* =========================
-   IOS SAFE AREA
-========================= */
-
-@supports(
-  padding:max(0px)
-){
-
-  body{
-    padding-left:
-      max(
-        5px,
-        env(safe-area-inset-left)
-      );
-
-    padding-right:
-      max(
-        5px,
-        env(safe-area-inset-right)
-      );
-
-    padding-bottom:
-      max(
-        5px,
-        env(safe-area-inset-bottom)
-      );
-  }
-
-}
-
 </style>
 </head>
 
 <body>
 
-<div class="wrap">
+<div class="container">
 
 <header>
+  <div class="logo">XAU<span>USD</span>SNIPER</div>
 
-<h1>
-XAU/USD PRO SNIPER
-</h1>
-
-<p>
-V12 • H1 Bias → M15 Confirmation → M5 Trigger →
-Reversal/Continuation → H1 S/R Target → Fixed Entry/SL/TP → Server Push
-</p>
-
+  <div class="status">
+    <span id="statusDot" class="dot"></span>
+    <span id="statusText">Connecting...</span>
+  </div>
 </header>
 
+<div id="errorBox" class="errorBox" style="display:none"></div>
 
-<div class="status">
+<div class="hero">
 
-<div class="s">
+  <div class="card priceCard">
+    <div class="label">XAU / USD</div>
+    <div id="price" class="price">—</div>
+    <div id="priceSub" class="priceSub">
+      Waiting for market data...
+    </div>
+  </div>
 
-<small>
-System
-</small>
+  <div class="card signalCard">
+    <div class="label">SCALP SIGNAL</div>
+    <div id="signal" class="signal wait">WAIT</div>
+    <div id="signalReason" class="signalReason">
+      Loading...
+    </div>
+  </div>
 
-<strong id="system">
-CONNECTING
-</strong>
-
-</div>
-
-
-<div class="s">
-
-<small>
-API
-</small>
-
-<strong id="api">
-CONNECTING
-</strong>
-
-</div>
-
-
-<div class="s">
-
-<small>
-Signal
-</small>
-
-<strong
-id="signalTop"
-class="wait">
-WAIT
-</strong>
+  <div class="card signalCard">
+    <div class="label">MARKET FILTER</div>
+    <div id="marketFilter" class="signal wait">WAIT</div>
+    <div id="marketReason" class="signalReason">
+      M5 + M15 alignment
+    </div>
+  </div>
 
 </div>
-
-
-<div class="s">
-
-<small>
-MYT
-</small>
-
-<strong id="clock">
---:--:--
-</strong>
-
-</div>
-
-</div>
-
-
-<div class="sessions">
-
-<div class="sessionTitle">
-TRADING SESSION — MALAYSIA TIME
-</div>
-
-<div class="sessiongrid">
-
-<div id="asia" class="pill">
-ASIA
-<div>
-08:00–17:00
-</div>
-</div>
-
-<div id="london" class="pill">
-LONDON
-<div>
-15:00–00:00
-</div>
-</div>
-
-<div id="ny" class="pill">
-NEW YORK
-<div>
-20:00–05:00
-</div>
-</div>
-
-</div>
-
-</div>
-
-
-<div class="notify">
-
-<div>
-
-<b>
-🔔 SIGNAL PUSH
-</b>
-
-<small id="notificationStatus">
-Notification belum diaktifkan
-</small>
-
-</div>
-
-<button
-id="notificationButton"
-class="btn"
-onclick="enableNotifications()">
-🔔 ENABLE
-</button>
-
-</div>
-
-
-<div class="card">
-
-<h3 style="
-margin:0 0 8px;
-color:var(--blue);
-font-size:clamp(.68rem,1vw,.84rem)
-">
-XAU/USD • LIVE M5 • LAST 60 CANDLES
-</h3>
-
-<div class="chartbox">
-
-<canvas id="chart"></canvas>
-
-<div
-id="chartPrice"
-class="chartprice">
---
-</div>
-
-</div>
-
-</div>
-
-
-<div class="card master">
-
-<div style="
-font-size:clamp(.55rem,.8vw,.66rem);
-color:var(--muted);
-font-weight:bold
-">
-XAU/USD MARKET PRICE
-</div>
-
-<div
-id="price"
-class="price">
---
-</div>
-
-<div
-id="source"
-class="source">
-Waiting for /api/scalp
-</div>
-
-<div
-id="badge"
-class="badge neutral">
-⏳ WAIT
-</div>
-
-<div style="
-font-size:clamp(.62rem,.85vw,.75rem)
-">
-Entry Quality:
-<strong id="score">
-0/100
-</strong>
-</div>
-
-<div class="progress">
-
-<div
-id="fill"
-class="fill">
-</div>
-
-</div>
-
-</div>
-
-
-<div class="plan">
-
-<h3 style="
-margin:0 0 8px;
-color:var(--blue);
-font-size:clamp(.68rem,1vw,.84rem)
-">
-🎯 FIXED TRADE PLAN
-</h3>
-
-<div class="plangrid">
-
-<div class="p">
-STATUS
-<strong id="planStatus">WAIT</strong>
-</div>
-
-<div class="p">
-DIRECTION
-<strong id="planDir">--</strong>
-</div>
-
-<div class="p">
-ENTRY
-<strong id="entry">--</strong>
-</div>
-
-<div class="p">
-STOP LOSS
-<strong id="sl">--</strong>
-</div>
-
-<div class="p">
-TP1
-<strong id="tp1">--</strong>
-</div>
-
-<div class="p">
-TP2
-<strong id="tp2">--</strong>
-</div>
-
-<div class="p">
-TP3
-<strong id="tp3">--</strong>
-</div>
-
-<div class="p">
-R:R
-<strong id="rr">--</strong>
-</div>
-
-<div class="p">
-SETUP
-<strong id="setup">--</strong>
-</div>
-
-</div>
-
-</div>
-
-
-<div class="setupbox">
-
-<h3 style="
-margin:0 0 8px;
-color:var(--blue);
-font-size:clamp(.68rem,1vw,.84rem)
-">
-🧠 V12 SETUP ANALYSIS
-</h3>
-
-<div class="setupgrid">
-
-
-<div class="setup">
-
-<h4 class="good">
-🟢 BUY ANALYSIS
-</h4>
-
-<div class="metric">
-<span>Aligned</span>
-<strong id="buyAligned">--</strong>
-</div>
-
-<div class="metric">
-<span>Continuation</span>
-<strong id="buyContinuation">--</strong>
-</div>
-
-<div class="metric">
-<span>Reversal</span>
-<strong id="buyReversal">--</strong>
-</div>
-
-<div class="metric">
-<span>Type</span>
-<strong id="buyType">--</strong>
-</div>
-
-<div class="metric">
-<span>Location</span>
-<strong id="buyLocation">--</strong>
-</div>
-
-<div class="metric target">
-<span>H1 S/R Target</span>
-<strong id="buyTarget">--</strong>
-</div>
-
-</div>
-
-
-<div class="setup">
-
-<h4 class="bad">
-🔴 SELL ANALYSIS
-</h4>
-
-<div class="metric">
-<span>Aligned</span>
-<strong id="sellAligned">--</strong>
-</div>
-
-<div class="metric">
-<span>Continuation</span>
-<strong id="sellContinuation">--</strong>
-</div>
-
-<div class="metric">
-<span>Reversal</span>
-<strong id="sellReversal">--</strong>
-</div>
-
-<div class="metric">
-<span>Type</span>
-<strong id="sellType">--</strong>
-</div>
-
-<div class="metric">
-<span>Location</span>
-<strong id="sellLocation">--</strong>
-</div>
-
-<div class="metric target">
-<span>H1 S/R Target</span>
-<strong id="sellTarget">--</strong>
-</div>
-
-</div>
-
-</div>
-
-</div>
-
-
-<div class="card">
-
-<h3 style="
-margin:0 0 8px;
-color:var(--blue);
-font-size:clamp(.68rem,1vw,.84rem)
-">
-🎯 ACTIVE H1 S/R TARGET
-</h3>
-
-<div class="metric">
-<span>Target</span>
-<strong id="activeTarget">--</strong>
-</div>
-
-<div class="metric">
-<span>Target Type</span>
-<strong id="activeTargetType">--</strong>
-</div>
-
-<div class="metric">
-<span>Distance</span>
-<strong id="activeTargetDistance">--</strong>
-</div>
-
-<div class="metric">
-<span>Valid</span>
-<strong id="activeTargetValid">--</strong>
-</div>
-
-<div class="metric">
-<span>Target Mode</span>
-<strong id="targetMode">--</strong>
-</div>
-
-</div>
-
 
 <div class="grid">
 
+  <div class="card">
 
-<div class="card">
+    <div class="tfHead">
+      <div class="tfName">M5</div>
+      <div id="m5Badge" class="badge neutral">NEUTRAL</div>
+    </div>
 
-<h3 style="
-margin:0 0 8px;
-color:var(--blue);
-font-size:clamp(.68rem,1vw,.84rem)
-">
-H1 — CORE BIAS
-</h3>
+    <div class="metrics">
 
-<div class="metric">
-<span>Direction</span>
-<strong id="h1dir">--</strong>
-</div>
+      <div class="metric">
+        <div class="metricName">Direction</div>
+        <div id="m5Direction" class="metricValue">—</div>
+      </div>
 
-<div class="metric">
-<span>EMA 50</span>
-<strong id="h1ema50">--</strong>
-</div>
+      <div class="metric">
+        <div class="metricName">RSI</div>
+        <div id="m5Rsi" class="metricValue">—</div>
+      </div>
 
-<div class="metric">
-<span>EMA 200</span>
-<strong id="h1ema200">--</strong>
-</div>
+      <div class="metric">
+        <div class="metricName">EMA Fast</div>
+        <div id="m5Fast" class="metricValue">—</div>
+      </div>
 
-<div class="metric">
-<span>ATR</span>
-<strong id="h1atr">--</strong>
-</div>
+      <div class="metric">
+        <div class="metricName">EMA Slow</div>
+        <div id="m5Slow" class="metricValue">—</div>
+      </div>
 
-<div class="metric">
-<span>Structure</span>
-<strong id="h1struct">--</strong>
-</div>
+      <div class="metric">
+        <div class="metricName">ATR</div>
+        <div id="m5Atr" class="metricValue">—</div>
+      </div>
 
-<div class="metric">
-<span>Hold Bias</span>
-<strong id="holdBias">--</strong>
-</div>
+      <div class="metric">
+        <div class="metricName">Last Candle</div>
+        <div id="m5Last" class="metricValue">—</div>
+      </div>
 
-<div class="metric">
-<span>Hold Permission</span>
-<strong id="hold">--</strong>
-</div>
+    </div>
+  </div>
 
-</div>
+  <div class="card">
 
+    <div class="tfHead">
+      <div class="tfName">M15</div>
+      <div id="m15Badge" class="badge neutral">NEUTRAL</div>
+    </div>
 
-<div class="card">
+    <div class="metrics">
 
-<h3 style="
-margin:0 0 8px;
-color:var(--blue);
-font-size:clamp(.68rem,1vw,.84rem)
-">
-H1 — SUPPORT / RESISTANCE
-</h3>
+      <div class="metric">
+        <div class="metricName">Direction</div>
+        <div id="m15Direction" class="metricValue">—</div>
+      </div>
 
-<div class="metric">
-<span>Support</span>
-<strong id="h1support">--</strong>
-</div>
+      <div class="metric">
+        <div class="metricName">RSI</div>
+        <div id="m15Rsi" class="metricValue">—</div>
+      </div>
 
-<div class="metric">
-<span>Resistance</span>
-<strong id="h1resistance">--</strong>
-</div>
+      <div class="metric">
+        <div class="metricName">EMA Fast</div>
+        <div id="m15Fast" class="metricValue">—</div>
+      </div>
 
-<div class="metric">
-<span>Position</span>
-<strong id="srposition">--</strong>
-</div>
+      <div class="metric">
+        <div class="metricName">EMA Slow</div>
+        <div id="m15Slow" class="metricValue">—</div>
+      </div>
 
-<div class="metric">
-<span>Zone</span>
-<strong id="srzone">--</strong>
-</div>
+      <div class="metric">
+        <div class="metricName">ATR</div>
+        <div id="m15Atr" class="metricValue">—</div>
+      </div>
 
-<div class="metric">
-<span>Buy Filter</span>
-<strong id="buyfilter">--</strong>
-</div>
+      <div class="metric">
+        <div class="metricName">Last Candle</div>
+        <div id="m15Last" class="metricValue">—</div>
+      </div>
 
-<div class="metric">
-<span>Sell Filter</span>
-<strong id="sellfilter">--</strong>
-</div>
+    </div>
+  </div>
 
-</div>
+  <div class="card">
 
+    <div class="tfHead">
+      <div class="tfName">H1</div>
+      <div id="h1Badge" class="badge neutral">NEUTRAL</div>
+    </div>
 
-<div class="card">
+    <div class="metrics">
 
-<h3 style="
-margin:0 0 8px;
-color:var(--blue);
-font-size:clamp(.68rem,1vw,.84rem)
-">
-M15 — CONFIRMATION
-</h3>
+      <div class="metric">
+        <div class="metricName">Direction</div>
+        <div id="h1Direction" class="metricValue">—</div>
+      </div>
 
-<div class="metric">
-<span>Direction</span>
-<strong id="m15dir">--</strong>
-</div>
+      <div class="metric">
+        <div class="metricName">RSI</div>
+        <div id="h1Rsi" class="metricValue">—</div>
+      </div>
 
-<div class="metric">
-<span>EMA 20 / 50</span>
-<strong id="m15ema">--</strong>
-</div>
+      <div class="metric">
+        <div class="metricName">EMA Fast</div>
+        <div id="h1Fast" class="metricValue">—</div>
+      </div>
 
-<div class="metric">
-<span>RSI 14</span>
-<strong id="m15rsi">--</strong>
-</div>
+      <div class="metric">
+        <div class="metricName">EMA Slow</div>
+        <div id="h1Slow" class="metricValue">—</div>
+      </div>
 
-<div class="metric">
-<span>MACD</span>
-<strong id="m15macd">--</strong>
-</div>
+      <div class="metric">
+        <div class="metricName">ATR</div>
+        <div id="h1Atr" class="metricValue">—</div>
+      </div>
 
-<div class="metric">
-<span>BOS / CHOCH</span>
-<strong id="m15structure">--</strong>
-</div>
+      <div class="metric">
+        <div class="metricName">Context</div>
+        <div id="h1Context" class="metricValue">HOLD</div>
+      </div>
 
-<div class="metric">
-<span>Momentum</span>
-<strong id="m15momentum">--</strong>
-</div>
+    </div>
+  </div>
 
 </div>
 
+<div class="card section">
 
-<div class="card">
+  <div class="sectionTitle">
+    H1 Support / Resistance
+  </div>
 
-<h3 style="
-margin:0 0 8px;
-color:var(--blue);
-font-size:clamp(.68rem,1vw,.84rem)
-">
-M5 — TRIGGER
-</h3>
+  <div class="srGrid">
 
-<div class="metric">
-<span>Direction</span>
-<strong id="m5dir">--</strong>
-</div>
+    <div class="level support">
+      <div class="levelTitle">Support</div>
+      <div id="support" class="levelPrice">—</div>
+      <div id="supportTime" class="levelTime">—</div>
+    </div>
 
-<div class="metric">
-<span>EMA 9 / 20 / 50</span>
-<strong id="m5ema">--</strong>
-</div>
+    <div class="level resistance">
+      <div class="levelTitle">Resistance</div>
+      <div id="resistance" class="levelPrice">—</div>
+      <div id="resistanceTime" class="levelTime">—</div>
+    </div>
 
-<div class="metric">
-<span>RSI 14</span>
-<strong id="m5rsi">--</strong>
-</div>
-
-<div class="metric">
-<span>MACD</span>
-<strong id="m5macd">--</strong>
-</div>
-
-<div class="metric">
-<span>ATR</span>
-<strong id="m5atr">--</strong>
-</div>
-
-<div class="metric">
-<span>BOS / CHOCH</span>
-<strong id="m5structure">--</strong>
-</div>
-
-<div class="metric">
-<span>Momentum</span>
-<strong id="m5momentum">--</strong>
-</div>
+  </div>
 
 </div>
 
+<div class="card section">
 
-<div class="card">
+  <div class="sectionTitle">
+    Signal Confluence
+  </div>
 
-<h3 style="
-margin:0 0 8px;
-color:var(--blue);
-font-size:clamp(.68rem,1vw,.84rem)
-">
-SCALP SCORE
-</h3>
+  <div class="infoGrid">
 
-<div class="metric">
-<span>M15 BUY / SELL</span>
-<strong id="m15score">--</strong>
+    <div class="infoBox">
+      <div class="infoTitle">Score</div>
+      <div id="confScore" class="infoValue">—</div>
+    </div>
+
+    <div class="infoBox">
+      <div class="infoTitle">Quality</div>
+      <div id="confQuality" class="infoValue">—</div>
+    </div>
+
+    <div class="infoBox">
+      <div class="infoTitle">Entry Quality</div>
+      <div id="entryQuality" class="infoValue">—</div>
+    </div>
+
+    <div class="infoBox">
+      <div class="infoTitle">Structure</div>
+      <div id="structure" class="infoValue">—</div>
+    </div>
+
+  </div>
 </div>
 
-<div class="metric">
-<span>M5 BUY / SELL</span>
-<strong id="m5score">--</strong>
+<div class="card section">
+
+  <div class="sectionTitle">
+    Trade Plan
+  </div>
+
+  <div class="plan">
+
+    <div class="planBox">
+      <div class="planTitle">Status</div>
+      <div id="planStatus" class="planValue waitText">WAIT</div>
+    </div>
+
+    <div class="planBox">
+      <div class="planTitle">Entry</div>
+      <div id="planEntry" class="planValue">—</div>
+    </div>
+
+    <div class="planBox">
+      <div class="planTitle">Stop Loss</div>
+      <div id="planSL" class="planValue">—</div>
+    </div>
+
+    <div class="planBox">
+      <div class="planTitle">TP1</div>
+      <div id="planTP1" class="planValue">—</div>
+    </div>
+
+    <div class="planBox">
+      <div class="planTitle">TP2</div>
+      <div id="planTP2" class="planValue">—</div>
+    </div>
+
+  </div>
 </div>
 
-<div class="metric">
-<span>Context</span>
-<strong id="context">--</strong>
-</div>
+<div id="newsCard" class="card section news">
 
-<div class="metric">
-<span>Setup Type</span>
-<strong id="setupStatus">--</strong>
-</div>
+  <div class="newsHeader">
 
-<div class="metric">
-<span>Execution</span>
-<strong id="execution">--</strong>
-</div>
+    <div class="sectionTitle" style="margin:0">
+      News Filter
+    </div>
 
-<div class="metric">
-<span>Reason</span>
-<strong id="reason">--</strong>
-</div>
+    <div id="newsStatus" class="newsStatus">
+      —
+    </div>
 
-</div>
+  </div>
 
-</div>
-
-
-<div class="diag">
-
-<h3 style="
-margin:0 0 8px;
-color:var(--blue);
-font-size:clamp(.68rem,1vw,.84rem)
-">
-🔎 DATA / SIGNAL DIAGNOSTIC
-</h3>
-
-<div class="diaggrid">
-
-<div class="d">
-<span>M5 candles</span>
-<strong id="m5count">--</strong>
-</div>
-
-<div class="d">
-<span>M15 candles</span>
-<strong id="m15count">--</strong>
-</div>
-
-<div class="d">
-<span>H1 candles</span>
-<strong id="h1count">--</strong>
-</div>
-
-<div class="d">
-<span>Live source</span>
-<strong id="liveSource">--</strong>
-</div>
-
-<div class="d">
-<span>Cache age</span>
-<strong id="cacheAge">--</strong>
-</div>
-
-<div class="d">
-<span>Quota</span>
-<strong id="quota">--</strong>
-</div>
-
-<div class="d">
-<span>Signal candle</span>
-<strong id="signalCandle">--</strong>
-</div>
-
-<div class="d">
-<span>Signal key</span>
-<strong id="signalKey">--</strong>
-</div>
+  <div id="newsList" class="newsList">
+    <div class="loading">
+      Loading news...
+    </div>
+  </div>
 
 </div>
 
+<div class="card section">
+
+  <div class="sectionTitle">
+    Liquidity Map
+  </div>
+
+  <div class="infoGrid">
+
+    <div class="infoBox">
+      <div class="infoTitle">H1 Above</div>
+      <div id="liqH1Above" class="infoValue">—</div>
+    </div>
+
+    <div class="infoBox">
+      <div class="infoTitle">M15 Above</div>
+      <div id="liqM15Above" class="infoValue">—</div>
+    </div>
+
+    <div class="infoBox">
+      <div class="infoTitle">M5 Above</div>
+      <div id="liqM5Above" class="infoValue">—</div>
+    </div>
+
+    <div class="infoBox">
+      <div class="infoTitle">H1 Below</div>
+      <div id="liqH1Below" class="infoValue">—</div>
+    </div>
+
+  </div>
 </div>
 
-
-<div class="foot">
-V12 • Server-side signal engine • Reversal/Continuation •
-H1 S/R Target • Fixed Entry/SL/TP • Frontend refresh 15s •
-Push handled by backend
+<div class="footer">
+  XAUUSDSNIPER • M5 + M15 scalp alignment • H1 context
+  <br>
+  <span id="updated">Last update: —</span>
 </div>
 
 </div>
-
 
 <script>
 
-"use strict";
+const API = "/api/scalp";
+const REFRESH_MS = 60000;
 
-let candles = [];
-let lastSignal = null;
+function $(id){
+  return document.getElementById(id);
+}
 
-const $ = id => document.getElementById(id);
+function setText(id,value){
+  const el = $(id);
 
+  if(!el){
+    return;
+  }
 
-const fmt = v => {
+  el.textContent =
+    value === null ||
+    value === undefined ||
+    value === ""
+      ? "—"
+      : String(value);
+}
 
-  const n = Number(v);
+function fmt(value,digits=2){
 
-  return Number.isFinite(n)
-    ? n.toFixed(2)
-    : "--";
-};
+  if(
+    value === null ||
+    value === undefined ||
+    value === "" ||
+    Number.isNaN(Number(value))
+  ){
+    return "—";
+  }
 
+  return Number(value).toFixed(digits);
+}
 
-function text(id,v){
+function safe(value,fallback="—"){
+  return value === null ||
+         value === undefined ||
+         value === ""
+    ? fallback
+    : value;
+}
+
+function directionClass(value){
+
+  const v =
+    String(value || "")
+      .toUpperCase();
+
+  if(v === "BUY"){
+    return "buy";
+  }
+
+  if(v === "SELL"){
+    return "sell";
+  }
+
+  return "neutral";
+}
+
+function setBadge(id,value){
 
   const el = $(id);
 
-  if(!el) return;
+  if(!el){
+    return;
+  }
 
-  if(
-    v === null ||
-    v === undefined ||
-    v === ""
-  ){
+  const v =
+    String(value || "NEUTRAL")
+      .toUpperCase();
 
-    el.textContent = "--";
+  el.textContent = v;
+  el.className =
+    "badge " + directionClass(v);
+}
+
+function setSignal(id,value){
+
+  const el = $(id);
+
+  if(!el){
+    return;
+  }
+
+  const v =
+    String(value || "WAIT")
+      .toUpperCase();
+
+  el.textContent = v;
+
+  el.className =
+    "signal " +
+    (
+      v === "BUY"
+        ? "buy"
+        : v === "SELL"
+          ? "sell"
+          : "wait"
+    );
+}
+
+function formatTime(value){
+
+  if(!value){
+    return "—";
+  }
+
+  return String(value)
+    .replace("T"," ")
+    .replace("Z","");
+}
+
+function renderTimeframe(prefix,data){
+
+  if(!data){
+    return;
+  }
+
+  const direction =
+    data.direction ||
+    data.bias ||
+    "NEUTRAL";
+
+  setBadge(
+    prefix + "Badge",
+    direction
+  );
+
+  setText(
+    prefix + "Direction",
+    direction
+  );
+
+  setText(
+    prefix + "Rsi",
+    fmt(data.rsi,2)
+  );
+
+  setText(
+    prefix + "Fast",
+    fmt(data.emaFast,2)
+  );
+
+  setText(
+    prefix + "Slow",
+    fmt(data.emaSlow,2)
+  );
+
+  setText(
+    prefix + "Atr",
+    fmt(data.atr,2)
+  );
+
+  /*
+    IMPORTANT:
+    Don't directly access .textContent.
+    Some older/mobile cached HTML may not contain
+    the Last Candle element.
+  */
+
+  setText(
+    prefix + "Last",
+    formatTime(data.lastCandle)
+  );
+
+  if(prefix === "h1"){
+
+    setText(
+      "h1Context",
+      direction === "NEUTRAL"
+        ? "CONTEXT"
+        : "HOLD " + direction
+    );
+  }
+}
+
+function escapeHtml(value){
+
+  return String(value)
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;")
+    .replaceAll("'","&#039;");
+}
+
+function renderNews(data){
+
+  const card = $("newsCard");
+  const status = $("newsStatus");
+  const list = $("newsList");
+
+  if(!card || !status || !list){
+    return;
+  }
+
+  if(!data){
+
+    status.textContent = "UNKNOWN";
+
+    list.innerHTML =
+      '<div class="loading">No news data</div>';
 
     return;
   }
 
-  el.textContent = v;
-}
-
-
-function clsDirection(el,v){
-
-  if(!el) return;
-
-  const s =
-    String(v || "WAIT")
-      .toUpperCase();
-
-  el.className = "";
-
-  if(
-    s === "BUY" ||
-    s === "BULL" ||
-    s === "BULLISH" ||
-    s === "ALLOWED"
-  ){
-
-    el.classList.add("good");
-
-  }else if(
-    s === "SELL" ||
-    s === "BEAR" ||
-    s === "BEARISH" ||
-    s === "BLOCKED"
-  ){
-
-    el.classList.add("bad");
-
-  }else{
-
-    el.classList.add("wait");
-
-  }
-}
-
-
-function yn(id,v){
-
-  const el = $(id);
-
-  if(!el) return;
-
-  el.classList.remove(
-    "good",
-    "bad",
-    "wait"
-  );
-
-  if(v === true){
-
-    text(id,"YES");
-    el.classList.add("good");
-
-  }else if(v === false){
-
-    text(id,"NO");
-    el.classList.add("bad");
-
-  }else{
-
-    text(id,"--");
-    el.classList.add("wait");
-
-  }
-}
-
-
-function updateSessions(){
-
-  const d = new Date();
-
-  const h = d.getHours();
-
-  text(
-    "clock",
-    d.toLocaleTimeString(
-      "en-MY",
-      {
-        hour12:false
-      }
-    )
-  );
-
-  $("asia")?.classList.toggle(
-    "active",
-    h >= 8 && h < 17
-  );
-
-  $("london")?.classList.toggle(
-    "active",
-    h >= 15 && h < 24
-  );
-
-  $("ny")?.classList.toggle(
-    "active",
-    h >= 20 || h < 5
-  );
-}
-
-
-function draw(){
-
-  const c = $("chart");
-
-  if(!c) return;
-
-  const r =
-    c.getBoundingClientRect();
-
-  const dpr =
-    window.devicePixelRatio || 1;
-
-  c.width =
-    Math.max(1,r.width * dpr);
-
-  c.height =
-    Math.max(1,r.height * dpr);
-
-  const x =
-    c.getContext("2d");
-
-  x.setTransform(
-    dpr,
-    0,
-    0,
-    dpr,
-    0,
-    0
-  );
-
-  const w = r.width;
-  const h = r.height;
-
-  const data =
-    candles.slice(-60);
-
-  x.clearRect(
-    0,
-    0,
-    w,
-    h
-  );
-
-  if(data.length < 2) return;
-
-  const hi =
-    Math.max(
-      ...data.map(a => a.high)
-    );
-
-  const lo =
-    Math.min(
-      ...data.map(a => a.low)
-    );
-
-  const range =
-    hi - lo || 1;
-
-  const pad =
-    range * .12;
-
-  const max =
-    hi + pad;
-
-  const min =
-    lo - pad;
-
-  const X = i =>
-    8 +
-    i /
-      (data.length - 1) *
-    (w - 16);
-
-  const Y = p =>
-    h -
-    20 -
-    (p - min) /
-      (max - min) *
-    (h - 35);
-
-  x.strokeStyle =
-    "rgba(255,255,255,.08)";
-
-  x.lineWidth = 1;
-
-  for(let i=1;i<5;i++){
-
-    const gy =
-      15 +
-      (h - 35) * i / 5;
-
-    x.beginPath();
-
-    x.moveTo(
-      8,
-      gy
-    );
-
-    x.lineTo(
-      w - 8,
-      gy
-    );
-
-    x.stroke();
-  }
-
-  x.beginPath();
-
-  data.forEach((a,i)=>{
-
-    const px = X(i);
-    const py = Y(a.close);
-
-    if(i === 0){
-
-      x.moveTo(
-        px,
-        py
-      );
-
-    }else{
-
-      x.lineTo(
-        px,
-        py
-      );
-
-    }
-
-  });
-
-  x.strokeStyle =
-    "#fbbf24";
-
-  x.lineWidth = 2;
-
-  x.stroke();
-}
-
-
-/* =========================================================
-   SIGNAL KEY
-========================================================= */
-
-function buildSignalKey(d){
-
-  const sig =
+  const level =
     String(
-      d.signal || "WAIT"
+      data.level ||
+      data.status ||
+      "UNKNOWN"
     ).toUpperCase();
 
-  if(
-    sig !== "BUY" &&
-    sig !== "SELL"
-  ){
-
-    return null;
-  }
-
-  const candle =
-    d.signalCandle ||
-    d.candleTime ||
+  status.textContent =
+    level +
     (
-      Array.isArray(d.candles) &&
-      d.candles.length
-        ? (
-            d.candles[
-              d.candles.length - 1
-            ].time ||
-            d.candles[
-              d.candles.length - 1
-            ].datetime
-          )
+      data.score !== undefined
+        ? " • " + data.score
         : ""
     );
 
-  return [
-    sig,
-    candle
-  ].join("|");
-}
-
-
-/* =========================================================
-   RENDER
-========================================================= */
-
-function render(d){
-
-  const h1 =
-    d.h1 || {};
-
-  const m15 =
-    d.m15 || {};
-
-  const m5 =
-    d.m5 || {};
-
-  const tp =
-    d.tradePlan || {};
-
-  const sr =
-    d.srAnalysis ||
-    h1.supportResistance ||
-    {};
-
-  const sa =
-    d.setupAnalysis || {};
-
-  const buy =
-    sa.buy || {};
-
-  const sell =
-    sa.sell || {};
-
-  const sig =
-    String(
-      d.signal || "WAIT"
-    ).toUpperCase();
-
-
-  text(
-    "system",
-    "ONLINE"
+  card.classList.remove(
+    "risk",
+    "clear"
   );
-
-  $("system").className =
-    "good";
-
-  text(
-    "api",
-    "LIVE"
-  );
-
-  $("api").className =
-    "good";
-
-
-  text(
-    "signalTop",
-    sig
-  );
-
-  clsDirection(
-    $("signalTop"),
-    sig
-  );
-
-
-  const livePrice =
-    d.livePrice?.price ??
-    d.price;
-
-  text(
-    "price",
-    fmt(livePrice)
-  );
-
-  text(
-    "chartPrice",
-    fmt(livePrice)
-  );
-
-
-  text(
-    "source",
-    (
-      d.livePrice?.source ||
-      "TWELVE_DATA"
-    ) +
-    " • " +
-    new Date().toLocaleTimeString(
-      "en-MY",
-      {
-        hour12:false
-      }
-    )
-  );
-
-
-  const badge =
-    $("badge");
-
-  if(badge){
-
-    badge.textContent =
-      sig === "BUY"
-        ? "🟢 BUY"
-        : sig === "SELL"
-          ? "🔴 SELL"
-          : "⏳ WAIT";
-
-    badge.className =
-      "badge " +
-      (
-        sig === "BUY"
-          ? "buy"
-          : sig === "SELL"
-            ? "sell"
-            : "neutral"
-      );
-
-  }
-
-
-  const score =
-    Number(d.score || 0);
-
-  text(
-    "score",
-    Math.round(score) +
-    "/100"
-  );
-
-  const fill =
-    $("fill");
-
-  if(fill){
-
-    fill.style.width =
-      Math.max(
-        0,
-        Math.min(
-          100,
-          score
-        )
-      ) +
-      "%";
-
-  }
-
-
-  /* TRADE PLAN */
-
-  text(
-    "planStatus",
-    tp.locked
-      ? "LOCKED"
-      : d.status || "WAIT"
-  );
-
-  text(
-    "planDir",
-    sig
-  );
-
-  text(
-    "entry",
-    fmt(tp.entry)
-  );
-
-  text(
-    "sl",
-    fmt(tp.stopLoss)
-  );
-
-  text(
-    "tp1",
-    fmt(tp.tp1)
-  );
-
-  text(
-    "tp2",
-    fmt(tp.tp2)
-  );
-
-  text(
-    "tp3",
-    fmt(tp.tp3)
-  );
-
-  text(
-    "rr",
-    tp.rr == null
-      ? "--"
-      : tp.rr
-  );
-
-  text(
-    "setup",
-    d.setupType ||
-    tp.source ||
-    "--"
-  );
-
-
-  /* ACTIVE TARGET */
-
-  text(
-    "activeTarget",
-    fmt(tp.targetSR)
-  );
-
-  text(
-    "activeTargetType",
-    tp.targetSRType ||
-    "--"
-  );
-
-  text(
-    "activeTargetDistance",
-    tp.targetSRDistance == null
-      ? "--"
-      : fmt(tp.targetSRDistance)
-  );
-
-  text(
-    "activeTargetValid",
-    tp.targetSRValid === true
-      ? "YES"
-      : tp.targetSRValid === false
-        ? "NO"
-        : "--"
-  );
-
-  text(
-    "targetMode",
-    tp.targetMode ||
-    "--"
-  );
-
-  clsDirection(
-    $("activeTargetValid"),
-    tp.targetSRValid === true
-      ? "BUY"
-      : tp.targetSRValid === false
-        ? "SELL"
-        : "WAIT"
-  );
-
-
-  /* BUY */
-
-  yn(
-    "buyAligned",
-    buy.aligned
-  );
-
-  yn(
-    "buyContinuation",
-    buy.continuation
-  );
-
-  yn(
-    "buyReversal",
-    buy.reversal
-  );
-
-  text(
-    "buyType",
-    buy.type ||
-    "--"
-  );
-
-  text(
-    "buyLocation",
-    buy.location ||
-    "--"
-  );
-
-  text(
-    "buyTarget",
-    buy.targetSR == null
-      ? "--"
-      : fmt(buy.targetSR)
-  );
-
-
-  /* SELL */
-
-  yn(
-    "sellAligned",
-    sell.aligned
-  );
-
-  yn(
-    "sellContinuation",
-    sell.continuation
-  );
-
-  yn(
-    "sellReversal",
-    sell.reversal
-  );
-
-  text(
-    "sellType",
-    sell.type ||
-    "--"
-  );
-
-  text(
-    "sellLocation",
-    sell.location ||
-    "--"
-  );
-
-  text(
-    "sellTarget",
-    sell.targetSR == null
-      ? "--"
-      : fmt(sell.targetSR)
-  );
-
-
-  /* H1 */
-
-  text(
-    "h1dir",
-    h1.direction
-  );
-
-  clsDirection(
-    $("h1dir"),
-    h1.direction
-  );
-
-  text(
-    "h1ema50",
-    fmt(h1.ema50)
-  );
-
-  text(
-    "h1ema200",
-    fmt(h1.ema200)
-  );
-
-  text(
-    "h1atr",
-    fmt(h1.atr)
-  );
-
-  text(
-    "h1struct",
-    h1.structure?.bullish
-      ? "BULLISH"
-      : h1.structure?.bearish
-        ? "BEARISH"
-        : "RANGE"
-  );
-
-  text(
-    "holdBias",
-    h1.holdBias ||
-    "--"
-  );
-
-  clsDirection(
-    $("holdBias"),
-    h1.holdBias
-  );
-
-  text(
-    "hold",
-    h1.holdPermission ||
-    "--"
-  );
-
-
-  /* H1 S/R */
-
-  const support =
-    sr.support?.price ??
-    "--";
-
-  const resistance =
-    sr.resistance?.price ??
-    "--";
-
-  text(
-    "h1support",
-    fmt(support)
-  );
-
-  text(
-    "h1resistance",
-    fmt(resistance)
-  );
-
-  text(
-    "srposition",
-    sr.position ||
-    "--"
-  );
-
-  text(
-    "srzone",
-    sr.zone ||
-    "--"
-  );
-
-  text(
-    "buyfilter",
-    sr.buyAllowed === true
-      ? "ALLOWED"
-      : sr.buyAllowed === false
-        ? "BLOCKED"
-        : "--"
-  );
-
-  text(
-    "sellfilter",
-    sr.sellAllowed === true
-      ? "ALLOWED"
-      : sr.sellAllowed === false
-        ? "BLOCKED"
-        : "--"
-  );
-
-  clsDirection(
-    $("buyfilter"),
-    sr.buyAllowed === true
-      ? "BUY"
-      : "WAIT"
-  );
-
-  clsDirection(
-    $("sellfilter"),
-    sr.sellAllowed === true
-      ? "SELL"
-      : "WAIT"
-  );
-
-
-  /* M15 */
-
-  text(
-    "m15dir",
-    m15.confirmation ||
-    m15.direction ||
-    "WAIT"
-  );
-
-  clsDirection(
-    $("m15dir"),
-    m15.confirmation ||
-    m15.direction
-  );
-
-  text(
-    "m15ema",
-    fmt(m15.ema20) +
-    " / " +
-    fmt(m15.ema50)
-  );
-
-  text(
-    "m15rsi",
-    fmt(m15.rsi)
-  );
-
-  text(
-    "m15macd",
-    m15.macd?.bullish
-      ? "BULLISH"
-      : m15.macd?.bearish
-        ? "BEARISH"
-        : "--"
-  );
-
-  text(
-    "m15structure",
-    (
-      m15.bos?.bullish ||
-      m15.choch?.bullish
-    )
-      ? "BOS/CHOCH ↑"
-      : (
-          m15.bos?.bearish ||
-          m15.choch?.bearish
-        )
-        ? "BOS/CHOCH ↓"
-        : m15.structure?.bullish
-          ? "BULLISH"
-          : m15.structure?.bearish
-            ? "BEARISH"
-            : "RANGE"
-  );
-
-  text(
-    "m15momentum",
-    m15.momentum?.strength != null
-      ? (
-          m15.momentum.bullish
-            ? "BULLISH "
-            : m15.momentum.bearish
-              ? "BEARISH "
-              : "NEUTRAL "
-        ) +
-        fmt(m15.momentum.strength)
-      : "--"
-  );
-
-
-  /* M5 */
-
-  text(
-    "m5dir",
-    m5.trigger ||
-    m5.confirmation ||
-    "WAIT"
-  );
-
-  clsDirection(
-    $("m5dir"),
-    m5.trigger ||
-    m5.confirmation
-  );
-
-  text(
-    "m5ema",
-    fmt(m5.ema9) +
-    " / " +
-    fmt(m5.ema20) +
-    " / " +
-    fmt(m5.ema50)
-  );
-
-  text(
-    "m5rsi",
-    fmt(m5.rsi)
-  );
-
-  text(
-    "m5macd",
-    m5.macd?.bullish
-      ? "BULLISH"
-      : m5.macd?.bearish
-        ? "BEARISH"
-        : "--"
-  );
-
-  text(
-    "m5atr",
-    fmt(m5.atr)
-  );
-
-  text(
-    "m5structure",
-    (
-      m5.bos?.bullish ||
-      m5.choch?.bullish
-    )
-      ? "BOS/CHOCH ↑"
-      : (
-          m5.bos?.bearish ||
-          m5.choch?.bearish
-        )
-        ? "BOS/CHOCH ↓"
-        : m5.structure?.bullish
-          ? "BULLISH"
-          : m5.structure?.bearish
-            ? "BEARISH"
-            : "RANGE"
-  );
-
-  text(
-    "m5momentum",
-    m5.momentum?.strength != null
-      ? (
-          m5.momentum.bullish
-            ? "BULLISH "
-            : m5.momentum.bearish
-              ? "BEARISH "
-              : "NEUTRAL "
-        ) +
-        fmt(m5.momentum.strength)
-      : "--"
-  );
-
-
-  /* SCORE */
-
-  text(
-    "m15score",
-    fmt(m15.buyScore) +
-    " / " +
-    fmt(m15.sellScore)
-  );
-
-  text(
-    "m5score",
-    fmt(m5.buyScore) +
-    " / " +
-    fmt(m5.sellScore)
-  );
-
-  text(
-    "context",
-    d.context ||
-    "NEUTRAL"
-  );
-
-  text(
-    "setupStatus",
-    d.setupType ||
-    d.status ||
-    "WAIT"
-  );
-
-  text(
-    "execution",
-    d.execution ||
-    "WAIT"
-  );
-
-  text(
-    "reason",
-    Array.isArray(d.reasons)
-      ? d.reasons.join(" • ")
-      : (
-          d.reason ||
-          "--"
-        )
-  );
-
-
-  /* DIAGNOSTIC */
-
-  text(
-    "m5count",
-    d.data?.m5Candles ??
-    "--"
-  );
-
-  text(
-    "m15count",
-    d.data?.m15Candles ??
-    "--"
-  );
-
-  text(
-    "h1count",
-    d.data?.h1Candles ??
-    "--"
-  );
-
-  text(
-    "liveSource",
-    d.livePrice?.source ||
-    "--"
-  );
-
-  text(
-    "cacheAge",
-    d.cache?.ageSeconds != null
-      ? Math.round(
-          d.cache.ageSeconds
-        ) + "s"
-      : d.data?.cacheAgeSeconds != null
-        ? Math.round(
-            d.data.cacheAgeSeconds
-          ) + "s"
-        : "--"
-  );
-
-  text(
-    "quota",
-    d.data?.quotaUsed != null
-      ? d.data.quotaUsed +
-        "/700 day"
-      : "--"
-  );
-
-  text(
-    "signalCandle",
-    d.signalCandle ||
-    "--"
-  );
-
-  text(
-    "signalKey",
-    buildSignalKey(d) ||
-    "--"
-  );
-
-
-  handleSignal(d);
-}
-
-
-/* =========================================================
-   SIGNAL STATE
-========================================================= */
-
-function handleSignal(d){
-
-  const sig =
-    String(
-      d.signal || "WAIT"
-    ).toUpperCase();
-
-  const key =
-    buildSignalKey(d);
 
   if(
-    sig !== "BUY" &&
-    sig !== "SELL"
+    level === "HIGH" ||
+    level === "RISK"
   ){
-
-    lastSignal = "WAIT";
-
-    return;
+    card.classList.add("risk");
   }
-
-  if(!key) return;
-
-  const stored =
-    localStorage.getItem(
-      "xau_last_signal_key"
-    );
 
   if(
-    lastSignal === null
+    level === "LOW" ||
+    level === "CLEAR"
   ){
+    card.classList.add("clear");
+  }
 
-    lastSignal = sig;
+  const items =
+    Array.isArray(data.items)
+      ? data.items
+      : [];
 
-    if(!stored){
+  if(!items.length){
 
-      localStorage.setItem(
-        "xau_last_signal_key",
-        key
-      );
-    }
+    list.innerHTML =
+      '<div class="loading">No recent news detected</div>';
 
     return;
   }
 
-  if(stored === key){
+  list.innerHTML =
+    items
+      .slice(0,8)
+      .map(item => {
 
-    lastSignal = sig;
-
-    return;
-  }
-
-  if(lastSignal === sig){
-
-    return;
-  }
-
-  localStorage.setItem(
-    "xau_last_signal_key",
-    key
-  );
-
-  lastSignal = sig;
-}
-
-
-/* =========================================================
-   VAPID
-========================================================= */
-
-function urlBase64ToUint8Array(
-  base64String
-){
-
-  const padding =
-    "=".repeat(
-      (
-        4 -
-        base64String.length % 4
-      ) % 4
-    );
-
-  const base64 =
-    (
-      base64String +
-      padding
-    )
-    .replace(/-/g,"+")
-    .replace(/_/g,"/");
-
-  const rawData =
-    atob(base64);
-
-  return Uint8Array.from(
-    [...rawData].map(
-      c => c.charCodeAt(0)
-    )
-  );
-}
-
-
-/* =========================================================
-   ENABLE PUSH
-========================================================= */
-
-async function enableNotifications(){
-
-  const btn =
-    $("notificationButton");
-
-  if(
-    !("serviceWorker" in navigator) ||
-    !("PushManager" in window) ||
-    !("Notification" in window)
-  ){
-
-    $("notificationStatus").textContent =
-      "Browser ini tidak menyokong Web Push.";
-
-    btn.className =
-      "btn err";
-
-    return;
-  }
-
-  try{
-
-    const permission =
-      await Notification.requestPermission();
-
-    if(
-      permission !== "granted"
-    ){
-
-      $("notificationStatus").textContent =
-        "Permission notification ditolak.";
-
-      btn.className =
-        "btn err";
-
-      return;
-    }
-
-    const reg =
-      await navigator.serviceWorker.register(
-        "/sw.js",
-        {
-          scope:"/",
-          updateViaCache:"none"
-        }
-      );
-
-    await navigator.serviceWorker.ready;
-
-    const cr =
-      await fetch(
-        "/api/push-config?ts=" +
-        Date.now(),
-        {
-          cache:"no-store"
-        }
-      );
-
-    if(!cr.ok){
-
-      throw new Error(
-        "push-config gagal: HTTP " +
-        cr.status
-      );
-    }
-
-    const cfg =
-      await cr.json();
-
-    if(!cfg.publicKey){
-
-      throw new Error(
-        "VAPID_PUBLIC_KEY tidak dijumpai."
-      );
-    }
-
-    let sub =
-      await reg.pushManager
-        .getSubscription();
-
-    if(!sub){
-
-      sub =
-        await reg.pushManager.subscribe({
-
-          userVisibleOnly:true,
-
-          applicationServerKey:
-            urlBase64ToUint8Array(
-              cfg.publicKey
-            )
-        });
-    }
-
-    const sr =
-      await fetch(
-        "/api/push-subscribe",
-        {
-          method:"POST",
-
-          headers:{
-            "Content-Type":
-              "application/json"
-          },
-
-          body:
-            JSON.stringify(
-              sub.toJSON()
-            )
-        }
-      );
-
-    if(!sr.ok){
-
-      const err =
-        await sr.text()
-          .catch(
-            () => ""
+        const category =
+          safe(
+            item?.category,
+            "NEWS"
           );
 
-      throw new Error(
-        "push-subscribe gagal: HTTP " +
-        sr.status +
-        (
-          err
-            ? " — " + err
-            : ""
-        )
-      );
-    }
+        const title =
+          safe(
+            item?.title,
+            "Untitled"
+          );
 
-    btn.textContent =
-      "🔔 ON";
+        return `
+          <div class="newsItem">
+            <div class="newsCat">
+              ${escapeHtml(category)}
+            </div>
 
-    btn.className =
-      "btn on";
-
-    $("notificationStatus").textContent =
-      "Push aktif — subscription berjaya disimpan.";
-
-  }catch(e){
-
-    console.error(
-      "Notification setup:",
-      e
-    );
-
-    $("notificationStatus").textContent =
-      "Push gagal: " +
-      e.message;
-
-    btn.className =
-      "btn err";
-  }
+            <div class="newsTitle">
+              ${escapeHtml(title)}
+            </div>
+          </div>
+        `;
+      })
+      .join("");
 }
 
+function renderLiquidity(data){
 
-/* =========================================================
-   RESTORE PUSH
-========================================================= */
-
-async function restorePushState(){
-
-  if(
-    !("serviceWorker" in navigator) ||
-    !("PushManager" in window)
-  ){
-
+  if(!data){
     return;
   }
 
-  try{
+  const above =
+    data.above || {};
 
-    if(
-      "Notification" in window &&
-      Notification.permission !== "granted"
-    ){
+  const below =
+    data.below || {};
 
-      return;
-    }
+  setText(
+    "liqH1Above",
+    above.h1
+      ? fmt(above.h1.price,2)
+      : "—"
+  );
 
-    const reg =
-      await navigator.serviceWorker.ready;
+  setText(
+    "liqM15Above",
+    above.m15
+      ? fmt(above.m15.price,2)
+      : "—"
+  );
 
-    const sub =
-      await reg.pushManager
-        .getSubscription();
+  setText(
+    "liqM5Above",
+    above.m5
+      ? fmt(above.m5.price,2)
+      : "—"
+  );
 
-    if(!sub){
+  setText(
+    "liqH1Below",
+    below.h1
+      ? fmt(below.h1.price,2)
+      : "—"
+  );
+}
 
-      return;
-    }
+function render(data){
 
-    const sr =
-      await fetch(
-        "/api/push-subscribe",
-        {
-          method:"POST",
+  if(!data){
 
-          headers:{
-            "Content-Type":
-              "application/json"
-          },
-
-          body:
-            JSON.stringify(
-              sub.toJSON()
-            )
-        }
-      );
-
-    if(sr.ok){
-
-      $("notificationButton").textContent =
-        "🔔 ON";
-
-      $("notificationButton").className =
-        "btn on";
-
-      $("notificationStatus").textContent =
-        "Push aktif — subscription dipulihkan.";
-
-    }
-
-  }catch(e){
-
-    console.warn(
-      "restorePushState:",
-      e
+    throw new Error(
+      "Empty API response"
     );
+  }
+
+  if(data.ok !== true){
+
+    throw new Error(
+      safe(
+        data.error,
+        "API returned ok:false"
+      )
+    );
+  }
+
+  const price =
+    data.price ??
+    data.livePrice?.price ??
+    data.m5?.price ??
+    null;
+
+  setText(
+    "price",
+    fmt(price,2)
+  );
+
+  const source =
+    data.livePrice?.source ||
+    data.m5?.source ||
+    "API";
+
+  const age =
+    data.livePrice?.ageSeconds;
+
+  setText(
+    "priceSub",
+    source +
+    (
+      age !== undefined
+        ? " • cache " + age + "s"
+        : ""
+    )
+  );
+
+  const signalData =
+    data.signal || {};
+
+  const scalp =
+    signalData.scalpSignal ||
+    data.scalpSignal ||
+    signalData.signal ||
+    "WAIT";
+
+  setSignal(
+    "signal",
+    scalp
+  );
+
+  setText(
+    "signalReason",
+    safe(
+      signalData.reason,
+      "Waiting for M5 + M15 alignment"
+    )
+  );
+
+  const market =
+    data.marketFilter || {};
+
+  const marketStatus =
+    market.status ||
+    scalp ||
+    "WAIT";
+
+  setSignal(
+    "marketFilter",
+    marketStatus
+  );
+
+  setText(
+    "marketReason",
+    safe(
+      market.note,
+      "M5 + M15 alignment required"
+    )
+  );
+
+  renderTimeframe(
+    "m5",
+    data.m5
+  );
+
+  renderTimeframe(
+    "m15",
+    data.m15
+  );
+
+  renderTimeframe(
+    "h1",
+    data.h1
+  );
+
+  const sr =
+    data.supportResistance || {};
+
+  setText(
+    "support",
+    fmt(sr.support,2)
+  );
+
+  setText(
+    "supportTime",
+    formatTime(sr.supportTime)
+  );
+
+  setText(
+    "resistance",
+    fmt(sr.resistance,2)
+  );
+
+  setText(
+    "resistanceTime",
+    formatTime(sr.resistanceTime)
+  );
+
+  const confluence =
+    data.confluence || {};
+
+  setText(
+    "confScore",
+    safe(confluence.score)
+  );
+
+  setText(
+    "confQuality",
+    safe(confluence.quality)
+  );
+
+  const entry =
+    data.entryQuality || {};
+
+  setText(
+    "entryQuality",
+    safe(entry.quality)
+  );
+
+  setText(
+    "structure",
+    safe(
+      data.h1?.structure?.bias
+    )
+  );
+
+  const plan =
+    data.tradePlan || {};
+
+  const planStatus =
+    String(
+      plan.status || "WAIT"
+    ).toUpperCase();
+
+  setText(
+    "planStatus",
+    planStatus
+  );
+
+  const planEl =
+    $("planStatus");
+
+  if(planEl){
+
+    planEl.className =
+      "planValue " +
+      (
+        planStatus === "BUY"
+          ? "buyText"
+          : planStatus === "SELL"
+            ? "sellText"
+            : "waitText"
+      );
+  }
+
+  setText(
+    "planEntry",
+    fmt(plan.entry,2)
+  );
+
+  setText(
+    "planSL",
+    fmt(plan.stopLoss,2)
+  );
+
+  setText(
+    "planTP1",
+    fmt(plan.takeProfit1,2)
+  );
+
+  setText(
+    "planTP2",
+    fmt(plan.takeProfit2,2)
+  );
+
+  renderNews(
+    data.newsFilter
+  );
+
+  renderLiquidity(
+    data.liquidity
+  );
+
+  const cache =
+    data.cache;
+
+  if(cache){
+
+    setText(
+      "updated",
+      "Updated • M5 " +
+      safe(cache.m5?.source,"API") +
+      " • M15 " +
+      safe(cache.m15?.source,"API") +
+      " • H1 " +
+      safe(cache.h1?.source,"API")
+    );
+
+  }else{
+
+    setText(
+      "updated",
+      "Updated • " +
+      new Date().toLocaleTimeString()
+    );
+  }
+
+  const dot =
+    $("statusDot");
+
+  if(dot){
+    dot.className =
+      "dot ok";
+  }
+
+  setText(
+    "statusText",
+    "API ONLINE"
+  );
+
+  const errorBox =
+    $("errorBox");
+
+  if(errorBox){
+    errorBox.style.display =
+      "none";
   }
 }
 
-
-/* =========================================================
-   API
-========================================================= */
-
-async function fetchData(){
+async function load(){
 
   try{
 
-    const r =
+    const response =
       await fetch(
-        "/api/scalp?ts=" +
-        Date.now(),
+        API + "?t=" + Date.now(),
         {
-          cache:"no-store"
+          cache:"no-store",
+          headers:{
+            "Accept":"application/json"
+          }
         }
       );
 
-    const d =
-      await r.json();
+    const raw =
+      await response.text();
 
-    if(
-      !r.ok ||
-      !d.ok
-    ){
+    let data;
+
+    try{
+
+      data =
+        JSON.parse(raw);
+
+    }catch(parseError){
 
       throw new Error(
-        d.error ||
-        "HTTP " +
-        r.status
+        "API returned invalid JSON"
       );
     }
 
-    candles =
-      Array.isArray(d.candles)
-        ? d.candles
-            .map(x => ({
+    if(!response.ok){
 
-              time:
-                x.time ||
-                x.datetime,
+      throw new Error(
+        data?.error ||
+        "HTTP " +
+        response.status
+      );
+    }
 
-              open:
-                Number(x.open),
+    render(data);
 
-              high:
-                Number(x.high),
-
-              low:
-                Number(x.low),
-
-              close:
-                Number(x.close)
-
-            }))
-            .filter(x =>
-              Number.isFinite(x.open) &&
-              Number.isFinite(x.high) &&
-              Number.isFinite(x.low) &&
-              Number.isFinite(x.close)
-            )
-        : [];
-
-    render(d);
-
-    draw();
-
-  }catch(e){
+  }catch(error){
 
     console.error(
-      "scalp API:",
-      e
+      "XAUUSDSNIPER:",
+      error
     );
 
-    $("api").textContent =
-      "ERROR";
+    const dot =
+      $("statusDot");
 
-    $("api").className =
-      "bad";
+    if(dot){
+      dot.className =
+        "dot error";
+    }
 
-    $("source").textContent =
-      "API ERROR: " +
-      e.message;
+    setText(
+      "statusText",
+      "API ERROR"
+    );
+
+    const box =
+      $("errorBox");
+
+    if(box){
+
+      box.style.display =
+        "block";
+
+      box.textContent =
+        "API Error: " +
+        (
+          error?.message ||
+          String(error)
+        );
+    }
   }
 }
 
-
-/* =========================================================
-   START
-========================================================= */
-
-window.addEventListener(
-  "resize",
-  draw
-);
-
-updateSessions();
+load();
 
 setInterval(
-  updateSessions,
-  1000
-);
-
-
-/* =========================================================
-   SERVICE WORKER
-========================================================= */
-
-if(
-  "serviceWorker" in navigator
-){
-
-  navigator.serviceWorker
-    .register(
-      "/sw.js",
-      {
-        scope:"/",
-        updateViaCache:"none"
-      }
-    )
-    .then(async reg => {
-
-      try{
-
-        await reg.update();
-
-      }catch(e){
-
-        console.warn(
-          "SW update:",
-          e
-        );
-      }
-
-      await restorePushState();
-
-    })
-    .catch(err => {
-
-      console.warn(
-        "Service Worker:",
-        err
-      );
-
-      $("notificationStatus").textContent =
-        "Service Worker gagal: " +
-        err.message;
-    });
-
-}else{
-
-  $("notificationStatus").textContent =
-    "Service Worker tidak disokong browser ini.";
-}
-
-
-/* =========================================================
-   FIRST LOAD
-========================================================= */
-
-fetchData();
-
-
-/* =========================================================
-   REFRESH EVERY 15 SECONDS
-========================================================= */
-
-setInterval(
-  fetchData,
-  15000
+  load,
+  REFRESH_MS
 );
 
 </script>
