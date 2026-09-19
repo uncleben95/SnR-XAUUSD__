@@ -1,563 +1,198 @@
-<!DOCTYPE html>
-<html lang="en">
+<!doctype html>
+<html lang="ms">
 <head>
-<meta charset="UTF-8">
+<meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#f4f7fb">
-<title>XAUUSDSNIPER</title>
+
+<link rel="manifest" href="/manifest.json">
+<link rel="apple-touch-icon" href="/icon.png">
+
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+
+<title>XAU/USD Pro Sniper — V12 Fixed Trade Plan</title>
 
 <style>
+
+:root{
+  --bg:#f4f7fb;
+  --card:#fff;
+  --sub:#f7f9fc;
+  --text:#20252b;
+  --muted:#737b87;
+  --border:#e1e5ea;
+
+  --blue:#2563eb;
+  --green:#15803d;
+  --red:#dc2626;
+  --yellow:#a16207;
+  --purple:#7c3aed;
+
+  --dark:#0f172a;
+
+  --shadow:0 3px 14px rgba(0,0,0,.055);
+}
+
 *{
   box-sizing:border-box;
 }
 
-html,
+html{
+  width:100%;
+  min-height:100%;
+}
+
 body{
   margin:0;
-  padding:0;
-  min-height:100%;
-  background:#f4f7fb;
-  color:#172033;
-  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
-}
-
-body{
-  min-height:100vh;
-  overflow-x:hidden;
-}
-
-:root{
-  --bg:#f4f7fb;
-  --card:#ffffff;
-  --card-soft:#f8faff;
-  --line:#dfe6f0;
-  --text:#172033;
-  --muted:#718096;
-
-  --green:#079669;
-  --green-bg:#eaf9f3;
-
-  --red:#dc3e5d;
-  --red-bg:#fff0f3;
-
-  --yellow:#b98200;
-  --yellow-bg:#fff8df;
-
-  --blue:#2777d6;
-  --blue-bg:#edf5ff;
-
-  --purple:#7654c7;
-  --purple-bg:#f3efff;
-
-  --shadow:0 5px 20px rgba(36,55,80,.07);
-}
-
-.app{
-  width:100%;
-  max-width:1100px;
-  margin:0 auto;
   padding:
-    clamp(8px,1.5vw,18px)
-    clamp(8px,2vw,24px)
-    clamp(14px,2vw,25px);
+    clamp(6px,1.5vw,14px);
+
+  width:100%;
+  min-height:100vh;
+
+  background:var(--bg);
+  color:var(--text);
+
+  font-family:
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    Arial,
+    Helvetica,
+    sans-serif;
+
+  overflow-x:hidden;
+  -webkit-text-size-adjust:100%;
+}
+
+button{
+  -webkit-tap-highlight-color:transparent;
+}
+
+.wrap{
+  width:100%;
+  max-width:1180px;
+  margin:0 auto;
 }
 
 /* =========================
    HEADER
 ========================= */
 
-.header{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  gap:10px;
-  margin-bottom:clamp(7px,1vw,12px);
+header{
+  text-align:center;
+  margin-bottom:clamp(7px,1vw,11px);
 }
 
-.brand{
-  display:flex;
-  align-items:center;
-  gap:9px;
-  min-width:0;
+h1{
+  margin:0;
+
+  color:#a87900;
+
+  font-size:
+    clamp(1.05rem,2.7vw,1.55rem);
+
+  line-height:1.2;
+
+  font-weight:900;
 }
 
-.logo{
-  width:clamp(34px,4vw,46px);
-  height:clamp(34px,4vw,46px);
-  border-radius:clamp(10px,1vw,14px);
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  flex-shrink:0;
+header p{
+  margin:4px auto 0;
 
-  color:#fff;
-  font-weight:950;
-  font-size:clamp(12px,1.5vw,16px);
-
-  background:linear-gradient(
-    135deg,
-    #4d73e8,
-    #7d55ce
-  );
-
-  box-shadow:
-    0 6px 18px rgba(77,115,232,.20);
-}
-
-.title{
-  font-size:clamp(14px,1.8vw,20px);
-  font-weight:950;
-  letter-spacing:.3px;
-  white-space:nowrap;
-}
-
-.subtitle{
-  margin-top:2px;
-  font-size:clamp(8px,1vw,11px);
-  color:var(--muted);
-  font-weight:700;
-}
-
-.headerRight{
-  display:flex;
-  align-items:center;
-  gap:6px;
-}
-
-/* API STATUS */
-
-.status{
-  display:flex;
-  align-items:center;
-  gap:5px;
-
-  padding:6px 9px;
-
-  background:#fff;
-  border:1px solid var(--line);
-  border-radius:20px;
+  max-width:1000px;
 
   color:var(--muted);
-  font-size:clamp(8px,.9vw,10px);
-  font-weight:800;
 
-  box-shadow:var(--shadow);
-}
+  font-size:
+    clamp(.56rem,1vw,.72rem);
 
-.dot{
-  width:7px;
-  height:7px;
-  border-radius:50%;
-  background:#aab3c0;
-  flex-shrink:0;
-}
-
-.dot.live{
-  background:var(--green);
-  box-shadow:0 0 8px rgba(7,150,105,.35);
-}
-
-/* PUSH */
-
-.pushBtn{
-  border:1px solid #c9d7eb;
-  background:#fff;
-
-  color:#64748b;
-
-  border-radius:20px;
-
-  padding:
-    clamp(6px,.8vw,8px)
-    clamp(8px,1vw,11px);
-
-  font-size:clamp(8px,.9vw,10px);
-  font-weight:950;
-
-  white-space:nowrap;
-  cursor:pointer;
-
-  box-shadow:var(--shadow);
-
-  -webkit-tap-highlight-color:transparent;
-}
-
-.pushBtn.on{
-  color:var(--green);
-  border-color:#a6dbc9;
-  background:var(--green-bg);
-}
-
-.pushBtn.off{
-  color:#64748b;
-}
-
-.pushBtn:disabled{
-  opacity:.55;
+  line-height:1.45;
 }
 
 /* =========================
    COMMON CARD
 ========================= */
 
-.card{
+.card,
+.status,
+.sessions,
+.plan,
+.notify,
+.diag,
+.setupbox{
+
   background:var(--card);
-  border:1px solid var(--line);
-  border-radius:clamp(11px,1.5vw,17px);
+
+  border:1px solid var(--border);
+
+  border-radius:
+    clamp(8px,1vw,11px);
 
   box-shadow:var(--shadow);
-}
 
-/* =========================
-   HERO
-========================= */
+  padding:
+    clamp(8px,1.2vw,11px);
 
-.hero{
-  display:grid;
-  grid-template-columns:minmax(0,1fr) minmax(0,1.15fr);
-
-  gap:clamp(5px,1vw,10px);
-
-  margin-bottom:clamp(6px,1vw,10px);
-}
-
-.priceCard{
-  padding:clamp(10px,1.5vw,16px);
-}
-
-.label{
-  color:var(--muted);
-
-  font-size:clamp(7px,.85vw,10px);
-
-  text-transform:uppercase;
-  letter-spacing:1px;
-  font-weight:850;
-}
-
-.price{
-  margin-top:5px;
-
-  font-size:
-    clamp(22px,4vw,38px);
-
-  line-height:1;
-
-  font-weight:950;
-  letter-spacing:-1px;
-
-  overflow:hidden;
-  text-overflow:ellipsis;
-  white-space:nowrap;
-}
-
-.priceUnit{
-  margin-top:6px;
-
-  color:var(--muted);
-
-  font-size:clamp(7px,.85vw,10px);
-  font-weight:700;
-}
-
-.signalCard{
-  position:relative;
-  overflow:hidden;
-
-  padding:clamp(10px,1.5vw,16px);
-}
-
-.signalCard:after{
-  content:"";
-
-  position:absolute;
-
-  width:clamp(70px,12vw,120px);
-  height:clamp(70px,12vw,120px);
-
-  right:-45px;
-  top:-50px;
-
-  border-radius:50%;
-
-  background:rgba(39,119,214,.06);
-}
-
-.signal{
-  margin-top:5px;
-
-  font-size:
-    clamp(22px,4vw,38px);
-
-  line-height:1;
-
-  font-weight:950;
-  letter-spacing:.4px;
-}
-
-.signal.buy{
-  color:var(--green);
-}
-
-.signal.sell{
-  color:var(--red);
-}
-
-.signal.wait{
-  color:var(--yellow);
-}
-
-.reason{
-  margin-top:7px;
-
-  font-size:clamp(8px,1vw,11px);
-
-  color:var(--muted);
-
-  white-space:nowrap;
-  overflow:hidden;
-  text-overflow:ellipsis;
-}
-
-/* =========================
-   TIMEFRAMES
-========================= */
-
-.tfGrid{
-  display:grid;
-
-  grid-template-columns:
-    repeat(3,minmax(0,1fr));
-
-  gap:clamp(5px,1vw,9px);
-
-  margin-bottom:clamp(6px,1vw,10px);
-}
-
-.tf{
-  padding:clamp(8px,1.2vw,13px);
-  min-width:0;
-}
-
-.tfTop{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:5px;
-}
-
-.tfName{
-  font-size:clamp(9px,1.2vw,13px);
-  font-weight:950;
-}
-
-.tfDir{
-  font-size:clamp(7px,.9vw,10px);
-
-  font-weight:950;
-
-  padding:4px 6px;
-
-  border-radius:7px;
-
-  background:#f1f4f8;
-}
-
-.tfDir.buy{
-  color:var(--green);
-  background:var(--green-bg);
-}
-
-.tfDir.sell{
-  color:var(--red);
-  background:var(--red-bg);
-}
-
-.tfDir.neutral{
-  color:var(--yellow);
-  background:var(--yellow-bg);
-}
-
-.tfMain{
-  margin-top:8px;
-
-  display:flex;
-  justify-content:space-between;
-  align-items:end;
-
-  gap:5px;
-}
-
-.tfValue{
-  font-size:clamp(10px,1.4vw,15px);
-  font-weight:900;
-}
-
-.tfRsi{
-  font-size:clamp(7px,1vw,10px);
-  color:var(--muted);
-  white-space:nowrap;
-}
-
-.tfMeta{
-  display:grid;
-  grid-template-columns:1fr 1fr;
-
-  gap:4px;
-
-  margin-top:7px;
-}
-
-.mini{
-  background:var(--card-soft);
-
-  border:1px solid #edf0f5;
-
-  border-radius:7px;
-
-  padding:5px 6px;
+  margin-bottom:
+    clamp(7px,1vw,10px);
 
   min-width:0;
-}
-
-.mini span{
-  display:block;
-
-  color:var(--muted);
-
-  font-size:clamp(6px,.75vw,8px);
-
-  font-weight:750;
-}
-
-.mini b{
-  display:block;
-
-  margin-top:2px;
-
-  font-size:clamp(8px,1vw,10px);
-
-  overflow:hidden;
-  text-overflow:ellipsis;
-  white-space:nowrap;
-}
-
-/* =========================
-   QUICK LEVELS
-========================= */
-
-.quick{
-  display:grid;
-
-  grid-template-columns:
-    repeat(4,minmax(0,1fr));
-
-  gap:clamp(5px,1vw,9px);
-
-  margin-bottom:clamp(6px,1vw,10px);
-}
-
-.q{
-  padding:clamp(7px,1.1vw,11px) 6px;
-
-  text-align:center;
-
-  min-width:0;
-}
-
-.q .qLabel{
-  color:var(--muted);
-
-  font-size:clamp(6px,.8vw,9px);
-
-  text-transform:uppercase;
-
-  letter-spacing:.5px;
-
-  font-weight:850;
-}
-
-.q .qValue{
-  margin-top:4px;
-
-  font-size:clamp(9px,1.3vw,13px);
-
-  font-weight:950;
-
-  overflow:hidden;
-  text-overflow:ellipsis;
-  white-space:nowrap;
 }
 
 /* =========================
    STATUS
 ========================= */
 
-.statusGrid{
+.status{
   display:grid;
 
   grid-template-columns:
-    repeat(3,minmax(0,1fr));
+    repeat(4,minmax(0,1fr));
 
-  gap:clamp(5px,1vw,9px);
-
-  margin-bottom:clamp(6px,1vw,10px);
+  gap:clamp(5px,.8vw,8px);
 }
 
-.badgeCard{
-  padding:clamp(7px,1.1vw,11px);
-
+.s{
+  text-align:center;
   min-width:0;
 }
 
-.badgeTitle{
-  font-size:clamp(6px,.8vw,9px);
+.s small{
+  display:block;
 
   color:var(--muted);
 
+  font-size:
+    clamp(.52rem,.75vw,.62rem);
+
   text-transform:uppercase;
-
-  letter-spacing:.7px;
-
-  font-weight:850;
 }
 
-.badge{
-  display:inline-block;
+.s strong{
+  display:block;
 
-  margin-top:5px;
+  margin-top:2px;
 
-  padding:4px 7px;
+  font-size:
+    clamp(.68rem,1vw,.84rem);
 
-  border-radius:7px;
-
-  font-size:clamp(7px,.9vw,10px);
-
-  font-weight:950;
-
-  background:#f2f4f8;
-
-  max-width:100%;
-
+  white-space:nowrap;
   overflow:hidden;
   text-overflow:ellipsis;
-  white-space:nowrap;
 }
 
-.green{
+.good{
   color:var(--green);
 }
 
-.red{
+.bad{
   color:var(--red);
 }
 
-.yellow{
+.wait{
   color:var(--yellow);
-}
-
-.blue{
-  color:var(--blue);
 }
 
 .purple{
@@ -565,109 +200,485 @@ body{
 }
 
 /* =========================
-   TRADE PLAN
+   SESSIONS
 ========================= */
 
-.plan{
-  padding:clamp(8px,1.3vw,13px);
-
-  margin-bottom:clamp(6px,1vw,10px);
+.sessions{
+  padding:clamp(8px,1vw,10px);
 }
 
-.planHead{
-  display:flex;
+.sessionTitle{
+  font-size:
+    clamp(.57rem,.85vw,.68rem);
 
-  justify-content:space-between;
-  align-items:center;
+  color:var(--muted);
 
-  margin-bottom:8px;
+  font-weight:bold;
+
+  margin-bottom:7px;
 }
 
-.sectionTitle{
-  font-size:clamp(8px,1vw,11px);
-
-  font-weight:950;
-
-  text-transform:uppercase;
-
-  letter-spacing:.8px;
-}
-
-.planStatus{
-  font-size:clamp(7px,.9vw,10px);
-
-  font-weight:950;
-
-  padding:4px 7px;
-
-  border-radius:7px;
-
-  background:#f2f4f8;
-}
-
-.planGrid{
+.sessiongrid{
   display:grid;
 
   grid-template-columns:
-    repeat(4,minmax(0,1fr));
+    repeat(3,minmax(0,1fr));
 
-  gap:clamp(4px,.8vw,7px);
+  gap:clamp(5px,.8vw,8px);
 }
 
-.planItem{
-  padding:clamp(6px,1vw,9px);
+.pill{
+  padding:
+    clamp(7px,1vw,9px);
 
-  border-radius:8px;
+  text-align:center;
 
-  background:var(--card-soft);
+  border:1px solid var(--border);
 
-  border:1px solid #edf0f5;
+  border-radius:7px;
+
+  font-weight:bold;
+
+  font-size:
+    clamp(.61rem,.85vw,.74rem);
+
+  color:#666;
 
   min-width:0;
 }
 
-.planItem span{
+.pill div{
+  margin-top:2px;
+
+  font-size:
+    clamp(.52rem,.75vw,.63rem);
+}
+
+.pill.active{
+  background:#dcfce7;
+
+  border-color:#22c55e;
+
+  color:var(--green);
+}
+
+/* =========================
+   NOTIFICATION
+========================= */
+
+.notify{
+  display:flex;
+
+  align-items:center;
+
+  justify-content:space-between;
+
+  gap:8px;
+}
+
+.notify > div{
+  min-width:0;
+}
+
+.notify b{
+  font-size:
+    clamp(.6rem,.85vw,.7rem);
+}
+
+.notify small{
   display:block;
 
   color:var(--muted);
 
-  font-size:clamp(6px,.8vw,9px);
+  font-size:
+    clamp(.53rem,.75vw,.63rem);
 
-  font-weight:750;
-}
-
-.planItem b{
-  display:block;
-
-  margin-top:3px;
-
-  font-size:clamp(8px,1.1vw,11px);
+  margin-top:2px;
 
   overflow:hidden;
   text-overflow:ellipsis;
+}
+
+.btn{
+  flex-shrink:0;
+
+  border:0;
+
+  border-radius:7px;
+
+  padding:
+    clamp(7px,1vw,9px)
+    clamp(9px,1.3vw,12px);
+
+  background:var(--blue);
+
+  color:white;
+
+  font-weight:bold;
+
+  font-size:
+    clamp(.58rem,.8vw,.69rem);
+
+  cursor:pointer;
+}
+
+.btn.on{
+  background:var(--green);
+}
+
+.btn.err{
+  background:var(--red);
+}
+
+/* =========================
+   CHART
+========================= */
+
+.chartbox{
+  width:100%;
+
+  height:
+    clamp(190px,32vw,330px);
+
+  background:var(--dark);
+
+  border-radius:8px;
+
+  position:relative;
+
+  overflow:hidden;
+}
+
+.chartbox canvas{
+  display:block;
+
+  width:100%;
+  height:100%;
+}
+
+.chartprice{
+  position:absolute;
+
+  right:7px;
+  top:7px;
+
+  background:#fff;
+
+  padding:4px 7px;
+
+  border-radius:5px;
+
+  font-weight:bold;
+
+  font-size:
+    clamp(.6rem,.8vw,.72rem);
+
+  color:#a87900;
+
+  max-width:45%;
+
+  overflow:hidden;
+
+  text-overflow:ellipsis;
+
   white-space:nowrap;
 }
 
 /* =========================
-   LOWER
+   MASTER SIGNAL
 ========================= */
 
-.lower{
+.master{
+  text-align:center;
+
+  border:2px solid var(--border);
+
+  padding:
+    clamp(10px,1.5vw,15px);
+}
+
+.price{
+  font-size:
+    clamp(1.65rem,5vw,2.4rem);
+
+  line-height:1.05;
+
+  font-weight:900;
+
+  color:#a87900;
+
+  margin-top:3px;
+}
+
+.source{
+  font-size:
+    clamp(.52rem,.75vw,.63rem);
+
+  color:var(--muted);
+
+  margin-top:3px;
+
+  overflow:hidden;
+
+  text-overflow:ellipsis;
+
+  white-space:nowrap;
+}
+
+.badge{
+  display:inline-block;
+
+  margin:
+    7px 0;
+
+  padding:
+    clamp(6px,1vw,8px)
+    clamp(20px,4vw,34px);
+
+  border-radius:8px;
+
+  font-size:
+    clamp(.9rem,2vw,1.2rem);
+
+  font-weight:800;
+
+  border:1px solid;
+
+  max-width:90%;
+
+  overflow:hidden;
+
+  text-overflow:ellipsis;
+
+  white-space:nowrap;
+}
+
+.buy{
+  color:var(--green);
+
+  background:#dcfce7;
+
+  border-color:#22c55e;
+}
+
+.sell{
+  color:var(--red);
+
+  background:#fee2e2;
+
+  border-color:#ef4444;
+}
+
+.neutral{
+  color:var(--purple);
+
+  background:#f3e8ff;
+
+  border-color:#a78bfa;
+}
+
+/* =========================
+   GENERAL GRID
+========================= */
+
+.grid{
   display:grid;
 
   grid-template-columns:
     repeat(2,minmax(0,1fr));
 
-  gap:clamp(5px,1vw,9px);
+  gap:
+    clamp(6px,1vw,10px);
 }
 
-.info{
-  padding:clamp(8px,1.2vw,12px);
+.grid .card{
+  margin-bottom:0;
+}
+
+/* =========================
+   METRICS
+========================= */
+
+.metric{
+  display:flex;
+
+  justify-content:space-between;
+
+  align-items:center;
+
+  gap:10px;
+
+  padding:6px 0;
+
+  border-bottom:1px solid #f0f2f5;
+
+  font-size:
+    clamp(.6rem,.8vw,.75rem);
 
   min-width:0;
 }
 
-.infoRow{
+.metric:last-child{
+  border-bottom:0;
+}
+
+.metric span{
+  color:var(--muted);
+
+  min-width:0;
+}
+
+.metric strong{
+  text-align:right;
+
+  min-width:0;
+
+  max-width:65%;
+
+  overflow:hidden;
+
+  text-overflow:ellipsis;
+
+  white-space:nowrap;
+}
+
+/* =========================
+   TRADE PLAN
+========================= */
+
+.plan{
+  background:var(--sub);
+}
+
+.plangrid{
+  display:grid;
+
+  grid-template-columns:
+    repeat(3,minmax(0,1fr));
+
+  gap:clamp(5px,.8vw,8px);
+}
+
+.p{
+  background:#fff;
+
+  border:1px solid var(--border);
+
+  border-radius:6px;
+
+  padding:
+    clamp(7px,1vw,9px);
+
+  font-size:
+    clamp(.58rem,.8vw,.69rem);
+
+  min-width:0;
+}
+
+.p strong{
+  display:block;
+
+  margin-top:3px;
+
+  font-size:
+    clamp(.76rem,1.2vw,.92rem);
+
+  overflow:hidden;
+
+  text-overflow:ellipsis;
+
+  white-space:nowrap;
+}
+
+/* =========================
+   PROGRESS
+========================= */
+
+.progress{
+  height:8px;
+
+  background:#e5e7eb;
+
+  border-radius:20px;
+
+  overflow:hidden;
+
+  margin-top:5px;
+}
+
+.fill{
+  height:100%;
+
+  width:0;
+
+  background:var(--green);
+
+  transition:.2s;
+}
+
+/* =========================
+   SETUP
+========================= */
+
+.setupbox{
+  background:#fff;
+}
+
+.setupgrid{
+  display:grid;
+
+  grid-template-columns:
+    repeat(2,minmax(0,1fr));
+
+  gap:
+    clamp(6px,1vw,10px);
+}
+
+.setup{
+  border:1px solid var(--border);
+
+  border-radius:8px;
+
+  padding:
+    clamp(8px,1.1vw,10px);
+
+  background:#fafafa;
+
+  min-width:0;
+}
+
+.setup h4{
+  margin:0 0 7px;
+
+  font-size:
+    clamp(.65rem,.85vw,.76rem);
+}
+
+.setup .metric{
+  font-size:
+    clamp(.57rem,.75vw,.69rem);
+}
+
+.target{
+  background:#eff6ff;
+
+  border-color:#93c5fd;
+}
+
+/* =========================
+   DIAGNOSTIC
+========================= */
+
+.diaggrid{
+  display:grid;
+
+  grid-template-columns:
+    repeat(4,minmax(0,1fr));
+
+  gap:6px;
+}
+
+.d{
   display:flex;
 
   justify-content:space-between;
@@ -676,93 +687,92 @@ body{
 
   gap:8px;
 
-  padding:5px 0;
+  background:#111827;
 
-  border-bottom:1px solid #edf0f4;
+  color:#fff;
+
+  border-radius:7px;
+
+  padding:
+    clamp(7px,.9vw,9px);
+
+  font-size:
+    clamp(.55rem,.75vw,.68rem);
+
+  min-width:0;
 }
 
-.infoRow:last-child{
-  border-bottom:0;
+.d span{
+  color:#cbd5e1;
+
+  min-width:0;
 }
 
-.infoRow span{
-  color:var(--muted);
-
-  font-size:clamp(7px,.9vw,10px);
-
-  font-weight:700;
-}
-
-.infoRow b{
-  font-size:clamp(7px,.9vw,10px);
-
-  font-weight:900;
-
+.d strong{
   text-align:right;
 
+  min-width:0;
+
+  max-width:60%;
+
   overflow:hidden;
+
   text-overflow:ellipsis;
+
   white-space:nowrap;
-}
-
-.footer{
-  text-align:center;
-
-  color:#8b97a8;
-
-  font-size:clamp(6px,.8vw,9px);
-
-  padding:9px 0 2px;
 }
 
 /* =========================
-   PUSH TOAST
+   FOOTER
 ========================= */
 
-.pushStatus{
-  position:fixed;
+.foot{
+  text-align:center;
 
-  left:50%;
-  bottom:15px;
+  color:var(--muted);
 
-  transform:translateX(-50%);
+  font-size:
+    clamp(.5rem,.7vw,.61rem);
 
-  z-index:90;
-
-  display:none;
-
-  padding:9px 13px;
-
-  border-radius:12px;
-
-  background:#172033;
-  color:#fff;
-
-  box-shadow:
-    0 10px 30px rgba(20,30,45,.20);
-
-  font-size:10px;
-  font-weight:850;
-
-  white-space:nowrap;
+  padding:10px 4px;
 }
 
 /* =========================
    PHONE
 ========================= */
 
-@media(max-width:600px){
+@media(max-width:650px){
 
-  .app{
-    max-width:none;
-  }
-
-  .header{
-    margin-bottom:7px;
+  body{
+    padding:
+      7px;
   }
 
   .status{
-    padding:6px 8px;
+    grid-template-columns:
+      repeat(2,minmax(0,1fr));
+  }
+
+  .grid{
+    grid-template-columns:1fr;
+  }
+
+  .grid .card{
+    margin-bottom:0;
+  }
+
+  .plangrid{
+    grid-template-columns:
+      repeat(2,minmax(0,1fr));
+  }
+
+  .setupgrid{
+    grid-template-columns:1fr;
+  }
+
+  .diaggrid{
+    grid-template-columns:
+      repeat(2,minmax(0,1fr));
   }
 
 }
@@ -773,92 +783,54 @@ body{
 
 @media(max-width:430px){
 
-  .app{
-    padding:
-      8px
-      7px
-      15px;
+  body{
+    padding:5px;
   }
 
-  .header{
-    gap:5px;
+  .card,
+  .status,
+  .sessions,
+  .plan,
+  .notify,
+  .diag,
+  .setupbox{
+    border-radius:8px;
+
+    padding:8px;
+
+    margin-bottom:7px;
   }
 
-  .brand{
-    gap:7px;
+  h1{
+    font-size:1.05rem;
   }
 
-  .headerRight{
+  header p{
+    font-size:.54rem;
+    line-height:1.35;
+  }
+
+  .sessiongrid{
     gap:4px;
   }
 
-  .title{
-    font-size:14px;
+  .pill{
+    padding:6px 3px;
   }
 
-  .subtitle{
-    font-size:8px;
+  .notify{
+    padding:8px;
   }
 
-  .status{
-    padding:5px 7px;
+  .metric{
+    padding:5px 0;
   }
 
-  .pushBtn{
-    padding:6px 7px;
-    font-size:8px;
+  .chartbox{
+    height:215px;
   }
 
-  .hero{
-    gap:5px;
-  }
-
-  .priceCard,
-  .signalCard{
-    padding:10px;
-  }
-
-  .price{
-    font-size:22px;
-  }
-
-  .signal{
-    font-size:22px;
-  }
-
-  .reason{
-    font-size:8px;
-  }
-
-  .tf{
-    padding:8px 7px;
-  }
-
-  .tfMeta{
-    gap:3px;
-  }
-
-  .mini{
-    padding:4px 5px;
-  }
-
-  .quick{
-    gap:4px;
-  }
-
-  .statusGrid{
-    gap:4px;
-  }
-
-  .badgeCard{
-    padding:7px;
-  }
-
-  .planGrid{
-    gap:4px;
-  }
-
-  .lower{
+  .diaggrid{
     gap:4px;
   }
 
@@ -870,55 +842,46 @@ body{
 
 @media(max-width:350px){
 
+  body{
+    padding:4px;
+  }
+
+  h1{
+    font-size:.98rem;
+  }
+
+  header p{
+    font-size:.5rem;
+  }
+
   .status{
-    display:none;
+    gap:4px;
   }
 
-  .title{
-    font-size:13px;
-  }
-
-  .subtitle{
-    font-size:7px;
-  }
-
-  .pushBtn{
-    font-size:8px;
-  }
-
-  .price{
-    font-size:20px;
-  }
-
-  .signal{
-    font-size:20px;
-  }
-
-  .tfName{
-    font-size:9px;
-  }
-
-  .tfValue{
-    font-size:10px;
-  }
-
-  .tfDir{
-    font-size:7px;
-    padding:3px 5px;
-  }
-
-  .quick .q:nth-child(4){
-    display:none;
-  }
-
-  .quick{
+  .sessiongrid{
     grid-template-columns:
-      repeat(3,minmax(0,1fr));
+      1fr;
   }
 
-  .planGrid{
+  .pill{
+    padding:6px;
+  }
+
+  .plangrid{
     grid-template-columns:
       repeat(2,minmax(0,1fr));
+  }
+
+  .chartbox{
+    height:195px;
+  }
+
+  .metric{
+    font-size:.57rem;
+  }
+
+  .p strong{
+    font-size:.72rem;
   }
 
 }
@@ -927,22 +890,50 @@ body{
    TABLET
 ========================= */
 
-@media(min-width:601px) and (max-width:900px){
+@media(min-width:651px) and (max-width:900px){
 
-  .app{
-    max-width:900px;
+  .grid{
+    grid-template-columns:
+      repeat(2,minmax(0,1fr));
+  }
+
+  .diaggrid{
+    grid-template-columns:
+      repeat(4,minmax(0,1fr));
   }
 
 }
 
 /* =========================
-   LAPTOP / DESKTOP
+   LAPTOP
 ========================= */
 
 @media(min-width:901px){
 
-  .app{
-    max-width:1100px;
+  .wrap{
+    max-width:1180px;
+  }
+
+  .grid{
+    grid-template-columns:
+      repeat(2,minmax(0,1fr));
+  }
+
+  .diaggrid{
+    grid-template-columns:
+      repeat(4,minmax(0,1fr));
+  }
+
+}
+
+/* =========================
+   LARGE DESKTOP
+========================= */
+
+@media(min-width:1200px){
+
+  .wrap{
+    max-width:1250px;
   }
 
 }
@@ -951,511 +942,753 @@ body{
    LANDSCAPE PHONE
 ========================= */
 
-@media(max-height:520px) and (orientation:landscape){
+@media(
+  max-height:520px
+) and (
+  orientation:landscape
+){
 
-  .app{
-    padding-top:6px;
-    padding-bottom:10px;
+  body{
+    padding:5px;
   }
 
-  .header{
+  .chartbox{
+    height:190px;
+  }
+
+  header{
     margin-bottom:5px;
-  }
-
-  .hero,
-  .tfGrid,
-  .quick,
-  .statusGrid,
-  .plan{
-    margin-bottom:5px;
-  }
-
-  .priceCard,
-  .signalCard,
-  .tf,
-  .q,
-  .badgeCard,
-  .plan,
-  .info{
-    padding:6px;
-  }
-
-  .footer{
-    display:none;
   }
 
 }
+
+/* =========================
+   IOS SAFE AREA
+========================= */
+
+@supports(
+  padding:max(0px)
+){
+
+  body{
+    padding-left:
+      max(
+        5px,
+        env(safe-area-inset-left)
+      );
+
+    padding-right:
+      max(
+        5px,
+        env(safe-area-inset-right)
+      );
+
+    padding-bottom:
+      max(
+        5px,
+        env(safe-area-inset-bottom)
+      );
+  }
+
+}
+
 </style>
 </head>
 
 <body>
 
-<div id="pushStatus" class="pushStatus"></div>
+<div class="wrap">
 
-<div class="app">
+<header>
 
-<header class="header">
+<h1>
+XAU/USD PRO SNIPER
+</h1>
 
-<div class="brand">
-
-<div class="logo">XAU</div>
-
-<div>
-<div class="title">XAUUSDSNIPER</div>
-<div class="subtitle">M5 + M15 SCALP ENGINE</div>
-</div>
-
-</div>
-
-<div class="headerRight">
-
-<button id="pushBtn" class="pushBtn off" type="button">
-🔔 PUSH OFF
-</button>
-
-<div class="status">
-<span id="statusDot" class="dot"></span>
-<span id="apiStatus">Connecting</span>
-</div>
-
-</div>
+<p>
+V12 • H1 Bias → M15 Confirmation → M5 Trigger →
+Reversal/Continuation → H1 S/R Target → Fixed Entry/SL/TP → Server Push
+</p>
 
 </header>
 
 
-<!-- HERO -->
+<div class="status">
 
-<section class="hero">
+<div class="s">
 
-<div class="card priceCard">
+<small>
+System
+</small>
 
-<div class="label">
-XAU / USD
-</div>
-
-<div id="price" class="price">
-—
-</div>
-
-<div id="priceSource" class="priceUnit">
-LIVE PRICE
-</div>
+<strong id="system">
+CONNECTING
+</strong>
 
 </div>
 
 
-<div class="card signalCard">
+<div class="s">
 
-<div class="label">
-SCALP SIGNAL
+<small>
+API
+</small>
+
+<strong id="api">
+CONNECTING
+</strong>
+
 </div>
 
-<div id="signal" class="signal wait">
+
+<div class="s">
+
+<small>
+Signal
+</small>
+
+<strong
+id="signalTop"
+class="wait">
 WAIT
-</div>
-
-<div id="signalReason" class="reason">
-Waiting for M5 + M15 alignment
-</div>
+</strong>
 
 </div>
 
-</section>
 
+<div class="s">
 
-<!-- TIMEFRAMES -->
+<small>
+MYT
+</small>
 
-<section class="tfGrid">
+<strong id="clock">
+--:--:--
+</strong>
 
-
-<div class="card tf">
-
-<div class="tfTop">
-
-<div class="tfName">
-M5
-</div>
-
-<div id="m5Dir" class="tfDir neutral">
-—
 </div>
 
 </div>
 
-<div class="tfMain">
+
+<div class="sessions">
+
+<div class="sessionTitle">
+TRADING SESSION — MALAYSIA TIME
+</div>
+
+<div class="sessiongrid">
+
+<div id="asia" class="pill">
+ASIA
+<div>
+08:00–17:00
+</div>
+</div>
+
+<div id="london" class="pill">
+LONDON
+<div>
+15:00–00:00
+</div>
+</div>
+
+<div id="ny" class="pill">
+NEW YORK
+<div>
+20:00–05:00
+</div>
+</div>
+
+</div>
+
+</div>
+
+
+<div class="notify">
 
 <div>
 
-<div class="label">
-BIAS
-</div>
-
-<div id="m5Bias" class="tfValue">
-—
-</div>
-
-</div>
-
-<div id="m5Rsi" class="tfRsi">
-RSI —
-</div>
-
-</div>
-
-<div class="tfMeta">
-
-<div class="mini">
-<span>EMA F</span>
-<b id="m5Fast">—</b>
-</div>
-
-<div class="mini">
-<span>EMA S</span>
-<b id="m5Slow">—</b>
-</div>
-
-</div>
-
-</div>
-
-
-<div class="card tf">
-
-<div class="tfTop">
-
-<div class="tfName">
-M15
-</div>
-
-<div id="m15Dir" class="tfDir neutral">
-—
-</div>
-
-</div>
-
-<div class="tfMain">
-
-<div>
-
-<div class="label">
-BIAS
-</div>
-
-<div id="m15Bias" class="tfValue">
-—
-</div>
-
-</div>
-
-<div id="m15Rsi" class="tfRsi">
-RSI —
-</div>
-
-</div>
-
-<div class="tfMeta">
-
-<div class="mini">
-<span>EMA F</span>
-<b id="m15Fast">—</b>
-</div>
-
-<div class="mini">
-<span>EMA S</span>
-<b id="m15Slow">—</b>
-</div>
-
-</div>
-
-</div>
-
-
-<div class="card tf">
-
-<div class="tfTop">
-
-<div class="tfName">
-H1
-</div>
-
-<div id="h1Dir" class="tfDir neutral">
-—
-</div>
-
-</div>
-
-<div class="tfMain">
-
-<div>
-
-<div class="label">
-CONTEXT
-</div>
-
-<div id="h1Bias" class="tfValue">
-—
-</div>
-
-</div>
-
-<div id="h1Rsi" class="tfRsi">
-RSI —
-</div>
-
-</div>
-
-<div class="tfMeta">
-
-<div class="mini">
-<span>EMA F</span>
-<b id="h1Fast">—</b>
-</div>
-
-<div class="mini">
-<span>EMA S</span>
-<b id="h1Slow">—</b>
-</div>
-
-</div>
-
-</div>
-
-</section>
-
-
-<!-- QUICK LEVELS -->
-
-<section class="quick">
-
-<div class="card q">
-
-<div class="qLabel">
-Support
-</div>
-
-<div id="support" class="qValue green">
-—
-</div>
-
-</div>
-
-
-<div class="card q">
-
-<div class="qLabel">
-Resistance
-</div>
-
-<div id="resistance" class="qValue red">
-—
-</div>
-
-</div>
-
-
-<div class="card q">
-
-<div class="qLabel">
-ATR M5
-</div>
-
-<div id="atr" class="qValue blue">
-—
-</div>
-
-</div>
-
-
-<div class="card q">
-
-<div class="qLabel">
-H1 Context
-</div>
-
-<div id="h1Context" class="qValue purple">
-—
-</div>
-
-</div>
-
-</section>
-
-
-<!-- STATUS -->
-
-<section class="statusGrid">
-
-<div class="card badgeCard">
-
-<div class="badgeTitle">
-Market Filter
-</div>
-
-<div id="marketFilter" class="badge yellow">
-WAIT
-</div>
-
-</div>
-
-
-<div class="card badgeCard">
-
-<div class="badgeTitle">
-Confluence
-</div>
-
-<div id="confluence" class="badge yellow">
-LOW
-</div>
-
-</div>
-
-
-<div class="card badgeCard">
-
-<div class="badgeTitle">
-Entry Quality
-</div>
-
-<div id="entryQuality" class="badge yellow">
-WAIT
-</div>
-
-</div>
-
-</section>
-
-
-<!-- TRADE PLAN -->
-
-<section class="card plan">
-
-<div class="planHead">
-
-<div class="sectionTitle">
-Trade Plan
-</div>
-
-<div id="planStatus" class="planStatus yellow">
-WAIT
-</div>
-
-</div>
-
-<div class="planGrid">
-
-<div class="planItem">
-<span>ENTRY</span>
-<b id="entry">—</b>
-</div>
-
-<div class="planItem">
-<span>STOP</span>
-<b id="stop">—</b>
-</div>
-
-<div class="planItem">
-<span>TP1</span>
-<b id="tp1">—</b>
-</div>
-
-<div class="planItem">
-<span>TP2</span>
-<b id="tp2">—</b>
-</div>
-
-</div>
-
-</section>
-
-
-<!-- NEWS + LIQUIDITY -->
-
-<section class="lower">
-
-
-<div class="card info">
-
-<div class="sectionTitle">
-News Filter
-</div>
-
-<div class="infoRow">
-
-<span>Status</span>
-
-<b id="newsStatus" class="yellow">
-—
+<b>
+🔔 SIGNAL PUSH
 </b>
 
-</div>
-
-<div class="infoRow">
-
-<span>Level</span>
-
-<b id="newsLevel">
-—
-</b>
+<small id="notificationStatus">
+Notification belum diaktifkan
+</small>
 
 </div>
 
-<div class="infoRow">
-
-<span>Score</span>
-
-<b id="newsScore">
-—
-</b>
-
-</div>
+<button
+id="notificationButton"
+class="btn"
+onclick="enableNotifications()">
+🔔 ENABLE
+</button>
 
 </div>
 
 
-<div class="card info">
+<div class="card">
 
-<div class="sectionTitle">
-Liquidity
+<h3 style="
+margin:0 0 8px;
+color:var(--blue);
+font-size:clamp(.68rem,1vw,.84rem)
+">
+XAU/USD • LIVE M5 • LAST 60 CANDLES
+</h3>
+
+<div class="chartbox">
+
+<canvas id="chart"></canvas>
+
+<div
+id="chartPrice"
+class="chartprice">
+--
 </div>
-
-<div class="infoRow">
-
-<span>Above H1</span>
-
-<b id="liqAbove">
-—
-</b>
-
-</div>
-
-<div class="infoRow">
-
-<span>Below H1</span>
-
-<b id="liqBelow">
-—
-</b>
-
-</div>
-
-<div class="infoRow">
-
-<span>Last Candle</span>
-
-<b id="lastCandle">
-—
-</b>
 
 </div>
 
 </div>
 
-</section>
+
+<div class="card master">
+
+<div style="
+font-size:clamp(.55rem,.8vw,.66rem);
+color:var(--muted);
+font-weight:bold
+">
+XAU/USD MARKET PRICE
+</div>
+
+<div
+id="price"
+class="price">
+--
+</div>
+
+<div
+id="source"
+class="source">
+Waiting for /api/scalp
+</div>
+
+<div
+id="badge"
+class="badge neutral">
+⏳ WAIT
+</div>
+
+<div style="
+font-size:clamp(.62rem,.85vw,.75rem)
+">
+Entry Quality:
+<strong id="score">
+0/100
+</strong>
+</div>
+
+<div class="progress">
+
+<div
+id="fill"
+class="fill">
+</div>
+
+</div>
+
+</div>
 
 
-<div id="footer" class="footer">
-XAUUSDSNIPER • Connecting...
+<div class="plan">
+
+<h3 style="
+margin:0 0 8px;
+color:var(--blue);
+font-size:clamp(.68rem,1vw,.84rem)
+">
+🎯 FIXED TRADE PLAN
+</h3>
+
+<div class="plangrid">
+
+<div class="p">
+STATUS
+<strong id="planStatus">WAIT</strong>
+</div>
+
+<div class="p">
+DIRECTION
+<strong id="planDir">--</strong>
+</div>
+
+<div class="p">
+ENTRY
+<strong id="entry">--</strong>
+</div>
+
+<div class="p">
+STOP LOSS
+<strong id="sl">--</strong>
+</div>
+
+<div class="p">
+TP1
+<strong id="tp1">--</strong>
+</div>
+
+<div class="p">
+TP2
+<strong id="tp2">--</strong>
+</div>
+
+<div class="p">
+TP3
+<strong id="tp3">--</strong>
+</div>
+
+<div class="p">
+R:R
+<strong id="rr">--</strong>
+</div>
+
+<div class="p">
+SETUP
+<strong id="setup">--</strong>
+</div>
+
+</div>
+
+</div>
+
+
+<div class="setupbox">
+
+<h3 style="
+margin:0 0 8px;
+color:var(--blue);
+font-size:clamp(.68rem,1vw,.84rem)
+">
+🧠 V12 SETUP ANALYSIS
+</h3>
+
+<div class="setupgrid">
+
+
+<div class="setup">
+
+<h4 class="good">
+🟢 BUY ANALYSIS
+</h4>
+
+<div class="metric">
+<span>Aligned</span>
+<strong id="buyAligned">--</strong>
+</div>
+
+<div class="metric">
+<span>Continuation</span>
+<strong id="buyContinuation">--</strong>
+</div>
+
+<div class="metric">
+<span>Reversal</span>
+<strong id="buyReversal">--</strong>
+</div>
+
+<div class="metric">
+<span>Type</span>
+<strong id="buyType">--</strong>
+</div>
+
+<div class="metric">
+<span>Location</span>
+<strong id="buyLocation">--</strong>
+</div>
+
+<div class="metric target">
+<span>H1 S/R Target</span>
+<strong id="buyTarget">--</strong>
+</div>
+
+</div>
+
+
+<div class="setup">
+
+<h4 class="bad">
+🔴 SELL ANALYSIS
+</h4>
+
+<div class="metric">
+<span>Aligned</span>
+<strong id="sellAligned">--</strong>
+</div>
+
+<div class="metric">
+<span>Continuation</span>
+<strong id="sellContinuation">--</strong>
+</div>
+
+<div class="metric">
+<span>Reversal</span>
+<strong id="sellReversal">--</strong>
+</div>
+
+<div class="metric">
+<span>Type</span>
+<strong id="sellType">--</strong>
+</div>
+
+<div class="metric">
+<span>Location</span>
+<strong id="sellLocation">--</strong>
+</div>
+
+<div class="metric target">
+<span>H1 S/R Target</span>
+<strong id="sellTarget">--</strong>
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+
+<div class="card">
+
+<h3 style="
+margin:0 0 8px;
+color:var(--blue);
+font-size:clamp(.68rem,1vw,.84rem)
+">
+🎯 ACTIVE H1 S/R TARGET
+</h3>
+
+<div class="metric">
+<span>Target</span>
+<strong id="activeTarget">--</strong>
+</div>
+
+<div class="metric">
+<span>Target Type</span>
+<strong id="activeTargetType">--</strong>
+</div>
+
+<div class="metric">
+<span>Distance</span>
+<strong id="activeTargetDistance">--</strong>
+</div>
+
+<div class="metric">
+<span>Valid</span>
+<strong id="activeTargetValid">--</strong>
+</div>
+
+<div class="metric">
+<span>Target Mode</span>
+<strong id="targetMode">--</strong>
+</div>
+
+</div>
+
+
+<div class="grid">
+
+
+<div class="card">
+
+<h3 style="
+margin:0 0 8px;
+color:var(--blue);
+font-size:clamp(.68rem,1vw,.84rem)
+">
+H1 — CORE BIAS
+</h3>
+
+<div class="metric">
+<span>Direction</span>
+<strong id="h1dir">--</strong>
+</div>
+
+<div class="metric">
+<span>EMA 50</span>
+<strong id="h1ema50">--</strong>
+</div>
+
+<div class="metric">
+<span>EMA 200</span>
+<strong id="h1ema200">--</strong>
+</div>
+
+<div class="metric">
+<span>ATR</span>
+<strong id="h1atr">--</strong>
+</div>
+
+<div class="metric">
+<span>Structure</span>
+<strong id="h1struct">--</strong>
+</div>
+
+<div class="metric">
+<span>Hold Bias</span>
+<strong id="holdBias">--</strong>
+</div>
+
+<div class="metric">
+<span>Hold Permission</span>
+<strong id="hold">--</strong>
+</div>
+
+</div>
+
+
+<div class="card">
+
+<h3 style="
+margin:0 0 8px;
+color:var(--blue);
+font-size:clamp(.68rem,1vw,.84rem)
+">
+H1 — SUPPORT / RESISTANCE
+</h3>
+
+<div class="metric">
+<span>Support</span>
+<strong id="h1support">--</strong>
+</div>
+
+<div class="metric">
+<span>Resistance</span>
+<strong id="h1resistance">--</strong>
+</div>
+
+<div class="metric">
+<span>Position</span>
+<strong id="srposition">--</strong>
+</div>
+
+<div class="metric">
+<span>Zone</span>
+<strong id="srzone">--</strong>
+</div>
+
+<div class="metric">
+<span>Buy Filter</span>
+<strong id="buyfilter">--</strong>
+</div>
+
+<div class="metric">
+<span>Sell Filter</span>
+<strong id="sellfilter">--</strong>
+</div>
+
+</div>
+
+
+<div class="card">
+
+<h3 style="
+margin:0 0 8px;
+color:var(--blue);
+font-size:clamp(.68rem,1vw,.84rem)
+">
+M15 — CONFIRMATION
+</h3>
+
+<div class="metric">
+<span>Direction</span>
+<strong id="m15dir">--</strong>
+</div>
+
+<div class="metric">
+<span>EMA 20 / 50</span>
+<strong id="m15ema">--</strong>
+</div>
+
+<div class="metric">
+<span>RSI 14</span>
+<strong id="m15rsi">--</strong>
+</div>
+
+<div class="metric">
+<span>MACD</span>
+<strong id="m15macd">--</strong>
+</div>
+
+<div class="metric">
+<span>BOS / CHOCH</span>
+<strong id="m15structure">--</strong>
+</div>
+
+<div class="metric">
+<span>Momentum</span>
+<strong id="m15momentum">--</strong>
+</div>
+
+</div>
+
+
+<div class="card">
+
+<h3 style="
+margin:0 0 8px;
+color:var(--blue);
+font-size:clamp(.68rem,1vw,.84rem)
+">
+M5 — TRIGGER
+</h3>
+
+<div class="metric">
+<span>Direction</span>
+<strong id="m5dir">--</strong>
+</div>
+
+<div class="metric">
+<span>EMA 9 / 20 / 50</span>
+<strong id="m5ema">--</strong>
+</div>
+
+<div class="metric">
+<span>RSI 14</span>
+<strong id="m5rsi">--</strong>
+</div>
+
+<div class="metric">
+<span>MACD</span>
+<strong id="m5macd">--</strong>
+</div>
+
+<div class="metric">
+<span>ATR</span>
+<strong id="m5atr">--</strong>
+</div>
+
+<div class="metric">
+<span>BOS / CHOCH</span>
+<strong id="m5structure">--</strong>
+</div>
+
+<div class="metric">
+<span>Momentum</span>
+<strong id="m5momentum">--</strong>
+</div>
+
+</div>
+
+
+<div class="card">
+
+<h3 style="
+margin:0 0 8px;
+color:var(--blue);
+font-size:clamp(.68rem,1vw,.84rem)
+">
+SCALP SCORE
+</h3>
+
+<div class="metric">
+<span>M15 BUY / SELL</span>
+<strong id="m15score">--</strong>
+</div>
+
+<div class="metric">
+<span>M5 BUY / SELL</span>
+<strong id="m5score">--</strong>
+</div>
+
+<div class="metric">
+<span>Context</span>
+<strong id="context">--</strong>
+</div>
+
+<div class="metric">
+<span>Setup Type</span>
+<strong id="setupStatus">--</strong>
+</div>
+
+<div class="metric">
+<span>Execution</span>
+<strong id="execution">--</strong>
+</div>
+
+<div class="metric">
+<span>Reason</span>
+<strong id="reason">--</strong>
+</div>
+
+</div>
+
+</div>
+
+
+<div class="diag">
+
+<h3 style="
+margin:0 0 8px;
+color:var(--blue);
+font-size:clamp(.68rem,1vw,.84rem)
+">
+🔎 DATA / SIGNAL DIAGNOSTIC
+</h3>
+
+<div class="diaggrid">
+
+<div class="d">
+<span>M5 candles</span>
+<strong id="m5count">--</strong>
+</div>
+
+<div class="d">
+<span>M15 candles</span>
+<strong id="m15count">--</strong>
+</div>
+
+<div class="d">
+<span>H1 candles</span>
+<strong id="h1count">--</strong>
+</div>
+
+<div class="d">
+<span>Live source</span>
+<strong id="liveSource">--</strong>
+</div>
+
+<div class="d">
+<span>Cache age</span>
+<strong id="cacheAge">--</strong>
+</div>
+
+<div class="d">
+<span>Quota</span>
+<strong id="quota">--</strong>
+</div>
+
+<div class="d">
+<span>Signal candle</span>
+<strong id="signalCandle">--</strong>
+</div>
+
+<div class="d">
+<span>Signal key</span>
+<strong id="signalKey">--</strong>
+</div>
+
+</div>
+
+</div>
+
+
+<div class="foot">
+V12 • Server-side signal engine • Reversal/Continuation •
+H1 S/R Target • Fixed Entry/SL/TP • Frontend refresh 15s •
+Push handled by backend
 </div>
 
 </div>
@@ -1463,1113 +1696,1537 @@ XAUUSDSNIPER • Connecting...
 
 <script>
 
-/* =========================
-   HELPERS
-========================= */
+"use strict";
 
-const $=id=>document.getElementById(id);
+let candles = [];
+let lastSignal = null;
+
+const $ = id => document.getElementById(id);
 
 
-function setText(id,value){
+const fmt = v => {
 
-const el=$(id);
+  const n = Number(v);
 
-if(!el)return;
+  return Number.isFinite(n)
+    ? n.toFixed(2)
+    : "--";
+};
 
-el.textContent=
-value===null||
-value===undefined||
-value===""
-?"—"
-:String(value);
 
+function text(id,v){
+
+  const el = $(id);
+
+  if(!el) return;
+
+  if(
+    v === null ||
+    v === undefined ||
+    v === ""
+  ){
+
+    el.textContent = "--";
+
+    return;
+  }
+
+  el.textContent = v;
 }
 
 
-function num(value,digits=2){
+function clsDirection(el,v){
 
-if(
-value===null||
-value===undefined||
-value===""
-){
-return"—";
-}
+  if(!el) return;
 
-const n=Number(value);
+  const s =
+    String(v || "WAIT")
+      .toUpperCase();
 
-return Number.isFinite(n)
-?n.toFixed(digits)
-:"—";
+  el.className = "";
 
-}
+  if(
+    s === "BUY" ||
+    s === "BULL" ||
+    s === "BULLISH" ||
+    s === "ALLOWED"
+  ){
 
+    el.classList.add("good");
 
-function directionClass(value){
+  }else if(
+    s === "SELL" ||
+    s === "BEAR" ||
+    s === "BEARISH" ||
+    s === "BLOCKED"
+  ){
 
-const v=
-String(value||"")
-.toUpperCase();
+    el.classList.add("bad");
 
-if(v.includes("BUY"))
-return"buy";
+  }else{
 
-if(v.includes("SELL"))
-return"sell";
+    el.classList.add("wait");
 
-return"neutral";
-
-}
-
-
-function applyDirection(id,value){
-
-const el=$(id);
-
-if(!el)return;
-
-const v=
-String(value||"NEUTRAL")
-.toUpperCase();
-
-el.textContent=v;
-
-el.className=
-"tfDir "+
-directionClass(v);
-
+  }
 }
 
 
-function signalClass(value){
+function yn(id,v){
 
-const v=
-String(value||"WAIT")
-.toUpperCase();
+  const el = $(id);
 
-if(v.includes("BUY"))
-return"buy";
+  if(!el) return;
 
-if(v.includes("SELL"))
-return"sell";
+  el.classList.remove(
+    "good",
+    "bad",
+    "wait"
+  );
 
-return"wait";
+  if(v === true){
 
+    text(id,"YES");
+    el.classList.add("good");
+
+  }else if(v === false){
+
+    text(id,"NO");
+    el.classList.add("bad");
+
+  }else{
+
+    text(id,"--");
+    el.classList.add("wait");
+
+  }
 }
 
 
-function applySignal(value){
+function updateSessions(){
 
-const el=$("signal");
+  const d = new Date();
 
-if(!el)return;
+  const h = d.getHours();
 
-const v=
-String(value||"WAIT")
-.toUpperCase();
+  text(
+    "clock",
+    d.toLocaleTimeString(
+      "en-MY",
+      {
+        hour12:false
+      }
+    )
+  );
 
-el.textContent=v;
+  $("asia")?.classList.toggle(
+    "active",
+    h >= 8 && h < 17
+  );
 
-el.className=
-"signal "+
-signalClass(v);
+  $("london")?.classList.toggle(
+    "active",
+    h >= 15 && h < 24
+  );
 
+  $("ny")?.classList.toggle(
+    "active",
+    h >= 20 || h < 5
+  );
 }
 
 
-function applyBadge(id,value){
+function draw(){
 
-const el=$(id);
+  const c = $("chart");
 
-if(!el)return;
+  if(!c) return;
 
-const v=
-String(value||"WAIT")
-.toUpperCase();
+  const r =
+    c.getBoundingClientRect();
 
-el.textContent=v;
+  const dpr =
+    window.devicePixelRatio || 1;
 
-el.className="badge";
+  c.width =
+    Math.max(1,r.width * dpr);
 
-if(
-v.includes("BUY")||
-v.includes("GOOD")||
-v.includes("HIGH QUALITY")
-){
+  c.height =
+    Math.max(1,r.height * dpr);
 
-el.classList.add("green");
+  const x =
+    c.getContext("2d");
 
-}else if(
-v.includes("SELL")
-){
+  x.setTransform(
+    dpr,
+    0,
+    0,
+    dpr,
+    0,
+    0
+  );
 
-el.classList.add("red");
+  const w = r.width;
+  const h = r.height;
 
-}else if(
-v.includes("RISK")||
-v.includes("LOW")||
-v.includes("WAIT")
-){
+  const data =
+    candles.slice(-60);
 
-el.classList.add("yellow");
+  x.clearRect(
+    0,
+    0,
+    w,
+    h
+  );
 
-}else{
+  if(data.length < 2) return;
 
-el.classList.add("blue");
+  const hi =
+    Math.max(
+      ...data.map(a => a.high)
+    );
 
+  const lo =
+    Math.min(
+      ...data.map(a => a.low)
+    );
+
+  const range =
+    hi - lo || 1;
+
+  const pad =
+    range * .12;
+
+  const max =
+    hi + pad;
+
+  const min =
+    lo - pad;
+
+  const X = i =>
+    8 +
+    i /
+      (data.length - 1) *
+    (w - 16);
+
+  const Y = p =>
+    h -
+    20 -
+    (p - min) /
+      (max - min) *
+    (h - 35);
+
+  x.strokeStyle =
+    "rgba(255,255,255,.08)";
+
+  x.lineWidth = 1;
+
+  for(let i=1;i<5;i++){
+
+    const gy =
+      15 +
+      (h - 35) * i / 5;
+
+    x.beginPath();
+
+    x.moveTo(
+      8,
+      gy
+    );
+
+    x.lineTo(
+      w - 8,
+      gy
+    );
+
+    x.stroke();
+  }
+
+  x.beginPath();
+
+  data.forEach((a,i)=>{
+
+    const px = X(i);
+    const py = Y(a.close);
+
+    if(i === 0){
+
+      x.moveTo(
+        px,
+        py
+      );
+
+    }else{
+
+      x.lineTo(
+        px,
+        py
+      );
+
+    }
+
+  });
+
+  x.strokeStyle =
+    "#fbbf24";
+
+  x.lineWidth = 2;
+
+  x.stroke();
 }
 
+
+/* =========================================================
+   SIGNAL KEY
+========================================================= */
+
+function buildSignalKey(d){
+
+  const sig =
+    String(
+      d.signal || "WAIT"
+    ).toUpperCase();
+
+  if(
+    sig !== "BUY" &&
+    sig !== "SELL"
+  ){
+
+    return null;
+  }
+
+  const candle =
+    d.signalCandle ||
+    d.candleTime ||
+    (
+      Array.isArray(d.candles) &&
+      d.candles.length
+        ? (
+            d.candles[
+              d.candles.length - 1
+            ].time ||
+            d.candles[
+              d.candles.length - 1
+            ].datetime
+          )
+        : ""
+    );
+
+  return [
+    sig,
+    candle
+  ].join("|");
 }
 
 
-function renderTF(prefix,data){
+/* =========================================================
+   RENDER
+========================================================= */
 
-if(!data)return;
+function render(d){
 
-applyDirection(
-prefix+"Dir",
-data.direction
-);
+  const h1 =
+    d.h1 || {};
 
-setText(
-prefix+"Bias",
-data.bias||
-data.direction
-);
+  const m15 =
+    d.m15 || {};
 
-setText(
-prefix+"Rsi",
-data.rsi!==undefined
-?"RSI "+num(data.rsi,1)
-:"RSI —"
-);
+  const m5 =
+    d.m5 || {};
 
-setText(
-prefix+"Fast",
-num(data.emaFast,2)
-);
+  const tp =
+    d.tradePlan || {};
 
-setText(
-prefix+"Slow",
-num(data.emaSlow,2)
-);
+  const sr =
+    d.srAnalysis ||
+    h1.supportResistance ||
+    {};
 
+  const sa =
+    d.setupAnalysis || {};
+
+  const buy =
+    sa.buy || {};
+
+  const sell =
+    sa.sell || {};
+
+  const sig =
+    String(
+      d.signal || "WAIT"
+    ).toUpperCase();
+
+
+  text(
+    "system",
+    "ONLINE"
+  );
+
+  $("system").className =
+    "good";
+
+  text(
+    "api",
+    "LIVE"
+  );
+
+  $("api").className =
+    "good";
+
+
+  text(
+    "signalTop",
+    sig
+  );
+
+  clsDirection(
+    $("signalTop"),
+    sig
+  );
+
+
+  const livePrice =
+    d.livePrice?.price ??
+    d.price;
+
+  text(
+    "price",
+    fmt(livePrice)
+  );
+
+  text(
+    "chartPrice",
+    fmt(livePrice)
+  );
+
+
+  text(
+    "source",
+    (
+      d.livePrice?.source ||
+      "TWELVE_DATA"
+    ) +
+    " • " +
+    new Date().toLocaleTimeString(
+      "en-MY",
+      {
+        hour12:false
+      }
+    )
+  );
+
+
+  const badge =
+    $("badge");
+
+  if(badge){
+
+    badge.textContent =
+      sig === "BUY"
+        ? "🟢 BUY"
+        : sig === "SELL"
+          ? "🔴 SELL"
+          : "⏳ WAIT";
+
+    badge.className =
+      "badge " +
+      (
+        sig === "BUY"
+          ? "buy"
+          : sig === "SELL"
+            ? "sell"
+            : "neutral"
+      );
+
+  }
+
+
+  const score =
+    Number(d.score || 0);
+
+  text(
+    "score",
+    Math.round(score) +
+    "/100"
+  );
+
+  const fill =
+    $("fill");
+
+  if(fill){
+
+    fill.style.width =
+      Math.max(
+        0,
+        Math.min(
+          100,
+          score
+        )
+      ) +
+      "%";
+
+  }
+
+
+  /* TRADE PLAN */
+
+  text(
+    "planStatus",
+    tp.locked
+      ? "LOCKED"
+      : d.status || "WAIT"
+  );
+
+  text(
+    "planDir",
+    sig
+  );
+
+  text(
+    "entry",
+    fmt(tp.entry)
+  );
+
+  text(
+    "sl",
+    fmt(tp.stopLoss)
+  );
+
+  text(
+    "tp1",
+    fmt(tp.tp1)
+  );
+
+  text(
+    "tp2",
+    fmt(tp.tp2)
+  );
+
+  text(
+    "tp3",
+    fmt(tp.tp3)
+  );
+
+  text(
+    "rr",
+    tp.rr == null
+      ? "--"
+      : tp.rr
+  );
+
+  text(
+    "setup",
+    d.setupType ||
+    tp.source ||
+    "--"
+  );
+
+
+  /* ACTIVE TARGET */
+
+  text(
+    "activeTarget",
+    fmt(tp.targetSR)
+  );
+
+  text(
+    "activeTargetType",
+    tp.targetSRType ||
+    "--"
+  );
+
+  text(
+    "activeTargetDistance",
+    tp.targetSRDistance == null
+      ? "--"
+      : fmt(tp.targetSRDistance)
+  );
+
+  text(
+    "activeTargetValid",
+    tp.targetSRValid === true
+      ? "YES"
+      : tp.targetSRValid === false
+        ? "NO"
+        : "--"
+  );
+
+  text(
+    "targetMode",
+    tp.targetMode ||
+    "--"
+  );
+
+  clsDirection(
+    $("activeTargetValid"),
+    tp.targetSRValid === true
+      ? "BUY"
+      : tp.targetSRValid === false
+        ? "SELL"
+        : "WAIT"
+  );
+
+
+  /* BUY */
+
+  yn(
+    "buyAligned",
+    buy.aligned
+  );
+
+  yn(
+    "buyContinuation",
+    buy.continuation
+  );
+
+  yn(
+    "buyReversal",
+    buy.reversal
+  );
+
+  text(
+    "buyType",
+    buy.type ||
+    "--"
+  );
+
+  text(
+    "buyLocation",
+    buy.location ||
+    "--"
+  );
+
+  text(
+    "buyTarget",
+    buy.targetSR == null
+      ? "--"
+      : fmt(buy.targetSR)
+  );
+
+
+  /* SELL */
+
+  yn(
+    "sellAligned",
+    sell.aligned
+  );
+
+  yn(
+    "sellContinuation",
+    sell.continuation
+  );
+
+  yn(
+    "sellReversal",
+    sell.reversal
+  );
+
+  text(
+    "sellType",
+    sell.type ||
+    "--"
+  );
+
+  text(
+    "sellLocation",
+    sell.location ||
+    "--"
+  );
+
+  text(
+    "sellTarget",
+    sell.targetSR == null
+      ? "--"
+      : fmt(sell.targetSR)
+  );
+
+
+  /* H1 */
+
+  text(
+    "h1dir",
+    h1.direction
+  );
+
+  clsDirection(
+    $("h1dir"),
+    h1.direction
+  );
+
+  text(
+    "h1ema50",
+    fmt(h1.ema50)
+  );
+
+  text(
+    "h1ema200",
+    fmt(h1.ema200)
+  );
+
+  text(
+    "h1atr",
+    fmt(h1.atr)
+  );
+
+  text(
+    "h1struct",
+    h1.structure?.bullish
+      ? "BULLISH"
+      : h1.structure?.bearish
+        ? "BEARISH"
+        : "RANGE"
+  );
+
+  text(
+    "holdBias",
+    h1.holdBias ||
+    "--"
+  );
+
+  clsDirection(
+    $("holdBias"),
+    h1.holdBias
+  );
+
+  text(
+    "hold",
+    h1.holdPermission ||
+    "--"
+  );
+
+
+  /* H1 S/R */
+
+  const support =
+    sr.support?.price ??
+    "--";
+
+  const resistance =
+    sr.resistance?.price ??
+    "--";
+
+  text(
+    "h1support",
+    fmt(support)
+  );
+
+  text(
+    "h1resistance",
+    fmt(resistance)
+  );
+
+  text(
+    "srposition",
+    sr.position ||
+    "--"
+  );
+
+  text(
+    "srzone",
+    sr.zone ||
+    "--"
+  );
+
+  text(
+    "buyfilter",
+    sr.buyAllowed === true
+      ? "ALLOWED"
+      : sr.buyAllowed === false
+        ? "BLOCKED"
+        : "--"
+  );
+
+  text(
+    "sellfilter",
+    sr.sellAllowed === true
+      ? "ALLOWED"
+      : sr.sellAllowed === false
+        ? "BLOCKED"
+        : "--"
+  );
+
+  clsDirection(
+    $("buyfilter"),
+    sr.buyAllowed === true
+      ? "BUY"
+      : "WAIT"
+  );
+
+  clsDirection(
+    $("sellfilter"),
+    sr.sellAllowed === true
+      ? "SELL"
+      : "WAIT"
+  );
+
+
+  /* M15 */
+
+  text(
+    "m15dir",
+    m15.confirmation ||
+    m15.direction ||
+    "WAIT"
+  );
+
+  clsDirection(
+    $("m15dir"),
+    m15.confirmation ||
+    m15.direction
+  );
+
+  text(
+    "m15ema",
+    fmt(m15.ema20) +
+    " / " +
+    fmt(m15.ema50)
+  );
+
+  text(
+    "m15rsi",
+    fmt(m15.rsi)
+  );
+
+  text(
+    "m15macd",
+    m15.macd?.bullish
+      ? "BULLISH"
+      : m15.macd?.bearish
+        ? "BEARISH"
+        : "--"
+  );
+
+  text(
+    "m15structure",
+    (
+      m15.bos?.bullish ||
+      m15.choch?.bullish
+    )
+      ? "BOS/CHOCH ↑"
+      : (
+          m15.bos?.bearish ||
+          m15.choch?.bearish
+        )
+        ? "BOS/CHOCH ↓"
+        : m15.structure?.bullish
+          ? "BULLISH"
+          : m15.structure?.bearish
+            ? "BEARISH"
+            : "RANGE"
+  );
+
+  text(
+    "m15momentum",
+    m15.momentum?.strength != null
+      ? (
+          m15.momentum.bullish
+            ? "BULLISH "
+            : m15.momentum.bearish
+              ? "BEARISH "
+              : "NEUTRAL "
+        ) +
+        fmt(m15.momentum.strength)
+      : "--"
+  );
+
+
+  /* M5 */
+
+  text(
+    "m5dir",
+    m5.trigger ||
+    m5.confirmation ||
+    "WAIT"
+  );
+
+  clsDirection(
+    $("m5dir"),
+    m5.trigger ||
+    m5.confirmation
+  );
+
+  text(
+    "m5ema",
+    fmt(m5.ema9) +
+    " / " +
+    fmt(m5.ema20) +
+    " / " +
+    fmt(m5.ema50)
+  );
+
+  text(
+    "m5rsi",
+    fmt(m5.rsi)
+  );
+
+  text(
+    "m5macd",
+    m5.macd?.bullish
+      ? "BULLISH"
+      : m5.macd?.bearish
+        ? "BEARISH"
+        : "--"
+  );
+
+  text(
+    "m5atr",
+    fmt(m5.atr)
+  );
+
+  text(
+    "m5structure",
+    (
+      m5.bos?.bullish ||
+      m5.choch?.bullish
+    )
+      ? "BOS/CHOCH ↑"
+      : (
+          m5.bos?.bearish ||
+          m5.choch?.bearish
+        )
+        ? "BOS/CHOCH ↓"
+        : m5.structure?.bullish
+          ? "BULLISH"
+          : m5.structure?.bearish
+            ? "BEARISH"
+            : "RANGE"
+  );
+
+  text(
+    "m5momentum",
+    m5.momentum?.strength != null
+      ? (
+          m5.momentum.bullish
+            ? "BULLISH "
+            : m5.momentum.bearish
+              ? "BEARISH "
+              : "NEUTRAL "
+        ) +
+        fmt(m5.momentum.strength)
+      : "--"
+  );
+
+
+  /* SCORE */
+
+  text(
+    "m15score",
+    fmt(m15.buyScore) +
+    " / " +
+    fmt(m15.sellScore)
+  );
+
+  text(
+    "m5score",
+    fmt(m5.buyScore) +
+    " / " +
+    fmt(m5.sellScore)
+  );
+
+  text(
+    "context",
+    d.context ||
+    "NEUTRAL"
+  );
+
+  text(
+    "setupStatus",
+    d.setupType ||
+    d.status ||
+    "WAIT"
+  );
+
+  text(
+    "execution",
+    d.execution ||
+    "WAIT"
+  );
+
+  text(
+    "reason",
+    Array.isArray(d.reasons)
+      ? d.reasons.join(" • ")
+      : (
+          d.reason ||
+          "--"
+        )
+  );
+
+
+  /* DIAGNOSTIC */
+
+  text(
+    "m5count",
+    d.data?.m5Candles ??
+    "--"
+  );
+
+  text(
+    "m15count",
+    d.data?.m15Candles ??
+    "--"
+  );
+
+  text(
+    "h1count",
+    d.data?.h1Candles ??
+    "--"
+  );
+
+  text(
+    "liveSource",
+    d.livePrice?.source ||
+    "--"
+  );
+
+  text(
+    "cacheAge",
+    d.cache?.ageSeconds != null
+      ? Math.round(
+          d.cache.ageSeconds
+        ) + "s"
+      : d.data?.cacheAgeSeconds != null
+        ? Math.round(
+            d.data.cacheAgeSeconds
+          ) + "s"
+        : "--"
+  );
+
+  text(
+    "quota",
+    d.data?.quotaUsed != null
+      ? d.data.quotaUsed +
+        "/700 day"
+      : "--"
+  );
+
+  text(
+    "signalCandle",
+    d.signalCandle ||
+    "--"
+  );
+
+  text(
+    "signalKey",
+    buildSignalKey(d) ||
+    "--"
+  );
+
+
+  handleSignal(d);
 }
 
 
-function formatTime(value){
+/* =========================================================
+   SIGNAL STATE
+========================================================= */
 
-if(!value)return"—";
+function handleSignal(d){
 
-const s=String(value);
+  const sig =
+    String(
+      d.signal || "WAIT"
+    ).toUpperCase();
 
-if(s.length>=16){
+  const key =
+    buildSignalKey(d);
 
-return s
-.replace("T"," ")
-.slice(0,16);
+  if(
+    sig !== "BUY" &&
+    sig !== "SELL"
+  ){
 
+    lastSignal = "WAIT";
+
+    return;
+  }
+
+  if(!key) return;
+
+  const stored =
+    localStorage.getItem(
+      "xau_last_signal_key"
+    );
+
+  if(
+    lastSignal === null
+  ){
+
+    lastSignal = sig;
+
+    if(!stored){
+
+      localStorage.setItem(
+        "xau_last_signal_key",
+        key
+      );
+    }
+
+    return;
+  }
+
+  if(stored === key){
+
+    lastSignal = sig;
+
+    return;
+  }
+
+  if(lastSignal === sig){
+
+    return;
+  }
+
+  localStorage.setItem(
+    "xau_last_signal_key",
+    key
+  );
+
+  lastSignal = sig;
 }
 
-return s;
 
-}
-
-
-/* =========================
-   PUSH
-========================= */
-
-let pushBusy=false;
-
-
-function showPushStatus(
-message,
-ms=2400
-){
-
-const el=$("pushStatus");
-
-if(!el)return;
-
-el.textContent=message;
-
-el.style.display="block";
-
-clearTimeout(
-showPushStatus.timer
-);
-
-showPushStatus.timer=
-setTimeout(
-()=>{
-el.style.display="none";
-},
-ms
-);
-
-}
-
-
-function setPushButton(
-on,
-text
-){
-
-const btn=$("pushBtn");
-
-if(!btn)return;
-
-btn.className=
-"pushBtn "+
-(on?"on":"off");
-
-btn.textContent=
-text||
-(
-on
-?"🔔 PUSH ON"
-:"🔔 PUSH OFF"
-);
-
-}
-
+/* =========================================================
+   VAPID
+========================================================= */
 
 function urlBase64ToUint8Array(
-base64String
+  base64String
 ){
 
-const padding=
-"=".repeat(
-(4-base64String.length%4)%4
-);
+  const padding =
+    "=".repeat(
+      (
+        4 -
+        base64String.length % 4
+      ) % 4
+    );
 
-const base64=
-(base64String+padding)
-.replace(/-/g,"+")
-.replace(/_/g,"/");
+  const base64 =
+    (
+      base64String +
+      padding
+    )
+    .replace(/-/g,"+")
+    .replace(/_/g,"/");
 
-const rawData=
-atob(base64);
+  const rawData =
+    atob(base64);
 
-const outputArray=
-new Uint8Array(
-rawData.length
-);
-
-for(
-let i=0;
-i<rawData.length;
-++i
-){
-
-outputArray[i]=
-rawData.charCodeAt(i);
-
-}
-
-return outputArray;
-
+  return Uint8Array.from(
+    [...rawData].map(
+      c => c.charCodeAt(0)
+    )
+  );
 }
 
 
-async function getPushConfig(){
+/* =========================================================
+   ENABLE PUSH
+========================================================= */
 
-const response=
-await fetch(
-"/api/push-config?t="+Date.now(),
-{
-cache:"no-store",
-headers:{
-"Accept":
-"application/json"
-}
-}
-);
+async function enableNotifications(){
 
-if(!response.ok){
+  const btn =
+    $("notificationButton");
 
-throw new Error(
-"Push config HTTP "+
-response.status
-);
+  if(
+    !("serviceWorker" in navigator) ||
+    !("PushManager" in window) ||
+    !("Notification" in window)
+  ){
+
+    $("notificationStatus").textContent =
+      "Browser ini tidak menyokong Web Push.";
+
+    btn.className =
+      "btn err";
 
-}
-
-const data=
-await response.json();
-
-if(!data||
-data.ok===false){
-
-throw new Error(
-data?.error||
-"Push config unavailable"
-);
-
-}
-
-const key=
-data.VAPID_PUBLIC_KEY||
-data.vapidPublicKey||
-data.publicKey||
-data.key;
-
-if(!key){
-
-throw new Error(
-"VAPID public key missing"
-);
-
-}
-
-return key;
-
-}
-
-
-async function subscribePush(){
-
-if(pushBusy)return;
-
-pushBusy=true;
-
-const btn=$("pushBtn");
-
-if(btn)
-btn.disabled=true;
-
-try{
-
-if(!("Notification" in window)){
-
-throw new Error(
-"Notifications not supported"
-);
-
-}
-
-if(!("serviceWorker" in navigator)){
-
-throw new Error(
-"Service Worker not supported"
-);
-
-}
-
-if(!("PushManager" in window)){
-
-throw new Error(
-"Push not supported"
-);
-
-}
-
-
-/*
- Existing root sw.js
-*/
-const registration=
-await navigator.serviceWorker
-.register("/sw.js");
-
-await navigator.serviceWorker.ready;
-
-let permission=
-Notification.permission;
-
-if(permission!=="granted"){
-
-permission=
-await Notification
-.requestPermission();
-
-if(permission!=="granted"){
-
-throw new Error(
-"Notification permission denied"
-);
-
-}
-
-}
-
-const vapidPublicKey=
-await getPushConfig();
-
-let subscription=
-await registration
-.pushManager
-.getSubscription();
-
-if(!subscription){
-
-subscription=
-await registration
-.pushManager
-.subscribe({
-
-userVisibleOnly:true,
-
-applicationServerKey:
-urlBase64ToUint8Array(
-vapidPublicKey
-)
-
-});
-
-}
-
-const response=
-await fetch(
-"/api/push-subscribe",
-{
-method:"POST",
-
-headers:{
-"Content-Type":
-"application/json",
-
-"Accept":
-"application/json"
-},
-
-body:
-JSON.stringify(
-subscription
-)
-}
-);
-
-const result=
-await response
-.json()
-.catch(
-()=>({})
-);
-
-if(!response.ok){
-
-throw new Error(
-result?.error||
-"Push subscribe HTTP "+
-response.status
-);
-
-}
-
-localStorage.setItem(
-"xau_push_enabled",
-"1"
-);
-
-setPushButton(
-true,
-"🔔 PUSH ON"
-);
-
-showPushStatus(
-"🔔 Push Notification ON"
-);
-
-}catch(error){
-
-console.error(
-"Push error:",
-error
-);
-
-localStorage.removeItem(
-"xau_push_enabled"
-);
-
-setPushButton(
-false,
-"🔔 PUSH OFF"
-);
-
-showPushStatus(
-"Push: "+
-(error?.message||"failed"),
-3500
-);
-
-}finally{
-
-pushBusy=false;
-
-if(btn)
-btn.disabled=false;
-
-}
-
+    return;
+  }
+
+  try{
+
+    const permission =
+      await Notification.requestPermission();
+
+    if(
+      permission !== "granted"
+    ){
+
+      $("notificationStatus").textContent =
+        "Permission notification ditolak.";
+
+      btn.className =
+        "btn err";
+
+      return;
+    }
+
+    const reg =
+      await navigator.serviceWorker.register(
+        "/sw.js",
+        {
+          scope:"/",
+          updateViaCache:"none"
+        }
+      );
+
+    await navigator.serviceWorker.ready;
+
+    const cr =
+      await fetch(
+        "/api/push-config?ts=" +
+        Date.now(),
+        {
+          cache:"no-store"
+        }
+      );
+
+    if(!cr.ok){
+
+      throw new Error(
+        "push-config gagal: HTTP " +
+        cr.status
+      );
+    }
+
+    const cfg =
+      await cr.json();
+
+    if(!cfg.publicKey){
+
+      throw new Error(
+        "VAPID_PUBLIC_KEY tidak dijumpai."
+      );
+    }
+
+    let sub =
+      await reg.pushManager
+        .getSubscription();
+
+    if(!sub){
+
+      sub =
+        await reg.pushManager.subscribe({
+
+          userVisibleOnly:true,
+
+          applicationServerKey:
+            urlBase64ToUint8Array(
+              cfg.publicKey
+            )
+        });
+    }
+
+    const sr =
+      await fetch(
+        "/api/push-subscribe",
+        {
+          method:"POST",
+
+          headers:{
+            "Content-Type":
+              "application/json"
+          },
+
+          body:
+            JSON.stringify(
+              sub.toJSON()
+            )
+        }
+      );
+
+    if(!sr.ok){
+
+      const err =
+        await sr.text()
+          .catch(
+            () => ""
+          );
+
+      throw new Error(
+        "push-subscribe gagal: HTTP " +
+        sr.status +
+        (
+          err
+            ? " — " + err
+            : ""
+        )
+      );
+    }
+
+    btn.textContent =
+      "🔔 ON";
+
+    btn.className =
+      "btn on";
+
+    $("notificationStatus").textContent =
+      "Push aktif — subscription berjaya disimpan.";
+
+  }catch(e){
+
+    console.error(
+      "Notification setup:",
+      e
+    );
+
+    $("notificationStatus").textContent =
+      "Push gagal: " +
+      e.message;
+
+    btn.className =
+      "btn err";
+  }
 }
 
 
-async function checkPushStatus(){
+/* =========================================================
+   RESTORE PUSH
+========================================================= */
 
-try{
+async function restorePushState(){
 
-if(
-!("serviceWorker" in navigator)||
-!("PushManager" in window)
-){
+  if(
+    !("serviceWorker" in navigator) ||
+    !("PushManager" in window)
+  ){
 
-setPushButton(
-false,
-"🔔 PUSH"
-);
+    return;
+  }
 
-return;
+  try{
 
-}
+    if(
+      "Notification" in window &&
+      Notification.permission !== "granted"
+    ){
 
-const registration=
-await navigator.serviceWorker
-.getRegistration("/sw.js")||
-await navigator.serviceWorker
-.getRegistration();
+      return;
+    }
 
-if(!registration){
+    const reg =
+      await navigator.serviceWorker.ready;
 
-setPushButton(
-false,
-"🔔 PUSH OFF"
-);
+    const sub =
+      await reg.pushManager
+        .getSubscription();
 
-return;
+    if(!sub){
 
-}
+      return;
+    }
 
-const subscription=
-await registration
-.pushManager
-.getSubscription();
+    const sr =
+      await fetch(
+        "/api/push-subscribe",
+        {
+          method:"POST",
 
-if(
-subscription&&
-Notification.permission==="granted"
-){
+          headers:{
+            "Content-Type":
+              "application/json"
+          },
 
-setPushButton(
-true,
-"🔔 PUSH ON"
-);
+          body:
+            JSON.stringify(
+              sub.toJSON()
+            )
+        }
+      );
 
-localStorage.setItem(
-"xau_push_enabled",
-"1"
-);
+    if(sr.ok){
 
-}else{
+      $("notificationButton").textContent =
+        "🔔 ON";
 
-setPushButton(
-false,
-"🔔 PUSH OFF"
-);
+      $("notificationButton").className =
+        "btn on";
 
-}
+      $("notificationStatus").textContent =
+        "Push aktif — subscription dipulihkan.";
 
-}catch(error){
+    }
 
-console.log(
-"Push status:",
-error
-);
+  }catch(e){
 
-setPushButton(
-false,
-"🔔 PUSH OFF"
-);
-
-}
-
+    console.warn(
+      "restorePushState:",
+      e
+    );
+  }
 }
 
 
-$("pushBtn")?.addEventListener(
-"click",
-subscribePush
-);
-
-checkPushStatus();
-
-
-/* =========================
+/* =========================================================
    API
-========================= */
-
-let previousScalpSignal=null;
-
-let firstApiLoad=true;
-
-
-async function loadData(){
-
-try{
-
-const response=
-await fetch(
-"/api/scalp?t="+Date.now(),
-{
-cache:"no-store",
-headers:{
-"Accept":
-"application/json"
-}
-}
-);
-
-if(!response.ok){
-
-throw new Error(
-"HTTP "+
-response.status
-);
-
-}
-
-const data=
-await response.json();
-
-if(
-!data||
-data.ok!==true
-){
-
-throw new Error(
-data?.error||
-"Invalid API response"
-);
-
-}
-
-
-/* API STATUS */
-
-if($("statusDot")){
-
-$("statusDot")
-.classList.add("live");
-
-}
-
-setText(
-"apiStatus",
-"LIVE"
-);
-
-
-/* PRICE */
-
-const livePrice=
-data.livePrice?.price??
-data.price;
-
-setText(
-"price",
-num(livePrice,2)
-);
-
-setText(
-"priceSource",
-data.livePrice?.source||
-"TWELVE DATA"
-);
-
-
-/* SIGNAL */
-
-const scalp=
-data.scalpSignal??
-data.signal?.signal??
-data.signal;
-
-applySignal(
-scalp
-);
-
-const reason=
-data.signal?.reason??
-data.signal?.message??
-data.marketFilter?.note||
-"Waiting for M5 + M15 alignment";
-
-setText(
-"signalReason",
-reason
-);
-
-
-/* TIMEFRAMES */
-
-renderTF(
-"m5",
-data.m5
-);
-
-renderTF(
-"m15",
-data.m15
-);
-
-renderTF(
-"h1",
-data.h1
-);
-
-
-/* LEVELS */
-
-const sr=
-data.supportResistance||
-{};
-
-setText(
-"support",
-num(
-sr.support?.price??
-sr.support??
-data.h1?.support?.price,
-2
-)
-);
-
-setText(
-"resistance",
-num(
-sr.resistance?.price??
-sr.resistance??
-data.h1?.resistance?.price,
-2
-)
-);
-
-setText(
-"atr",
-num(
-data.m5?.atr,
-2
-)
-);
-
-setText(
-"h1Context",
-data.marketFilter?.h1Context??
-data.h1?.direction||
-"—"
-);
-
-
-/* STATUS */
-
-applyBadge(
-"marketFilter",
-data.marketFilter?.status||
-data.marketFilter?.filter||
-"WAIT"
-);
-
-applyBadge(
-"confluence",
-data.confluence?.quality||
-"LOW"
-);
-
-applyBadge(
-"entryQuality",
-data.entryQuality?.quality||
-"WAIT"
-);
-
-
-/* TRADE PLAN */
-
-const plan=
-data.tradePlan||
-{};
-
-const planDirection=
-plan.direction||
-plan.signal||
-scalp||
-"WAIT";
-
-applyBadge(
-"planStatus",
-planDirection
-);
-
-setText(
-"entry",
-num(
-plan.entry??
-plan.entryPrice,
-2
-)
-);
-
-setText(
-"stop",
-num(
-plan.stop??
-plan.stopLoss??
-plan.sl,
-2
-)
-);
-
-setText(
-"tp1",
-num(
-plan.tp1??
-plan.takeProfit1,
-2
-)
-);
-
-setText(
-"tp2",
-num(
-plan.tp2??
-plan.takeProfit2,
-2
-)
-);
-
-
-/* NEWS */
-
-const news=
-data.newsFilter||
-{};
-
-setText(
-"newsStatus",
-news.status||
-"—"
-);
-
-setText(
-"newsLevel",
-news.level||
-"—"
-);
-
-setText(
-"newsScore",
-news.score!==undefined
-?news.score
-:"—"
-);
-
-if($("newsStatus")){
-
-const ns=
-String(
-news.status||
-""
-).toUpperCase();
-
-$("newsStatus")
-.className=
-ns.includes("RISK")
-?"red"
-:ns.includes("WATCH")
-?"yellow"
-:"green";
-
+========================================================= */
+
+async function fetchData(){
+
+  try{
+
+    const r =
+      await fetch(
+        "/api/scalp?ts=" +
+        Date.now(),
+        {
+          cache:"no-store"
+        }
+      );
+
+    const d =
+      await r.json();
+
+    if(
+      !r.ok ||
+      !d.ok
+    ){
+
+      throw new Error(
+        d.error ||
+        "HTTP " +
+        r.status
+      );
+    }
+
+    candles =
+      Array.isArray(d.candles)
+        ? d.candles
+            .map(x => ({
+
+              time:
+                x.time ||
+                x.datetime,
+
+              open:
+                Number(x.open),
+
+              high:
+                Number(x.high),
+
+              low:
+                Number(x.low),
+
+              close:
+                Number(x.close)
+
+            }))
+            .filter(x =>
+              Number.isFinite(x.open) &&
+              Number.isFinite(x.high) &&
+              Number.isFinite(x.low) &&
+              Number.isFinite(x.close)
+            )
+        : [];
+
+    render(d);
+
+    draw();
+
+  }catch(e){
+
+    console.error(
+      "scalp API:",
+      e
+    );
+
+    $("api").textContent =
+      "ERROR";
+
+    $("api").className =
+      "bad";
+
+    $("source").textContent =
+      "API ERROR: " +
+      e.message;
+  }
 }
 
 
-/* LIQUIDITY */
-
-const liq=
-data.liquidity||
-{};
-
-setText(
-"liqAbove",
-num(
-liq.above?.h1??
-liq.aboveH1??
-liq.above,
-2
-)
-);
-
-setText(
-"liqBelow",
-num(
-liq.below?.h1??
-liq.belowH1??
-liq.below,
-2
-)
-);
-
-setText(
-"lastCandle",
-formatTime(
-data.m5?.lastCandle??
-data.m15?.lastCandle
-)
-);
-
-
-/* FOOTER */
-
-const cache=
-data.cache||
-{};
-
-let cacheText="LIVE";
-
-if(cache.m5?.source){
-
-cacheText=
-"CACHE • M5 "+
-String(
-cache.m5.source
-).toUpperCase();
-
-}
-
-setText(
-"footer",
-"XAUUSDSNIPER • "+
-cacheText
-);
-
-
-/* =========================
-   NEW SIGNAL DETECTION
-========================= */
-
-const currentSignal=
-String(
-scalp||
-"WAIT"
-).toUpperCase();
-
-const confirmed=
-data.signal?.confirmed===true||
-data.signal?.confirmed==="true";
-
-const isTradeSignal=
-currentSignal==="BUY"||
-currentSignal==="SELL";
-
-
-if(firstApiLoad){
-
-previousScalpSignal=
-currentSignal;
-
-firstApiLoad=false;
-
-}else if(
-isTradeSignal&&
-confirmed&&
-currentSignal!==
-previousScalpSignal
-){
-
-try{
-
-await fetch(
-"/api/push-check?t="+
-Date.now(),
-{
-method:"GET",
-cache:"no-store"
-}
-);
-
-}catch(pushError){
-
-console.log(
-"Push check:",
-pushError
-);
-
-}
-
-previousScalpSignal=
-currentSignal;
-
-}else{
-
-previousScalpSignal=
-currentSignal;
-
-}
-
-
-}catch(error){
-
-console.error(
-"API Error:",
-error
-);
-
-if($("statusDot")){
-
-$("statusDot")
-.classList.remove("live");
-
-}
-
-setText(
-"apiStatus",
-"ERROR"
-);
-
-setText(
-"signalReason",
-error?.message||
-"API connection error"
-);
-
-}
-
-}
-
-
-/* =========================
+/* =========================================================
    START
-========================= */
+========================================================= */
 
-loadData();
+window.addEventListener(
+  "resize",
+  draw
+);
 
-
-/* =========================
-   REFRESH 60 SEC
-========================= */
+updateSessions();
 
 setInterval(
-loadData,
-60000
+  updateSessions,
+  1000
 );
 
 
-/* =========================
-   RETURN TO PAGE
-========================= */
+/* =========================================================
+   SERVICE WORKER
+========================================================= */
 
-document.addEventListener(
-"visibilitychange",
-()=>{
+if(
+  "serviceWorker" in navigator
+){
 
-if(!document.hidden){
+  navigator.serviceWorker
+    .register(
+      "/sw.js",
+      {
+        scope:"/",
+        updateViaCache:"none"
+      }
+    )
+    .then(async reg => {
 
-checkPushStatus();
+      try{
 
-loadData();
+        await reg.update();
 
+      }catch(e){
+
+        console.warn(
+          "SW update:",
+          e
+        );
+      }
+
+      await restorePushState();
+
+    })
+    .catch(err => {
+
+      console.warn(
+        "Service Worker:",
+        err
+      );
+
+      $("notificationStatus").textContent =
+        "Service Worker gagal: " +
+        err.message;
+    });
+
+}else{
+
+  $("notificationStatus").textContent =
+    "Service Worker tidak disokong browser ini.";
 }
 
-}
+
+/* =========================================================
+   FIRST LOAD
+========================================================= */
+
+fetchData();
+
+
+/* =========================================================
+   REFRESH EVERY 15 SECONDS
+========================================================= */
+
+setInterval(
+  fetchData,
+  15000
 );
 
 </script>
