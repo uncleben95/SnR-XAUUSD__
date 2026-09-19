@@ -2,1439 +2,1105 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#080b12">
 <title>XAUUSDSNIPER</title>
 
 <style>
-:root{
-  --bg:#070b12;
-  --panel:#0d131d;
-  --panel2:#111925;
-  --border:#1d2a3a;
-  --text:#e8eef7;
-  --muted:#7f8da1;
-  --green:#22c55e;
-  --red:#ef4444;
-  --yellow:#f59e0b;
-  --blue:#38bdf8;
-}
-
 *{box-sizing:border-box}
+html,body{margin:0;padding:0;background:#070a10;color:#edf2f7;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif}
+body{min-height:100vh}
 
-body{
-  margin:0;
-  background:
-    radial-gradient(circle at top,#101b2c 0,#070b12 42%,#05080d 100%);
-  color:var(--text);
-  font-family:Inter,Arial,sans-serif;
+:root{
+  --bg:#070a10;
+  --card:rgba(17,22,32,.88);
+  --card2:rgba(22,28,40,.92);
+  --line:rgba(255,255,255,.08);
+  --text:#edf2f7;
+  --muted:#8994a5;
+  --green:#35e59a;
+  --red:#ff5573;
+  --yellow:#ffd45a;
+  --blue:#5da9ff;
+  --purple:#a879ff;
 }
 
-.container{
-  width:min(1400px,100%);
+.app{
+  width:100%;
+  max-width:760px;
   margin:auto;
-  padding:14px;
+  padding:12px 12px 24px;
 }
 
-header{
+/* HEADER */
+.header{
   display:flex;
   justify-content:space-between;
   align-items:center;
-  gap:12px;
-  margin-bottom:14px;
+  margin-bottom:10px;
+}
+
+.brand{
+  display:flex;
+  align-items:center;
+  gap:9px;
 }
 
 .logo{
-  font-size:24px;
+  width:34px;
+  height:34px;
+  border-radius:11px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
   font-weight:900;
+  font-size:14px;
+  background:linear-gradient(135deg,#5d7cff,#a855f7);
+  box-shadow:0 0 22px rgba(99,102,241,.35);
 }
 
-.logo span{
-  color:#facc15;
+.title{
+  font-size:16px;
+  font-weight:850;
+  letter-spacing:.4px;
+}
+
+.subtitle{
+  font-size:10px;
+  color:var(--muted);
+  margin-top:1px;
 }
 
 .status{
   display:flex;
   align-items:center;
-  gap:7px;
+  gap:5px;
+  padding:6px 9px;
+  border:1px solid var(--line);
+  background:rgba(255,255,255,.035);
+  border-radius:20px;
+  font-size:10px;
   color:var(--muted);
-  font-size:12px;
 }
 
 .dot{
-  width:9px;
-  height:9px;
+  width:7px;
+  height:7px;
   border-radius:50%;
-  background:var(--yellow);
+  background:#555;
 }
 
-.dot.ok{
+.dot.live{
   background:var(--green);
-  box-shadow:0 0 10px rgba(34,197,94,.6);
+  box-shadow:0 0 9px var(--green);
 }
 
-.dot.error{
-  background:var(--red);
+/* PRICE + SIGNAL */
+.hero{
+  display:grid;
+  grid-template-columns:1fr 1.15fr;
+  gap:8px;
+  margin-bottom:8px;
 }
 
 .card{
-  background:rgba(13,19,29,.94);
-  border:1px solid var(--border);
-  border-radius:16px;
-  padding:15px;
-  box-shadow:0 12px 35px rgba(0,0,0,.2);
-}
-
-.hero{
-  display:grid;
-  grid-template-columns:1.4fr .8fr .8fr;
-  gap:12px;
-  margin-bottom:12px;
+  background:linear-gradient(145deg,rgba(20,26,38,.95),rgba(12,16,24,.95));
+  border:1px solid var(--line);
+  border-radius:17px;
+  box-shadow:0 10px 35px rgba(0,0,0,.18);
 }
 
 .priceCard{
-  min-height:145px;
+  padding:13px;
 }
 
 .label{
   color:var(--muted);
-  font-size:11px;
+  font-size:9px;
   text-transform:uppercase;
   letter-spacing:1px;
-  margin-bottom:7px;
+  font-weight:700;
 }
 
 .price{
-  font-size:38px;
+  margin-top:4px;
+  font-size:25px;
+  line-height:1;
   font-weight:900;
+  letter-spacing:-.8px;
 }
 
-.priceSub{
-  margin-top:7px;
+.priceUnit{
+  font-size:9px;
   color:var(--muted);
-  font-size:12px;
+  margin-top:6px;
 }
 
 .signalCard{
-  display:flex;
-  flex-direction:column;
-  justify-content:center;
-  align-items:center;
-  text-align:center;
+  position:relative;
+  overflow:hidden;
+  padding:13px;
+}
+
+.signalCard:after{
+  content:"";
+  position:absolute;
+  width:100px;
+  height:100px;
+  right:-40px;
+  top:-50px;
+  border-radius:50%;
+  background:rgba(93,169,255,.12);
+  filter:blur(10px);
 }
 
 .signal{
-  font-size:34px;
-  font-weight:1000;
-  margin:5px 0;
+  margin-top:3px;
+  font-size:25px;
+  line-height:1;
+  font-weight:950;
+  letter-spacing:.5px;
 }
 
-.signal.buy{color:var(--green)}
-.signal.sell{color:var(--red)}
+.signal.buy{color:var(--green);text-shadow:0 0 18px rgba(53,229,154,.3)}
+.signal.sell{color:var(--red);text-shadow:0 0 18px rgba(255,85,115,.3)}
 .signal.wait{color:var(--yellow)}
 
-.signalReason{
-  color:var(--muted);
-  font-size:12px;
-}
-
-.grid{
-  display:grid;
-  grid-template-columns:repeat(3,1fr);
-  gap:12px;
-  margin-bottom:12px;
-}
-
-.tfHead{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  margin-bottom:12px;
-}
-
-.tfName{
-  font-size:18px;
-  font-weight:900;
-}
-
-.badge{
-  padding:5px 9px;
-  border-radius:999px;
+.reason{
+  margin-top:7px;
   font-size:10px;
-  font-weight:900;
-  border:1px solid var(--border);
-}
-
-.badge.buy{
-  color:var(--green);
-  background:rgba(34,197,94,.08);
-  border-color:rgba(34,197,94,.25);
-}
-
-.badge.sell{
-  color:var(--red);
-  background:rgba(239,68,68,.08);
-  border-color:rgba(239,68,68,.25);
-}
-
-.badge.neutral{
-  color:var(--yellow);
-  background:rgba(245,158,11,.08);
-  border-color:rgba(245,158,11,.25);
-}
-
-.metrics{
-  display:grid;
-  grid-template-columns:repeat(2,1fr);
-  gap:9px;
-}
-
-.metric{
-  background:rgba(255,255,255,.025);
-  border:1px solid rgba(255,255,255,.045);
-  border-radius:10px;
-  padding:9px;
-}
-
-.metricName{
   color:var(--muted);
-  font-size:10px;
-  margin-bottom:4px;
-}
-
-.metricValue{
-  font-size:14px;
-  font-weight:800;
+  white-space:nowrap;
   overflow:hidden;
   text-overflow:ellipsis;
 }
 
-.section{
-  margin-bottom:12px;
+/* TIMEFRAME */
+.tfGrid{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:7px;
+  margin-bottom:8px;
 }
 
-.sectionTitle{
-  font-size:15px;
+.tf{
+  padding:10px;
+  min-width:0;
+}
+
+.tfTop{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+}
+
+.tfName{
+  font-size:11px;
   font-weight:900;
-  margin-bottom:10px;
 }
 
-.srGrid{
+.tfDir{
+  font-size:9px;
+  font-weight:900;
+  padding:4px 6px;
+  border-radius:7px;
+  background:rgba(255,255,255,.055);
+}
+
+.tfDir.buy{color:var(--green)}
+.tfDir.sell{color:var(--red)}
+.tfDir.neutral{color:var(--yellow)}
+
+.tfMain{
+  margin-top:8px;
+  display:flex;
+  justify-content:space-between;
+  align-items:end;
+}
+
+.tfValue{
+  font-size:13px;
+  font-weight:800;
+}
+
+.tfRsi{
+  font-size:10px;
+  color:var(--muted);
+}
+
+.tfMeta{
   display:grid;
   grid-template-columns:1fr 1fr;
-  gap:12px;
+  gap:4px;
+  margin-top:7px;
 }
 
-.level{
-  border-radius:12px;
-  padding:14px;
-  border:1px solid var(--border);
+.mini{
+  background:rgba(255,255,255,.035);
+  border-radius:7px;
+  padding:5px 6px;
 }
 
-.level.support{
-  background:rgba(34,197,94,.055);
-}
-
-.level.resistance{
-  background:rgba(239,68,68,.055);
-}
-
-.levelTitle{
+.mini span{
+  display:block;
   color:var(--muted);
-  font-size:11px;
-  text-transform:uppercase;
-  margin-bottom:5px;
+  font-size:8px;
 }
 
-.levelPrice{
-  font-size:24px;
+.mini b{
+  display:block;
+  font-size:9px;
+  margin-top:2px;
+}
+
+/* QUICK INFO */
+.quick{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:7px;
+  margin-bottom:8px;
+}
+
+.q{
+  padding:9px 7px;
+  text-align:center;
+}
+
+.q .qLabel{
+  color:var(--muted);
+  font-size:8px;
+  text-transform:uppercase;
+  letter-spacing:.5px;
+}
+
+.q .qValue{
+  margin-top:4px;
+  font-size:11px;
   font-weight:900;
 }
 
-.levelTime{
-  color:var(--muted);
-  font-size:10px;
-  margin-top:5px;
-}
-
-.infoGrid{
+/* STATUS ROW */
+.statusGrid{
   display:grid;
-  grid-template-columns:repeat(4,1fr);
-  gap:10px;
+  grid-template-columns:repeat(3,1fr);
+  gap:7px;
+  margin-bottom:8px;
 }
 
-.infoBox{
-  padding:12px;
-  border-radius:12px;
-  background:rgba(255,255,255,.025);
-  border:1px solid rgba(255,255,255,.05);
+.badgeCard{
+  padding:9px;
 }
 
-.infoTitle{
+.badgeTitle{
+  font-size:8px;
   color:var(--muted);
-  font-size:10px;
   text-transform:uppercase;
-  margin-bottom:5px;
+  letter-spacing:.7px;
 }
 
-.infoValue{
-  font-size:15px;
-  font-weight:850;
+.badge{
+  display:inline-block;
+  margin-top:5px;
+  padding:4px 7px;
+  border-radius:7px;
+  font-size:9px;
+  font-weight:900;
+  background:rgba(255,255,255,.06);
 }
 
-.news{
-  border-left:3px solid var(--yellow);
+.green{color:var(--green)}
+.red{color:var(--red)}
+.yellow{color:var(--yellow)}
+.blue{color:var(--blue)}
+.purple{color:var(--purple)}
+
+/* TRADE PLAN */
+.plan{
+  padding:11px;
+  margin-bottom:8px;
 }
 
-.news.risk{
-  border-left-color:var(--red);
-}
-
-.news.clear{
-  border-left-color:var(--green);
-}
-
-.newsHeader{
+.planHead{
   display:flex;
   justify-content:space-between;
   align-items:center;
-  gap:10px;
+  margin-bottom:8px;
 }
 
-.newsStatus{
-  font-size:12px;
+.sectionTitle{
+  font-size:10px;
   font-weight:900;
+  text-transform:uppercase;
+  letter-spacing:.8px;
 }
 
-.newsList{
-  margin-top:10px;
+.planStatus{
+  font-size:9px;
+  font-weight:900;
+  padding:4px 7px;
+  border-radius:7px;
+  background:rgba(255,255,255,.05);
+}
+
+.planGrid{
   display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:6px;
+}
+
+.planItem{
+  padding:7px;
+  border-radius:8px;
+  background:rgba(255,255,255,.035);
+}
+
+.planItem span{
+  display:block;
+  color:var(--muted);
+  font-size:8px;
+}
+
+.planItem b{
+  display:block;
+  font-size:10px;
+  margin-top:3px;
+}
+
+/* LOWER INFO */
+.lower{
+  display:grid;
+  grid-template-columns:1fr 1fr;
   gap:7px;
 }
 
-.newsItem{
-  padding:9px 10px;
-  background:rgba(255,255,255,.025);
-  border-radius:9px;
-  border:1px solid rgba(255,255,255,.04);
+.info{
+  padding:10px;
 }
 
-.newsCat{
-  color:var(--yellow);
-  font-size:10px;
-  font-weight:900;
-  margin-bottom:3px;
+.infoRow{
+  display:flex;
+  justify-content:space-between;
+  gap:8px;
+  padding:5px 0;
+  border-bottom:1px solid rgba(255,255,255,.045);
 }
 
-.newsTitle{
-  font-size:12px;
-  line-height:1.4;
+.infoRow:last-child{
+  border-bottom:0;
 }
 
-.plan{
-  display:grid;
-  grid-template-columns:repeat(5,1fr);
-  gap:10px;
-}
-
-.planBox{
-  background:rgba(255,255,255,.025);
-  border:1px solid rgba(255,255,255,.05);
-  border-radius:11px;
-  padding:12px;
-}
-
-.planTitle{
+.infoRow span{
   color:var(--muted);
-  font-size:10px;
-  text-transform:uppercase;
-  margin-bottom:5px;
+  font-size:9px;
 }
 
-.planValue{
-  font-size:15px;
-  font-weight:900;
+.infoRow b{
+  font-size:9px;
+  text-align:right;
 }
 
-.waitText{
-  color:var(--yellow);
-}
-
-.buyText{
-  color:var(--green);
-}
-
-.sellText{
-  color:var(--red);
-}
-
-.loading{
-  color:var(--muted);
-  text-align:center;
-  padding:30px;
-}
-
-.errorBox{
-  color:#fecaca;
-  border:1px solid rgba(239,68,68,.3);
-  background:rgba(239,68,68,.07);
-  border-radius:12px;
-  padding:14px;
-  font-size:12px;
-  margin-bottom:12px;
-}
-
+/* FOOTER */
 .footer{
   text-align:center;
-  color:var(--muted);
-  font-size:10px;
-  padding:10px 0 20px;
+  color:#596474;
+  font-size:8px;
+  padding:10px 0 2px;
 }
 
-@media(max-width:900px){
-  .hero{
-    grid-template-columns:1fr;
-  }
-
-  .grid{
-    grid-template-columns:1fr;
-  }
-
-  .infoGrid{
-    grid-template-columns:repeat(2,1fr);
-  }
-
-  .plan{
-    grid-template-columns:repeat(2,1fr);
-  }
+/* LOADING */
+.loading{
+  position:fixed;
+  inset:0;
+  background:#070a10;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  z-index:99;
 }
 
-@media(max-width:520px){
-  .container{
-    padding:10px;
-  }
+.loadingBox{
+  text-align:center;
+}
 
-  .price{
-    font-size:32px;
-  }
+.spinner{
+  width:27px;
+  height:27px;
+  border:3px solid rgba(255,255,255,.1);
+  border-top-color:#6c7cff;
+  border-radius:50%;
+  animation:spin .8s linear infinite;
+  margin:auto auto 10px;
+}
 
-  .srGrid{
-    grid-template-columns:1fr;
-  }
+@keyframes spin{
+  to{transform:rotate(360deg)}
+}
 
-  .infoGrid{
-    grid-template-columns:1fr 1fr;
-  }
+/* MOBILE */
+@media(max-width:430px){
+  .app{padding:10px 9px 20px}
+  .price{font-size:23px}
+  .signal{font-size:23px}
+  .tf{padding:9px 7px}
+  .tfMeta{gap:3px}
+  .quick{gap:5px}
+  .statusGrid{gap:5px}
+  .planGrid{gap:4px}
+  .lower{gap:5px}
+}
 
-  .plan{
-    grid-template-columns:1fr 1fr;
-  }
+@media(max-width:350px){
+  .quick .q:nth-child(4){display:none}
+  .quick{grid-template-columns:repeat(3,1fr)}
+  .planGrid{grid-template-columns:repeat(2,1fr)}
 }
 </style>
 </head>
 
 <body>
 
-<div class="container">
-
-<header>
-  <div class="logo">XAU<span>USD</span>SNIPER</div>
-
-  <div class="status">
-    <span id="statusDot" class="dot"></span>
-    <span id="statusText">Connecting...</span>
-  </div>
-</header>
-
-<div id="errorBox" class="errorBox" style="display:none"></div>
-
-<div class="hero">
-
-  <div class="card priceCard">
-    <div class="label">XAU / USD</div>
-    <div id="price" class="price">—</div>
-    <div id="priceSub" class="priceSub">
-      Waiting for market data...
-    </div>
-  </div>
-
-  <div class="card signalCard">
-    <div class="label">SCALP SIGNAL</div>
-    <div id="signal" class="signal wait">WAIT</div>
-    <div id="signalReason" class="signalReason">
-      Loading...
-    </div>
-  </div>
-
-  <div class="card signalCard">
-    <div class="label">MARKET FILTER</div>
-    <div id="marketFilter" class="signal wait">WAIT</div>
-    <div id="marketReason" class="signalReason">
-      M5 + M15 alignment
-    </div>
-  </div>
-
-</div>
-
-<div class="grid">
-
-  <div class="card">
-
-    <div class="tfHead">
-      <div class="tfName">M5</div>
-      <div id="m5Badge" class="badge neutral">NEUTRAL</div>
-    </div>
-
-    <div class="metrics">
-
-      <div class="metric">
-        <div class="metricName">Direction</div>
-        <div id="m5Direction" class="metricValue">—</div>
-      </div>
-
-      <div class="metric">
-        <div class="metricName">RSI</div>
-        <div id="m5Rsi" class="metricValue">—</div>
-      </div>
-
-      <div class="metric">
-        <div class="metricName">EMA Fast</div>
-        <div id="m5Fast" class="metricValue">—</div>
-      </div>
-
-      <div class="metric">
-        <div class="metricName">EMA Slow</div>
-        <div id="m5Slow" class="metricValue">—</div>
-      </div>
-
-      <div class="metric">
-        <div class="metricName">ATR</div>
-        <div id="m5Atr" class="metricValue">—</div>
-      </div>
-
-      <div class="metric">
-        <div class="metricName">Last Candle</div>
-        <div id="m5Last" class="metricValue">—</div>
-      </div>
-
-    </div>
-  </div>
-
-  <div class="card">
-
-    <div class="tfHead">
-      <div class="tfName">M15</div>
-      <div id="m15Badge" class="badge neutral">NEUTRAL</div>
-    </div>
-
-    <div class="metrics">
-
-      <div class="metric">
-        <div class="metricName">Direction</div>
-        <div id="m15Direction" class="metricValue">—</div>
-      </div>
-
-      <div class="metric">
-        <div class="metricName">RSI</div>
-        <div id="m15Rsi" class="metricValue">—</div>
-      </div>
-
-      <div class="metric">
-        <div class="metricName">EMA Fast</div>
-        <div id="m15Fast" class="metricValue">—</div>
-      </div>
-
-      <div class="metric">
-        <div class="metricName">EMA Slow</div>
-        <div id="m15Slow" class="metricValue">—</div>
-      </div>
-
-      <div class="metric">
-        <div class="metricName">ATR</div>
-        <div id="m15Atr" class="metricValue">—</div>
-      </div>
-
-      <div class="metric">
-        <div class="metricName">Last Candle</div>
-        <div id="m15Last" class="metricValue">—</div>
-      </div>
-
-    </div>
-  </div>
-
-  <div class="card">
-
-    <div class="tfHead">
-      <div class="tfName">H1</div>
-      <div id="h1Badge" class="badge neutral">NEUTRAL</div>
-    </div>
-
-    <div class="metrics">
-
-      <div class="metric">
-        <div class="metricName">Direction</div>
-        <div id="h1Direction" class="metricValue">—</div>
-      </div>
-
-      <div class="metric">
-        <div class="metricName">RSI</div>
-        <div id="h1Rsi" class="metricValue">—</div>
-      </div>
-
-      <div class="metric">
-        <div class="metricName">EMA Fast</div>
-        <div id="h1Fast" class="metricValue">—</div>
-      </div>
-
-      <div class="metric">
-        <div class="metricName">EMA Slow</div>
-        <div id="h1Slow" class="metricValue">—</div>
-      </div>
-
-      <div class="metric">
-        <div class="metricName">ATR</div>
-        <div id="h1Atr" class="metricValue">—</div>
-      </div>
-
-      <div class="metric">
-        <div class="metricName">Context</div>
-        <div id="h1Context" class="metricValue">HOLD</div>
-      </div>
-
-    </div>
-  </div>
-
-</div>
-
-<div class="card section">
-
-  <div class="sectionTitle">
-    H1 Support / Resistance
-  </div>
-
-  <div class="srGrid">
-
-    <div class="level support">
-      <div class="levelTitle">Support</div>
-      <div id="support" class="levelPrice">—</div>
-      <div id="supportTime" class="levelTime">—</div>
-    </div>
-
-    <div class="level resistance">
-      <div class="levelTitle">Resistance</div>
-      <div id="resistance" class="levelPrice">—</div>
-      <div id="resistanceTime" class="levelTime">—</div>
-    </div>
-
-  </div>
-
-</div>
-
-<div class="card section">
-
-  <div class="sectionTitle">
-    Signal Confluence
-  </div>
-
-  <div class="infoGrid">
-
-    <div class="infoBox">
-      <div class="infoTitle">Score</div>
-      <div id="confScore" class="infoValue">—</div>
-    </div>
-
-    <div class="infoBox">
-      <div class="infoTitle">Quality</div>
-      <div id="confQuality" class="infoValue">—</div>
-    </div>
-
-    <div class="infoBox">
-      <div class="infoTitle">Entry Quality</div>
-      <div id="entryQuality" class="infoValue">—</div>
-    </div>
-
-    <div class="infoBox">
-      <div class="infoTitle">Structure</div>
-      <div id="structure" class="infoValue">—</div>
-    </div>
-
+<div id="loading" class="loading">
+  <div class="loadingBox">
+    <div class="spinner"></div>
+    <div style="font-size:11px;color:#8994a5">Loading XAUUSDSNIPER...</div>
   </div>
 </div>
 
-<div class="card section">
+<div class="app">
 
-  <div class="sectionTitle">
-    Trade Plan
+  <!-- HEADER -->
+  <header class="header">
+    <div class="brand">
+      <div class="logo">XAU</div>
+      <div>
+        <div class="title">XAUUSDSNIPER</div>
+        <div class="subtitle">M5 + M15 SCALP ENGINE</div>
+      </div>
+    </div>
+
+    <div class="status">
+      <span id="statusDot" class="dot"></span>
+      <span id="apiStatus">Connecting</span>
+    </div>
+  </header>
+
+  <!-- PRICE / SIGNAL -->
+  <section class="hero">
+
+    <div class="card priceCard">
+      <div class="label">XAU / USD</div>
+      <div id="price" class="price">—</div>
+      <div id="priceSource" class="priceUnit">LIVE PRICE</div>
+    </div>
+
+    <div class="card signalCard">
+      <div class="label">SCALP SIGNAL</div>
+      <div id="signal" class="signal wait">WAIT</div>
+      <div id="signalReason" class="reason">Waiting for M5 + M15 alignment</div>
+    </div>
+
+  </section>
+
+  <!-- M5 / M15 / H1 -->
+  <section class="tfGrid">
+
+    <div class="card tf">
+      <div class="tfTop">
+        <div class="tfName">M5</div>
+        <div id="m5Dir" class="tfDir neutral">—</div>
+      </div>
+
+      <div class="tfMain">
+        <div>
+          <div class="label">BIAS</div>
+          <div id="m5Bias" class="tfValue">—</div>
+        </div>
+        <div id="m5Rsi" class="tfRsi">RSI —</div>
+      </div>
+
+      <div class="tfMeta">
+        <div class="mini">
+          <span>EMA F</span>
+          <b id="m5Fast">—</b>
+        </div>
+        <div class="mini">
+          <span>EMA S</span>
+          <b id="m5Slow">—</b>
+        </div>
+      </div>
+    </div>
+
+    <div class="card tf">
+      <div class="tfTop">
+        <div class="tfName">M15</div>
+        <div id="m15Dir" class="tfDir neutral">—</div>
+      </div>
+
+      <div class="tfMain">
+        <div>
+          <div class="label">BIAS</div>
+          <div id="m15Bias" class="tfValue">—</div>
+        </div>
+        <div id="m15Rsi" class="tfRsi">RSI —</div>
+      </div>
+
+      <div class="tfMeta">
+        <div class="mini">
+          <span>EMA F</span>
+          <b id="m15Fast">—</b>
+        </div>
+        <div class="mini">
+          <span>EMA S</span>
+          <b id="m15Slow">—</b>
+        </div>
+      </div>
+    </div>
+
+    <div class="card tf">
+      <div class="tfTop">
+        <div class="tfName">H1</div>
+        <div id="h1Dir" class="tfDir neutral">—</div>
+      </div>
+
+      <div class="tfMain">
+        <div>
+          <div class="label">CONTEXT</div>
+          <div id="h1Bias" class="tfValue">—</div>
+        </div>
+        <div id="h1Rsi" class="tfRsi">RSI —</div>
+      </div>
+
+      <div class="tfMeta">
+        <div class="mini">
+          <span>EMA F</span>
+          <b id="h1Fast">—</b>
+        </div>
+        <div class="mini">
+          <span>EMA S</span>
+          <b id="h1Slow">—</b>
+        </div>
+      </div>
+    </div>
+
+  </section>
+
+  <!-- QUICK LEVELS -->
+  <section class="quick">
+
+    <div class="card q">
+      <div class="qLabel">Support</div>
+      <div id="support" class="qValue green">—</div>
+    </div>
+
+    <div class="card q">
+      <div class="qLabel">Resistance</div>
+      <div id="resistance" class="qValue red">—</div>
+    </div>
+
+    <div class="card q">
+      <div class="qLabel">ATR M5</div>
+      <div id="atr" class="qValue blue">—</div>
+    </div>
+
+    <div class="card q">
+      <div class="qLabel">H1 Context</div>
+      <div id="h1Context" class="qValue purple">—</div>
+    </div>
+
+  </section>
+
+  <!-- FILTERS -->
+  <section class="statusGrid">
+
+    <div class="card badgeCard">
+      <div class="badgeTitle">Market Filter</div>
+      <div id="marketFilter" class="badge yellow">WAIT</div>
+    </div>
+
+    <div class="card badgeCard">
+      <div class="badgeTitle">Confluence</div>
+      <div id="confluence" class="badge yellow">LOW</div>
+    </div>
+
+    <div class="card badgeCard">
+      <div class="badgeTitle">Entry Quality</div>
+      <div id="entryQuality" class="badge yellow">WAIT</div>
+    </div>
+
+  </section>
+
+  <!-- TRADE PLAN -->
+  <section class="card plan">
+
+    <div class="planHead">
+      <div class="sectionTitle">Trade Plan</div>
+      <div id="planStatus" class="planStatus yellow">WAIT</div>
+    </div>
+
+    <div class="planGrid">
+
+      <div class="planItem">
+        <span>ENTRY</span>
+        <b id="entry">—</b>
+      </div>
+
+      <div class="planItem">
+        <span>STOP</span>
+        <b id="stop">—</b>
+      </div>
+
+      <div class="planItem">
+        <span>TP1</span>
+        <b id="tp1">—</b>
+      </div>
+
+      <div class="planItem">
+        <span>TP2</span>
+        <b id="tp2">—</b>
+      </div>
+
+    </div>
+
+  </section>
+
+  <!-- LOWER -->
+  <section class="lower">
+
+    <div class="card info">
+      <div class="sectionTitle">News Filter</div>
+
+      <div class="infoRow">
+        <span>Status</span>
+        <b id="newsStatus" class="yellow">—</b>
+      </div>
+
+      <div class="infoRow">
+        <span>Level</span>
+        <b id="newsLevel">—</b>
+      </div>
+
+      <div class="infoRow">
+        <span>Score</span>
+        <b id="newsScore">—</b>
+      </div>
+    </div>
+
+    <div class="card info">
+      <div class="sectionTitle">Liquidity</div>
+
+      <div class="infoRow">
+        <span>Above H1</span>
+        <b id="liqAbove">—</b>
+      </div>
+
+      <div class="infoRow">
+        <span>Below H1</span>
+        <b id="liqBelow">—</b>
+      </div>
+
+      <div class="infoRow">
+        <span>Last Candle</span>
+        <b id="lastCandle">—</b>
+      </div>
+    </div>
+
+  </section>
+
+  <div id="footer" class="footer">
+    XAUUSDSNIPER • Updating...
   </div>
-
-  <div class="plan">
-
-    <div class="planBox">
-      <div class="planTitle">Status</div>
-      <div id="planStatus" class="planValue waitText">WAIT</div>
-    </div>
-
-    <div class="planBox">
-      <div class="planTitle">Entry</div>
-      <div id="planEntry" class="planValue">—</div>
-    </div>
-
-    <div class="planBox">
-      <div class="planTitle">Stop Loss</div>
-      <div id="planSL" class="planValue">—</div>
-    </div>
-
-    <div class="planBox">
-      <div class="planTitle">TP1</div>
-      <div id="planTP1" class="planValue">—</div>
-    </div>
-
-    <div class="planBox">
-      <div class="planTitle">TP2</div>
-      <div id="planTP2" class="planValue">—</div>
-    </div>
-
-  </div>
-</div>
-
-<div id="newsCard" class="card section news">
-
-  <div class="newsHeader">
-
-    <div class="sectionTitle" style="margin:0">
-      News Filter
-    </div>
-
-    <div id="newsStatus" class="newsStatus">
-      —
-    </div>
-
-  </div>
-
-  <div id="newsList" class="newsList">
-    <div class="loading">
-      Loading news...
-    </div>
-  </div>
-
-</div>
-
-<div class="card section">
-
-  <div class="sectionTitle">
-    Liquidity Map
-  </div>
-
-  <div class="infoGrid">
-
-    <div class="infoBox">
-      <div class="infoTitle">H1 Above</div>
-      <div id="liqH1Above" class="infoValue">—</div>
-    </div>
-
-    <div class="infoBox">
-      <div class="infoTitle">M15 Above</div>
-      <div id="liqM15Above" class="infoValue">—</div>
-    </div>
-
-    <div class="infoBox">
-      <div class="infoTitle">M5 Above</div>
-      <div id="liqM5Above" class="infoValue">—</div>
-    </div>
-
-    <div class="infoBox">
-      <div class="infoTitle">H1 Below</div>
-      <div id="liqH1Below" class="infoValue">—</div>
-    </div>
-
-  </div>
-</div>
-
-<div class="footer">
-  XAUUSDSNIPER • M5 + M15 scalp alignment • H1 context
-  <br>
-  <span id="updated">Last update: —</span>
-</div>
 
 </div>
 
 <script>
-
-const API = "/api/scalp";
-const REFRESH_MS = 60000;
-
-function $(id){
-  return document.getElementById(id);
-}
+const $ = id => document.getElementById(id);
 
 function setText(id,value){
-  const el = $(id);
-
-  if(!el){
-    return;
-  }
-
+  const el=$(id);
+  if(!el)return;
   el.textContent =
-    value === null ||
-    value === undefined ||
-    value === ""
-      ? "—"
-      : String(value);
+    value===null ||
+    value===undefined ||
+    value==="" ? "—" : String(value);
 }
 
-function fmt(value,digits=2){
-
-  if(
-    value === null ||
-    value === undefined ||
-    value === "" ||
-    Number.isNaN(Number(value))
-  ){
-    return "—";
-  }
-
-  return Number(value).toFixed(digits);
-}
-
-function safe(value,fallback="—"){
-  return value === null ||
-         value === undefined ||
-         value === ""
-    ? fallback
-    : value;
+function num(value,digits=2){
+  if(value===null || value===undefined || value==="") return "—";
+  const n=Number(value);
+  if(!Number.isFinite(n)) return "—";
+  return n.toFixed(digits);
 }
 
 function directionClass(value){
+  const v=String(value||"").toUpperCase();
 
-  const v =
-    String(value || "")
-      .toUpperCase();
-
-  if(v === "BUY"){
-    return "buy";
-  }
-
-  if(v === "SELL"){
-    return "sell";
-  }
-
+  if(v.includes("BUY")) return "buy";
+  if(v.includes("SELL")) return "sell";
   return "neutral";
 }
 
-function setBadge(id,value){
+function applyDirection(id,value){
+  const el=$(id);
+  if(!el)return;
 
-  const el = $(id);
+  const v=String(value||"NEUTRAL").toUpperCase();
 
-  if(!el){
-    return;
-  }
+  el.textContent=v;
 
-  const v =
-    String(value || "NEUTRAL")
-      .toUpperCase();
-
-  el.textContent = v;
-  el.className =
-    "badge " + directionClass(v);
+  el.className="tfDir "+directionClass(v);
 }
 
-function setSignal(id,value){
+function signalClass(value){
+  const v=String(value||"WAIT").toUpperCase();
 
-  const el = $(id);
+  if(v.includes("BUY"))return"buy";
+  if(v.includes("SELL"))return"sell";
+  return"wait";
+}
 
-  if(!el){
-    return;
+function applySignal(value){
+  const el=$("signal");
+  if(!el)return;
+
+  const v=String(value||"WAIT").toUpperCase();
+
+  el.textContent=v;
+  el.className="signal "+signalClass(v);
+}
+
+function applyBadge(id,value){
+  const el=$(id);
+  if(!el)return;
+
+  const v=String(value||"WAIT").toUpperCase();
+
+  el.textContent=v;
+
+  el.className="badge";
+
+  if(v.includes("BUY") || v.includes("GOOD") || v.includes("HIGH QUALITY")){
+    el.classList.add("green");
+  }else if(v.includes("SELL")){
+    el.classList.add("red");
+  }else if(v.includes("RISK") || v.includes("LOW") || v.includes("WAIT")){
+    el.classList.add("yellow");
+  }else{
+    el.classList.add("blue");
   }
+}
 
-  const v =
-    String(value || "WAIT")
-      .toUpperCase();
+function renderTF(prefix,data){
 
-  el.textContent = v;
+  if(!data)return;
 
-  el.className =
-    "signal " +
-    (
-      v === "BUY"
-        ? "buy"
-        : v === "SELL"
-          ? "sell"
-          : "wait"
-    );
+  applyDirection(prefix+"Dir",data.direction);
+
+  setText(prefix+"Bias",data.bias || data.direction);
+
+  setText(
+    prefix+"Rsi",
+    data.rsi!==undefined ? "RSI "+num(data.rsi,1) : "RSI —"
+  );
+
+  setText(prefix+"Fast",num(data.emaFast,2));
+  setText(prefix+"Slow",num(data.emaSlow,2));
 }
 
 function formatTime(value){
 
-  if(!value){
-    return "—";
+  if(!value)return"—";
+
+  const s=String(value);
+
+  if(s.length>=16){
+    return s.replace("T"," ").slice(0,16);
   }
 
-  return String(value)
-    .replace("T"," ")
-    .replace("Z","");
+  return s;
 }
 
-function renderTimeframe(prefix,data){
-
-  if(!data){
-    return;
-  }
-
-  const direction =
-    data.direction ||
-    data.bias ||
-    "NEUTRAL";
-
-  setBadge(
-    prefix + "Badge",
-    direction
-  );
-
-  setText(
-    prefix + "Direction",
-    direction
-  );
-
-  setText(
-    prefix + "Rsi",
-    fmt(data.rsi,2)
-  );
-
-  setText(
-    prefix + "Fast",
-    fmt(data.emaFast,2)
-  );
-
-  setText(
-    prefix + "Slow",
-    fmt(data.emaSlow,2)
-  );
-
-  setText(
-    prefix + "Atr",
-    fmt(data.atr,2)
-  );
-
-  /*
-    IMPORTANT:
-    Don't directly access .textContent.
-    Some older/mobile cached HTML may not contain
-    the Last Candle element.
-  */
-
-  setText(
-    prefix + "Last",
-    formatTime(data.lastCandle)
-  );
-
-  if(prefix === "h1"){
-
-    setText(
-      "h1Context",
-      direction === "NEUTRAL"
-        ? "CONTEXT"
-        : "HOLD " + direction
-    );
-  }
-}
-
-function escapeHtml(value){
-
-  return String(value)
-    .replaceAll("&","&amp;")
-    .replaceAll("<","&lt;")
-    .replaceAll(">","&gt;")
-    .replaceAll('"',"&quot;")
-    .replaceAll("'","&#039;");
-}
-
-function renderNews(data){
-
-  const card = $("newsCard");
-  const status = $("newsStatus");
-  const list = $("newsList");
-
-  if(!card || !status || !list){
-    return;
-  }
-
-  if(!data){
-
-    status.textContent = "UNKNOWN";
-
-    list.innerHTML =
-      '<div class="loading">No news data</div>';
-
-    return;
-  }
-
-  const level =
-    String(
-      data.level ||
-      data.status ||
-      "UNKNOWN"
-    ).toUpperCase();
-
-  status.textContent =
-    level +
-    (
-      data.score !== undefined
-        ? " • " + data.score
-        : ""
-    );
-
-  card.classList.remove(
-    "risk",
-    "clear"
-  );
-
-  if(
-    level === "HIGH" ||
-    level === "RISK"
-  ){
-    card.classList.add("risk");
-  }
-
-  if(
-    level === "LOW" ||
-    level === "CLEAR"
-  ){
-    card.classList.add("clear");
-  }
-
-  const items =
-    Array.isArray(data.items)
-      ? data.items
-      : [];
-
-  if(!items.length){
-
-    list.innerHTML =
-      '<div class="loading">No recent news detected</div>';
-
-    return;
-  }
-
-  list.innerHTML =
-    items
-      .slice(0,8)
-      .map(item => {
-
-        const category =
-          safe(
-            item?.category,
-            "NEWS"
-          );
-
-        const title =
-          safe(
-            item?.title,
-            "Untitled"
-          );
-
-        return `
-          <div class="newsItem">
-            <div class="newsCat">
-              ${escapeHtml(category)}
-            </div>
-
-            <div class="newsTitle">
-              ${escapeHtml(title)}
-            </div>
-          </div>
-        `;
-      })
-      .join("");
-}
-
-function renderLiquidity(data){
-
-  if(!data){
-    return;
-  }
-
-  const above =
-    data.above || {};
-
-  const below =
-    data.below || {};
-
-  setText(
-    "liqH1Above",
-    above.h1
-      ? fmt(above.h1.price,2)
-      : "—"
-  );
-
-  setText(
-    "liqM15Above",
-    above.m15
-      ? fmt(above.m15.price,2)
-      : "—"
-  );
-
-  setText(
-    "liqM5Above",
-    above.m5
-      ? fmt(above.m5.price,2)
-      : "—"
-  );
-
-  setText(
-    "liqH1Below",
-    below.h1
-      ? fmt(below.h1.price,2)
-      : "—"
-  );
-}
-
-function render(data){
-
-  if(!data){
-
-    throw new Error(
-      "Empty API response"
-    );
-  }
-
-  if(data.ok !== true){
-
-    throw new Error(
-      safe(
-        data.error,
-        "API returned ok:false"
-      )
-    );
-  }
-
-  const price =
-    data.price ??
-    data.livePrice?.price ??
-    data.m5?.price ??
-    null;
-
-  setText(
-    "price",
-    fmt(price,2)
-  );
-
-  const source =
-    data.livePrice?.source ||
-    data.m5?.source ||
-    "API";
-
-  const age =
-    data.livePrice?.ageSeconds;
-
-  setText(
-    "priceSub",
-    source +
-    (
-      age !== undefined
-        ? " • cache " + age + "s"
-        : ""
-    )
-  );
-
-  const signalData =
-    data.signal || {};
-
-  const scalp =
-    signalData.scalpSignal ||
-    data.scalpSignal ||
-    signalData.signal ||
-    "WAIT";
-
-  setSignal(
-    "signal",
-    scalp
-  );
-
-  setText(
-    "signalReason",
-    safe(
-      signalData.reason,
-      "Waiting for M5 + M15 alignment"
-    )
-  );
-
-  const market =
-    data.marketFilter || {};
-
-  const marketStatus =
-    market.status ||
-    scalp ||
-    "WAIT";
-
-  setSignal(
-    "marketFilter",
-    marketStatus
-  );
-
-  setText(
-    "marketReason",
-    safe(
-      market.note,
-      "M5 + M15 alignment required"
-    )
-  );
-
-  renderTimeframe(
-    "m5",
-    data.m5
-  );
-
-  renderTimeframe(
-    "m15",
-    data.m15
-  );
-
-  renderTimeframe(
-    "h1",
-    data.h1
-  );
-
-  const sr =
-    data.supportResistance || {};
-
-  setText(
-    "support",
-    fmt(sr.support,2)
-  );
-
-  setText(
-    "supportTime",
-    formatTime(sr.supportTime)
-  );
-
-  setText(
-    "resistance",
-    fmt(sr.resistance,2)
-  );
-
-  setText(
-    "resistanceTime",
-    formatTime(sr.resistanceTime)
-  );
-
-  const confluence =
-    data.confluence || {};
-
-  setText(
-    "confScore",
-    safe(confluence.score)
-  );
-
-  setText(
-    "confQuality",
-    safe(confluence.quality)
-  );
-
-  const entry =
-    data.entryQuality || {};
-
-  setText(
-    "entryQuality",
-    safe(entry.quality)
-  );
-
-  setText(
-    "structure",
-    safe(
-      data.h1?.structure?.bias
-    )
-  );
-
-  const plan =
-    data.tradePlan || {};
-
-  const planStatus =
-    String(
-      plan.status || "WAIT"
-    ).toUpperCase();
-
-  setText(
-    "planStatus",
-    planStatus
-  );
-
-  const planEl =
-    $("planStatus");
-
-  if(planEl){
-
-    planEl.className =
-      "planValue " +
-      (
-        planStatus === "BUY"
-          ? "buyText"
-          : planStatus === "SELL"
-            ? "sellText"
-            : "waitText"
-      );
-  }
-
-  setText(
-    "planEntry",
-    fmt(plan.entry,2)
-  );
-
-  setText(
-    "planSL",
-    fmt(plan.stopLoss,2)
-  );
-
-  setText(
-    "planTP1",
-    fmt(plan.takeProfit1,2)
-  );
-
-  setText(
-    "planTP2",
-    fmt(plan.takeProfit2,2)
-  );
-
-  renderNews(
-    data.newsFilter
-  );
-
-  renderLiquidity(
-    data.liquidity
-  );
-
-  const cache =
-    data.cache;
-
-  if(cache){
-
-    setText(
-      "updated",
-      "Updated • M5 " +
-      safe(cache.m5?.source,"API") +
-      " • M15 " +
-      safe(cache.m15?.source,"API") +
-      " • H1 " +
-      safe(cache.h1?.source,"API")
-    );
-
-  }else{
-
-    setText(
-      "updated",
-      "Updated • " +
-      new Date().toLocaleTimeString()
-    );
-  }
-
-  const dot =
-    $("statusDot");
-
-  if(dot){
-    dot.className =
-      "dot ok";
-  }
-
-  setText(
-    "statusText",
-    "API ONLINE"
-  );
-
-  const errorBox =
-    $("errorBox");
-
-  if(errorBox){
-    errorBox.style.display =
-      "none";
-  }
-}
-
-async function load(){
+async function loadData(){
 
   try{
 
-    const response =
-      await fetch(
-        API + "?t=" + Date.now(),
-        {
-          cache:"no-store",
-          headers:{
-            "Accept":"application/json"
-          }
+    const response=await fetch(
+      "/api/scalp?t="+Date.now(),
+      {
+        cache:"no-store",
+        headers:{
+          "Accept":"application/json"
         }
-      );
-
-    const raw =
-      await response.text();
-
-    let data;
-
-    try{
-
-      data =
-        JSON.parse(raw);
-
-    }catch(parseError){
-
-      throw new Error(
-        "API returned invalid JSON"
-      );
-    }
+      }
+    );
 
     if(!response.ok){
-
-      throw new Error(
-        data?.error ||
-        "HTTP " +
-        response.status
-      );
+      throw new Error("HTTP "+response.status);
     }
 
-    render(data);
+    const data=await response.json();
+
+    if(!data || data.ok!==true){
+      throw new Error(data?.error || "Invalid API response");
+    }
+
+    /* STATUS */
+
+    if($("loading")){
+      $("loading").style.display="none";
+    }
+
+    if($("statusDot")){
+      $("statusDot").classList.add("live");
+    }
+
+    setText("apiStatus","LIVE");
+
+    /* PRICE */
+
+    const livePrice=
+      data.livePrice?.price ??
+      data.price;
+
+    setText("price",num(livePrice,2));
+
+    setText(
+      "priceSource",
+      data.livePrice?.source || "TWELVE DATA"
+    );
+
+    /* SIGNAL */
+
+    const scalp=
+      data.scalpSignal ??
+      data.signal?.signal ??
+      data.signal;
+
+    applySignal(scalp);
+
+    const reason=
+      data.signal?.reason ??
+      data.signal?.message ??
+      data.marketFilter?.note ??
+      "";
+
+    setText("signalReason",reason);
+
+    /* TIMEFRAMES */
+
+    renderTF("m5",data.m5);
+    renderTF("m15",data.m15);
+    renderTF("h1",data.h1);
+
+    /* QUICK LEVELS */
+
+    const sr=data.supportResistance || {};
+
+    setText(
+      "support",
+      num(
+        sr.support?.price ??
+        sr.support ??
+        data.h1?.support?.price,
+        2
+      )
+    );
+
+    setText(
+      "resistance",
+      num(
+        sr.resistance?.price ??
+        sr.resistance ??
+        data.h1?.resistance?.price,
+        2
+      )
+    );
+
+    setText(
+      "atr",
+      num(data.m5?.atr,2)
+    );
+
+    setText(
+      "h1Context",
+      data.marketFilter?.h1Context ??
+      data.h1?.direction ??
+      "—"
+    );
+
+    /* FILTERS */
+
+    applyBadge(
+      "marketFilter",
+      data.marketFilter?.status ||
+      data.marketFilter?.filter ||
+      "WAIT"
+    );
+
+    applyBadge(
+      "confluence",
+      data.confluence?.quality ||
+      "LOW"
+    );
+
+    applyBadge(
+      "entryQuality",
+      data.entryQuality?.quality ||
+      "WAIT"
+    );
+
+    /* TRADE PLAN */
+
+    const plan=data.tradePlan || {};
+
+    const planDirection=
+      plan.direction ||
+      plan.signal ||
+      scalp ||
+      "WAIT";
+
+    applyBadge("planStatus",planDirection);
+
+    setText(
+      "entry",
+      num(
+        plan.entry ??
+        plan.entryPrice,
+        2
+      )
+    );
+
+    setText(
+      "stop",
+      num(
+        plan.stop ??
+        plan.stopLoss ??
+        plan.sl,
+        2
+      )
+    );
+
+    setText(
+      "tp1",
+      num(
+        plan.tp1 ??
+        plan.takeProfit1,
+        2
+      )
+    );
+
+    setText(
+      "tp2",
+      num(
+        plan.tp2 ??
+        plan.takeProfit2,
+        2
+      )
+    );
+
+    /* NEWS */
+
+    const news=data.newsFilter || {};
+
+    setText(
+      "newsStatus",
+      news.status || "—"
+    );
+
+    setText(
+      "newsLevel",
+      news.level || "—"
+    );
+
+    setText(
+      "newsScore",
+      news.score!==undefined ?
+      news.score :
+      "—"
+    );
+
+    if($("newsStatus")){
+      const ns=String(news.status||"").toUpperCase();
+
+      $("newsStatus").className=
+        ns.includes("RISK") ?
+        "red" :
+        ns.includes("WATCH") ?
+        "yellow" :
+        "green";
+    }
+
+    /* LIQUIDITY */
+
+    const liq=data.liquidity || {};
+
+    setText(
+      "liqAbove",
+      num(
+        liq.above?.h1 ??
+        liq.aboveH1 ??
+        liq.above,
+        2
+      )
+    );
+
+    setText(
+      "liqBelow",
+      num(
+        liq.below?.h1 ??
+        liq.belowH1 ??
+        liq.below,
+        2
+      )
+    );
+
+    setText(
+      "lastCandle",
+      formatTime(
+        data.m5?.lastCandle ??
+        data.m15?.lastCandle
+      )
+    );
+
+    /* FOOTER */
+
+    const cache=data.cache || {};
+
+    let cacheText="LIVE";
+
+    if(cache.m5?.source){
+      cacheText=
+        "CACHE • M5 "+
+        String(cache.m5.source).toUpperCase();
+    }
+
+    setText("footer","XAUUSDSNIPER • "+cacheText);
 
   }catch(error){
 
-    console.error(
-      "XAUUSDSNIPER:",
-      error
-    );
+    console.error(error);
 
-    const dot =
-      $("statusDot");
-
-    if(dot){
-      dot.className =
-        "dot error";
+    if($("loading")){
+      $("loading").style.display="none";
     }
+
+    if($("statusDot")){
+      $("statusDot").classList.remove("live");
+    }
+
+    setText("apiStatus","ERROR");
 
     setText(
-      "statusText",
-      "API ERROR"
+      "signalReason",
+      error?.message || "API connection error"
     );
-
-    const box =
-      $("errorBox");
-
-    if(box){
-
-      box.style.display =
-        "block";
-
-      box.textContent =
-        "API Error: " +
-        (
-          error?.message ||
-          String(error)
-        );
-    }
   }
 }
 
-load();
+/* FIRST LOAD */
+loadData();
 
-setInterval(
-  load,
-  REFRESH_MS
-);
-
+/* REFRESH EVERY 60 SEC */
+setInterval(loadData,60000);
 </script>
 
 </body>
