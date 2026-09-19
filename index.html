@@ -10,386 +10,388 @@
 *{box-sizing:border-box}
 
 html,body{
-margin:0;
-padding:0;
-background:#f3f7fc;
-color:#172033;
-font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif
+  margin:0;
+  padding:0;
+  min-height:100%;
+  background:#f3f7fc;
+  color:#172033;
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif
 }
 
-body{min-height:100vh}
+body{
+  min-height:100vh
+}
 
 :root{
---bg:#f3f7fc;
---card:#ffffff;
---card2:#f8faff;
---line:#dfe6f0;
---text:#172033;
---muted:#697589;
---green:#079669;
---red:#e3345b;
---yellow:#c88b00;
---blue:#2777d6;
---purple:#7654c7;
---shadow:0 5px 18px rgba(42,58,82,.08)
+  --bg:#f3f7fc;
+  --card:#fff;
+  --line:#dfe6f0;
+  --text:#172033;
+  --muted:#697589;
+  --green:#079669;
+  --red:#e3345b;
+  --yellow:#c88b00;
+  --blue:#2777d6;
+  --purple:#7654c7;
+  --shadow:0 5px 18px rgba(42,58,82,.08)
 }
 
 .app{
-width:100%;
-max-width:900px;
-margin:auto;
-padding:12px 12px 18px
+  width:100%;
+  max-width:900px;
+  margin:auto;
+  padding:12px 12px 18px
 }
 
 /* HEADER */
 
 .header{
-display:flex;
-justify-content:space-between;
-align-items:center;
-gap:8px;
-margin-bottom:10px
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:8px;
+  margin-bottom:10px
 }
 
 .brand{
-display:flex;
-align-items:center;
-gap:9px;
-min-width:0
+  display:flex;
+  align-items:center;
+  gap:9px;
+  min-width:0
 }
 
 .logo{
-width:40px;
-height:40px;
-border-radius:12px;
-display:flex;
-align-items:center;
-justify-content:center;
-font-weight:950;
-font-size:14px;
-color:#fff;
-background:linear-gradient(135deg,#386cf0,#8054d8);
-box-shadow:0 5px 15px rgba(67,92,220,.22);
-flex-shrink:0
+  width:40px;
+  height:40px;
+  border-radius:12px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-weight:950;
+  font-size:14px;
+  color:#fff;
+  background:linear-gradient(135deg,#386cf0,#8054d8);
+  box-shadow:0 5px 15px rgba(67,92,220,.22);
+  flex-shrink:0
 }
 
 .title{
-font-size:18px;
-font-weight:950;
-letter-spacing:.2px;
-white-space:nowrap
+  font-size:18px;
+  font-weight:950;
+  letter-spacing:.2px;
+  white-space:nowrap
 }
 
 .subtitle{
-font-size:10px;
-font-weight:700;
-color:var(--muted);
-margin-top:1px
+  font-size:10px;
+  font-weight:700;
+  color:var(--muted);
+  margin-top:1px
 }
 
 .headerRight{
-display:flex;
-align-items:center;
-gap:6px
+  display:flex;
+  align-items:center;
+  gap:6px
 }
 
 .status{
-display:flex;
-align-items:center;
-gap:5px;
-padding:7px 10px;
-border:1px solid var(--line);
-background:#fff;
-border-radius:20px;
-font-size:10px;
-font-weight:800;
-color:var(--muted);
-box-shadow:var(--shadow)
+  display:flex;
+  align-items:center;
+  gap:5px;
+  padding:7px 10px;
+  border:1px solid var(--line);
+  background:#fff;
+  border-radius:20px;
+  font-size:10px;
+  font-weight:800;
+  color:var(--muted);
+  box-shadow:var(--shadow)
 }
 
 .dot{
-width:8px;
-height:8px;
-border-radius:50%;
-background:#aab3c0
+  width:8px;
+  height:8px;
+  border-radius:50%;
+  background:#aab3c0
 }
 
 .dot.live{
-background:var(--green);
-box-shadow:0 0 8px rgba(7,150,105,.4)
+  background:var(--green);
+  box-shadow:0 0 8px rgba(7,150,105,.4)
 }
 
 .pushBtn{
-border:1px solid #cbd7e8;
-background:#fff;
-color:#5e6d82;
-border-radius:20px;
-padding:8px 11px;
-font-size:10px;
-font-weight:950;
-white-space:nowrap;
-cursor:pointer;
--webkit-tap-highlight-color:transparent;
-box-shadow:var(--shadow)
+  border:1px solid #cbd7e8;
+  background:#fff;
+  color:#59697e;
+  border-radius:20px;
+  padding:8px 11px;
+  font-size:10px;
+  font-weight:950;
+  white-space:nowrap;
+  cursor:pointer;
+  -webkit-tap-highlight-color:transparent;
+  box-shadow:var(--shadow)
 }
 
 .pushBtn.on{
-color:var(--green);
-border-color:#9edac5;
-background:#f0fbf7
+  color:var(--green);
+  border-color:#9edac5;
+  background:#f0fbf7
 }
 
 .pushBtn.off{
-color:#59697e
+  color:#59697e
 }
 
 .pushBtn:disabled{
-opacity:.55
+  opacity:.55
 }
 
-/* GENERAL CARD */
+/* CARD */
 
 .card{
-background:var(--card);
-border:1px solid var(--line);
-border-radius:15px;
-box-shadow:var(--shadow)
+  background:var(--card);
+  border:1px solid var(--line);
+  border-radius:15px;
+  box-shadow:var(--shadow)
 }
 
 /* HERO */
 
 .hero{
-display:grid;
-grid-template-columns:1fr 1.15fr;
-gap:9px;
-margin-bottom:9px
+  display:grid;
+  grid-template-columns:1fr 1.15fr;
+  gap:9px;
+  margin-bottom:9px
 }
 
 .priceCard{
-padding:15px
+  padding:15px
 }
 
 .label{
-color:var(--muted);
-font-size:9px;
-text-transform:uppercase;
-letter-spacing:1px;
-font-weight:850
+  color:var(--muted);
+  font-size:9px;
+  text-transform:uppercase;
+  letter-spacing:1px;
+  font-weight:850
 }
 
 .price{
-margin-top:5px;
-font-size:30px;
-line-height:1;
-font-weight:950;
-letter-spacing:-.8px
+  margin-top:5px;
+  font-size:30px;
+  line-height:1;
+  font-weight:950;
+  letter-spacing:-.8px
 }
 
 .priceUnit{
-font-size:9px;
-font-weight:700;
-color:var(--muted);
-margin-top:7px
+  font-size:9px;
+  font-weight:700;
+  color:var(--muted);
+  margin-top:7px
 }
 
 .signalCard{
-position:relative;
-overflow:hidden;
-padding:15px
+  position:relative;
+  overflow:hidden;
+  padding:15px
 }
 
 .signalCard:after{
-content:"";
-position:absolute;
-width:120px;
-height:120px;
-right:-50px;
-top:-55px;
-border-radius:50%;
-background:rgba(59,130,246,.07)
+  content:"";
+  position:absolute;
+  width:120px;
+  height:120px;
+  right:-50px;
+  top:-55px;
+  border-radius:50%;
+  background:rgba(59,130,246,.07)
 }
 
 .signal{
-margin-top:5px;
-font-size:30px;
-line-height:1;
-font-weight:950;
-letter-spacing:.5px
+  margin-top:5px;
+  font-size:30px;
+  line-height:1;
+  font-weight:950;
+  letter-spacing:.5px
 }
 
 .signal.buy{
-color:var(--green)
+  color:var(--green)
 }
 
 .signal.sell{
-color:var(--red)
+  color:var(--red)
 }
 
 .signal.wait{
-color:var(--yellow)
+  color:var(--yellow)
 }
 
 .reason{
-margin-top:8px;
-font-size:10px;
-font-weight:650;
-color:var(--muted);
-white-space:nowrap;
-overflow:hidden;
-text-overflow:ellipsis
+  margin-top:8px;
+  font-size:10px;
+  font-weight:650;
+  color:var(--muted);
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis
 }
 
 /* TIMEFRAMES */
 
 .tfGrid{
-display:grid;
-grid-template-columns:repeat(3,1fr);
-gap:8px;
-margin-bottom:9px
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:8px;
+  margin-bottom:9px
 }
 
 .tf{
-padding:12px;
-min-width:0
+  padding:12px;
+  min-width:0
 }
 
 .tfTop{
-display:flex;
-align-items:center;
-justify-content:space-between;
-gap:5px
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:5px
 }
 
 .tfName{
-font-size:13px;
-font-weight:950
+  font-size:13px;
+  font-weight:950
 }
 
 .tfDir{
-font-size:10px;
-font-weight:950;
-padding:5px 7px;
-border-radius:7px;
-background:#f0f3f8
+  font-size:10px;
+  font-weight:950;
+  padding:5px 7px;
+  border-radius:7px;
+  background:#f0f3f8
 }
 
 .tfDir.buy{
-color:var(--green);
-background:#eaf9f3
+  color:var(--green);
+  background:#eaf9f3
 }
 
 .tfDir.sell{
-color:var(--red);
-background:#fff0f3
+  color:var(--red);
+  background:#fff0f3
 }
 
 .tfDir.neutral{
-color:var(--yellow);
-background:#fff8e5
+  color:var(--yellow);
+  background:#fff8e5
 }
 
 .tfMain{
-margin-top:10px;
-display:flex;
-justify-content:space-between;
-align-items:end
+  margin-top:10px;
+  display:flex;
+  justify-content:space-between;
+  align-items:end
 }
 
 .tfValue{
-font-size:15px;
-font-weight:900
+  font-size:15px;
+  font-weight:900
 }
 
 .tfRsi{
-font-size:10px;
-font-weight:700;
-color:var(--muted)
+  font-size:10px;
+  font-weight:700;
+  color:var(--muted)
 }
 
 .tfMeta{
-display:grid;
-grid-template-columns:1fr 1fr;
-gap:5px;
-margin-top:8px
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:5px;
+  margin-top:8px
 }
 
 .mini{
-background:#f6f8fb;
-border:1px solid #edf0f5;
-border-radius:8px;
-padding:6px 7px
+  background:#f6f8fb;
+  border:1px solid #edf0f5;
+  border-radius:8px;
+  padding:6px 7px
 }
 
 .mini span{
-display:block;
-color:var(--muted);
-font-size:8px;
-font-weight:700
+  display:block;
+  color:var(--muted);
+  font-size:8px;
+  font-weight:700
 }
 
 .mini b{
-display:block;
-font-size:10px;
-margin-top:3px
+  display:block;
+  font-size:10px;
+  margin-top:3px
 }
 
 /* QUICK */
 
 .quick{
-display:grid;
-grid-template-columns:repeat(4,1fr);
-gap:8px;
-margin-bottom:9px
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:8px;
+  margin-bottom:9px
 }
 
 .q{
-padding:11px 7px;
-text-align:center
+  padding:11px 7px;
+  text-align:center
 }
 
 .q .qLabel{
-color:var(--muted);
-font-size:8px;
-text-transform:uppercase;
-letter-spacing:.5px;
-font-weight:800
+  color:var(--muted);
+  font-size:8px;
+  text-transform:uppercase;
+  letter-spacing:.5px;
+  font-weight:800
 }
 
 .q .qValue{
-margin-top:5px;
-font-size:13px;
-font-weight:950
+  margin-top:5px;
+  font-size:13px;
+  font-weight:950
 }
 
 /* STATUS */
 
 .statusGrid{
-display:grid;
-grid-template-columns:repeat(3,1fr);
-gap:8px;
-margin-bottom:9px
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:8px;
+  margin-bottom:9px
 }
 
 .badgeCard{
-padding:11px
+  padding:11px
 }
 
 .badgeTitle{
-font-size:8px;
-color:var(--muted);
-text-transform:uppercase;
-letter-spacing:.7px;
-font-weight:850
+  font-size:8px;
+  color:var(--muted);
+  text-transform:uppercase;
+  letter-spacing:.7px;
+  font-weight:850
 }
 
 .badge{
-display:inline-block;
-margin-top:6px;
-padding:5px 8px;
-border-radius:7px;
-font-size:10px;
-font-weight:950;
-background:#f2f4f8
+  display:inline-block;
+  margin-top:6px;
+  padding:5px 8px;
+  border-radius:7px;
+  font-size:10px;
+  font-weight:950;
+  background:#f2f4f8
 }
 
 .green{color:var(--green)}
@@ -401,462 +403,426 @@ background:#f2f4f8
 /* TRADE PLAN */
 
 .plan{
-padding:12px;
-margin-bottom:9px
+  padding:12px;
+  margin-bottom:9px
 }
 
 .planHead{
-display:flex;
-justify-content:space-between;
-align-items:center;
-margin-bottom:9px
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:9px
 }
 
 .sectionTitle{
-font-size:10px;
-font-weight:950;
-text-transform:uppercase;
-letter-spacing:.8px
+  font-size:10px;
+  font-weight:950;
+  text-transform:uppercase;
+  letter-spacing:.8px
 }
 
 .planStatus{
-font-size:10px;
-font-weight:950;
-padding:5px 8px;
-border-radius:7px;
-background:#f2f4f8
+  font-size:10px;
+  font-weight:950;
+  padding:5px 8px;
+  border-radius:7px;
+  background:#f2f4f8
 }
 
 .planGrid{
-display:grid;
-grid-template-columns:repeat(4,1fr);
-gap:7px
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:7px
 }
 
 .planItem{
-padding:8px;
-border-radius:8px;
-background:#f6f8fb;
-border:1px solid #edf0f5
+  padding:8px;
+  border-radius:8px;
+  background:#f6f8fb;
+  border:1px solid #edf0f5
 }
 
 .planItem span{
-display:block;
-color:var(--muted);
-font-size:8px;
-font-weight:750
+  display:block;
+  color:var(--muted);
+  font-size:8px;
+  font-weight:750
 }
 
 .planItem b{
-display:block;
-font-size:11px;
-margin-top:4px
+  display:block;
+  font-size:11px;
+  margin-top:4px
 }
 
 /* LOWER */
 
 .lower{
-display:grid;
-grid-template-columns:1fr 1fr;
-gap:8px
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:8px
 }
 
 .info{
-padding:11px
+  padding:11px
 }
 
 .infoRow{
-display:flex;
-justify-content:space-between;
-gap:8px;
-padding:6px 0;
-border-bottom:1px solid #edf0f4
+  display:flex;
+  justify-content:space-between;
+  gap:8px;
+  padding:6px 0;
+  border-bottom:1px solid #edf0f4
 }
 
 .infoRow:last-child{
-border-bottom:0
+  border-bottom:0
 }
 
 .infoRow span{
-color:var(--muted);
-font-size:9px;
-font-weight:700
+  color:var(--muted);
+  font-size:9px;
+  font-weight:700
 }
 
 .infoRow b{
-font-size:10px;
-font-weight:900;
-text-align:right
+  font-size:10px;
+  font-weight:900;
+  text-align:right
 }
 
 /* FOOTER */
 
 .footer{
-text-align:center;
-color:#8b97a8;
-font-size:8px;
-font-weight:700;
-padding:9px 0 0
+  text-align:center;
+  color:#8b97a8;
+  font-size:8px;
+  font-weight:700;
+  padding:9px 0 0
 }
 
-/* PUSH MESSAGE */
+/* PUSH TOAST */
 
 .pushStatus{
-position:fixed;
-left:50%;
-bottom:15px;
-transform:translateX(-50%);
-z-index:90;
-display:none;
-padding:10px 14px;
-border-radius:12px;
-background:#172033;
-color:#fff;
-box-shadow:0 8px 25px rgba(20,30,45,.2);
-font-size:10px;
-font-weight:850;
-white-space:nowrap
+  position:fixed;
+  left:50%;
+  bottom:15px;
+  transform:translateX(-50%);
+  z-index:90;
+  display:none;
+  padding:10px 14px;
+  border-radius:12px;
+  background:#172033;
+  color:#fff;
+  box-shadow:0 8px 25px rgba(20,30,45,.2);
+  font-size:10px;
+  font-weight:850;
+  white-space:nowrap
 }
 
-/* LOADING */
-
-.loading{
-position:fixed;
-inset:0;
-background:#f3f7fc;
-display:flex;
-align-items:center;
-justify-content:center;
-z-index:99
-}
-
-.loadingBox{
-text-align:center
-}
-
-.spinner{
-width:29px;
-height:29px;
-border:3px solid #dce4ef;
-border-top-color:#5477e8;
-border-radius:50%;
-animation:spin .8s linear infinite;
-margin:auto auto 10px
-}
-
-@keyframes spin{
-to{transform:rotate(360deg)}
-}
-
-/* TABLET / PHONE */
+/* RESPONSIVE */
 
 @media(max-width:650px){
 
-.app{
-padding:10px 9px 16px
-}
+  .app{
+    padding:10px 9px 16px
+  }
 
-.title{
-font-size:16px
-}
+  .title{
+    font-size:16px
+  }
 
-.logo{
-width:38px;
-height:38px
-}
+  .logo{
+    width:38px;
+    height:38px
+  }
 
-.price{
-font-size:28px
-}
+  .price{
+    font-size:28px
+  }
 
-.signal{
-font-size:28px
-}
+  .signal{
+    font-size:28px
+  }
 
-.tf{
-padding:10px
-}
+  .tf{
+    padding:10px
+  }
 
-.tfName{
-font-size:12px
-}
+  .tfName{
+    font-size:12px
+  }
 
-.tfValue{
-font-size:14px
-}
+  .tfValue{
+    font-size:14px
+  }
 
 }
-
-/* SMALL PHONE */
 
 @media(max-width:480px){
 
-.app{
-padding:8px 7px 12px
-}
+  .app{
+    padding:8px 7px 12px
+  }
 
-.header{
-margin-bottom:7px
-}
+  .header{
+    margin-bottom:7px
+  }
 
-.subtitle{
-font-size:9px
-}
+  .subtitle{
+    font-size:9px
+  }
 
-.status{
-padding:6px 8px
-}
+  .status{
+    padding:6px 8px
+  }
 
-.pushBtn{
-padding:7px 8px;
-font-size:9px
-}
+  .pushBtn{
+    padding:7px 8px;
+    font-size:9px
+  }
 
-.hero{
-gap:6px;
-margin-bottom:6px
-}
+  .hero{
+    gap:6px;
+    margin-bottom:6px
+  }
 
-.priceCard,
-.signalCard{
-padding:11px
-}
+  .priceCard,
+  .signalCard{
+    padding:11px
+  }
 
-.price{
-font-size:25px
-}
+  .price{
+    font-size:25px
+  }
 
-.signal{
-font-size:25px
-}
+  .signal{
+    font-size:25px
+  }
 
-.reason{
-margin-top:6px;
-font-size:9px
-}
+  .reason{
+    margin-top:6px;
+    font-size:9px
+  }
 
-.tfGrid{
-gap:5px;
-margin-bottom:6px
-}
+  .tfGrid{
+    gap:5px;
+    margin-bottom:6px
+  }
 
-.tf{
-padding:8px
-}
+  .tf{
+    padding:8px
+  }
 
-.tfDir{
-font-size:8px;
-padding:4px 5px
-}
+  .tfDir{
+    font-size:8px;
+    padding:4px 5px
+  }
 
-.tfMain{
-margin-top:7px
-}
+  .tfMain{
+    margin-top:7px
+  }
 
-.tfValue{
-font-size:12px
-}
+  .tfValue{
+    font-size:12px
+  }
 
-.tfRsi{
-font-size:8px
-}
+  .tfRsi{
+    font-size:8px
+  }
 
-.tfMeta{
-gap:3px;
-margin-top:6px
-}
+  .tfMeta{
+    gap:3px;
+    margin-top:6px
+  }
 
-.mini{
-padding:5px
-}
+  .mini{
+    padding:5px
+  }
 
-.mini span{
-font-size:7px
-}
+  .mini span{
+    font-size:7px
+  }
 
-.mini b{
-font-size:9px
-}
+  .mini b{
+    font-size:9px
+  }
 
-.quick{
-gap:5px;
-margin-bottom:6px
-}
+  .quick{
+    gap:5px;
+    margin-bottom:6px
+  }
 
-.q{
-padding:8px 4px
-}
+  .q{
+    padding:8px 4px
+  }
 
-.q .qLabel{
-font-size:7px
-}
+  .q .qLabel{
+    font-size:7px
+  }
 
-.q .qValue{
-font-size:11px
-}
+  .q .qValue{
+    font-size:11px
+  }
 
-.statusGrid{
-gap:5px;
-margin-bottom:6px
-}
+  .statusGrid{
+    gap:5px;
+    margin-bottom:6px
+  }
 
-.badgeCard{
-padding:8px
-}
+  .badgeCard{
+    padding:8px
+  }
 
-.badgeTitle{
-font-size:7px
-}
+  .badgeTitle{
+    font-size:7px
+  }
 
-.badge{
-margin-top:4px;
-font-size:8px;
-padding:4px 6px
-}
+  .badge{
+    margin-top:4px;
+    font-size:8px;
+    padding:4px 6px
+  }
 
-.plan{
-padding:9px;
-margin-bottom:6px
-}
+  .plan{
+    padding:9px;
+    margin-bottom:6px
+  }
 
-.planGrid{
-gap:4px
-}
+  .planGrid{
+    gap:4px
+  }
 
-.planItem{
-padding:6px
-}
+  .planItem{
+    padding:6px
+  }
 
-.planItem span{
-font-size:7px
-}
+  .planItem span{
+    font-size:7px
+  }
 
-.planItem b{
-font-size:9px
-}
+  .planItem b{
+    font-size:9px
+  }
 
-.lower{
-gap:5px
-}
+  .lower{
+    gap:5px
+  }
 
-.info{
-padding:8px
-}
+  .info{
+    padding:8px
+  }
 
-.infoRow{
-padding:5px 0
-}
+  .infoRow{
+    padding:5px 0
+  }
 
-.infoRow span,
-.infoRow b{
-font-size:8px
-}
+  .infoRow span,
+  .infoRow b{
+    font-size:8px
+  }
 
-.footer{
-padding-top:7px
-}
+  .footer{
+    padding-top:7px
+  }
 
 }
-
-/* VERY SMALL */
 
 @media(max-width:360px){
 
-.logo{
-width:34px;
-height:34px;
-font-size:12px
-}
+  .logo{
+    width:34px;
+    height:34px;
+    font-size:12px
+  }
 
-.title{
-font-size:14px
-}
+  .title{
+    font-size:14px
+  }
 
-.subtitle{
-font-size:8px
-}
+  .subtitle{
+    font-size:8px
+  }
 
-.status{
-display:none
-}
+  .status{
+    display:none
+  }
 
-.pushBtn{
-font-size:8px;
-padding:6px 7px
-}
+  .pushBtn{
+    font-size:8px;
+    padding:6px 7px
+  }
 
-.price{
-font-size:22px
-}
+  .price{
+    font-size:22px
+  }
 
-.signal{
-font-size:22px
-}
+  .signal{
+    font-size:22px
+  }
 
-.tf{
-padding:7px
-}
+  .tf{
+    padding:7px
+  }
 
-.tfName{
-font-size:10px
-}
+  .tfName{
+    font-size:10px
+  }
 
-.tfValue{
-font-size:11px
-}
+  .tfValue{
+    font-size:11px
+  }
 
-.tfDir{
-font-size:7px
-}
+  .tfDir{
+    font-size:7px
+  }
 
-.q .qValue{
-font-size:10px
-}
+  .q .qValue{
+    font-size:10px
+  }
 
-.badge{
-font-size:7px
-}
+  .badge{
+    font-size:7px
+  }
 
-.planItem b{
-font-size:8px
-}
+  .planItem b{
+    font-size:8px
+  }
 
 }
-
-/* LANDSCAPE PHONE */
 
 @media(max-height:500px) and (orientation:landscape){
 
-.app{
-max-width:1100px;
-padding:7px 10px
-}
+  .app{
+    max-width:1100px;
+    padding:7px 10px
+  }
 
-.header{
-margin-bottom:5px
-}
+  .header{
+    margin-bottom:5px
+  }
 
-.hero,
-.tfGrid,
-.quick,
-.statusGrid,
-.plan{
-margin-bottom:5px
-}
+  .hero,
+  .tfGrid,
+  .quick,
+  .statusGrid,
+  .plan{
+    margin-bottom:5px
+  }
 
-.priceCard,
-.signalCard,
-.tf,
-.q,
-.badgeCard,
-.plan,
-.info{
-padding:7px
-}
+  .priceCard,
+  .signalCard,
+  .tf,
+  .q,
+  .badgeCard,
+  .plan,
+  .info{
+    padding:7px
+  }
 
-.footer{
-display:none
-}
+  .footer{
+    display:none
+  }
 
 }
 </style>
@@ -864,345 +830,336 @@ display:none
 
 <body>
 
-<div id="loading" class="loading">
-<div class="loadingBox">
-<div class="spinner"></div>
-<div style="font-size:11px;color:#697589;font-weight:700">
-Loading XAUUSDSNIPER...
-</div>
-</div>
-</div>
-
 <div id="pushStatus" class="pushStatus"></div>
 
 <div class="app">
 
 <header class="header">
 
-<div class="brand">
+  <div class="brand">
 
-<div class="logo">XAU</div>
+    <div class="logo">XAU</div>
 
-<div>
-<div class="title">XAUUSDSNIPER</div>
-<div class="subtitle">M5 + M15 SCALP ENGINE</div>
-</div>
+    <div>
+      <div class="title">XAUUSDSNIPER</div>
+      <div class="subtitle">M5 + M15 SCALP ENGINE</div>
+    </div>
 
-</div>
+  </div>
 
-<div class="headerRight">
+  <div class="headerRight">
 
-<button id="pushBtn" class="pushBtn off" type="button">
-🔔 PUSH OFF
-</button>
+    <button id="pushBtn" class="pushBtn off" type="button">
+      🔔 PUSH OFF
+    </button>
 
-<div class="status">
-<span id="statusDot" class="dot"></span>
-<span id="apiStatus">Connecting</span>
-</div>
+    <div class="status">
+      <span id="statusDot" class="dot"></span>
+      <span id="apiStatus">Connecting</span>
+    </div>
 
-</div>
+  </div>
 
 </header>
 
 <section class="hero">
 
-<div class="card priceCard">
+  <div class="card priceCard">
 
-<div class="label">XAU / USD</div>
+    <div class="label">XAU / USD</div>
 
-<div id="price" class="price">—</div>
+    <div id="price" class="price">—</div>
 
-<div id="priceSource" class="priceUnit">
-LIVE PRICE
-</div>
+    <div id="priceSource" class="priceUnit">
+      LIVE PRICE
+    </div>
 
-</div>
+  </div>
 
-<div class="card signalCard">
+  <div class="card signalCard">
 
-<div class="label">SCALP SIGNAL</div>
+    <div class="label">SCALP SIGNAL</div>
 
-<div id="signal" class="signal wait">
-WAIT
-</div>
+    <div id="signal" class="signal wait">
+      WAIT
+    </div>
 
-<div id="signalReason" class="reason">
-Waiting for M5 + M15 alignment
-</div>
+    <div id="signalReason" class="reason">
+      Waiting for M5 + M15 alignment
+    </div>
 
-</div>
+  </div>
 
 </section>
 
 <section class="tfGrid">
 
-<div class="card tf">
+  <div class="card tf">
 
-<div class="tfTop">
-<div class="tfName">M5</div>
-<div id="m5Dir" class="tfDir neutral">—</div>
-</div>
+    <div class="tfTop">
+      <div class="tfName">M5</div>
+      <div id="m5Dir" class="tfDir neutral">—</div>
+    </div>
 
-<div class="tfMain">
+    <div class="tfMain">
 
-<div>
-<div class="label">BIAS</div>
-<div id="m5Bias" class="tfValue">—</div>
-</div>
+      <div>
+        <div class="label">BIAS</div>
+        <div id="m5Bias" class="tfValue">—</div>
+      </div>
 
-<div id="m5Rsi" class="tfRsi">
-RSI —
-</div>
+      <div id="m5Rsi" class="tfRsi">
+        RSI —
+      </div>
 
-</div>
+    </div>
 
-<div class="tfMeta">
+    <div class="tfMeta">
 
-<div class="mini">
-<span>EMA F</span>
-<b id="m5Fast">—</b>
-</div>
+      <div class="mini">
+        <span>EMA F</span>
+        <b id="m5Fast">—</b>
+      </div>
 
-<div class="mini">
-<span>EMA S</span>
-<b id="m5Slow">—</b>
-</div>
+      <div class="mini">
+        <span>EMA S</span>
+        <b id="m5Slow">—</b>
+      </div>
 
-</div>
+    </div>
 
-</div>
+  </div>
 
-<div class="card tf">
+  <div class="card tf">
 
-<div class="tfTop">
-<div class="tfName">M15</div>
-<div id="m15Dir" class="tfDir neutral">—</div>
-</div>
+    <div class="tfTop">
+      <div class="tfName">M15</div>
+      <div id="m15Dir" class="tfDir neutral">—</div>
+    </div>
 
-<div class="tfMain">
+    <div class="tfMain">
 
-<div>
-<div class="label">BIAS</div>
-<div id="m15Bias" class="tfValue">—</div>
-</div>
+      <div>
+        <div class="label">BIAS</div>
+        <div id="m15Bias" class="tfValue">—</div>
+      </div>
 
-<div id="m15Rsi" class="tfRsi">
-RSI —
-</div>
+      <div id="m15Rsi" class="tfRsi">
+        RSI —
+      </div>
 
-</div>
+    </div>
 
-<div class="tfMeta">
+    <div class="tfMeta">
 
-<div class="mini">
-<span>EMA F</span>
-<b id="m15Fast">—</b>
-</div>
+      <div class="mini">
+        <span>EMA F</span>
+        <b id="m15Fast">—</b>
+      </div>
 
-<div class="mini">
-<span>EMA S</span>
-<b id="m15Slow">—</b>
-</div>
+      <div class="mini">
+        <span>EMA S</span>
+        <b id="m15Slow">—</b>
+      </div>
 
-</div>
+    </div>
 
-</div>
+  </div>
 
-<div class="card tf">
+  <div class="card tf">
 
-<div class="tfTop">
-<div class="tfName">H1</div>
-<div id="h1Dir" class="tfDir neutral">—</div>
-</div>
+    <div class="tfTop">
+      <div class="tfName">H1</div>
+      <div id="h1Dir" class="tfDir neutral">—</div>
+    </div>
 
-<div class="tfMain">
+    <div class="tfMain">
 
-<div>
-<div class="label">CONTEXT</div>
-<div id="h1Bias" class="tfValue">—</div>
-</div>
+      <div>
+        <div class="label">CONTEXT</div>
+        <div id="h1Bias" class="tfValue">—</div>
+      </div>
 
-<div id="h1Rsi" class="tfRsi">
-RSI —
-</div>
+      <div id="h1Rsi" class="tfRsi">
+        RSI —
+      </div>
 
-</div>
+    </div>
 
-<div class="tfMeta">
+    <div class="tfMeta">
 
-<div class="mini">
-<span>EMA F</span>
-<b id="h1Fast">—</b>
-</div>
+      <div class="mini">
+        <span>EMA F</span>
+        <b id="h1Fast">—</b>
+      </div>
 
-<div class="mini">
-<span>EMA S</span>
-<b id="h1Slow">—</b>
-</div>
+      <div class="mini">
+        <span>EMA S</span>
+        <b id="h1Slow">—</b>
+      </div>
 
-</div>
+    </div>
 
-</div>
+  </div>
 
 </section>
 
 <section class="quick">
 
-<div class="card q">
-<div class="qLabel">Support</div>
-<div id="support" class="qValue green">—</div>
-</div>
+  <div class="card q">
+    <div class="qLabel">Support</div>
+    <div id="support" class="qValue green">—</div>
+  </div>
 
-<div class="card q">
-<div class="qLabel">Resistance</div>
-<div id="resistance" class="qValue red">—</div>
-</div>
+  <div class="card q">
+    <div class="qLabel">Resistance</div>
+    <div id="resistance" class="qValue red">—</div>
+  </div>
 
-<div class="card q">
-<div class="qLabel">ATR M5</div>
-<div id="atr" class="qValue blue">—</div>
-</div>
+  <div class="card q">
+    <div class="qLabel">ATR M5</div>
+    <div id="atr" class="qValue blue">—</div>
+  </div>
 
-<div class="card q">
-<div class="qLabel">H1 Context</div>
-<div id="h1Context" class="qValue purple">—</div>
-</div>
+  <div class="card q">
+    <div class="qLabel">H1 Context</div>
+    <div id="h1Context" class="qValue purple">—</div>
+  </div>
 
 </section>
 
 <section class="statusGrid">
 
-<div class="card badgeCard">
+  <div class="card badgeCard">
 
-<div class="badgeTitle">
-Market Filter
-</div>
+    <div class="badgeTitle">
+      Market Filter
+    </div>
 
-<div id="marketFilter" class="badge yellow">
-WAIT
-</div>
+    <div id="marketFilter" class="badge yellow">
+      WAIT
+    </div>
 
-</div>
+  </div>
 
-<div class="card badgeCard">
+  <div class="card badgeCard">
 
-<div class="badgeTitle">
-Confluence
-</div>
+    <div class="badgeTitle">
+      Confluence
+    </div>
 
-<div id="confluence" class="badge yellow">
-LOW
-</div>
+    <div id="confluence" class="badge yellow">
+      LOW
+    </div>
 
-</div>
+  </div>
 
-<div class="card badgeCard">
+  <div class="card badgeCard">
 
-<div class="badgeTitle">
-Entry Quality
-</div>
+    <div class="badgeTitle">
+      Entry Quality
+    </div>
 
-<div id="entryQuality" class="badge yellow">
-WAIT
-</div>
+    <div id="entryQuality" class="badge yellow">
+      WAIT
+    </div>
 
-</div>
+  </div>
 
 </section>
 
 <section class="card plan">
 
-<div class="planHead">
+  <div class="planHead">
 
-<div class="sectionTitle">
-Trade Plan
-</div>
+    <div class="sectionTitle">
+      Trade Plan
+    </div>
 
-<div id="planStatus" class="planStatus yellow">
-WAIT
-</div>
+    <div id="planStatus" class="planStatus yellow">
+      WAIT
+    </div>
 
-</div>
+  </div>
 
-<div class="planGrid">
+  <div class="planGrid">
 
-<div class="planItem">
-<span>ENTRY</span>
-<b id="entry">—</b>
-</div>
+    <div class="planItem">
+      <span>ENTRY</span>
+      <b id="entry">—</b>
+    </div>
 
-<div class="planItem">
-<span>STOP</span>
-<b id="stop">—</b>
-</div>
+    <div class="planItem">
+      <span>STOP</span>
+      <b id="stop">—</b>
+    </div>
 
-<div class="planItem">
-<span>TP1</span>
-<b id="tp1">—</b>
-</div>
+    <div class="planItem">
+      <span>TP1</span>
+      <b id="tp1">—</b>
+    </div>
 
-<div class="planItem">
-<span>TP2</span>
-<b id="tp2">—</b>
-</div>
+    <div class="planItem">
+      <span>TP2</span>
+      <b id="tp2">—</b>
+    </div>
 
-</div>
+  </div>
 
 </section>
 
 <section class="lower">
 
-<div class="card info">
+  <div class="card info">
 
-<div class="sectionTitle">
-News Filter
-</div>
+    <div class="sectionTitle">
+      News Filter
+    </div>
 
-<div class="infoRow">
-<span>Status</span>
-<b id="newsStatus" class="yellow">—</b>
-</div>
+    <div class="infoRow">
+      <span>Status</span>
+      <b id="newsStatus" class="yellow">—</b>
+    </div>
 
-<div class="infoRow">
-<span>Level</span>
-<b id="newsLevel">—</b>
-</div>
+    <div class="infoRow">
+      <span>Level</span>
+      <b id="newsLevel">—</b>
+    </div>
 
-<div class="infoRow">
-<span>Score</span>
-<b id="newsScore">—</b>
-</div>
+    <div class="infoRow">
+      <span>Score</span>
+      <b id="newsScore">—</b>
+    </div>
 
-</div>
+  </div>
 
-<div class="card info">
+  <div class="card info">
 
-<div class="sectionTitle">
-Liquidity
-</div>
+    <div class="sectionTitle">
+      Liquidity
+    </div>
 
-<div class="infoRow">
-<span>Above H1</span>
-<b id="liqAbove">—</b>
-</div>
+    <div class="infoRow">
+      <span>Above H1</span>
+      <b id="liqAbove">—</b>
+    </div>
 
-<div class="infoRow">
-<span>Below H1</span>
-<b id="liqBelow">—</b>
-</div>
+    <div class="infoRow">
+      <span>Below H1</span>
+      <b id="liqBelow">—</b>
+    </div>
 
-<div class="infoRow">
-<span>Last Candle</span>
-<b id="lastCandle">—</b>
-</div>
+    <div class="infoRow">
+      <span>Last Candle</span>
+      <b id="lastCandle">—</b>
+    </div>
 
-</div>
+  </div>
 
 </section>
 
 <div id="footer" class="footer">
-XAUUSDSNIPER • Updating...
+  XAUUSDSNIPER • Connecting...
 </div>
 
 </div>
@@ -1213,188 +1170,192 @@ const $=id=>document.getElementById(id);
 
 function setText(id,value){
 
-const el=$(id);
+  const el=$(id);
 
-if(!el)return;
+  if(!el)return;
 
-el.textContent=
-value===null||
-value===undefined||
-value===""
-?"—"
-:String(value);
+  el.textContent=
+    value===null||
+    value===undefined||
+    value===""
+      ?"—"
+      :String(value);
 
 }
 
 function num(value,digits=2){
 
-if(value===null||
-value===undefined||
-value==="")
-return"—";
+  if(
+    value===null||
+    value===undefined||
+    value===""
+  ){
+    return"—";
+  }
 
-const n=Number(value);
+  const n=Number(value);
 
-return Number.isFinite(n)
-?n.toFixed(digits)
-:"—";
+  return Number.isFinite(n)
+    ?n.toFixed(digits)
+    :"—";
 
 }
 
 function directionClass(value){
 
-const v=String(value||"").toUpperCase();
+  const v=
+    String(value||"").toUpperCase();
 
-if(v.includes("BUY"))
-return"buy";
+  if(v.includes("BUY"))
+    return"buy";
 
-if(v.includes("SELL"))
-return"sell";
+  if(v.includes("SELL"))
+    return"sell";
 
-return"neutral";
+  return"neutral";
 
 }
 
 function applyDirection(id,value){
 
-const el=$(id);
+  const el=$(id);
 
-if(!el)return;
+  if(!el)return;
 
-const v=
-String(value||"NEUTRAL")
-.toUpperCase();
+  const v=
+    String(value||"NEUTRAL")
+    .toUpperCase();
 
-el.textContent=v;
+  el.textContent=v;
 
-el.className=
-"tfDir "+directionClass(v);
+  el.className=
+    "tfDir "+directionClass(v);
 
 }
 
 function signalClass(value){
 
-const v=
-String(value||"WAIT")
-.toUpperCase();
+  const v=
+    String(value||"WAIT")
+    .toUpperCase();
 
-if(v.includes("BUY"))
-return"buy";
+  if(v.includes("BUY"))
+    return"buy";
 
-if(v.includes("SELL"))
-return"sell";
+  if(v.includes("SELL"))
+    return"sell";
 
-return"wait";
+  return"wait";
 
 }
 
 function applySignal(value){
 
-const el=$("signal");
+  const el=$("signal");
 
-if(!el)return;
+  if(!el)return;
 
-const v=
-String(value||"WAIT")
-.toUpperCase();
+  const v=
+    String(value||"WAIT")
+    .toUpperCase();
 
-el.textContent=v;
+  el.textContent=v;
 
-el.className=
-"signal "+signalClass(v);
+  el.className=
+    "signal "+signalClass(v);
 
 }
 
 function applyBadge(id,value){
 
-const el=$(id);
+  const el=$(id);
 
-if(!el)return;
+  if(!el)return;
 
-const v=
-String(value||"WAIT")
-.toUpperCase();
+  const v=
+    String(value||"WAIT")
+    .toUpperCase();
 
-el.textContent=v;
+  el.textContent=v;
 
-el.className="badge";
+  el.className="badge";
 
-if(
-v.includes("BUY")||
-v.includes("GOOD")||
-v.includes("HIGH QUALITY")
-){
+  if(
+    v.includes("BUY")||
+    v.includes("GOOD")||
+    v.includes("HIGH QUALITY")
+  ){
 
-el.classList.add("green");
+    el.classList.add("green");
 
-}else if(v.includes("SELL")){
+  }else if(v.includes("SELL")){
 
-el.classList.add("red");
+    el.classList.add("red");
 
-}else if(
-v.includes("RISK")||
-v.includes("LOW")||
-v.includes("WAIT")
-){
+  }else if(
+    v.includes("RISK")||
+    v.includes("LOW")||
+    v.includes("WAIT")
+  ){
 
-el.classList.add("yellow");
+    el.classList.add("yellow");
 
-}else{
+  }else{
 
-el.classList.add("blue");
+    el.classList.add("blue");
 
-}
+  }
 
 }
 
 function renderTF(prefix,data){
 
-if(!data)return;
+  if(!data)return;
 
-applyDirection(
-prefix+"Dir",
-data.direction
-);
+  applyDirection(
+    prefix+"Dir",
+    data.direction
+  );
 
-setText(
-prefix+"Bias",
-data.bias||data.direction
-);
+  setText(
+    prefix+"Bias",
+    data.bias||data.direction
+  );
 
-setText(
-prefix+"Rsi",
-data.rsi!==undefined
-?"RSI "+num(data.rsi,1)
-:"RSI —"
-);
+  setText(
+    prefix+"Rsi",
+    data.rsi!==undefined
+      ?"RSI "+num(data.rsi,1)
+      :"RSI —"
+  );
 
-setText(
-prefix+"Fast",
-num(data.emaFast,2)
-);
+  setText(
+    prefix+"Fast",
+    num(data.emaFast,2)
+  );
 
-setText(
-prefix+"Slow",
-num(data.emaSlow,2)
-);
+  setText(
+    prefix+"Slow",
+    num(data.emaSlow,2)
+  );
 
 }
 
 function formatTime(value){
 
-if(!value)return"—";
+  if(!value)return"—";
 
-const s=String(value);
+  const s=String(value);
 
-if(s.length>=16){
+  if(s.length>=16){
 
-return s
-.replace("T"," ")
-.slice(0,16);
+    return s
+      .replace("T"," ")
+      .slice(0,16);
 
-}
+  }
 
-return s;
+  return s;
 
 }
 
@@ -1406,362 +1367,369 @@ let pushBusy=false;
 
 function showPushStatus(message,ms=2400){
 
-const el=$("pushStatus");
+  const el=$("pushStatus");
 
-if(!el)return;
+  if(!el)return;
 
-el.textContent=message;
+  el.textContent=message;
 
-el.style.display="block";
+  el.style.display="block";
 
-clearTimeout(showPushStatus.timer);
+  clearTimeout(
+    showPushStatus.timer
+  );
 
-showPushStatus.timer=
-setTimeout(()=>{
+  showPushStatus.timer=
+    setTimeout(()=>{
 
-el.style.display="none";
+      el.style.display="none";
 
-},ms);
+    },ms);
 
 }
 
 function setPushButton(on,text){
 
-const btn=$("pushBtn");
+  const btn=$("pushBtn");
 
-if(!btn)return;
+  if(!btn)return;
 
-btn.className=
-"pushBtn "+(on?"on":"off");
+  btn.className=
+    "pushBtn "+(on?"on":"off");
 
-btn.textContent=
-text||
-(on?"🔔 PUSH ON":"🔔 PUSH OFF");
+  btn.textContent=
+    text||
+    (on
+      ?"🔔 PUSH ON"
+      :"🔔 PUSH OFF");
 
 }
 
 function urlBase64ToUint8Array(base64String){
 
-const padding=
-"=".repeat(
-(4-base64String.length%4)%4
-);
+  const padding=
+    "=".repeat(
+      (4-base64String.length%4)%4
+    );
 
-const base64=
-(base64String+padding)
-.replace(/-/g,"+")
-.replace(/_/g,"/");
+  const base64=
+    (base64String+padding)
+      .replace(/-/g,"+")
+      .replace(/_/g,"/");
 
-const rawData=atob(base64);
+  const rawData=
+    atob(base64);
 
-const outputArray=
-new Uint8Array(rawData.length);
+  const outputArray=
+    new Uint8Array(rawData.length);
 
-for(
-let i=0;
-i<rawData.length;
-++i
-){
+  for(
+    let i=0;
+    i<rawData.length;
+    ++i
+  ){
 
-outputArray[i]=
-rawData.charCodeAt(i);
+    outputArray[i]=
+      rawData.charCodeAt(i);
 
-}
+  }
 
-return outputArray;
+  return outputArray;
 
 }
 
 async function getPushConfig(){
 
-const response=
-await fetch(
-"/api/push-config?t="+Date.now(),
-{
-cache:"no-store",
-headers:{
-"Accept":"application/json"
-}
-}
-);
+  const response=
+    await fetch(
+      "/api/push-config?t="+Date.now(),
+      {
+        cache:"no-store",
+        headers:{
+          "Accept":
+            "application/json"
+        }
+      }
+    );
 
-if(!response.ok){
+  if(!response.ok){
 
-throw new Error(
-"Push config HTTP "+
-response.status
-);
+    throw new Error(
+      "Push config HTTP "+
+      response.status
+    );
 
-}
+  }
 
-const data=
-await response.json();
+  const data=
+    await response.json();
 
-if(!data||data.ok===false){
+  if(!data||data.ok===false){
 
-throw new Error(
-data?.error||
-"Push config unavailable"
-);
+    throw new Error(
+      data?.error||
+      "Push config unavailable"
+    );
 
-}
+  }
 
-const key=
-data.VAPID_PUBLIC_KEY||
-data.vapidPublicKey||
-data.publicKey||
-data.key;
+  const key=
+    data.VAPID_PUBLIC_KEY||
+    data.vapidPublicKey||
+    data.publicKey||
+    data.key;
 
-if(!key){
+  if(!key){
 
-throw new Error(
-"VAPID public key missing"
-);
+    throw new Error(
+      "VAPID public key missing"
+    );
 
-}
+  }
 
-return key;
+  return key;
 
 }
 
 async function subscribePush(){
 
-if(pushBusy)return;
+  if(pushBusy)return;
 
-pushBusy=true;
+  pushBusy=true;
 
-const btn=$("pushBtn");
+  const btn=$("pushBtn");
 
-if(btn)
-btn.disabled=true;
+  if(btn)
+    btn.disabled=true;
 
-try{
+  try{
 
-if(!("Notification" in window))
-throw new Error(
-"Notifications not supported"
-);
+    if(!("Notification" in window))
+      throw new Error(
+        "Notifications not supported"
+      );
 
-if(!("serviceWorker" in navigator))
-throw new Error(
-"Service Worker not supported"
-);
+    if(!("serviceWorker" in navigator))
+      throw new Error(
+        "Service Worker not supported"
+      );
 
-if(!("PushManager" in window))
-throw new Error(
-"Push not supported"
-);
+    if(!("PushManager" in window))
+      throw new Error(
+        "Push not supported"
+      );
 
-/* USE EXISTING ROOT sw.js */
+    const registration=
+      await navigator.serviceWorker.register(
+        "/sw.js"
+      );
 
-const registration=
-await navigator.serviceWorker.register(
-"/sw.js"
-);
+    await navigator.serviceWorker.ready;
 
-await navigator.serviceWorker.ready;
+    let permission=
+      Notification.permission;
 
-let permission=
-Notification.permission;
+    if(permission!=="granted"){
 
-if(permission!=="granted"){
+      permission=
+        await Notification.requestPermission();
 
-permission=
-await Notification.requestPermission();
+      if(permission!=="granted"){
 
-if(permission!=="granted"){
+        throw new Error(
+          "Notification permission denied"
+        );
 
-throw new Error(
-"Notification permission denied"
-);
+      }
 
-}
+    }
 
-}
+    const vapidPublicKey=
+      await getPushConfig();
 
-const vapidPublicKey=
-await getPushConfig();
+    let subscription=
+      await registration.pushManager
+        .getSubscription();
 
-let subscription=
-await registration.pushManager
-.getSubscription();
+    if(!subscription){
 
-if(!subscription){
+      subscription=
+        await registration.pushManager.subscribe({
 
-subscription=
-await registration.pushManager.subscribe({
+          userVisibleOnly:true,
 
-userVisibleOnly:true,
+          applicationServerKey:
+            urlBase64ToUint8Array(
+              vapidPublicKey
+            )
 
-applicationServerKey:
-urlBase64ToUint8Array(
-vapidPublicKey
-)
+        });
 
-});
+    }
 
-}
+    const response=
+      await fetch(
+        "/api/push-subscribe",
+        {
+          method:"POST",
 
-const response=
-await fetch(
-"/api/push-subscribe",
-{
-method:"POST",
-headers:{
-"Content-Type":
-"application/json",
-"Accept":
-"application/json"
-},
-body:
-JSON.stringify(subscription)
-}
-);
+          headers:{
+            "Content-Type":
+              "application/json",
 
-const result=
-await response
-.json()
-.catch(()=>({}));
+            "Accept":
+              "application/json"
+          },
 
-if(!response.ok){
+          body:
+            JSON.stringify(subscription)
+        }
+      );
 
-throw new Error(
-result?.error||
-"Push subscribe HTTP "+
-response.status
-);
+    const result=
+      await response
+        .json()
+        .catch(()=>({}));
 
-}
+    if(!response.ok){
 
-localStorage.setItem(
-"xau_push_enabled",
-"1"
-);
+      throw new Error(
+        result?.error||
+        "Push subscribe HTTP "+
+        response.status
+      );
 
-setPushButton(
-true,
-"🔔 PUSH ON"
-);
+    }
 
-showPushStatus(
-"🔔 Push Notification ON"
-);
+    localStorage.setItem(
+      "xau_push_enabled",
+      "1"
+    );
 
-}catch(error){
+    setPushButton(
+      true,
+      "🔔 PUSH ON"
+    );
 
-console.error(
-"Push error:",
-error
-);
+    showPushStatus(
+      "🔔 Push Notification ON"
+    );
 
-localStorage.removeItem(
-"xau_push_enabled"
-);
+  }catch(error){
 
-setPushButton(
-false,
-"🔔 PUSH OFF"
-);
+    console.error(
+      "Push error:",
+      error
+    );
 
-showPushStatus(
-"Push: "+
-(error?.message||"failed"),
-3500
-);
+    localStorage.removeItem(
+      "xau_push_enabled"
+    );
 
-}finally{
+    setPushButton(
+      false,
+      "🔔 PUSH OFF"
+    );
 
-pushBusy=false;
+    showPushStatus(
+      "Push: "+
+      (error?.message||"failed"),
+      3500
+    );
 
-if(btn)
-btn.disabled=false;
+  }finally{
 
-}
+    pushBusy=false;
+
+    if(btn)
+      btn.disabled=false;
+
+  }
 
 }
 
 async function checkPushStatus(){
 
-try{
+  try{
 
-if(
-!("serviceWorker" in navigator)||
-!("PushManager" in window)
-){
+    if(
+      !("serviceWorker" in navigator)||
+      !("PushManager" in window)
+    ){
 
-setPushButton(
-false,
-"🔔 PUSH"
-);
+      setPushButton(
+        false,
+        "🔔 PUSH"
+      );
 
-return;
+      return;
 
-}
+    }
 
-const registration=
-await navigator.serviceWorker
-.getRegistration("/sw.js")||
-await navigator.serviceWorker
-.getRegistration();
+    const registration=
+      await navigator.serviceWorker
+        .getRegistration("/sw.js")||
+      await navigator.serviceWorker
+        .getRegistration();
 
-if(!registration){
+    if(!registration){
 
-setPushButton(
-false,
-"🔔 PUSH OFF"
-);
+      setPushButton(
+        false,
+        "🔔 PUSH OFF"
+      );
 
-return;
+      return;
 
-}
+    }
 
-const subscription=
-await registration.pushManager
-.getSubscription();
+    const subscription=
+      await registration.pushManager
+        .getSubscription();
 
-if(
-subscription&&
-Notification.permission==="granted"
-){
+    if(
+      subscription&&
+      Notification.permission==="granted"
+    ){
 
-setPushButton(
-true,
-"🔔 PUSH ON"
-);
+      setPushButton(
+        true,
+        "🔔 PUSH ON"
+      );
 
-localStorage.setItem(
-"xau_push_enabled",
-"1"
-);
+      localStorage.setItem(
+        "xau_push_enabled",
+        "1"
+      );
 
-}else{
+    }else{
 
-setPushButton(
-false,
-"🔔 PUSH OFF"
-);
+      setPushButton(
+        false,
+        "🔔 PUSH OFF"
+      );
 
-}
+    }
 
-}catch(error){
+  }catch(error){
 
-console.log(
-"Push status:",
-error
-);
+    console.log(
+      "Push status:",
+      error
+    );
 
-setPushButton(
-false,
-"🔔 PUSH OFF"
-);
+    setPushButton(
+      false,
+      "🔔 PUSH OFF"
+    );
 
-}
+  }
 
 }
 
 $("pushBtn")?.addEventListener(
-"click",
-subscribePush
+  "click",
+  subscribePush
 );
 
 checkPushStatus();
@@ -1775,423 +1743,419 @@ let firstApiLoad=true;
 
 async function loadData(){
 
-try{
-
-const response=
-await fetch(
-"/api/scalp?t="+Date.now(),
-{
-cache:"no-store",
-headers:{
-"Accept":"application/json"
-}
-}
-);
-
-if(!response.ok){
-
-throw new Error(
-"HTTP "+response.status
-);
-
-}
-
-const data=
-await response.json();
-
-if(!data||data.ok!==true){
-
-throw new Error(
-data?.error||
-"Invalid API response"
-);
-
-}
-
-if($("loading"))
-$("loading").style.display="none";
-
-if($("statusDot"))
-$("statusDot")
-.classList.add("live");
-
-setText(
-"apiStatus",
-"LIVE"
-);
-
-/* PRICE */
-
-const livePrice=
-data.livePrice?.price??
-data.price;
-
-setText(
-"price",
-num(livePrice,2)
-);
-
-setText(
-"priceSource",
-data.livePrice?.source||
-"TWELVE DATA"
-);
-
-/* SIGNAL */
-
-const scalp=
-data.scalpSignal??
-data.signal?.signal??
-data.signal;
-
-applySignal(scalp);
-
-const reason=
-data.signal?.reason??
-data.signal?.message??
-data.marketFilter?.note||
-"";
-
-setText(
-"signalReason",
-reason
-);
-
-/* TIMEFRAMES */
-
-renderTF(
-"m5",
-data.m5
-);
-
-renderTF(
-"m15",
-data.m15
-);
-
-renderTF(
-"h1",
-data.h1
-);
-
-/* LEVELS */
-
-const sr=
-data.supportResistance||{};
-
-setText(
-"support",
-num(
-sr.support?.price??
-sr.support??
-data.h1?.support?.price,
-2
-)
-);
-
-setText(
-"resistance",
-num(
-sr.resistance?.price??
-sr.resistance??
-data.h1?.resistance?.price,
-2
-)
-);
-
-setText(
-"atr",
-num(
-data.m5?.atr,
-2
-)
-);
-
-setText(
-"h1Context",
-data.marketFilter?.h1Context??
-data.h1?.direction||
-"—"
-);
-
-/* FILTERS */
-
-applyBadge(
-"marketFilter",
-data.marketFilter?.status||
-data.marketFilter?.filter||
-"WAIT"
-);
-
-applyBadge(
-"confluence",
-data.confluence?.quality||
-"LOW"
-);
-
-applyBadge(
-"entryQuality",
-data.entryQuality?.quality||
-"WAIT"
-);
-
-/* PLAN */
-
-const plan=
-data.tradePlan||{};
-
-const planDirection=
-plan.direction||
-plan.signal||
-scalp||
-"WAIT";
-
-applyBadge(
-"planStatus",
-planDirection
-);
-
-setText(
-"entry",
-num(
-plan.entry??
-plan.entryPrice,
-2
-)
-);
-
-setText(
-"stop",
-num(
-plan.stop??
-plan.stopLoss??
-plan.sl,
-2
-)
-);
-
-setText(
-"tp1",
-num(
-plan.tp1??
-plan.takeProfit1,
-2
-)
-);
-
-setText(
-"tp2",
-num(
-plan.tp2??
-plan.takeProfit2,
-2
-)
-);
-
-/* NEWS */
-
-const news=
-data.newsFilter||{};
-
-setText(
-"newsStatus",
-news.status||"—"
-);
-
-setText(
-"newsLevel",
-news.level||"—"
-);
-
-setText(
-"newsScore",
-news.score!==undefined
-?news.score
-:"—"
-);
-
-if($("newsStatus")){
-
-const ns=
-String(news.status||"")
-.toUpperCase();
-
-$("newsStatus").className=
-ns.includes("RISK")
-?"red":
-ns.includes("WATCH")
-?"yellow":
-"green";
-
-}
-
-/* LIQUIDITY */
-
-const liq=
-data.liquidity||{};
-
-setText(
-"liqAbove",
-num(
-liq.above?.h1??
-liq.aboveH1??
-liq.above,
-2
-)
-);
-
-setText(
-"liqBelow",
-num(
-liq.below?.h1??
-liq.belowH1??
-liq.below,
-2
-)
-);
-
-setText(
-"lastCandle",
-formatTime(
-data.m5?.lastCandle??
-data.m15?.lastCandle
-)
-);
-
-/* FOOTER */
-
-const cache=
-data.cache||{};
-
-let cacheText="LIVE";
-
-if(cache.m5?.source){
-
-cacheText=
-"CACHE • M5 "+
-String(
-cache.m5.source
-).toUpperCase();
-
-}
-
-setText(
-"footer",
-"XAUUSDSNIPER • "+
-cacheText
-);
-
-/*
-  NEW SIGNAL DETECTION
-*/
-
-const currentSignal=
-String(
-scalp||"WAIT"
-).toUpperCase();
-
-const confirmed=
-data.signal?.confirmed===true||
-data.signal?.confirmed==="true";
-
-const isTradeSignal=
-currentSignal==="BUY"||
-currentSignal==="SELL";
-
-if(firstApiLoad){
-
-previousScalpSignal=
-currentSignal;
-
-firstApiLoad=false;
-
-}else if(
-isTradeSignal&&
-confirmed&&
-currentSignal!==previousScalpSignal
-){
-
-try{
-
-await fetch(
-"/api/push-check?t="+Date.now(),
-{
-method:"GET",
-cache:"no-store"
-}
-);
-
-}catch(pushError){
-
-console.log(
-"Push check:",
-pushError
-);
-
-}
-
-previousScalpSignal=
-currentSignal;
-
-}else{
-
-previousScalpSignal=
-currentSignal;
-
-}
-
-}catch(error){
-
-console.error(error);
-
-if($("loading"))
-$("loading").style.display="none";
-
-if($("statusDot"))
-$("statusDot")
-.classList.remove("live");
-
-setText(
-"apiStatus",
-"ERROR"
-);
-
-setText(
-"signalReason",
-error?.message||
-"API connection error"
-);
+  try{
+
+    const response=
+      await fetch(
+        "/api/scalp?t="+Date.now(),
+        {
+          cache:"no-store",
+          headers:{
+            "Accept":
+              "application/json"
+          }
+        }
+      );
+
+    if(!response.ok){
+
+      throw new Error(
+        "HTTP "+response.status
+      );
+
+    }
+
+    const data=
+      await response.json();
+
+    if(!data||data.ok!==true){
+
+      throw new Error(
+        data?.error||
+        "Invalid API response"
+      );
+
+    }
+
+    if($("statusDot"))
+      $("statusDot")
+        .classList.add("live");
+
+    setText(
+      "apiStatus",
+      "LIVE"
+    );
+
+    /* PRICE */
+
+    const livePrice=
+      data.livePrice?.price??
+      data.price;
+
+    setText(
+      "price",
+      num(livePrice,2)
+    );
+
+    setText(
+      "priceSource",
+      data.livePrice?.source||
+      "TWELVE DATA"
+    );
+
+    /* SIGNAL */
+
+    const scalp=
+      data.scalpSignal??
+      data.signal?.signal??
+      data.signal;
+
+    applySignal(scalp);
+
+    const reason=
+      data.signal?.reason??
+      data.signal?.message??
+      data.marketFilter?.note||
+      "Waiting for M5 + M15 alignment";
+
+    setText(
+      "signalReason",
+      reason
+    );
+
+    /* TIMEFRAMES */
+
+    renderTF(
+      "m5",
+      data.m5
+    );
+
+    renderTF(
+      "m15",
+      data.m15
+    );
+
+    renderTF(
+      "h1",
+      data.h1
+    );
+
+    /* LEVELS */
+
+    const sr=
+      data.supportResistance||{};
+
+    setText(
+      "support",
+      num(
+        sr.support?.price??
+        sr.support??
+        data.h1?.support?.price,
+        2
+      )
+    );
+
+    setText(
+      "resistance",
+      num(
+        sr.resistance?.price??
+        sr.resistance??
+        data.h1?.resistance?.price,
+        2
+      )
+    );
+
+    setText(
+      "atr",
+      num(
+        data.m5?.atr,
+        2
+      )
+    );
+
+    setText(
+      "h1Context",
+      data.marketFilter?.h1Context??
+      data.h1?.direction||
+      "—"
+    );
+
+    /* FILTERS */
+
+    applyBadge(
+      "marketFilter",
+      data.marketFilter?.status||
+      data.marketFilter?.filter||
+      "WAIT"
+    );
+
+    applyBadge(
+      "confluence",
+      data.confluence?.quality||
+      "LOW"
+    );
+
+    applyBadge(
+      "entryQuality",
+      data.entryQuality?.quality||
+      "WAIT"
+    );
+
+    /* PLAN */
+
+    const plan=
+      data.tradePlan||{};
+
+    const planDirection=
+      plan.direction||
+      plan.signal||
+      scalp||
+      "WAIT";
+
+    applyBadge(
+      "planStatus",
+      planDirection
+    );
+
+    setText(
+      "entry",
+      num(
+        plan.entry??
+        plan.entryPrice,
+        2
+      )
+    );
+
+    setText(
+      "stop",
+      num(
+        plan.stop??
+        plan.stopLoss??
+        plan.sl,
+        2
+      )
+    );
+
+    setText(
+      "tp1",
+      num(
+        plan.tp1??
+        plan.takeProfit1,
+        2
+      )
+    );
+
+    setText(
+      "tp2",
+      num(
+        plan.tp2??
+        plan.takeProfit2,
+        2
+      )
+    );
+
+    /* NEWS */
+
+    const news=
+      data.newsFilter||{};
+
+    setText(
+      "newsStatus",
+      news.status||"—"
+    );
+
+    setText(
+      "newsLevel",
+      news.level||"—"
+    );
+
+    setText(
+      "newsScore",
+      news.score!==undefined
+        ?news.score
+        :"—"
+    );
+
+    if($("newsStatus")){
+
+      const ns=
+        String(news.status||"")
+          .toUpperCase();
+
+      $("newsStatus").className=
+        ns.includes("RISK")
+          ?"red"
+          :ns.includes("WATCH")
+            ?"yellow"
+            :"green";
+
+    }
+
+    /* LIQUIDITY */
+
+    const liq=
+      data.liquidity||{};
+
+    setText(
+      "liqAbove",
+      num(
+        liq.above?.h1??
+        liq.aboveH1??
+        liq.above,
+        2
+      )
+    );
+
+    setText(
+      "liqBelow",
+      num(
+        liq.below?.h1??
+        liq.belowH1??
+        liq.below,
+        2
+      )
+    );
+
+    setText(
+      "lastCandle",
+      formatTime(
+        data.m5?.lastCandle??
+        data.m15?.lastCandle
+      )
+    );
+
+    /* FOOTER */
+
+    const cache=
+      data.cache||{};
+
+    let cacheText="LIVE";
+
+    if(cache.m5?.source){
+
+      cacheText=
+        "CACHE • M5 "+
+        String(
+          cache.m5.source
+        ).toUpperCase();
+
+    }
+
+    setText(
+      "footer",
+      "XAUUSDSNIPER • "+
+      cacheText
+    );
+
+    /* NEW SIGNAL */
+
+    const currentSignal=
+      String(
+        scalp||"WAIT"
+      ).toUpperCase();
+
+    const confirmed=
+      data.signal?.confirmed===true||
+      data.signal?.confirmed==="true";
+
+    const isTradeSignal=
+      currentSignal==="BUY"||
+      currentSignal==="SELL";
+
+    if(firstApiLoad){
+
+      previousScalpSignal=
+        currentSignal;
+
+      firstApiLoad=false;
+
+    }else if(
+      isTradeSignal&&
+      confirmed&&
+      currentSignal!==previousScalpSignal
+    ){
+
+      try{
+
+        await fetch(
+          "/api/push-check?t="+Date.now(),
+          {
+            method:"GET",
+            cache:"no-store"
+          }
+        );
+
+      }catch(pushError){
+
+        console.log(
+          "Push check:",
+          pushError
+        );
+
+      }
+
+      previousScalpSignal=
+        currentSignal;
+
+    }else{
+
+      previousScalpSignal=
+        currentSignal;
+
+    }
+
+  }catch(error){
+
+    console.error(
+      "API Error:",
+      error
+    );
+
+    if($("statusDot"))
+      $("statusDot")
+        .classList.remove("live");
+
+    setText(
+      "apiStatus",
+      "ERROR"
+    );
+
+    setText(
+      "signalReason",
+      error?.message||
+      "API connection error"
+    );
+
+  }
 
 }
 
-}
-
-/* INITIAL */
+/* START */
 
 loadData();
 
-/* REFRESH */
+/* REFRESH EVERY 60 SEC */
 
 setInterval(
-loadData,
-60000
+  loadData,
+  60000
 );
 
-/* RETURN TO APP */
+/* REFRESH WHEN RETURN TO APP */
 
 document.addEventListener(
-"visibilitychange",
-()=>{
+  "visibilitychange",
+  ()=>{
 
-if(!document.hidden){
+    if(!document.hidden){
 
-checkPushStatus();
+      checkPushStatus();
 
-loadData();
+      loadData();
 
-}
+    }
 
-}
+  }
 );
 
 </script>
