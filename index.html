@@ -3,397 +3,1810 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#080b12">
+<meta name="theme-color" content="#f4f7fb">
 <title>XAUUSDSNIPER</title>
 
 <style>
-*{box-sizing:border-box}
-html,body{margin:0;padding:0;background:#070a10;color:#edf2f7;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif}
-body{min-height:100vh}
-:root{
---bg:#070a10;--card:rgba(17,22,32,.88);--line:rgba(255,255,255,.08);
---text:#edf2f7;--muted:#8994a5;--green:#35e59a;--red:#ff5573;
---yellow:#ffd45a;--blue:#5da9ff;--purple:#a879ff
+*{
+  box-sizing:border-box;
 }
-.app{width:100%;max-width:760px;margin:auto;padding:12px 12px 24px}
-.header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;gap:8px}
-.brand{display:flex;align-items:center;gap:9px;min-width:0}
-.logo{width:34px;height:34px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:14px;background:linear-gradient(135deg,#5d7cff,#a855f7);box-shadow:0 0 22px rgba(99,102,241,.35)}
-.title{font-size:16px;font-weight:850;letter-spacing:.4px}
-.subtitle{font-size:10px;color:var(--muted);margin-top:1px}
-.headerRight{display:flex;align-items:center;gap:6px}
-.status{display:flex;align-items:center;gap:5px;padding:6px 9px;border:1px solid var(--line);background:rgba(255,255,255,.035);border-radius:20px;font-size:10px;color:var(--muted)}
-.dot{width:7px;height:7px;border-radius:50%;background:#555}
-.dot.live{background:var(--green);box-shadow:0 0 9px var(--green)}
+
+html,
+body{
+  margin:0;
+  padding:0;
+  min-height:100%;
+  background:#f4f7fb;
+  color:#172033;
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
+}
+
+body{
+  min-height:100vh;
+  overflow-x:hidden;
+}
+
+:root{
+  --bg:#f4f7fb;
+  --card:#ffffff;
+  --card-soft:#f8faff;
+  --line:#dfe6f0;
+  --text:#172033;
+  --muted:#718096;
+
+  --green:#079669;
+  --green-bg:#eaf9f3;
+
+  --red:#dc3e5d;
+  --red-bg:#fff0f3;
+
+  --yellow:#b98200;
+  --yellow-bg:#fff8df;
+
+  --blue:#2777d6;
+  --blue-bg:#edf5ff;
+
+  --purple:#7654c7;
+  --purple-bg:#f3efff;
+
+  --shadow:0 5px 20px rgba(36,55,80,.07);
+}
+
+.app{
+  width:100%;
+  max-width:1100px;
+  margin:0 auto;
+  padding:
+    clamp(8px,1.5vw,18px)
+    clamp(8px,2vw,24px)
+    clamp(14px,2vw,25px);
+}
+
+/* =========================
+   HEADER
+========================= */
+
+.header{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:10px;
+  margin-bottom:clamp(7px,1vw,12px);
+}
+
+.brand{
+  display:flex;
+  align-items:center;
+  gap:9px;
+  min-width:0;
+}
+
+.logo{
+  width:clamp(34px,4vw,46px);
+  height:clamp(34px,4vw,46px);
+  border-radius:clamp(10px,1vw,14px);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  flex-shrink:0;
+
+  color:#fff;
+  font-weight:950;
+  font-size:clamp(12px,1.5vw,16px);
+
+  background:linear-gradient(
+    135deg,
+    #4d73e8,
+    #7d55ce
+  );
+
+  box-shadow:
+    0 6px 18px rgba(77,115,232,.20);
+}
+
+.title{
+  font-size:clamp(14px,1.8vw,20px);
+  font-weight:950;
+  letter-spacing:.3px;
+  white-space:nowrap;
+}
+
+.subtitle{
+  margin-top:2px;
+  font-size:clamp(8px,1vw,11px);
+  color:var(--muted);
+  font-weight:700;
+}
+
+.headerRight{
+  display:flex;
+  align-items:center;
+  gap:6px;
+}
+
+/* API STATUS */
+
+.status{
+  display:flex;
+  align-items:center;
+  gap:5px;
+
+  padding:6px 9px;
+
+  background:#fff;
+  border:1px solid var(--line);
+  border-radius:20px;
+
+  color:var(--muted);
+  font-size:clamp(8px,.9vw,10px);
+  font-weight:800;
+
+  box-shadow:var(--shadow);
+}
+
+.dot{
+  width:7px;
+  height:7px;
+  border-radius:50%;
+  background:#aab3c0;
+  flex-shrink:0;
+}
+
+.dot.live{
+  background:var(--green);
+  box-shadow:0 0 8px rgba(7,150,105,.35);
+}
+
+/* PUSH */
 
 .pushBtn{
-border:1px solid rgba(93,169,255,.25);
-background:rgba(93,169,255,.10);
-color:var(--blue);
-border-radius:20px;
-padding:7px 10px;
-font-size:10px;
-font-weight:900;
-white-space:nowrap;
-cursor:pointer;
--webkit-tap-highlight-color:transparent
+  border:1px solid #c9d7eb;
+  background:#fff;
+
+  color:#64748b;
+
+  border-radius:20px;
+
+  padding:
+    clamp(6px,.8vw,8px)
+    clamp(8px,1vw,11px);
+
+  font-size:clamp(8px,.9vw,10px);
+  font-weight:950;
+
+  white-space:nowrap;
+  cursor:pointer;
+
+  box-shadow:var(--shadow);
+
+  -webkit-tap-highlight-color:transparent;
 }
-.pushBtn.on{color:var(--green);border-color:rgba(53,229,154,.3);background:rgba(53,229,154,.10)}
-.pushBtn.off{color:var(--muted)}
-.pushBtn:disabled{opacity:.55}
 
-.card{background:linear-gradient(145deg,rgba(20,26,38,.95),rgba(12,16,24,.95));border:1px solid var(--line);border-radius:17px;box-shadow:0 10px 35px rgba(0,0,0,.18)}
-.hero{display:grid;grid-template-columns:1fr 1.15fr;gap:8px;margin-bottom:8px}
-.priceCard{padding:13px}
-.label{color:var(--muted);font-size:9px;text-transform:uppercase;letter-spacing:1px;font-weight:700}
-.price{margin-top:4px;font-size:25px;line-height:1;font-weight:900;letter-spacing:-.8px}
-.priceUnit{font-size:9px;color:var(--muted);margin-top:6px}
-.signalCard{position:relative;overflow:hidden;padding:13px}
-.signalCard:after{content:"";position:absolute;width:100px;height:100px;right:-40px;top:-50px;border-radius:50%;background:rgba(93,169,255,.12);filter:blur(10px)}
-.signal{margin-top:3px;font-size:25px;line-height:1;font-weight:950;letter-spacing:.5px}
-.signal.buy{color:var(--green);text-shadow:0 0 18px rgba(53,229,154,.3)}
-.signal.sell{color:var(--red);text-shadow:0 0 18px rgba(255,85,115,.3)}
-.signal.wait{color:var(--yellow)}
-.reason{margin-top:7px;font-size:10px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pushBtn.on{
+  color:var(--green);
+  border-color:#a6dbc9;
+  background:var(--green-bg);
+}
 
-.tfGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-bottom:8px}
-.tf{padding:10px;min-width:0}
-.tfTop{display:flex;align-items:center;justify-content:space-between}
-.tfName{font-size:11px;font-weight:900}
-.tfDir{font-size:9px;font-weight:900;padding:4px 6px;border-radius:7px;background:rgba(255,255,255,.055)}
-.tfDir.buy{color:var(--green)}.tfDir.sell{color:var(--red)}.tfDir.neutral{color:var(--yellow)}
-.tfMain{margin-top:8px;display:flex;justify-content:space-between;align-items:end}
-.tfValue{font-size:13px;font-weight:800}.tfRsi{font-size:10px;color:var(--muted)}
-.tfMeta{display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-top:7px}
-.mini{background:rgba(255,255,255,.035);border-radius:7px;padding:5px 6px}
-.mini span{display:block;color:var(--muted);font-size:8px}.mini b{display:block;font-size:9px;margin-top:2px}
+.pushBtn.off{
+  color:#64748b;
+}
 
-.quick{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-bottom:8px}
-.q{padding:9px 7px;text-align:center}.q .qLabel{color:var(--muted);font-size:8px;text-transform:uppercase;letter-spacing:.5px}
-.q .qValue{margin-top:4px;font-size:11px;font-weight:900}
+.pushBtn:disabled{
+  opacity:.55;
+}
 
-.statusGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-bottom:8px}
-.badgeCard{padding:9px}.badgeTitle{font-size:8px;color:var(--muted);text-transform:uppercase;letter-spacing:.7px}
-.badge{display:inline-block;margin-top:5px;padding:4px 7px;border-radius:7px;font-size:9px;font-weight:900;background:rgba(255,255,255,.06)}
-.green{color:var(--green)}.red{color:var(--red)}.yellow{color:var(--yellow)}.blue{color:var(--blue)}.purple{color:var(--purple)}
+/* =========================
+   COMMON CARD
+========================= */
 
-.plan{padding:11px;margin-bottom:8px}.planHead{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
-.sectionTitle{font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:.8px}
-.planStatus{font-size:9px;font-weight:900;padding:4px 7px;border-radius:7px;background:rgba(255,255,255,.05)}
-.planGrid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
-.planItem{padding:7px;border-radius:8px;background:rgba(255,255,255,.035)}
-.planItem span{display:block;color:var(--muted);font-size:8px}.planItem b{display:block;font-size:10px;margin-top:3px}
+.card{
+  background:var(--card);
+  border:1px solid var(--line);
+  border-radius:clamp(11px,1.5vw,17px);
 
-.lower{display:grid;grid-template-columns:1fr 1fr;gap:7px}
-.info{padding:10px}.infoRow{display:flex;justify-content:space-between;gap:8px;padding:5px 0;border-bottom:1px solid rgba(255,255,255,.045)}
-.infoRow:last-child{border-bottom:0}.infoRow span{color:var(--muted);font-size:9px}.infoRow b{font-size:9px;text-align:right}
-.footer{text-align:center;color:#596474;font-size:8px;padding:10px 0 2px}
+  box-shadow:var(--shadow);
+}
+
+/* =========================
+   HERO
+========================= */
+
+.hero{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) minmax(0,1.15fr);
+
+  gap:clamp(5px,1vw,10px);
+
+  margin-bottom:clamp(6px,1vw,10px);
+}
+
+.priceCard{
+  padding:clamp(10px,1.5vw,16px);
+}
+
+.label{
+  color:var(--muted);
+
+  font-size:clamp(7px,.85vw,10px);
+
+  text-transform:uppercase;
+  letter-spacing:1px;
+  font-weight:850;
+}
+
+.price{
+  margin-top:5px;
+
+  font-size:
+    clamp(22px,4vw,38px);
+
+  line-height:1;
+
+  font-weight:950;
+  letter-spacing:-1px;
+
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+
+.priceUnit{
+  margin-top:6px;
+
+  color:var(--muted);
+
+  font-size:clamp(7px,.85vw,10px);
+  font-weight:700;
+}
+
+.signalCard{
+  position:relative;
+  overflow:hidden;
+
+  padding:clamp(10px,1.5vw,16px);
+}
+
+.signalCard:after{
+  content:"";
+
+  position:absolute;
+
+  width:clamp(70px,12vw,120px);
+  height:clamp(70px,12vw,120px);
+
+  right:-45px;
+  top:-50px;
+
+  border-radius:50%;
+
+  background:rgba(39,119,214,.06);
+}
+
+.signal{
+  margin-top:5px;
+
+  font-size:
+    clamp(22px,4vw,38px);
+
+  line-height:1;
+
+  font-weight:950;
+  letter-spacing:.4px;
+}
+
+.signal.buy{
+  color:var(--green);
+}
+
+.signal.sell{
+  color:var(--red);
+}
+
+.signal.wait{
+  color:var(--yellow);
+}
+
+.reason{
+  margin-top:7px;
+
+  font-size:clamp(8px,1vw,11px);
+
+  color:var(--muted);
+
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+/* =========================
+   TIMEFRAMES
+========================= */
+
+.tfGrid{
+  display:grid;
+
+  grid-template-columns:
+    repeat(3,minmax(0,1fr));
+
+  gap:clamp(5px,1vw,9px);
+
+  margin-bottom:clamp(6px,1vw,10px);
+}
+
+.tf{
+  padding:clamp(8px,1.2vw,13px);
+  min-width:0;
+}
+
+.tfTop{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:5px;
+}
+
+.tfName{
+  font-size:clamp(9px,1.2vw,13px);
+  font-weight:950;
+}
+
+.tfDir{
+  font-size:clamp(7px,.9vw,10px);
+
+  font-weight:950;
+
+  padding:4px 6px;
+
+  border-radius:7px;
+
+  background:#f1f4f8;
+}
+
+.tfDir.buy{
+  color:var(--green);
+  background:var(--green-bg);
+}
+
+.tfDir.sell{
+  color:var(--red);
+  background:var(--red-bg);
+}
+
+.tfDir.neutral{
+  color:var(--yellow);
+  background:var(--yellow-bg);
+}
+
+.tfMain{
+  margin-top:8px;
+
+  display:flex;
+  justify-content:space-between;
+  align-items:end;
+
+  gap:5px;
+}
+
+.tfValue{
+  font-size:clamp(10px,1.4vw,15px);
+  font-weight:900;
+}
+
+.tfRsi{
+  font-size:clamp(7px,1vw,10px);
+  color:var(--muted);
+  white-space:nowrap;
+}
+
+.tfMeta{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+
+  gap:4px;
+
+  margin-top:7px;
+}
+
+.mini{
+  background:var(--card-soft);
+
+  border:1px solid #edf0f5;
+
+  border-radius:7px;
+
+  padding:5px 6px;
+
+  min-width:0;
+}
+
+.mini span{
+  display:block;
+
+  color:var(--muted);
+
+  font-size:clamp(6px,.75vw,8px);
+
+  font-weight:750;
+}
+
+.mini b{
+  display:block;
+
+  margin-top:2px;
+
+  font-size:clamp(8px,1vw,10px);
+
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+
+/* =========================
+   QUICK LEVELS
+========================= */
+
+.quick{
+  display:grid;
+
+  grid-template-columns:
+    repeat(4,minmax(0,1fr));
+
+  gap:clamp(5px,1vw,9px);
+
+  margin-bottom:clamp(6px,1vw,10px);
+}
+
+.q{
+  padding:clamp(7px,1.1vw,11px) 6px;
+
+  text-align:center;
+
+  min-width:0;
+}
+
+.q .qLabel{
+  color:var(--muted);
+
+  font-size:clamp(6px,.8vw,9px);
+
+  text-transform:uppercase;
+
+  letter-spacing:.5px;
+
+  font-weight:850;
+}
+
+.q .qValue{
+  margin-top:4px;
+
+  font-size:clamp(9px,1.3vw,13px);
+
+  font-weight:950;
+
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+
+/* =========================
+   STATUS
+========================= */
+
+.statusGrid{
+  display:grid;
+
+  grid-template-columns:
+    repeat(3,minmax(0,1fr));
+
+  gap:clamp(5px,1vw,9px);
+
+  margin-bottom:clamp(6px,1vw,10px);
+}
+
+.badgeCard{
+  padding:clamp(7px,1.1vw,11px);
+
+  min-width:0;
+}
+
+.badgeTitle{
+  font-size:clamp(6px,.8vw,9px);
+
+  color:var(--muted);
+
+  text-transform:uppercase;
+
+  letter-spacing:.7px;
+
+  font-weight:850;
+}
+
+.badge{
+  display:inline-block;
+
+  margin-top:5px;
+
+  padding:4px 7px;
+
+  border-radius:7px;
+
+  font-size:clamp(7px,.9vw,10px);
+
+  font-weight:950;
+
+  background:#f2f4f8;
+
+  max-width:100%;
+
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+
+.green{
+  color:var(--green);
+}
+
+.red{
+  color:var(--red);
+}
+
+.yellow{
+  color:var(--yellow);
+}
+
+.blue{
+  color:var(--blue);
+}
+
+.purple{
+  color:var(--purple);
+}
+
+/* =========================
+   TRADE PLAN
+========================= */
+
+.plan{
+  padding:clamp(8px,1.3vw,13px);
+
+  margin-bottom:clamp(6px,1vw,10px);
+}
+
+.planHead{
+  display:flex;
+
+  justify-content:space-between;
+  align-items:center;
+
+  margin-bottom:8px;
+}
+
+.sectionTitle{
+  font-size:clamp(8px,1vw,11px);
+
+  font-weight:950;
+
+  text-transform:uppercase;
+
+  letter-spacing:.8px;
+}
+
+.planStatus{
+  font-size:clamp(7px,.9vw,10px);
+
+  font-weight:950;
+
+  padding:4px 7px;
+
+  border-radius:7px;
+
+  background:#f2f4f8;
+}
+
+.planGrid{
+  display:grid;
+
+  grid-template-columns:
+    repeat(4,minmax(0,1fr));
+
+  gap:clamp(4px,.8vw,7px);
+}
+
+.planItem{
+  padding:clamp(6px,1vw,9px);
+
+  border-radius:8px;
+
+  background:var(--card-soft);
+
+  border:1px solid #edf0f5;
+
+  min-width:0;
+}
+
+.planItem span{
+  display:block;
+
+  color:var(--muted);
+
+  font-size:clamp(6px,.8vw,9px);
+
+  font-weight:750;
+}
+
+.planItem b{
+  display:block;
+
+  margin-top:3px;
+
+  font-size:clamp(8px,1.1vw,11px);
+
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+
+/* =========================
+   LOWER
+========================= */
+
+.lower{
+  display:grid;
+
+  grid-template-columns:
+    repeat(2,minmax(0,1fr));
+
+  gap:clamp(5px,1vw,9px);
+}
+
+.info{
+  padding:clamp(8px,1.2vw,12px);
+
+  min-width:0;
+}
+
+.infoRow{
+  display:flex;
+
+  justify-content:space-between;
+
+  align-items:center;
+
+  gap:8px;
+
+  padding:5px 0;
+
+  border-bottom:1px solid #edf0f4;
+}
+
+.infoRow:last-child{
+  border-bottom:0;
+}
+
+.infoRow span{
+  color:var(--muted);
+
+  font-size:clamp(7px,.9vw,10px);
+
+  font-weight:700;
+}
+
+.infoRow b{
+  font-size:clamp(7px,.9vw,10px);
+
+  font-weight:900;
+
+  text-align:right;
+
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+
+.footer{
+  text-align:center;
+
+  color:#8b97a8;
+
+  font-size:clamp(6px,.8vw,9px);
+
+  padding:9px 0 2px;
+}
+
+/* =========================
+   PUSH TOAST
+========================= */
 
 .pushStatus{
-position:fixed;
-left:50%;
-bottom:15px;
-transform:translateX(-50%);
-z-index:90;
-display:none;
-padding:9px 13px;
-border-radius:12px;
-background:rgba(20,26,38,.96);
-border:1px solid var(--line);
-box-shadow:0 10px 30px rgba(0,0,0,.35);
-font-size:10px;
-font-weight:800;
-white-space:nowrap
+  position:fixed;
+
+  left:50%;
+  bottom:15px;
+
+  transform:translateX(-50%);
+
+  z-index:90;
+
+  display:none;
+
+  padding:9px 13px;
+
+  border-radius:12px;
+
+  background:#172033;
+  color:#fff;
+
+  box-shadow:
+    0 10px 30px rgba(20,30,45,.20);
+
+  font-size:10px;
+  font-weight:850;
+
+  white-space:nowrap;
 }
 
-.loading{position:fixed;inset:0;background:#070a10;display:flex;align-items:center;justify-content:center;z-index:99}
-.loadingBox{text-align:center}
-.spinner{width:27px;height:27px;border:3px solid rgba(255,255,255,.1);border-top-color:#6c7cff;border-radius:50%;animation:spin .8s linear infinite;margin:auto auto 10px}
-@keyframes spin{to{transform:rotate(360deg)}}
+/* =========================
+   PHONE
+========================= */
+
+@media(max-width:600px){
+
+  .app{
+    max-width:none;
+  }
+
+  .header{
+    margin-bottom:7px;
+  }
+
+  .status{
+    padding:6px 8px;
+  }
+
+}
+
+/* =========================
+   SMALL PHONE
+========================= */
 
 @media(max-width:430px){
-.app{padding:10px 9px 20px}
-.price{font-size:23px}.signal{font-size:23px}
-.tf{padding:9px 7px}.tfMeta{gap:3px}.quick{gap:5px}.statusGrid{gap:5px}
-.planGrid{gap:4px}.lower{gap:5px}
-.status{padding:6px 7px}
-.pushBtn{padding:7px 8px}
-.title{font-size:15px}
+
+  .app{
+    padding:
+      8px
+      7px
+      15px;
+  }
+
+  .header{
+    gap:5px;
+  }
+
+  .brand{
+    gap:7px;
+  }
+
+  .headerRight{
+    gap:4px;
+  }
+
+  .title{
+    font-size:14px;
+  }
+
+  .subtitle{
+    font-size:8px;
+  }
+
+  .status{
+    padding:5px 7px;
+  }
+
+  .pushBtn{
+    padding:6px 7px;
+    font-size:8px;
+  }
+
+  .hero{
+    gap:5px;
+  }
+
+  .priceCard,
+  .signalCard{
+    padding:10px;
+  }
+
+  .price{
+    font-size:22px;
+  }
+
+  .signal{
+    font-size:22px;
+  }
+
+  .reason{
+    font-size:8px;
+  }
+
+  .tf{
+    padding:8px 7px;
+  }
+
+  .tfMeta{
+    gap:3px;
+  }
+
+  .mini{
+    padding:4px 5px;
+  }
+
+  .quick{
+    gap:4px;
+  }
+
+  .statusGrid{
+    gap:4px;
+  }
+
+  .badgeCard{
+    padding:7px;
+  }
+
+  .planGrid{
+    gap:4px;
+  }
+
+  .lower{
+    gap:4px;
+  }
+
 }
+
+/* =========================
+   VERY SMALL PHONE
+========================= */
+
 @media(max-width:350px){
-.quick .q:nth-child(4){display:none}.quick{grid-template-columns:repeat(3,1fr)}
-.planGrid{grid-template-columns:repeat(2,1fr)}
-.status{display:none}
+
+  .status{
+    display:none;
+  }
+
+  .title{
+    font-size:13px;
+  }
+
+  .subtitle{
+    font-size:7px;
+  }
+
+  .pushBtn{
+    font-size:8px;
+  }
+
+  .price{
+    font-size:20px;
+  }
+
+  .signal{
+    font-size:20px;
+  }
+
+  .tfName{
+    font-size:9px;
+  }
+
+  .tfValue{
+    font-size:10px;
+  }
+
+  .tfDir{
+    font-size:7px;
+    padding:3px 5px;
+  }
+
+  .quick .q:nth-child(4){
+    display:none;
+  }
+
+  .quick{
+    grid-template-columns:
+      repeat(3,minmax(0,1fr));
+  }
+
+  .planGrid{
+    grid-template-columns:
+      repeat(2,minmax(0,1fr));
+  }
+
+}
+
+/* =========================
+   TABLET
+========================= */
+
+@media(min-width:601px) and (max-width:900px){
+
+  .app{
+    max-width:900px;
+  }
+
+}
+
+/* =========================
+   LAPTOP / DESKTOP
+========================= */
+
+@media(min-width:901px){
+
+  .app{
+    max-width:1100px;
+  }
+
+}
+
+/* =========================
+   LANDSCAPE PHONE
+========================= */
+
+@media(max-height:520px) and (orientation:landscape){
+
+  .app{
+    padding-top:6px;
+    padding-bottom:10px;
+  }
+
+  .header{
+    margin-bottom:5px;
+  }
+
+  .hero,
+  .tfGrid,
+  .quick,
+  .statusGrid,
+  .plan{
+    margin-bottom:5px;
+  }
+
+  .priceCard,
+  .signalCard,
+  .tf,
+  .q,
+  .badgeCard,
+  .plan,
+  .info{
+    padding:6px;
+  }
+
+  .footer{
+    display:none;
+  }
+
 }
 </style>
 </head>
 
 <body>
 
-<div id="loading" class="loading">
-<div class="loadingBox">
-<div class="spinner"></div>
-<div style="font-size:11px;color:#8994a5">Loading XAUUSDSNIPER...</div>
-</div>
-</div>
-
 <div id="pushStatus" class="pushStatus"></div>
 
 <div class="app">
 
 <header class="header">
+
 <div class="brand">
+
 <div class="logo">XAU</div>
+
 <div>
 <div class="title">XAUUSDSNIPER</div>
 <div class="subtitle">M5 + M15 SCALP ENGINE</div>
 </div>
+
 </div>
 
 <div class="headerRight">
-<button id="pushBtn" class="pushBtn off" type="button">🔔 PUSH OFF</button>
+
+<button id="pushBtn" class="pushBtn off" type="button">
+🔔 PUSH OFF
+</button>
+
 <div class="status">
 <span id="statusDot" class="dot"></span>
 <span id="apiStatus">Connecting</span>
 </div>
+
 </div>
+
 </header>
 
+
+<!-- HERO -->
+
 <section class="hero">
+
 <div class="card priceCard">
-<div class="label">XAU / USD</div>
-<div id="price" class="price">—</div>
-<div id="priceSource" class="priceUnit">LIVE PRICE</div>
+
+<div class="label">
+XAU / USD
 </div>
 
-<div class="card signalCard">
-<div class="label">SCALP SIGNAL</div>
-<div id="signal" class="signal wait">WAIT</div>
-<div id="signalReason" class="reason">Waiting for M5 + M15 alignment</div>
+<div id="price" class="price">
+—
 </div>
+
+<div id="priceSource" class="priceUnit">
+LIVE PRICE
+</div>
+
+</div>
+
+
+<div class="card signalCard">
+
+<div class="label">
+SCALP SIGNAL
+</div>
+
+<div id="signal" class="signal wait">
+WAIT
+</div>
+
+<div id="signalReason" class="reason">
+Waiting for M5 + M15 alignment
+</div>
+
+</div>
+
 </section>
+
+
+<!-- TIMEFRAMES -->
 
 <section class="tfGrid">
 
-<div class="card tf">
-<div class="tfTop"><div class="tfName">M5</div><div id="m5Dir" class="tfDir neutral">—</div></div>
-<div class="tfMain">
-<div><div class="label">BIAS</div><div id="m5Bias" class="tfValue">—</div></div>
-<div id="m5Rsi" class="tfRsi">RSI —</div>
-</div>
-<div class="tfMeta">
-<div class="mini"><span>EMA F</span><b id="m5Fast">—</b></div>
-<div class="mini"><span>EMA S</span><b id="m5Slow">—</b></div>
-</div>
-</div>
 
 <div class="card tf">
-<div class="tfTop"><div class="tfName">M15</div><div id="m15Dir" class="tfDir neutral">—</div></div>
-<div class="tfMain">
-<div><div class="label">BIAS</div><div id="m15Bias" class="tfValue">—</div></div>
-<div id="m15Rsi" class="tfRsi">RSI —</div>
-</div>
-<div class="tfMeta">
-<div class="mini"><span>EMA F</span><b id="m15Fast">—</b></div>
-<div class="mini"><span>EMA S</span><b id="m15Slow">—</b></div>
-</div>
+
+<div class="tfTop">
+
+<div class="tfName">
+M5
 </div>
 
-<div class="card tf">
-<div class="tfTop"><div class="tfName">H1</div><div id="h1Dir" class="tfDir neutral">—</div></div>
+<div id="m5Dir" class="tfDir neutral">
+—
+</div>
+
+</div>
+
 <div class="tfMain">
-<div><div class="label">CONTEXT</div><div id="h1Bias" class="tfValue">—</div></div>
-<div id="h1Rsi" class="tfRsi">RSI —</div>
+
+<div>
+
+<div class="label">
+BIAS
 </div>
+
+<div id="m5Bias" class="tfValue">
+—
+</div>
+
+</div>
+
+<div id="m5Rsi" class="tfRsi">
+RSI —
+</div>
+
+</div>
+
 <div class="tfMeta">
-<div class="mini"><span>EMA F</span><b id="h1Fast">—</b></div>
-<div class="mini"><span>EMA S</span><b id="h1Slow">—</b></div>
+
+<div class="mini">
+<span>EMA F</span>
+<b id="m5Fast">—</b>
 </div>
+
+<div class="mini">
+<span>EMA S</span>
+<b id="m5Slow">—</b>
+</div>
+
+</div>
+
+</div>
+
+
+<div class="card tf">
+
+<div class="tfTop">
+
+<div class="tfName">
+M15
+</div>
+
+<div id="m15Dir" class="tfDir neutral">
+—
+</div>
+
+</div>
+
+<div class="tfMain">
+
+<div>
+
+<div class="label">
+BIAS
+</div>
+
+<div id="m15Bias" class="tfValue">
+—
+</div>
+
+</div>
+
+<div id="m15Rsi" class="tfRsi">
+RSI —
+</div>
+
+</div>
+
+<div class="tfMeta">
+
+<div class="mini">
+<span>EMA F</span>
+<b id="m15Fast">—</b>
+</div>
+
+<div class="mini">
+<span>EMA S</span>
+<b id="m15Slow">—</b>
+</div>
+
+</div>
+
+</div>
+
+
+<div class="card tf">
+
+<div class="tfTop">
+
+<div class="tfName">
+H1
+</div>
+
+<div id="h1Dir" class="tfDir neutral">
+—
+</div>
+
+</div>
+
+<div class="tfMain">
+
+<div>
+
+<div class="label">
+CONTEXT
+</div>
+
+<div id="h1Bias" class="tfValue">
+—
+</div>
+
+</div>
+
+<div id="h1Rsi" class="tfRsi">
+RSI —
+</div>
+
+</div>
+
+<div class="tfMeta">
+
+<div class="mini">
+<span>EMA F</span>
+<b id="h1Fast">—</b>
+</div>
+
+<div class="mini">
+<span>EMA S</span>
+<b id="h1Slow">—</b>
+</div>
+
+</div>
+
 </div>
 
 </section>
+
+
+<!-- QUICK LEVELS -->
 
 <section class="quick">
-<div class="card q"><div class="qLabel">Support</div><div id="support" class="qValue green">—</div></div>
-<div class="card q"><div class="qLabel">Resistance</div><div id="resistance" class="qValue red">—</div></div>
-<div class="card q"><div class="qLabel">ATR M5</div><div id="atr" class="qValue blue">—</div></div>
-<div class="card q"><div class="qLabel">H1 Context</div><div id="h1Context" class="qValue purple">—</div></div>
+
+<div class="card q">
+
+<div class="qLabel">
+Support
+</div>
+
+<div id="support" class="qValue green">
+—
+</div>
+
+</div>
+
+
+<div class="card q">
+
+<div class="qLabel">
+Resistance
+</div>
+
+<div id="resistance" class="qValue red">
+—
+</div>
+
+</div>
+
+
+<div class="card q">
+
+<div class="qLabel">
+ATR M5
+</div>
+
+<div id="atr" class="qValue blue">
+—
+</div>
+
+</div>
+
+
+<div class="card q">
+
+<div class="qLabel">
+H1 Context
+</div>
+
+<div id="h1Context" class="qValue purple">
+—
+</div>
+
+</div>
+
 </section>
+
+
+<!-- STATUS -->
 
 <section class="statusGrid">
-<div class="card badgeCard"><div class="badgeTitle">Market Filter</div><div id="marketFilter" class="badge yellow">WAIT</div></div>
-<div class="card badgeCard"><div class="badgeTitle">Confluence</div><div id="confluence" class="badge yellow">LOW</div></div>
-<div class="card badgeCard"><div class="badgeTitle">Entry Quality</div><div id="entryQuality" class="badge yellow">WAIT</div></div>
+
+<div class="card badgeCard">
+
+<div class="badgeTitle">
+Market Filter
+</div>
+
+<div id="marketFilter" class="badge yellow">
+WAIT
+</div>
+
+</div>
+
+
+<div class="card badgeCard">
+
+<div class="badgeTitle">
+Confluence
+</div>
+
+<div id="confluence" class="badge yellow">
+LOW
+</div>
+
+</div>
+
+
+<div class="card badgeCard">
+
+<div class="badgeTitle">
+Entry Quality
+</div>
+
+<div id="entryQuality" class="badge yellow">
+WAIT
+</div>
+
+</div>
+
 </section>
 
+
+<!-- TRADE PLAN -->
+
 <section class="card plan">
+
 <div class="planHead">
-<div class="sectionTitle">Trade Plan</div>
-<div id="planStatus" class="planStatus yellow">WAIT</div>
+
+<div class="sectionTitle">
+Trade Plan
 </div>
+
+<div id="planStatus" class="planStatus yellow">
+WAIT
+</div>
+
+</div>
+
 <div class="planGrid">
-<div class="planItem"><span>ENTRY</span><b id="entry">—</b></div>
-<div class="planItem"><span>STOP</span><b id="stop">—</b></div>
-<div class="planItem"><span>TP1</span><b id="tp1">—</b></div>
-<div class="planItem"><span>TP2</span><b id="tp2">—</b></div>
+
+<div class="planItem">
+<span>ENTRY</span>
+<b id="entry">—</b>
 </div>
+
+<div class="planItem">
+<span>STOP</span>
+<b id="stop">—</b>
+</div>
+
+<div class="planItem">
+<span>TP1</span>
+<b id="tp1">—</b>
+</div>
+
+<div class="planItem">
+<span>TP2</span>
+<b id="tp2">—</b>
+</div>
+
+</div>
+
 </section>
+
+
+<!-- NEWS + LIQUIDITY -->
 
 <section class="lower">
 
-<div class="card info">
-<div class="sectionTitle">News Filter</div>
-<div class="infoRow"><span>Status</span><b id="newsStatus" class="yellow">—</b></div>
-<div class="infoRow"><span>Level</span><b id="newsLevel">—</b></div>
-<div class="infoRow"><span>Score</span><b id="newsScore">—</b></div>
-</div>
 
 <div class="card info">
-<div class="sectionTitle">Liquidity</div>
-<div class="infoRow"><span>Above H1</span><b id="liqAbove">—</b></div>
-<div class="infoRow"><span>Below H1</span><b id="liqBelow">—</b></div>
-<div class="infoRow"><span>Last Candle</span><b id="lastCandle">—</b></div>
+
+<div class="sectionTitle">
+News Filter
+</div>
+
+<div class="infoRow">
+
+<span>Status</span>
+
+<b id="newsStatus" class="yellow">
+—
+</b>
+
+</div>
+
+<div class="infoRow">
+
+<span>Level</span>
+
+<b id="newsLevel">
+—
+</b>
+
+</div>
+
+<div class="infoRow">
+
+<span>Score</span>
+
+<b id="newsScore">
+—
+</b>
+
+</div>
+
+</div>
+
+
+<div class="card info">
+
+<div class="sectionTitle">
+Liquidity
+</div>
+
+<div class="infoRow">
+
+<span>Above H1</span>
+
+<b id="liqAbove">
+—
+</b>
+
+</div>
+
+<div class="infoRow">
+
+<span>Below H1</span>
+
+<b id="liqBelow">
+—
+</b>
+
+</div>
+
+<div class="infoRow">
+
+<span>Last Candle</span>
+
+<b id="lastCandle">
+—
+</b>
+
+</div>
+
 </div>
 
 </section>
 
-<div id="footer" class="footer">XAUUSDSNIPER • Updating...</div>
+
+<div id="footer" class="footer">
+XAUUSDSNIPER • Connecting...
+</div>
 
 </div>
 
+
 <script>
-const $=id=>document.getElementById(id);
-
-function setText(id,value){
-const el=$(id);
-if(!el)return;
-el.textContent=value===null||value===undefined||value===""?"—":String(value);
-}
-
-function num(value,digits=2){
-if(value===null||value===undefined||value==="")return"—";
-const n=Number(value);
-return Number.isFinite(n)?n.toFixed(digits):"—";
-}
-
-function directionClass(value){
-const v=String(value||"").toUpperCase();
-if(v.includes("BUY"))return"buy";
-if(v.includes("SELL"))return"sell";
-return"neutral";
-}
-
-function applyDirection(id,value){
-const el=$(id);
-if(!el)return;
-const v=String(value||"NEUTRAL").toUpperCase();
-el.textContent=v;
-el.className="tfDir "+directionClass(v);
-}
-
-function signalClass(value){
-const v=String(value||"WAIT").toUpperCase();
-if(v.includes("BUY"))return"buy";
-if(v.includes("SELL"))return"sell";
-return"wait";
-}
-
-function applySignal(value){
-const el=$("signal");
-if(!el)return;
-const v=String(value||"WAIT").toUpperCase();
-el.textContent=v;
-el.className="signal "+signalClass(v);
-}
-
-function applyBadge(id,value){
-const el=$(id);
-if(!el)return;
-const v=String(value||"WAIT").toUpperCase();
-el.textContent=v;
-el.className="badge";
-
-if(v.includes("BUY")||v.includes("GOOD")||v.includes("HIGH QUALITY"))
-el.classList.add("green");
-else if(v.includes("SELL"))
-el.classList.add("red");
-else if(v.includes("RISK")||v.includes("LOW")||v.includes("WAIT"))
-el.classList.add("yellow");
-else el.classList.add("blue");
-}
-
-function renderTF(prefix,data){
-if(!data)return;
-applyDirection(prefix+"Dir",data.direction);
-setText(prefix+"Bias",data.bias||data.direction);
-setText(prefix+"Rsi",data.rsi!==undefined?"RSI "+num(data.rsi,1):"RSI —");
-setText(prefix+"Fast",num(data.emaFast,2));
-setText(prefix+"Slow",num(data.emaSlow,2));
-}
-
-function formatTime(value){
-if(!value)return"—";
-const s=String(value);
-return s.length>=16?s.replace("T"," ").slice(0,16):s;
-}
 
 /* =========================
-   PUSH NOTIFICATION
+   HELPERS
+========================= */
+
+const $=id=>document.getElementById(id);
+
+
+function setText(id,value){
+
+const el=$(id);
+
+if(!el)return;
+
+el.textContent=
+value===null||
+value===undefined||
+value===""
+?"—"
+:String(value);
+
+}
+
+
+function num(value,digits=2){
+
+if(
+value===null||
+value===undefined||
+value===""
+){
+return"—";
+}
+
+const n=Number(value);
+
+return Number.isFinite(n)
+?n.toFixed(digits)
+:"—";
+
+}
+
+
+function directionClass(value){
+
+const v=
+String(value||"")
+.toUpperCase();
+
+if(v.includes("BUY"))
+return"buy";
+
+if(v.includes("SELL"))
+return"sell";
+
+return"neutral";
+
+}
+
+
+function applyDirection(id,value){
+
+const el=$(id);
+
+if(!el)return;
+
+const v=
+String(value||"NEUTRAL")
+.toUpperCase();
+
+el.textContent=v;
+
+el.className=
+"tfDir "+
+directionClass(v);
+
+}
+
+
+function signalClass(value){
+
+const v=
+String(value||"WAIT")
+.toUpperCase();
+
+if(v.includes("BUY"))
+return"buy";
+
+if(v.includes("SELL"))
+return"sell";
+
+return"wait";
+
+}
+
+
+function applySignal(value){
+
+const el=$("signal");
+
+if(!el)return;
+
+const v=
+String(value||"WAIT")
+.toUpperCase();
+
+el.textContent=v;
+
+el.className=
+"signal "+
+signalClass(v);
+
+}
+
+
+function applyBadge(id,value){
+
+const el=$(id);
+
+if(!el)return;
+
+const v=
+String(value||"WAIT")
+.toUpperCase();
+
+el.textContent=v;
+
+el.className="badge";
+
+if(
+v.includes("BUY")||
+v.includes("GOOD")||
+v.includes("HIGH QUALITY")
+){
+
+el.classList.add("green");
+
+}else if(
+v.includes("SELL")
+){
+
+el.classList.add("red");
+
+}else if(
+v.includes("RISK")||
+v.includes("LOW")||
+v.includes("WAIT")
+){
+
+el.classList.add("yellow");
+
+}else{
+
+el.classList.add("blue");
+
+}
+
+}
+
+
+function renderTF(prefix,data){
+
+if(!data)return;
+
+applyDirection(
+prefix+"Dir",
+data.direction
+);
+
+setText(
+prefix+"Bias",
+data.bias||
+data.direction
+);
+
+setText(
+prefix+"Rsi",
+data.rsi!==undefined
+?"RSI "+num(data.rsi,1)
+:"RSI —"
+);
+
+setText(
+prefix+"Fast",
+num(data.emaFast,2)
+);
+
+setText(
+prefix+"Slow",
+num(data.emaSlow,2)
+);
+
+}
+
+
+function formatTime(value){
+
+if(!value)return"—";
+
+const s=String(value);
+
+if(s.length>=16){
+
+return s
+.replace("T"," ")
+.slice(0,16);
+
+}
+
+return s;
+
+}
+
+
+/* =========================
+   PUSH
 ========================= */
 
 let pushBusy=false;
 
-function showPushStatus(message,ms=2200){
+
+function showPushStatus(
+message,
+ms=2400
+){
+
 const el=$("pushStatus");
+
 if(!el)return;
+
 el.textContent=message;
+
 el.style.display="block";
-clearTimeout(showPushStatus.timer);
-showPushStatus.timer=setTimeout(()=>{
+
+clearTimeout(
+showPushStatus.timer
+);
+
+showPushStatus.timer=
+setTimeout(
+()=>{
 el.style.display="none";
-},ms);
+},
+ms
+);
+
 }
 
-function setPushButton(on,text){
+
+function setPushButton(
+on,
+text
+){
+
 const btn=$("pushBtn");
+
 if(!btn)return;
 
-btn.className="pushBtn "+(on?"on":"off");
-btn.textContent=text||(on?"🔔 PUSH ON":"🔔 PUSH OFF");
+btn.className=
+"pushBtn "+
+(on?"on":"off");
+
+btn.textContent=
+text||
+(
+on
+?"🔔 PUSH ON"
+:"🔔 PUSH OFF"
+);
+
 }
 
-function urlBase64ToUint8Array(base64String){
-const padding="=".repeat((4-base64String.length%4)%4);
-const base64=(base64String+padding)
+
+function urlBase64ToUint8Array(
+base64String
+){
+
+const padding=
+"=".repeat(
+(4-base64String.length%4)%4
+);
+
+const base64=
+(base64String+padding)
 .replace(/-/g,"+")
 .replace(/_/g,"/");
-const rawData=atob(base64);
-const outputArray=new Uint8Array(rawData.length);
 
-for(let i=0;i<rawData.length;++i){
-outputArray[i]=rawData.charCodeAt(i);
+const rawData=
+atob(base64);
+
+const outputArray=
+new Uint8Array(
+rawData.length
+);
+
+for(
+let i=0;
+i<rawData.length;
+++i
+){
+
+outputArray[i]=
+rawData.charCodeAt(i);
+
 }
 
 return outputArray;
+
 }
 
+
 async function getPushConfig(){
-const response=await fetch(
+
+const response=
+await fetch(
 "/api/push-config?t="+Date.now(),
 {
 cache:"no-store",
-headers:{"Accept":"application/json"}
+headers:{
+"Accept":
+"application/json"
+}
 }
 );
 
 if(!response.ok){
-throw new Error("Push config HTTP "+response.status);
+
+throw new Error(
+"Push config HTTP "+
+response.status
+);
+
 }
 
-const data=await response.json();
+const data=
+await response.json();
 
-if(!data||data.ok===false){
-throw new Error(data?.error||"Push config unavailable");
+if(!data||
+data.ok===false){
+
+throw new Error(
+data?.error||
+"Push config unavailable"
+);
+
 }
 
 const key=
@@ -403,88 +1816,146 @@ data.publicKey||
 data.key;
 
 if(!key){
-throw new Error("VAPID public key missing");
+
+throw new Error(
+"VAPID public key missing"
+);
+
 }
 
 return key;
+
 }
 
+
 async function subscribePush(){
+
 if(pushBusy)return;
 
 pushBusy=true;
 
 const btn=$("pushBtn");
-if(btn)btn.disabled=true;
+
+if(btn)
+btn.disabled=true;
 
 try{
 
 if(!("Notification" in window)){
-throw new Error("Notifications not supported");
+
+throw new Error(
+"Notifications not supported"
+);
+
 }
 
 if(!("serviceWorker" in navigator)){
-throw new Error("Service Worker not supported");
+
+throw new Error(
+"Service Worker not supported"
+);
+
 }
 
 if(!("PushManager" in window)){
-throw new Error("Push not supported");
+
+throw new Error(
+"Push not supported"
+);
+
 }
 
+
 /*
-  IMPORTANT:
-  Existing root sw.js is reused.
+ Existing root sw.js
 */
 const registration=
-await navigator.serviceWorker.register("/sw.js");
+await navigator.serviceWorker
+.register("/sw.js");
 
 await navigator.serviceWorker.ready;
 
-let permission=Notification.permission;
+let permission=
+Notification.permission;
 
 if(permission!=="granted"){
 
-permission=await Notification.requestPermission();
+permission=
+await Notification
+.requestPermission();
 
 if(permission!=="granted"){
-throw new Error("Notification permission denied");
-}
+
+throw new Error(
+"Notification permission denied"
+);
+
 }
 
-const vapidPublicKey=await getPushConfig();
+}
+
+const vapidPublicKey=
+await getPushConfig();
 
 let subscription=
-await registration.pushManager.getSubscription();
+await registration
+.pushManager
+.getSubscription();
 
 if(!subscription){
 
 subscription=
-await registration.pushManager.subscribe({
+await registration
+.pushManager
+.subscribe({
+
 userVisibleOnly:true,
+
 applicationServerKey:
-urlBase64ToUint8Array(vapidPublicKey)
+urlBase64ToUint8Array(
+vapidPublicKey
+)
+
 });
+
 }
 
-const response=await fetch(
+const response=
+await fetch(
 "/api/push-subscribe",
 {
 method:"POST",
+
 headers:{
-"Content-Type":"application/json",
-"Accept":"application/json"
+"Content-Type":
+"application/json",
+
+"Accept":
+"application/json"
 },
-body:JSON.stringify(subscription)
+
+body:
+JSON.stringify(
+subscription
+)
 }
 );
 
-const result=await response.json().catch(()=>({}));
+const result=
+await response
+.json()
+.catch(
+()=>({})
+);
 
 if(!response.ok){
+
 throw new Error(
 result?.error||
-"Push subscribe HTTP "+response.status
+"Push subscribe HTTP "+
+response.status
 );
+
 }
 
 localStorage.setItem(
@@ -492,65 +1963,129 @@ localStorage.setItem(
 "1"
 );
 
-setPushButton(true,"🔔 PUSH ON");
+setPushButton(
+true,
+"🔔 PUSH ON"
+);
 
-showPushStatus("🔔 Push Notification ON");
+showPushStatus(
+"🔔 Push Notification ON"
+);
 
 }catch(error){
 
-console.error("Push error:",error);
+console.error(
+"Push error:",
+error
+);
 
-localStorage.removeItem("xau_push_enabled");
+localStorage.removeItem(
+"xau_push_enabled"
+);
 
-setPushButton(false,"🔔 PUSH OFF");
+setPushButton(
+false,
+"🔔 PUSH OFF"
+);
 
 showPushStatus(
-"Push: "+(error?.message||"failed"),
-3200
+"Push: "+
+(error?.message||"failed"),
+3500
 );
 
 }finally{
 
 pushBusy=false;
 
-if(btn)btn.disabled=false;
+if(btn)
+btn.disabled=false;
 
 }
+
 }
+
 
 async function checkPushStatus(){
+
 try{
 
-if(!("serviceWorker" in navigator)||
-!("PushManager" in window)){
-setPushButton(false,"🔔 PUSH");
+if(
+!("serviceWorker" in navigator)||
+!("PushManager" in window)
+){
+
+setPushButton(
+false,
+"🔔 PUSH"
+);
+
 return;
+
 }
 
 const registration=
-await navigator.serviceWorker.getRegistration("/sw.js")||
-await navigator.serviceWorker.getRegistration();
+await navigator.serviceWorker
+.getRegistration("/sw.js")||
+await navigator.serviceWorker
+.getRegistration();
 
 if(!registration){
-setPushButton(false,"🔔 PUSH OFF");
+
+setPushButton(
+false,
+"🔔 PUSH OFF"
+);
+
 return;
+
 }
 
 const subscription=
-await registration.pushManager.getSubscription();
+await registration
+.pushManager
+.getSubscription();
 
-if(subscription&&Notification.permission==="granted"){
-setPushButton(true,"🔔 PUSH ON");
-localStorage.setItem("xau_push_enabled","1");
+if(
+subscription&&
+Notification.permission==="granted"
+){
+
+setPushButton(
+true,
+"🔔 PUSH ON"
+);
+
+localStorage.setItem(
+"xau_push_enabled",
+"1"
+);
+
 }else{
-setPushButton(false,"🔔 PUSH OFF");
+
+setPushButton(
+false,
+"🔔 PUSH OFF"
+);
+
 }
 
 }catch(error){
-console.log("Push status:",error);
-setPushButton(false,"🔔 PUSH OFF");
+
+console.log(
+"Push status:",
+error
+);
+
+setPushButton(
+false,
+"🔔 PUSH OFF"
+);
+
 }
+
 }
+
 
 $("pushBtn")?.addEventListener(
 "click",
@@ -559,64 +2094,136 @@ subscribePush
 
 checkPushStatus();
 
+
 /* =========================
-   API DATA
+   API
 ========================= */
 
 let previousScalpSignal=null;
+
 let firstApiLoad=true;
+
 
 async function loadData(){
 
 try{
 
-const response=await fetch(
+const response=
+await fetch(
 "/api/scalp?t="+Date.now(),
 {
 cache:"no-store",
-headers:{"Accept":"application/json"}
+headers:{
+"Accept":
+"application/json"
+}
 }
 );
 
 if(!response.ok){
-throw new Error("HTTP "+response.status);
+
+throw new Error(
+"HTTP "+
+response.status
+);
+
 }
 
-const data=await response.json();
+const data=
+await response.json();
 
-if(!data||data.ok!==true){
-throw new Error(data?.error||"Invalid API response");
+if(
+!data||
+data.ok!==true
+){
+
+throw new Error(
+data?.error||
+"Invalid API response"
+);
+
 }
 
-if($("loading"))$("loading").style.display="none";
-if($("statusDot"))$("statusDot").classList.add("live");
-setText("apiStatus","LIVE");
+
+/* API STATUS */
+
+if($("statusDot")){
+
+$("statusDot")
+.classList.add("live");
+
+}
+
+setText(
+"apiStatus",
+"LIVE"
+);
+
+
+/* PRICE */
 
 const livePrice=
-data.livePrice?.price??data.price;
+data.livePrice?.price??
+data.price;
 
-setText("price",num(livePrice,2));
-setText("priceSource",data.livePrice?.source||"TWELVE DATA");
+setText(
+"price",
+num(livePrice,2)
+);
+
+setText(
+"priceSource",
+data.livePrice?.source||
+"TWELVE DATA"
+);
+
+
+/* SIGNAL */
 
 const scalp=
 data.scalpSignal??
 data.signal?.signal??
 data.signal;
 
-applySignal(scalp);
+applySignal(
+scalp
+);
 
 const reason=
 data.signal?.reason??
 data.signal?.message??
-data.marketFilter?.note??"";
+data.marketFilter?.note||
+"Waiting for M5 + M15 alignment";
 
-setText("signalReason",reason);
+setText(
+"signalReason",
+reason
+);
 
-renderTF("m5",data.m5);
-renderTF("m15",data.m15);
-renderTF("h1",data.h1);
 
-const sr=data.supportResistance||{};
+/* TIMEFRAMES */
+
+renderTF(
+"m5",
+data.m5
+);
+
+renderTF(
+"m15",
+data.m15
+);
+
+renderTF(
+"h1",
+data.h1
+);
+
+
+/* LEVELS */
+
+const sr=
+data.supportResistance||
+{};
 
 setText(
 "support",
@@ -638,14 +2245,23 @@ data.h1?.resistance?.price,
 )
 );
 
-setText("atr",num(data.m5?.atr,2));
+setText(
+"atr",
+num(
+data.m5?.atr,
+2
+)
+);
 
 setText(
 "h1Context",
 data.marketFilter?.h1Context??
-data.h1?.direction??
+data.h1?.direction||
 "—"
 );
+
+
+/* STATUS */
 
 applyBadge(
 "marketFilter",
@@ -656,15 +2272,22 @@ data.marketFilter?.filter||
 
 applyBadge(
 "confluence",
-data.confluence?.quality||"LOW"
+data.confluence?.quality||
+"LOW"
 );
 
 applyBadge(
 "entryQuality",
-data.entryQuality?.quality||"WAIT"
+data.entryQuality?.quality||
+"WAIT"
 );
 
-const plan=data.tradePlan||{};
+
+/* TRADE PLAN */
+
+const plan=
+data.tradePlan||
+{};
 
 const planDirection=
 plan.direction||
@@ -672,11 +2295,18 @@ plan.signal||
 scalp||
 "WAIT";
 
-applyBadge("planStatus",planDirection);
+applyBadge(
+"planStatus",
+planDirection
+);
 
 setText(
 "entry",
-num(plan.entry??plan.entryPrice,2)
+num(
+plan.entry??
+plan.entryPrice,
+2
+)
 );
 
 setText(
@@ -707,24 +2337,56 @@ plan.takeProfit2,
 )
 );
 
-const news=data.newsFilter||{};
 
-setText("newsStatus",news.status||"—");
-setText("newsLevel",news.level||"—");
+/* NEWS */
+
+const news=
+data.newsFilter||
+{};
+
+setText(
+"newsStatus",
+news.status||
+"—"
+);
+
+setText(
+"newsLevel",
+news.level||
+"—"
+);
+
 setText(
 "newsScore",
-news.score!==undefined?news.score:"—"
+news.score!==undefined
+?news.score
+:"—"
 );
 
 if($("newsStatus")){
-const ns=String(news.status||"").toUpperCase();
 
-$("newsStatus").className=
-ns.includes("RISK")?"red":
-ns.includes("WATCH")?"yellow":"green";
+const ns=
+String(
+news.status||
+""
+).toUpperCase();
+
+$("newsStatus")
+.className=
+ns.includes("RISK")
+?"red"
+:ns.includes("WATCH")
+?"yellow"
+:"green";
+
 }
 
-const liq=data.liquidity||{};
+
+/* LIQUIDITY */
+
+const liq=
+data.liquidity||
+{};
 
 setText(
 "liqAbove",
@@ -754,126 +2416,162 @@ data.m15?.lastCandle
 )
 );
 
-const cache=data.cache||{};
+
+/* FOOTER */
+
+const cache=
+data.cache||
+{};
 
 let cacheText="LIVE";
 
 if(cache.m5?.source){
+
 cacheText=
 "CACHE • M5 "+
-String(cache.m5.source).toUpperCase();
+String(
+cache.m5.source
+).toUpperCase();
+
 }
 
 setText(
 "footer",
-"XAUUSDSNIPER • "+cacheText
+"XAUUSDSNIPER • "+
+cacheText
 );
 
-/*
-========================================
-  SIGNAL CHANGE DETECTION
-========================================
 
-Only notify when a NEW confirmed BUY/SELL
-appears.
+/* =========================
+   NEW SIGNAL DETECTION
+========================= */
 
-WAIT does not notify.
-Same signal does not repeatedly notify.
-*/
 const currentSignal=
-String(scalp||"WAIT").toUpperCase();
+String(
+scalp||
+"WAIT"
+).toUpperCase();
 
 const confirmed=
 data.signal?.confirmed===true||
 data.signal?.confirmed==="true";
 
 const isTradeSignal=
-(currentSignal==="BUY"||
-currentSignal==="SELL");
+currentSignal==="BUY"||
+currentSignal==="SELL";
+
 
 if(firstApiLoad){
 
-previousScalpSignal=currentSignal;
+previousScalpSignal=
+currentSignal;
+
 firstApiLoad=false;
 
 }else if(
 isTradeSignal&&
 confirmed&&
-currentSignal!==previousScalpSignal
+currentSignal!==
+previousScalpSignal
 ){
 
-/*
-  Ask existing backend push checker to
-  perform its existing notification logic.
-
-  This does NOT replace the existing push
-  system. It simply gives the backend a
-  chance to process the new signal.
-*/
 try{
 
 await fetch(
-"/api/push-check?t="+Date.now(),
+"/api/push-check?t="+
+Date.now(),
 {
 method:"GET",
 cache:"no-store"
 }
 );
 
-}catch(pushCheckError){
+}catch(pushError){
 
 console.log(
 "Push check:",
-pushCheckError
+pushError
 );
 
 }
 
-previousScalpSignal=currentSignal;
+previousScalpSignal=
+currentSignal;
 
 }else{
 
-previousScalpSignal=currentSignal;
+previousScalpSignal=
+currentSignal;
 
 }
+
 
 }catch(error){
 
-console.error(error);
+console.error(
+"API Error:",
+error
+);
 
-if($("loading"))
-$("loading").style.display="none";
+if($("statusDot")){
 
-if($("statusDot"))
-$("statusDot").classList.remove("live");
+$("statusDot")
+.classList.remove("live");
 
-setText("apiStatus","ERROR");
+}
+
+setText(
+"apiStatus",
+"ERROR"
+);
 
 setText(
 "signalReason",
-error?.message||"API connection error"
+error?.message||
+"API connection error"
 );
 
 }
 
 }
 
-/* FIRST LOAD */
+
+/* =========================
+   START
+========================= */
+
 loadData();
 
-/* REFRESH EVERY 60 SEC */
-setInterval(loadData,60000);
 
-/* Re-check push after returning to page */
+/* =========================
+   REFRESH 60 SEC
+========================= */
+
+setInterval(
+loadData,
+60000
+);
+
+
+/* =========================
+   RETURN TO PAGE
+========================= */
+
 document.addEventListener(
 "visibilitychange",
 ()=>{
+
 if(!document.hidden){
+
 checkPushStatus();
+
 loadData();
+
 }
+
 }
 );
+
 </script>
 
 </body>
