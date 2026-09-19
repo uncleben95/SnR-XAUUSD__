@@ -10,449 +10,120 @@
 *{box-sizing:border-box}
 html,body{margin:0;padding:0;background:#070a10;color:#edf2f7;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif}
 body{min-height:100vh}
-
 :root{
-  --bg:#070a10;
-  --card:rgba(17,22,32,.88);
-  --card2:rgba(22,28,40,.92);
-  --line:rgba(255,255,255,.08);
-  --text:#edf2f7;
-  --muted:#8994a5;
-  --green:#35e59a;
-  --red:#ff5573;
-  --yellow:#ffd45a;
-  --blue:#5da9ff;
-  --purple:#a879ff;
+--bg:#070a10;--card:rgba(17,22,32,.88);--line:rgba(255,255,255,.08);
+--text:#edf2f7;--muted:#8994a5;--green:#35e59a;--red:#ff5573;
+--yellow:#ffd45a;--blue:#5da9ff;--purple:#a879ff
 }
+.app{width:100%;max-width:760px;margin:auto;padding:12px 12px 24px}
+.header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;gap:8px}
+.brand{display:flex;align-items:center;gap:9px;min-width:0}
+.logo{width:34px;height:34px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:14px;background:linear-gradient(135deg,#5d7cff,#a855f7);box-shadow:0 0 22px rgba(99,102,241,.35)}
+.title{font-size:16px;font-weight:850;letter-spacing:.4px}
+.subtitle{font-size:10px;color:var(--muted);margin-top:1px}
+.headerRight{display:flex;align-items:center;gap:6px}
+.status{display:flex;align-items:center;gap:5px;padding:6px 9px;border:1px solid var(--line);background:rgba(255,255,255,.035);border-radius:20px;font-size:10px;color:var(--muted)}
+.dot{width:7px;height:7px;border-radius:50%;background:#555}
+.dot.live{background:var(--green);box-shadow:0 0 9px var(--green)}
 
-.app{
-  width:100%;
-  max-width:760px;
-  margin:auto;
-  padding:12px 12px 24px;
+.pushBtn{
+border:1px solid rgba(93,169,255,.25);
+background:rgba(93,169,255,.10);
+color:var(--blue);
+border-radius:20px;
+padding:7px 10px;
+font-size:10px;
+font-weight:900;
+white-space:nowrap;
+cursor:pointer;
+-webkit-tap-highlight-color:transparent
 }
+.pushBtn.on{color:var(--green);border-color:rgba(53,229,154,.3);background:rgba(53,229,154,.10)}
+.pushBtn.off{color:var(--muted)}
+.pushBtn:disabled{opacity:.55}
 
-/* HEADER */
-.header{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  margin-bottom:10px;
-}
-
-.brand{
-  display:flex;
-  align-items:center;
-  gap:9px;
-}
-
-.logo{
-  width:34px;
-  height:34px;
-  border-radius:11px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  font-weight:900;
-  font-size:14px;
-  background:linear-gradient(135deg,#5d7cff,#a855f7);
-  box-shadow:0 0 22px rgba(99,102,241,.35);
-}
-
-.title{
-  font-size:16px;
-  font-weight:850;
-  letter-spacing:.4px;
-}
-
-.subtitle{
-  font-size:10px;
-  color:var(--muted);
-  margin-top:1px;
-}
-
-.status{
-  display:flex;
-  align-items:center;
-  gap:5px;
-  padding:6px 9px;
-  border:1px solid var(--line);
-  background:rgba(255,255,255,.035);
-  border-radius:20px;
-  font-size:10px;
-  color:var(--muted);
-}
-
-.dot{
-  width:7px;
-  height:7px;
-  border-radius:50%;
-  background:#555;
-}
-
-.dot.live{
-  background:var(--green);
-  box-shadow:0 0 9px var(--green);
-}
-
-/* PRICE + SIGNAL */
-.hero{
-  display:grid;
-  grid-template-columns:1fr 1.15fr;
-  gap:8px;
-  margin-bottom:8px;
-}
-
-.card{
-  background:linear-gradient(145deg,rgba(20,26,38,.95),rgba(12,16,24,.95));
-  border:1px solid var(--line);
-  border-radius:17px;
-  box-shadow:0 10px 35px rgba(0,0,0,.18);
-}
-
-.priceCard{
-  padding:13px;
-}
-
-.label{
-  color:var(--muted);
-  font-size:9px;
-  text-transform:uppercase;
-  letter-spacing:1px;
-  font-weight:700;
-}
-
-.price{
-  margin-top:4px;
-  font-size:25px;
-  line-height:1;
-  font-weight:900;
-  letter-spacing:-.8px;
-}
-
-.priceUnit{
-  font-size:9px;
-  color:var(--muted);
-  margin-top:6px;
-}
-
-.signalCard{
-  position:relative;
-  overflow:hidden;
-  padding:13px;
-}
-
-.signalCard:after{
-  content:"";
-  position:absolute;
-  width:100px;
-  height:100px;
-  right:-40px;
-  top:-50px;
-  border-radius:50%;
-  background:rgba(93,169,255,.12);
-  filter:blur(10px);
-}
-
-.signal{
-  margin-top:3px;
-  font-size:25px;
-  line-height:1;
-  font-weight:950;
-  letter-spacing:.5px;
-}
-
+.card{background:linear-gradient(145deg,rgba(20,26,38,.95),rgba(12,16,24,.95));border:1px solid var(--line);border-radius:17px;box-shadow:0 10px 35px rgba(0,0,0,.18)}
+.hero{display:grid;grid-template-columns:1fr 1.15fr;gap:8px;margin-bottom:8px}
+.priceCard{padding:13px}
+.label{color:var(--muted);font-size:9px;text-transform:uppercase;letter-spacing:1px;font-weight:700}
+.price{margin-top:4px;font-size:25px;line-height:1;font-weight:900;letter-spacing:-.8px}
+.priceUnit{font-size:9px;color:var(--muted);margin-top:6px}
+.signalCard{position:relative;overflow:hidden;padding:13px}
+.signalCard:after{content:"";position:absolute;width:100px;height:100px;right:-40px;top:-50px;border-radius:50%;background:rgba(93,169,255,.12);filter:blur(10px)}
+.signal{margin-top:3px;font-size:25px;line-height:1;font-weight:950;letter-spacing:.5px}
 .signal.buy{color:var(--green);text-shadow:0 0 18px rgba(53,229,154,.3)}
 .signal.sell{color:var(--red);text-shadow:0 0 18px rgba(255,85,115,.3)}
 .signal.wait{color:var(--yellow)}
+.reason{margin-top:7px;font-size:10px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
-.reason{
-  margin-top:7px;
-  font-size:10px;
-  color:var(--muted);
-  white-space:nowrap;
-  overflow:hidden;
-  text-overflow:ellipsis;
+.tfGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-bottom:8px}
+.tf{padding:10px;min-width:0}
+.tfTop{display:flex;align-items:center;justify-content:space-between}
+.tfName{font-size:11px;font-weight:900}
+.tfDir{font-size:9px;font-weight:900;padding:4px 6px;border-radius:7px;background:rgba(255,255,255,.055)}
+.tfDir.buy{color:var(--green)}.tfDir.sell{color:var(--red)}.tfDir.neutral{color:var(--yellow)}
+.tfMain{margin-top:8px;display:flex;justify-content:space-between;align-items:end}
+.tfValue{font-size:13px;font-weight:800}.tfRsi{font-size:10px;color:var(--muted)}
+.tfMeta{display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-top:7px}
+.mini{background:rgba(255,255,255,.035);border-radius:7px;padding:5px 6px}
+.mini span{display:block;color:var(--muted);font-size:8px}.mini b{display:block;font-size:9px;margin-top:2px}
+
+.quick{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-bottom:8px}
+.q{padding:9px 7px;text-align:center}.q .qLabel{color:var(--muted);font-size:8px;text-transform:uppercase;letter-spacing:.5px}
+.q .qValue{margin-top:4px;font-size:11px;font-weight:900}
+
+.statusGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-bottom:8px}
+.badgeCard{padding:9px}.badgeTitle{font-size:8px;color:var(--muted);text-transform:uppercase;letter-spacing:.7px}
+.badge{display:inline-block;margin-top:5px;padding:4px 7px;border-radius:7px;font-size:9px;font-weight:900;background:rgba(255,255,255,.06)}
+.green{color:var(--green)}.red{color:var(--red)}.yellow{color:var(--yellow)}.blue{color:var(--blue)}.purple{color:var(--purple)}
+
+.plan{padding:11px;margin-bottom:8px}.planHead{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.sectionTitle{font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:.8px}
+.planStatus{font-size:9px;font-weight:900;padding:4px 7px;border-radius:7px;background:rgba(255,255,255,.05)}
+.planGrid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.planItem{padding:7px;border-radius:8px;background:rgba(255,255,255,.035)}
+.planItem span{display:block;color:var(--muted);font-size:8px}.planItem b{display:block;font-size:10px;margin-top:3px}
+
+.lower{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.info{padding:10px}.infoRow{display:flex;justify-content:space-between;gap:8px;padding:5px 0;border-bottom:1px solid rgba(255,255,255,.045)}
+.infoRow:last-child{border-bottom:0}.infoRow span{color:var(--muted);font-size:9px}.infoRow b{font-size:9px;text-align:right}
+.footer{text-align:center;color:#596474;font-size:8px;padding:10px 0 2px}
+
+.pushStatus{
+position:fixed;
+left:50%;
+bottom:15px;
+transform:translateX(-50%);
+z-index:90;
+display:none;
+padding:9px 13px;
+border-radius:12px;
+background:rgba(20,26,38,.96);
+border:1px solid var(--line);
+box-shadow:0 10px 30px rgba(0,0,0,.35);
+font-size:10px;
+font-weight:800;
+white-space:nowrap
 }
 
-/* TIMEFRAME */
-.tfGrid{
-  display:grid;
-  grid-template-columns:repeat(3,1fr);
-  gap:7px;
-  margin-bottom:8px;
-}
+.loading{position:fixed;inset:0;background:#070a10;display:flex;align-items:center;justify-content:center;z-index:99}
+.loadingBox{text-align:center}
+.spinner{width:27px;height:27px;border:3px solid rgba(255,255,255,.1);border-top-color:#6c7cff;border-radius:50%;animation:spin .8s linear infinite;margin:auto auto 10px}
+@keyframes spin{to{transform:rotate(360deg)}}
 
-.tf{
-  padding:10px;
-  min-width:0;
-}
-
-.tfTop{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-}
-
-.tfName{
-  font-size:11px;
-  font-weight:900;
-}
-
-.tfDir{
-  font-size:9px;
-  font-weight:900;
-  padding:4px 6px;
-  border-radius:7px;
-  background:rgba(255,255,255,.055);
-}
-
-.tfDir.buy{color:var(--green)}
-.tfDir.sell{color:var(--red)}
-.tfDir.neutral{color:var(--yellow)}
-
-.tfMain{
-  margin-top:8px;
-  display:flex;
-  justify-content:space-between;
-  align-items:end;
-}
-
-.tfValue{
-  font-size:13px;
-  font-weight:800;
-}
-
-.tfRsi{
-  font-size:10px;
-  color:var(--muted);
-}
-
-.tfMeta{
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:4px;
-  margin-top:7px;
-}
-
-.mini{
-  background:rgba(255,255,255,.035);
-  border-radius:7px;
-  padding:5px 6px;
-}
-
-.mini span{
-  display:block;
-  color:var(--muted);
-  font-size:8px;
-}
-
-.mini b{
-  display:block;
-  font-size:9px;
-  margin-top:2px;
-}
-
-/* QUICK INFO */
-.quick{
-  display:grid;
-  grid-template-columns:repeat(4,1fr);
-  gap:7px;
-  margin-bottom:8px;
-}
-
-.q{
-  padding:9px 7px;
-  text-align:center;
-}
-
-.q .qLabel{
-  color:var(--muted);
-  font-size:8px;
-  text-transform:uppercase;
-  letter-spacing:.5px;
-}
-
-.q .qValue{
-  margin-top:4px;
-  font-size:11px;
-  font-weight:900;
-}
-
-/* STATUS ROW */
-.statusGrid{
-  display:grid;
-  grid-template-columns:repeat(3,1fr);
-  gap:7px;
-  margin-bottom:8px;
-}
-
-.badgeCard{
-  padding:9px;
-}
-
-.badgeTitle{
-  font-size:8px;
-  color:var(--muted);
-  text-transform:uppercase;
-  letter-spacing:.7px;
-}
-
-.badge{
-  display:inline-block;
-  margin-top:5px;
-  padding:4px 7px;
-  border-radius:7px;
-  font-size:9px;
-  font-weight:900;
-  background:rgba(255,255,255,.06);
-}
-
-.green{color:var(--green)}
-.red{color:var(--red)}
-.yellow{color:var(--yellow)}
-.blue{color:var(--blue)}
-.purple{color:var(--purple)}
-
-/* TRADE PLAN */
-.plan{
-  padding:11px;
-  margin-bottom:8px;
-}
-
-.planHead{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  margin-bottom:8px;
-}
-
-.sectionTitle{
-  font-size:10px;
-  font-weight:900;
-  text-transform:uppercase;
-  letter-spacing:.8px;
-}
-
-.planStatus{
-  font-size:9px;
-  font-weight:900;
-  padding:4px 7px;
-  border-radius:7px;
-  background:rgba(255,255,255,.05);
-}
-
-.planGrid{
-  display:grid;
-  grid-template-columns:repeat(4,1fr);
-  gap:6px;
-}
-
-.planItem{
-  padding:7px;
-  border-radius:8px;
-  background:rgba(255,255,255,.035);
-}
-
-.planItem span{
-  display:block;
-  color:var(--muted);
-  font-size:8px;
-}
-
-.planItem b{
-  display:block;
-  font-size:10px;
-  margin-top:3px;
-}
-
-/* LOWER INFO */
-.lower{
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:7px;
-}
-
-.info{
-  padding:10px;
-}
-
-.infoRow{
-  display:flex;
-  justify-content:space-between;
-  gap:8px;
-  padding:5px 0;
-  border-bottom:1px solid rgba(255,255,255,.045);
-}
-
-.infoRow:last-child{
-  border-bottom:0;
-}
-
-.infoRow span{
-  color:var(--muted);
-  font-size:9px;
-}
-
-.infoRow b{
-  font-size:9px;
-  text-align:right;
-}
-
-/* FOOTER */
-.footer{
-  text-align:center;
-  color:#596474;
-  font-size:8px;
-  padding:10px 0 2px;
-}
-
-/* LOADING */
-.loading{
-  position:fixed;
-  inset:0;
-  background:#070a10;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  z-index:99;
-}
-
-.loadingBox{
-  text-align:center;
-}
-
-.spinner{
-  width:27px;
-  height:27px;
-  border:3px solid rgba(255,255,255,.1);
-  border-top-color:#6c7cff;
-  border-radius:50%;
-  animation:spin .8s linear infinite;
-  margin:auto auto 10px;
-}
-
-@keyframes spin{
-  to{transform:rotate(360deg)}
-}
-
-/* MOBILE */
 @media(max-width:430px){
-  .app{padding:10px 9px 20px}
-  .price{font-size:23px}
-  .signal{font-size:23px}
-  .tf{padding:9px 7px}
-  .tfMeta{gap:3px}
-  .quick{gap:5px}
-  .statusGrid{gap:5px}
-  .planGrid{gap:4px}
-  .lower{gap:5px}
+.app{padding:10px 9px 20px}
+.price{font-size:23px}.signal{font-size:23px}
+.tf{padding:9px 7px}.tfMeta{gap:3px}.quick{gap:5px}.statusGrid{gap:5px}
+.planGrid{gap:4px}.lower{gap:5px}
+.status{padding:6px 7px}
+.pushBtn{padding:7px 8px}
+.title{font-size:15px}
 }
-
 @media(max-width:350px){
-  .quick .q:nth-child(4){display:none}
-  .quick{grid-template-columns:repeat(3,1fr)}
-  .planGrid{grid-template-columns:repeat(2,1fr)}
+.quick .q:nth-child(4){display:none}.quick{grid-template-columns:repeat(3,1fr)}
+.planGrid{grid-template-columns:repeat(2,1fr)}
+.status{display:none}
 }
 </style>
 </head>
@@ -460,640 +131,731 @@ body{min-height:100vh}
 <body>
 
 <div id="loading" class="loading">
-  <div class="loadingBox">
-    <div class="spinner"></div>
-    <div style="font-size:11px;color:#8994a5">Loading XAUUSDSNIPER...</div>
-  </div>
+<div class="loadingBox">
+<div class="spinner"></div>
+<div style="font-size:11px;color:#8994a5">Loading XAUUSDSNIPER...</div>
 </div>
+</div>
+
+<div id="pushStatus" class="pushStatus"></div>
 
 <div class="app">
 
-  <!-- HEADER -->
-  <header class="header">
-    <div class="brand">
-      <div class="logo">XAU</div>
-      <div>
-        <div class="title">XAUUSDSNIPER</div>
-        <div class="subtitle">M5 + M15 SCALP ENGINE</div>
-      </div>
-    </div>
+<header class="header">
+<div class="brand">
+<div class="logo">XAU</div>
+<div>
+<div class="title">XAUUSDSNIPER</div>
+<div class="subtitle">M5 + M15 SCALP ENGINE</div>
+</div>
+</div>
 
-    <div class="status">
-      <span id="statusDot" class="dot"></span>
-      <span id="apiStatus">Connecting</span>
-    </div>
-  </header>
+<div class="headerRight">
+<button id="pushBtn" class="pushBtn off" type="button">🔔 PUSH OFF</button>
+<div class="status">
+<span id="statusDot" class="dot"></span>
+<span id="apiStatus">Connecting</span>
+</div>
+</div>
+</header>
 
-  <!-- PRICE / SIGNAL -->
-  <section class="hero">
+<section class="hero">
+<div class="card priceCard">
+<div class="label">XAU / USD</div>
+<div id="price" class="price">—</div>
+<div id="priceSource" class="priceUnit">LIVE PRICE</div>
+</div>
 
-    <div class="card priceCard">
-      <div class="label">XAU / USD</div>
-      <div id="price" class="price">—</div>
-      <div id="priceSource" class="priceUnit">LIVE PRICE</div>
-    </div>
+<div class="card signalCard">
+<div class="label">SCALP SIGNAL</div>
+<div id="signal" class="signal wait">WAIT</div>
+<div id="signalReason" class="reason">Waiting for M5 + M15 alignment</div>
+</div>
+</section>
 
-    <div class="card signalCard">
-      <div class="label">SCALP SIGNAL</div>
-      <div id="signal" class="signal wait">WAIT</div>
-      <div id="signalReason" class="reason">Waiting for M5 + M15 alignment</div>
-    </div>
+<section class="tfGrid">
 
-  </section>
+<div class="card tf">
+<div class="tfTop"><div class="tfName">M5</div><div id="m5Dir" class="tfDir neutral">—</div></div>
+<div class="tfMain">
+<div><div class="label">BIAS</div><div id="m5Bias" class="tfValue">—</div></div>
+<div id="m5Rsi" class="tfRsi">RSI —</div>
+</div>
+<div class="tfMeta">
+<div class="mini"><span>EMA F</span><b id="m5Fast">—</b></div>
+<div class="mini"><span>EMA S</span><b id="m5Slow">—</b></div>
+</div>
+</div>
 
-  <!-- M5 / M15 / H1 -->
-  <section class="tfGrid">
+<div class="card tf">
+<div class="tfTop"><div class="tfName">M15</div><div id="m15Dir" class="tfDir neutral">—</div></div>
+<div class="tfMain">
+<div><div class="label">BIAS</div><div id="m15Bias" class="tfValue">—</div></div>
+<div id="m15Rsi" class="tfRsi">RSI —</div>
+</div>
+<div class="tfMeta">
+<div class="mini"><span>EMA F</span><b id="m15Fast">—</b></div>
+<div class="mini"><span>EMA S</span><b id="m15Slow">—</b></div>
+</div>
+</div>
 
-    <div class="card tf">
-      <div class="tfTop">
-        <div class="tfName">M5</div>
-        <div id="m5Dir" class="tfDir neutral">—</div>
-      </div>
+<div class="card tf">
+<div class="tfTop"><div class="tfName">H1</div><div id="h1Dir" class="tfDir neutral">—</div></div>
+<div class="tfMain">
+<div><div class="label">CONTEXT</div><div id="h1Bias" class="tfValue">—</div></div>
+<div id="h1Rsi" class="tfRsi">RSI —</div>
+</div>
+<div class="tfMeta">
+<div class="mini"><span>EMA F</span><b id="h1Fast">—</b></div>
+<div class="mini"><span>EMA S</span><b id="h1Slow">—</b></div>
+</div>
+</div>
 
-      <div class="tfMain">
-        <div>
-          <div class="label">BIAS</div>
-          <div id="m5Bias" class="tfValue">—</div>
-        </div>
-        <div id="m5Rsi" class="tfRsi">RSI —</div>
-      </div>
+</section>
 
-      <div class="tfMeta">
-        <div class="mini">
-          <span>EMA F</span>
-          <b id="m5Fast">—</b>
-        </div>
-        <div class="mini">
-          <span>EMA S</span>
-          <b id="m5Slow">—</b>
-        </div>
-      </div>
-    </div>
+<section class="quick">
+<div class="card q"><div class="qLabel">Support</div><div id="support" class="qValue green">—</div></div>
+<div class="card q"><div class="qLabel">Resistance</div><div id="resistance" class="qValue red">—</div></div>
+<div class="card q"><div class="qLabel">ATR M5</div><div id="atr" class="qValue blue">—</div></div>
+<div class="card q"><div class="qLabel">H1 Context</div><div id="h1Context" class="qValue purple">—</div></div>
+</section>
 
-    <div class="card tf">
-      <div class="tfTop">
-        <div class="tfName">M15</div>
-        <div id="m15Dir" class="tfDir neutral">—</div>
-      </div>
+<section class="statusGrid">
+<div class="card badgeCard"><div class="badgeTitle">Market Filter</div><div id="marketFilter" class="badge yellow">WAIT</div></div>
+<div class="card badgeCard"><div class="badgeTitle">Confluence</div><div id="confluence" class="badge yellow">LOW</div></div>
+<div class="card badgeCard"><div class="badgeTitle">Entry Quality</div><div id="entryQuality" class="badge yellow">WAIT</div></div>
+</section>
 
-      <div class="tfMain">
-        <div>
-          <div class="label">BIAS</div>
-          <div id="m15Bias" class="tfValue">—</div>
-        </div>
-        <div id="m15Rsi" class="tfRsi">RSI —</div>
-      </div>
+<section class="card plan">
+<div class="planHead">
+<div class="sectionTitle">Trade Plan</div>
+<div id="planStatus" class="planStatus yellow">WAIT</div>
+</div>
+<div class="planGrid">
+<div class="planItem"><span>ENTRY</span><b id="entry">—</b></div>
+<div class="planItem"><span>STOP</span><b id="stop">—</b></div>
+<div class="planItem"><span>TP1</span><b id="tp1">—</b></div>
+<div class="planItem"><span>TP2</span><b id="tp2">—</b></div>
+</div>
+</section>
 
-      <div class="tfMeta">
-        <div class="mini">
-          <span>EMA F</span>
-          <b id="m15Fast">—</b>
-        </div>
-        <div class="mini">
-          <span>EMA S</span>
-          <b id="m15Slow">—</b>
-        </div>
-      </div>
-    </div>
+<section class="lower">
 
-    <div class="card tf">
-      <div class="tfTop">
-        <div class="tfName">H1</div>
-        <div id="h1Dir" class="tfDir neutral">—</div>
-      </div>
+<div class="card info">
+<div class="sectionTitle">News Filter</div>
+<div class="infoRow"><span>Status</span><b id="newsStatus" class="yellow">—</b></div>
+<div class="infoRow"><span>Level</span><b id="newsLevel">—</b></div>
+<div class="infoRow"><span>Score</span><b id="newsScore">—</b></div>
+</div>
 
-      <div class="tfMain">
-        <div>
-          <div class="label">CONTEXT</div>
-          <div id="h1Bias" class="tfValue">—</div>
-        </div>
-        <div id="h1Rsi" class="tfRsi">RSI —</div>
-      </div>
+<div class="card info">
+<div class="sectionTitle">Liquidity</div>
+<div class="infoRow"><span>Above H1</span><b id="liqAbove">—</b></div>
+<div class="infoRow"><span>Below H1</span><b id="liqBelow">—</b></div>
+<div class="infoRow"><span>Last Candle</span><b id="lastCandle">—</b></div>
+</div>
 
-      <div class="tfMeta">
-        <div class="mini">
-          <span>EMA F</span>
-          <b id="h1Fast">—</b>
-        </div>
-        <div class="mini">
-          <span>EMA S</span>
-          <b id="h1Slow">—</b>
-        </div>
-      </div>
-    </div>
+</section>
 
-  </section>
-
-  <!-- QUICK LEVELS -->
-  <section class="quick">
-
-    <div class="card q">
-      <div class="qLabel">Support</div>
-      <div id="support" class="qValue green">—</div>
-    </div>
-
-    <div class="card q">
-      <div class="qLabel">Resistance</div>
-      <div id="resistance" class="qValue red">—</div>
-    </div>
-
-    <div class="card q">
-      <div class="qLabel">ATR M5</div>
-      <div id="atr" class="qValue blue">—</div>
-    </div>
-
-    <div class="card q">
-      <div class="qLabel">H1 Context</div>
-      <div id="h1Context" class="qValue purple">—</div>
-    </div>
-
-  </section>
-
-  <!-- FILTERS -->
-  <section class="statusGrid">
-
-    <div class="card badgeCard">
-      <div class="badgeTitle">Market Filter</div>
-      <div id="marketFilter" class="badge yellow">WAIT</div>
-    </div>
-
-    <div class="card badgeCard">
-      <div class="badgeTitle">Confluence</div>
-      <div id="confluence" class="badge yellow">LOW</div>
-    </div>
-
-    <div class="card badgeCard">
-      <div class="badgeTitle">Entry Quality</div>
-      <div id="entryQuality" class="badge yellow">WAIT</div>
-    </div>
-
-  </section>
-
-  <!-- TRADE PLAN -->
-  <section class="card plan">
-
-    <div class="planHead">
-      <div class="sectionTitle">Trade Plan</div>
-      <div id="planStatus" class="planStatus yellow">WAIT</div>
-    </div>
-
-    <div class="planGrid">
-
-      <div class="planItem">
-        <span>ENTRY</span>
-        <b id="entry">—</b>
-      </div>
-
-      <div class="planItem">
-        <span>STOP</span>
-        <b id="stop">—</b>
-      </div>
-
-      <div class="planItem">
-        <span>TP1</span>
-        <b id="tp1">—</b>
-      </div>
-
-      <div class="planItem">
-        <span>TP2</span>
-        <b id="tp2">—</b>
-      </div>
-
-    </div>
-
-  </section>
-
-  <!-- LOWER -->
-  <section class="lower">
-
-    <div class="card info">
-      <div class="sectionTitle">News Filter</div>
-
-      <div class="infoRow">
-        <span>Status</span>
-        <b id="newsStatus" class="yellow">—</b>
-      </div>
-
-      <div class="infoRow">
-        <span>Level</span>
-        <b id="newsLevel">—</b>
-      </div>
-
-      <div class="infoRow">
-        <span>Score</span>
-        <b id="newsScore">—</b>
-      </div>
-    </div>
-
-    <div class="card info">
-      <div class="sectionTitle">Liquidity</div>
-
-      <div class="infoRow">
-        <span>Above H1</span>
-        <b id="liqAbove">—</b>
-      </div>
-
-      <div class="infoRow">
-        <span>Below H1</span>
-        <b id="liqBelow">—</b>
-      </div>
-
-      <div class="infoRow">
-        <span>Last Candle</span>
-        <b id="lastCandle">—</b>
-      </div>
-    </div>
-
-  </section>
-
-  <div id="footer" class="footer">
-    XAUUSDSNIPER • Updating...
-  </div>
+<div id="footer" class="footer">XAUUSDSNIPER • Updating...</div>
 
 </div>
 
 <script>
-const $ = id => document.getElementById(id);
+const $=id=>document.getElementById(id);
 
 function setText(id,value){
-  const el=$(id);
-  if(!el)return;
-  el.textContent =
-    value===null ||
-    value===undefined ||
-    value==="" ? "—" : String(value);
+const el=$(id);
+if(!el)return;
+el.textContent=value===null||value===undefined||value===""?"—":String(value);
 }
 
 function num(value,digits=2){
-  if(value===null || value===undefined || value==="") return "—";
-  const n=Number(value);
-  if(!Number.isFinite(n)) return "—";
-  return n.toFixed(digits);
+if(value===null||value===undefined||value==="")return"—";
+const n=Number(value);
+return Number.isFinite(n)?n.toFixed(digits):"—";
 }
 
 function directionClass(value){
-  const v=String(value||"").toUpperCase();
-
-  if(v.includes("BUY")) return "buy";
-  if(v.includes("SELL")) return "sell";
-  return "neutral";
+const v=String(value||"").toUpperCase();
+if(v.includes("BUY"))return"buy";
+if(v.includes("SELL"))return"sell";
+return"neutral";
 }
 
 function applyDirection(id,value){
-  const el=$(id);
-  if(!el)return;
-
-  const v=String(value||"NEUTRAL").toUpperCase();
-
-  el.textContent=v;
-
-  el.className="tfDir "+directionClass(v);
+const el=$(id);
+if(!el)return;
+const v=String(value||"NEUTRAL").toUpperCase();
+el.textContent=v;
+el.className="tfDir "+directionClass(v);
 }
 
 function signalClass(value){
-  const v=String(value||"WAIT").toUpperCase();
-
-  if(v.includes("BUY"))return"buy";
-  if(v.includes("SELL"))return"sell";
-  return"wait";
+const v=String(value||"WAIT").toUpperCase();
+if(v.includes("BUY"))return"buy";
+if(v.includes("SELL"))return"sell";
+return"wait";
 }
 
 function applySignal(value){
-  const el=$("signal");
-  if(!el)return;
-
-  const v=String(value||"WAIT").toUpperCase();
-
-  el.textContent=v;
-  el.className="signal "+signalClass(v);
+const el=$("signal");
+if(!el)return;
+const v=String(value||"WAIT").toUpperCase();
+el.textContent=v;
+el.className="signal "+signalClass(v);
 }
 
 function applyBadge(id,value){
-  const el=$(id);
-  if(!el)return;
+const el=$(id);
+if(!el)return;
+const v=String(value||"WAIT").toUpperCase();
+el.textContent=v;
+el.className="badge";
 
-  const v=String(value||"WAIT").toUpperCase();
-
-  el.textContent=v;
-
-  el.className="badge";
-
-  if(v.includes("BUY") || v.includes("GOOD") || v.includes("HIGH QUALITY")){
-    el.classList.add("green");
-  }else if(v.includes("SELL")){
-    el.classList.add("red");
-  }else if(v.includes("RISK") || v.includes("LOW") || v.includes("WAIT")){
-    el.classList.add("yellow");
-  }else{
-    el.classList.add("blue");
-  }
+if(v.includes("BUY")||v.includes("GOOD")||v.includes("HIGH QUALITY"))
+el.classList.add("green");
+else if(v.includes("SELL"))
+el.classList.add("red");
+else if(v.includes("RISK")||v.includes("LOW")||v.includes("WAIT"))
+el.classList.add("yellow");
+else el.classList.add("blue");
 }
 
 function renderTF(prefix,data){
-
-  if(!data)return;
-
-  applyDirection(prefix+"Dir",data.direction);
-
-  setText(prefix+"Bias",data.bias || data.direction);
-
-  setText(
-    prefix+"Rsi",
-    data.rsi!==undefined ? "RSI "+num(data.rsi,1) : "RSI —"
-  );
-
-  setText(prefix+"Fast",num(data.emaFast,2));
-  setText(prefix+"Slow",num(data.emaSlow,2));
+if(!data)return;
+applyDirection(prefix+"Dir",data.direction);
+setText(prefix+"Bias",data.bias||data.direction);
+setText(prefix+"Rsi",data.rsi!==undefined?"RSI "+num(data.rsi,1):"RSI —");
+setText(prefix+"Fast",num(data.emaFast,2));
+setText(prefix+"Slow",num(data.emaSlow,2));
 }
 
 function formatTime(value){
-
-  if(!value)return"—";
-
-  const s=String(value);
-
-  if(s.length>=16){
-    return s.replace("T"," ").slice(0,16);
-  }
-
-  return s;
+if(!value)return"—";
+const s=String(value);
+return s.length>=16?s.replace("T"," ").slice(0,16):s;
 }
+
+/* =========================
+   PUSH NOTIFICATION
+========================= */
+
+let pushBusy=false;
+
+function showPushStatus(message,ms=2200){
+const el=$("pushStatus");
+if(!el)return;
+el.textContent=message;
+el.style.display="block";
+clearTimeout(showPushStatus.timer);
+showPushStatus.timer=setTimeout(()=>{
+el.style.display="none";
+},ms);
+}
+
+function setPushButton(on,text){
+const btn=$("pushBtn");
+if(!btn)return;
+
+btn.className="pushBtn "+(on?"on":"off");
+btn.textContent=text||(on?"🔔 PUSH ON":"🔔 PUSH OFF");
+}
+
+function urlBase64ToUint8Array(base64String){
+const padding="=".repeat((4-base64String.length%4)%4);
+const base64=(base64String+padding)
+.replace(/-/g,"+")
+.replace(/_/g,"/");
+const rawData=atob(base64);
+const outputArray=new Uint8Array(rawData.length);
+
+for(let i=0;i<rawData.length;++i){
+outputArray[i]=rawData.charCodeAt(i);
+}
+
+return outputArray;
+}
+
+async function getPushConfig(){
+const response=await fetch(
+"/api/push-config?t="+Date.now(),
+{
+cache:"no-store",
+headers:{"Accept":"application/json"}
+}
+);
+
+if(!response.ok){
+throw new Error("Push config HTTP "+response.status);
+}
+
+const data=await response.json();
+
+if(!data||data.ok===false){
+throw new Error(data?.error||"Push config unavailable");
+}
+
+const key=
+data.VAPID_PUBLIC_KEY||
+data.vapidPublicKey||
+data.publicKey||
+data.key;
+
+if(!key){
+throw new Error("VAPID public key missing");
+}
+
+return key;
+}
+
+async function subscribePush(){
+if(pushBusy)return;
+
+pushBusy=true;
+
+const btn=$("pushBtn");
+if(btn)btn.disabled=true;
+
+try{
+
+if(!("Notification" in window)){
+throw new Error("Notifications not supported");
+}
+
+if(!("serviceWorker" in navigator)){
+throw new Error("Service Worker not supported");
+}
+
+if(!("PushManager" in window)){
+throw new Error("Push not supported");
+}
+
+/*
+  IMPORTANT:
+  Existing root sw.js is reused.
+*/
+const registration=
+await navigator.serviceWorker.register("/sw.js");
+
+await navigator.serviceWorker.ready;
+
+let permission=Notification.permission;
+
+if(permission!=="granted"){
+
+permission=await Notification.requestPermission();
+
+if(permission!=="granted"){
+throw new Error("Notification permission denied");
+}
+}
+
+const vapidPublicKey=await getPushConfig();
+
+let subscription=
+await registration.pushManager.getSubscription();
+
+if(!subscription){
+
+subscription=
+await registration.pushManager.subscribe({
+userVisibleOnly:true,
+applicationServerKey:
+urlBase64ToUint8Array(vapidPublicKey)
+});
+}
+
+const response=await fetch(
+"/api/push-subscribe",
+{
+method:"POST",
+headers:{
+"Content-Type":"application/json",
+"Accept":"application/json"
+},
+body:JSON.stringify(subscription)
+}
+);
+
+const result=await response.json().catch(()=>({}));
+
+if(!response.ok){
+throw new Error(
+result?.error||
+"Push subscribe HTTP "+response.status
+);
+}
+
+localStorage.setItem(
+"xau_push_enabled",
+"1"
+);
+
+setPushButton(true,"🔔 PUSH ON");
+
+showPushStatus("🔔 Push Notification ON");
+
+}catch(error){
+
+console.error("Push error:",error);
+
+localStorage.removeItem("xau_push_enabled");
+
+setPushButton(false,"🔔 PUSH OFF");
+
+showPushStatus(
+"Push: "+(error?.message||"failed"),
+3200
+);
+
+}finally{
+
+pushBusy=false;
+
+if(btn)btn.disabled=false;
+
+}
+}
+
+async function checkPushStatus(){
+try{
+
+if(!("serviceWorker" in navigator)||
+!("PushManager" in window)){
+setPushButton(false,"🔔 PUSH");
+return;
+}
+
+const registration=
+await navigator.serviceWorker.getRegistration("/sw.js")||
+await navigator.serviceWorker.getRegistration();
+
+if(!registration){
+setPushButton(false,"🔔 PUSH OFF");
+return;
+}
+
+const subscription=
+await registration.pushManager.getSubscription();
+
+if(subscription&&Notification.permission==="granted"){
+setPushButton(true,"🔔 PUSH ON");
+localStorage.setItem("xau_push_enabled","1");
+}else{
+setPushButton(false,"🔔 PUSH OFF");
+}
+
+}catch(error){
+console.log("Push status:",error);
+setPushButton(false,"🔔 PUSH OFF");
+}
+}
+
+$("pushBtn")?.addEventListener(
+"click",
+subscribePush
+);
+
+checkPushStatus();
+
+/* =========================
+   API DATA
+========================= */
+
+let previousScalpSignal=null;
+let firstApiLoad=true;
 
 async function loadData(){
 
-  try{
+try{
 
-    const response=await fetch(
-      "/api/scalp?t="+Date.now(),
-      {
-        cache:"no-store",
-        headers:{
-          "Accept":"application/json"
-        }
-      }
-    );
+const response=await fetch(
+"/api/scalp?t="+Date.now(),
+{
+cache:"no-store",
+headers:{"Accept":"application/json"}
+}
+);
 
-    if(!response.ok){
-      throw new Error("HTTP "+response.status);
-    }
+if(!response.ok){
+throw new Error("HTTP "+response.status);
+}
 
-    const data=await response.json();
+const data=await response.json();
 
-    if(!data || data.ok!==true){
-      throw new Error(data?.error || "Invalid API response");
-    }
+if(!data||data.ok!==true){
+throw new Error(data?.error||"Invalid API response");
+}
 
-    /* STATUS */
+if($("loading"))$("loading").style.display="none";
+if($("statusDot"))$("statusDot").classList.add("live");
+setText("apiStatus","LIVE");
 
-    if($("loading")){
-      $("loading").style.display="none";
-    }
+const livePrice=
+data.livePrice?.price??data.price;
 
-    if($("statusDot")){
-      $("statusDot").classList.add("live");
-    }
+setText("price",num(livePrice,2));
+setText("priceSource",data.livePrice?.source||"TWELVE DATA");
 
-    setText("apiStatus","LIVE");
+const scalp=
+data.scalpSignal??
+data.signal?.signal??
+data.signal;
 
-    /* PRICE */
+applySignal(scalp);
 
-    const livePrice=
-      data.livePrice?.price ??
-      data.price;
+const reason=
+data.signal?.reason??
+data.signal?.message??
+data.marketFilter?.note??"";
 
-    setText("price",num(livePrice,2));
+setText("signalReason",reason);
 
-    setText(
-      "priceSource",
-      data.livePrice?.source || "TWELVE DATA"
-    );
+renderTF("m5",data.m5);
+renderTF("m15",data.m15);
+renderTF("h1",data.h1);
 
-    /* SIGNAL */
+const sr=data.supportResistance||{};
 
-    const scalp=
-      data.scalpSignal ??
-      data.signal?.signal ??
-      data.signal;
+setText(
+"support",
+num(
+sr.support?.price??
+sr.support??
+data.h1?.support?.price,
+2
+)
+);
 
-    applySignal(scalp);
+setText(
+"resistance",
+num(
+sr.resistance?.price??
+sr.resistance??
+data.h1?.resistance?.price,
+2
+)
+);
 
-    const reason=
-      data.signal?.reason ??
-      data.signal?.message ??
-      data.marketFilter?.note ??
-      "";
+setText("atr",num(data.m5?.atr,2));
 
-    setText("signalReason",reason);
+setText(
+"h1Context",
+data.marketFilter?.h1Context??
+data.h1?.direction??
+"—"
+);
 
-    /* TIMEFRAMES */
+applyBadge(
+"marketFilter",
+data.marketFilter?.status||
+data.marketFilter?.filter||
+"WAIT"
+);
 
-    renderTF("m5",data.m5);
-    renderTF("m15",data.m15);
-    renderTF("h1",data.h1);
+applyBadge(
+"confluence",
+data.confluence?.quality||"LOW"
+);
 
-    /* QUICK LEVELS */
+applyBadge(
+"entryQuality",
+data.entryQuality?.quality||"WAIT"
+);
 
-    const sr=data.supportResistance || {};
+const plan=data.tradePlan||{};
 
-    setText(
-      "support",
-      num(
-        sr.support?.price ??
-        sr.support ??
-        data.h1?.support?.price,
-        2
-      )
-    );
+const planDirection=
+plan.direction||
+plan.signal||
+scalp||
+"WAIT";
 
-    setText(
-      "resistance",
-      num(
-        sr.resistance?.price ??
-        sr.resistance ??
-        data.h1?.resistance?.price,
-        2
-      )
-    );
+applyBadge("planStatus",planDirection);
 
-    setText(
-      "atr",
-      num(data.m5?.atr,2)
-    );
+setText(
+"entry",
+num(plan.entry??plan.entryPrice,2)
+);
 
-    setText(
-      "h1Context",
-      data.marketFilter?.h1Context ??
-      data.h1?.direction ??
-      "—"
-    );
+setText(
+"stop",
+num(
+plan.stop??
+plan.stopLoss??
+plan.sl,
+2
+)
+);
 
-    /* FILTERS */
+setText(
+"tp1",
+num(
+plan.tp1??
+plan.takeProfit1,
+2
+)
+);
 
-    applyBadge(
-      "marketFilter",
-      data.marketFilter?.status ||
-      data.marketFilter?.filter ||
-      "WAIT"
-    );
+setText(
+"tp2",
+num(
+plan.tp2??
+plan.takeProfit2,
+2
+)
+);
 
-    applyBadge(
-      "confluence",
-      data.confluence?.quality ||
-      "LOW"
-    );
+const news=data.newsFilter||{};
 
-    applyBadge(
-      "entryQuality",
-      data.entryQuality?.quality ||
-      "WAIT"
-    );
+setText("newsStatus",news.status||"—");
+setText("newsLevel",news.level||"—");
+setText(
+"newsScore",
+news.score!==undefined?news.score:"—"
+);
 
-    /* TRADE PLAN */
+if($("newsStatus")){
+const ns=String(news.status||"").toUpperCase();
 
-    const plan=data.tradePlan || {};
+$("newsStatus").className=
+ns.includes("RISK")?"red":
+ns.includes("WATCH")?"yellow":"green";
+}
 
-    const planDirection=
-      plan.direction ||
-      plan.signal ||
-      scalp ||
-      "WAIT";
+const liq=data.liquidity||{};
 
-    applyBadge("planStatus",planDirection);
+setText(
+"liqAbove",
+num(
+liq.above?.h1??
+liq.aboveH1??
+liq.above,
+2
+)
+);
 
-    setText(
-      "entry",
-      num(
-        plan.entry ??
-        plan.entryPrice,
-        2
-      )
-    );
+setText(
+"liqBelow",
+num(
+liq.below?.h1??
+liq.belowH1??
+liq.below,
+2
+)
+);
 
-    setText(
-      "stop",
-      num(
-        plan.stop ??
-        plan.stopLoss ??
-        plan.sl,
-        2
-      )
-    );
+setText(
+"lastCandle",
+formatTime(
+data.m5?.lastCandle??
+data.m15?.lastCandle
+)
+);
 
-    setText(
-      "tp1",
-      num(
-        plan.tp1 ??
-        plan.takeProfit1,
-        2
-      )
-    );
+const cache=data.cache||{};
 
-    setText(
-      "tp2",
-      num(
-        plan.tp2 ??
-        plan.takeProfit2,
-        2
-      )
-    );
+let cacheText="LIVE";
 
-    /* NEWS */
+if(cache.m5?.source){
+cacheText=
+"CACHE • M5 "+
+String(cache.m5.source).toUpperCase();
+}
 
-    const news=data.newsFilter || {};
+setText(
+"footer",
+"XAUUSDSNIPER • "+cacheText
+);
 
-    setText(
-      "newsStatus",
-      news.status || "—"
-    );
+/*
+========================================
+  SIGNAL CHANGE DETECTION
+========================================
 
-    setText(
-      "newsLevel",
-      news.level || "—"
-    );
+Only notify when a NEW confirmed BUY/SELL
+appears.
 
-    setText(
-      "newsScore",
-      news.score!==undefined ?
-      news.score :
-      "—"
-    );
+WAIT does not notify.
+Same signal does not repeatedly notify.
+*/
+const currentSignal=
+String(scalp||"WAIT").toUpperCase();
 
-    if($("newsStatus")){
-      const ns=String(news.status||"").toUpperCase();
+const confirmed=
+data.signal?.confirmed===true||
+data.signal?.confirmed==="true";
 
-      $("newsStatus").className=
-        ns.includes("RISK") ?
-        "red" :
-        ns.includes("WATCH") ?
-        "yellow" :
-        "green";
-    }
+const isTradeSignal=
+(currentSignal==="BUY"||
+currentSignal==="SELL");
 
-    /* LIQUIDITY */
+if(firstApiLoad){
 
-    const liq=data.liquidity || {};
+previousScalpSignal=currentSignal;
+firstApiLoad=false;
 
-    setText(
-      "liqAbove",
-      num(
-        liq.above?.h1 ??
-        liq.aboveH1 ??
-        liq.above,
-        2
-      )
-    );
+}else if(
+isTradeSignal&&
+confirmed&&
+currentSignal!==previousScalpSignal
+){
 
-    setText(
-      "liqBelow",
-      num(
-        liq.below?.h1 ??
-        liq.belowH1 ??
-        liq.below,
-        2
-      )
-    );
+/*
+  Ask existing backend push checker to
+  perform its existing notification logic.
 
-    setText(
-      "lastCandle",
-      formatTime(
-        data.m5?.lastCandle ??
-        data.m15?.lastCandle
-      )
-    );
+  This does NOT replace the existing push
+  system. It simply gives the backend a
+  chance to process the new signal.
+*/
+try{
 
-    /* FOOTER */
+await fetch(
+"/api/push-check?t="+Date.now(),
+{
+method:"GET",
+cache:"no-store"
+}
+);
 
-    const cache=data.cache || {};
+}catch(pushCheckError){
 
-    let cacheText="LIVE";
+console.log(
+"Push check:",
+pushCheckError
+);
 
-    if(cache.m5?.source){
-      cacheText=
-        "CACHE • M5 "+
-        String(cache.m5.source).toUpperCase();
-    }
+}
 
-    setText("footer","XAUUSDSNIPER • "+cacheText);
+previousScalpSignal=currentSignal;
 
-  }catch(error){
+}else{
 
-    console.error(error);
+previousScalpSignal=currentSignal;
 
-    if($("loading")){
-      $("loading").style.display="none";
-    }
+}
 
-    if($("statusDot")){
-      $("statusDot").classList.remove("live");
-    }
+}catch(error){
 
-    setText("apiStatus","ERROR");
+console.error(error);
 
-    setText(
-      "signalReason",
-      error?.message || "API connection error"
-    );
-  }
+if($("loading"))
+$("loading").style.display="none";
+
+if($("statusDot"))
+$("statusDot").classList.remove("live");
+
+setText("apiStatus","ERROR");
+
+setText(
+"signalReason",
+error?.message||"API connection error"
+);
+
+}
+
 }
 
 /* FIRST LOAD */
@@ -1101,6 +863,17 @@ loadData();
 
 /* REFRESH EVERY 60 SEC */
 setInterval(loadData,60000);
+
+/* Re-check push after returning to page */
+document.addEventListener(
+"visibilitychange",
+()=>{
+if(!document.hidden){
+checkPushStatus();
+loadData();
+}
+}
+);
 </script>
 
 </body>
