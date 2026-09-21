@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="ms">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#f6f8fb">
+<link rel="manifest" href="/manifest.json">
+<link rel="apple-touch-icon" href="/icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<title>XAUUSDSNIPER • M5/M15 CHOCH SCALPER</title>
+<style>
+:root{--bg:#f3f6fa;--card:#fff;--line:#dfe5ec;--text:#172033;--muted:#687386;--green:#159447;--red:#d52f3f;--amber:#c47a00;--blue:#087bb8}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:12px Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif}
+.wrap{max-width:1120px;margin:auto;padding:10px}.top{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:9px}.logo{font-size:17px;font-weight:900;letter-spacing:.5px}.logo b{color:var(--amber)}.online{font-size:9px;color:var(--muted);display:flex;gap:6px;align-items:center}.dot{width:7px;height:7px;border-radius:50%;background:#aaa}.dot.ok{background:var(--green)}.dot.err{background:var(--red)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:11px;box-shadow:0 4px 16px rgba(15,23,42,.05);margin-bottom:9px}.hero{display:grid;grid-template-columns:1.25fr .9fr .9fr;gap:9px}.price{font-size:31px;font-weight:900;letter-spacing:-1px}.label{font-size:8px;color:var(--muted);letter-spacing:1px;font-weight:800;text-transform:uppercase;margin-bottom:6px}.sub{font-size:9px;color:var(--muted);margin-top:5px}.signal{font-size:22px;font-weight:900;text-align:center;margin:7px 0}.buy{color:var(--green)}.sell{color:var(--red)}.wait{color:var(--amber)}.center{text-align:center}.reason{font-size:9px;line-height:1.4;color:var(--muted);text-align:center}.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:9px}.tfhead{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;font-weight:900}.badge{font-size:8px;padding:3px 7px;border-radius:5px;border:1px solid var(--line);font-weight:900}.badge.buy{color:var(--green);background:#effaf3}.badge.sell{color:var(--red);background:#fff1f2}.badge.neutral{color:var(--amber);background:#fff8e8}.metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:5px}.metric,.box{background:#f8fafc;border:1px solid #e5eaf0;border-radius:7px;padding:7px;min-width:0}.mn{font-size:7px;color:var(--muted);margin-bottom:3px;text-transform:uppercase;letter-spacing:.4px}.mv{font-size:10px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.two{display:grid;grid-template-columns:1fr 1fr;gap:7px}.level{padding:10px;border-radius:8px;border:1px solid var(--line)}.level.s{background:#f2fbf5;border-color:#cbeed8}.level.r{background:#fff5f6;border-color:#f2ccd1}.lp{font-size:18px;font-weight:900}.lt{font-size:8px;color:var(--muted);margin-top:3px}.title{font-size:11px;font-weight:900;margin-bottom:8px}.structure{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px}.event{border-radius:8px;padding:9px;background:#f8fafc;border:1px solid var(--line)}.event.choch{background:#fff8e8;border-color:#f2d08a}.event .big{font-size:15px;font-weight:900;margin-top:3px}.ai{border-left:4px solid var(--amber)}.ai.valid{border-left-color:var(--green)}.ai.waiting{border-left-color:var(--amber)}.ai.avoid{border-left-color:var(--red)}.aihead{display:flex;justify-content:space-between;gap:10px;align-items:center}.decision{font-size:17px;font-weight:900}.confidence{font-size:10px;font-weight:800;color:var(--muted)}.reasoning{display:grid;gap:5px;margin-top:8px}.why{font-size:9px;line-height:1.45;background:#f8fafc;border:1px solid #e5eaf0;border-radius:7px;padding:7px}.plan{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}.news{font-size:9px;line-height:1.4;color:#475467}.btn{border:1px solid var(--line);background:#fff;border-radius:7px;padding:6px 8px;font-size:9px;font-weight:800;color:#344054}.btn.on{color:var(--green);background:#effaf3;border-color:#9cddb4}.headrow{display:flex;justify-content:space-between;align-items:center;gap:8px}.error{display:none;color:var(--red);background:#fff0f2;border:1px solid #f1c7cd;padding:8px;border-radius:8px;margin-bottom:9px;font-size:9px}.footer{text-align:center;color:var(--muted);font-size:8px;padding:3px 0 12px}
+@media(max-width:760px){.hero{grid-template-columns:1fr 1fr}.hero .pricecard{grid-column:1/-1}.grid{grid-template-columns:1fr}.metrics{grid-template-columns:repeat(3,1fr)}.structure{grid-template-columns:1fr}.plan{grid-template-columns:repeat(2,1fr)}}@media(max-width:430px){.wrap{padding:7px}.price{font-size:27px}.metrics{grid-template-columns:repeat(2,1fr)}.hero{gap:7px}.card{padding:9px}.two{gap:6px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <div class="logo">XAU<b>USD</b>SNIPER</div>
+    <div style="display:flex;align-items:center;gap:8px">
+      <button id="notify" class="btn">🔔 Enable Notifications</button>
+      <div class="online"><span id="dot" class="dot"></span><span id="status">CONNECTING</span></div>
+    </div>
+  </div>
+
+  <div id="error" class="error"></div>
+
+  <div class="hero">
+    <div class="card pricecard">
+      <div class="label">XAU/USD • LIVE</div>
+      <div id="price" class="price">—</div>
+      <div id="priceSub" class="sub">Waiting for data...</div>
+    </div>
+    <div class="card center">
+      <div class="label">SCALP STATE</div>
+      <div id="signal" class="signal wait">WAIT</div>
+      <div id="signalReason" class="reason">M5 + M15 belum confirm.</div>
+    </div>
+    <div class="card center">
+      <div class="label">MARKET</div>
+      <div id="market" class="signal wait" style="font-size:15px">CHECKING</div>
+      <div id="marketReason" class="reason">—</div>
+    </div>
+  </div>
+
+  <div class="grid">
+    <div class="card">
+      <div class="tfhead"><span>M5 • TRIGGER</span><span id="m5badge" class="badge neutral">NEUTRAL</span></div>
+      <div class="metrics">
+        <div class="metric"><div class="mn">Direction</div><div id="m5dir" class="mv">—</div></div>
+        <div class="metric"><div class="mn">RSI</div><div id="m5rsi" class="mv">—</div></div>
+        <div class="metric"><div class="mn">EMA 9</div><div id="m5fast" class="mv">—</div></div>
+        <div class="metric"><div class="mn">EMA 21</div><div id="m5slow" class="mv">—</div></div>
+        <div class="metric"><div class="mn">ATR</div><div id="m5atr" class="mv">—</div></div>
+        <div class="metric"><div class="mn">Closed</div><div id="m5last" class="mv">—</div></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="tfhead"><span>M15 • CONFIRMATION</span><span id="m15badge" class="badge neutral">NEUTRAL</span></div>
+      <div class="metrics">
+        <div class="metric"><div class="mn">Direction</div><div id="m15dir" class="mv">—</div></div>
+        <div class="metric"><div class="mn">RSI</div><div id="m15rsi" class="mv">—</div></div>
+        <div class="metric"><div class="mn">EMA 9</div><div id="m15fast" class="mv">—</div></div>
+        <div class="metric"><div class="mn">EMA 21</div><div id="m15slow" class="mv">—</div></div>
+        <div class="metric"><div class="mn">ATR</div><div id="m15atr" class="mv">—</div></div>
+        <div class="metric"><div class="mn">Closed</div><div id="m15last" class="mv">—</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="title">NEW STRUCTURE • CHOCH / BOS</div>
+    <div class="structure">
+      <div id="m5event" class="event"><div class="label">M5</div><div id="m5eventBig" class="big">NONE</div><div id="m5eventText" class="sub">No new structure.</div></div>
+      <div id="m15event" class="event"><div class="label">M15</div><div id="m15eventBig" class="big">NONE</div><div id="m15eventText" class="sub">No new structure.</div></div>
+      <div class="event"><div class="label">LATEST TRIGGER</div><div id="triggerBig" class="big">WAIT</div><div id="triggerText" class="sub">Wait for a new closed candle break.</div></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="title">M5 / M15 SUPPORT & RESISTANCE</div>
+    <div class="two">
+      <div class="level s"><div class="label">Nearest Support / Retest</div><div id="support" class="lp">—</div><div id="supportMeta" class="lt">—</div></div>
+      <div class="level r"><div class="label">Nearest Resistance / Retest</div><div id="resistance" class="lp">—</div><div id="resistanceMeta" class="lt">—</div></div>
+    </div>
+  </div>
+
+  <div id="aiCard" class="card ai waiting">
+    <div class="aihead">
+      <div>
+        <div class="label">AI ENTRY CHECK • AFTER STRUCTURE</div>
+        <div id="aiDecision" class="decision wait">WAIT</div>
+      </div>
+      <div id="aiConfidence" class="confidence">—</div>
+    </div>
+    <div id="aiSummary" class="reason" style="text-align:left;margin-top:5px">AI akan menilai selepas candle membentuk structure.</div>
+    <div id="aiReasoning" class="reasoning"></div>
+  </div>
+
+  <div class="card">
+    <div class="title">TRADE PLAN</div>
+    <div class="plan">
+      <div class="metric"><div class="mn">Status</div><div id="planStatus" class="mv">WAIT</div></div>
+      <div class="metric"><div class="mn">Entry</div><div id="planEntry" class="mv">—</div></div>
+      <div class="metric"><div class="mn">SL</div><div id="planSL" class="mv">—</div></div>
+      <div class="metric"><div class="mn">TP1</div><div id="planTP1" class="mv">—</div></div>
+      <div class="metric"><div class="mn">TP2</div><div id="planTP2" class="mv">—</div></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="headrow"><div class="title" style="margin:0">NEWS FILTER</div><div id="newsLevel" class="confidence">—</div></div>
+    <div id="news" class="news" style="margin-top:7px">—</div>
+  </div>
+
+  <div class="card">
+    <div class="title">H1 • CONTEXT ONLY</div>
+    <div class="metrics">
+      <div class="metric"><div class="mn">Direction</div><div id="h1dir" class="mv">—</div></div>
+      <div class="metric"><div class="mn">Structure</div><div id="h1struct" class="mv">—</div></div>
+      <div class="metric"><div class="mn">Support</div><div id="h1sup" class="mv">—</div></div>
+      <div class="metric"><div class="mn">Resistance</div><div id="h1res" class="mv">—</div></div>
+    </div>
+  </div>
+
+  <div class="footer">M5 trigger • M15 confirmation • CHOCH notification • S/R from nearest confirmed M5/M15 swings<br><span id="updated">Last update: —</span></div>
+</div>
+
+<script>
+const API="/api/scalp", REFRESH_MS=60000;
+const $=id=>document.getElementById(id);
+const text=(id,v)=>{if($(id))$(id).textContent=(v===null||v===undefined||v==="")?"—":String(v)};
+const fmt=(v,d=2)=>Number.isFinite(Number(v))?Number(v).toFixed(d):"—";
+const time=v=>v?String(v).replace("T"," ").replace("Z",""):"—";
+function cls(v){v=String(v||"NEUTRAL").toUpperCase();return v==="BUY"?"buy":v==="SELL"?"sell":"neutral"}
+function sig(id,v){const e=$(id),x=String(v||"WAIT").toUpperCase();if(!e)return;e.textContent=x;e.className="signal "+(x==="BUY"?"buy":x==="SELL"?"sell":"wait")}
+function badge(id,v){const e=$(id),x=String(v||"NEUTRAL").toUpperCase();if(!e)return;e.textContent=x;e.className="badge "+cls(x)}
+function renderTF(p,d){if(!d)return;const dir=d.direction||"NEUTRAL";badge(p+"badge",dir);text(p+"dir",dir);text(p+"rsi",fmt(d.rsi));text(p+"fast",fmt(d.emaFast));text(p+"slow",fmt(d.emaSlow));text(p+"atr",fmt(d.atr));text(p+"last",time(d.lastCandle))}
+function eventBox(prefix,e){if(!e)return;text(prefix+"eventBig",e.type||"NONE");text(prefix+"eventText",e.type&&e.type!=="NONE"?`${e.direction||""} • break ${fmt(e.level)} • ${time(e.time)}`:"No new structure from previous candle.");$(prefix+"event").className="event "+(e.type==="CHOCH"?"choch":"")}
+function renderAI(a){
+  const card=$("aiCard"); if(!a){text("aiDecision","WAIT");text("aiSummary","No new structure yet. Wait.");text("aiReasoning","");return}
+  let d=a.decision||"WAIT_RETRACE"; const label=d==="ENTRY_VALID"?"ENTRY VALID":d==="WAIT_RETRACE"?"WAIT":"AVOID";
+  text("aiDecision",label); text("aiConfidence",a.status==="OK"?`Confidence ${fmt(a.confidence,0)}%`:"AI unavailable");
+  text("aiSummary",a.summary||a.verdict||"Wait for a cleaner setup.");
+  const reasons=Array.isArray(a.reasoning)?a.reasoning:[]; $("aiReasoning").innerHTML=reasons.map((x,i)=>`<div class="why"><b>${i+1}.</b> ${String(x).replaceAll("<","&lt;").replaceAll(">","&gt;")}</div>`).join("");
+  card.className="card ai "+(d==="ENTRY_VALID"?"valid":d==="AVOID"?"avoid":"waiting");
+  $("aiDecision").className="decision "+(d==="ENTRY_VALID"?"buy":d==="AVOID"?"sell":"wait");
+}
+function renderNews(n){if(!n)return;text("newsLevel",`${n.level||"UNKNOWN"}${n.newestAgeMinutes!=null?" • "+n.newestAgeMinutes+"m":""}`);const items=Array.isArray(n.items)?n.items.slice(0,5):[];text("news",items.length?items.map(x=>`${x.category||"NEWS"}: ${x.title||""}`).join("\n"):"No recent headline data.")}
+function render(d){
+  if(!d||d.ok!==true)throw Error(d?.error||"API returned ok:false");
+  text("price",fmt(d.price));text("priceSub",`${d.livePrice?.source||"API"}${d.livePrice?.ageSeconds!=null?" • "+d.livePrice.ageSeconds+"s cache":""}`);
+  sig("signal",d.signal?.signal||"WAIT");text("signalReason",d.signal?.reason||"M5 + M15 belum searah.");
+  const m=d.marketFilter||{};sig("market",m.status==="SCALP_READY"?(d.signal?.direction||"WAIT"):m.status||"WAIT");text("marketReason",m.marketReason||m.note||"—");
+  renderTF("m5",d.m5);renderTF("m15",d.m15);
+  eventBox("m5",d.structure?.m5);eventBox("m15",d.structure?.m15);
+  const t=d.structure?.trigger||{};text("triggerBig",t.confirmed?`${t.type} ${t.timeframe}`:"WAIT");text("triggerText",t.confirmed?`${t.description||""} • ${time(t.time)}`:"Wait for a new closed candle break.");
+  const sr=d.supportResistance||{};text("support",fmt(sr.support));text("supportMeta",`${sr.supportKind||"SWING LOW"} • ${sr.supportTimeframe||"M5/M15"} • ${time(sr.supportTime)}`);text("resistance",fmt(sr.resistance));text("resistanceMeta",`${sr.resistanceKind||"SWING HIGH"} • ${sr.resistanceTimeframe||"M5/M15"} • ${time(sr.resistanceTime)}`);
+  renderAI(d.aiAnalysis);
+  const p=d.tradePlan||{};text("planStatus",p.status||"WAIT");text("planEntry",fmt(p.entry));text("planSL",fmt(p.stopLoss));text("planTP1",fmt(p.takeProfit1));text("planTP2",fmt(p.takeProfit2));
+  renderNews(d.newsFilter);
+  text("h1dir",d.h1?.direction||"—");text("h1struct",d.h1?.structure?.bias||"—");text("h1sup",fmt(d.h1?.support?.price));text("h1res",fmt(d.h1?.resistance?.price));
+  text("updated","Last update: "+new Date().toLocaleTimeString());
+  $("dot").className="dot ok";text("status","API ONLINE");$("error").style.display="none";
+}
+async function load(){
+ try{const r=await fetch(API+"?t="+Date.now(),{cache:"no-store"});const d=await r.json();if(!r.ok)throw Error(d?.error||"HTTP "+r.status);render(d)}
+ catch(e){$("dot").className="dot err";text("status","API ERROR");$("error").style.display="block";text("error","API Error: "+(e?.message||e))}
+}
+async function b64(s){const p="=".repeat((4-s.length%4)%4),r=atob((s+p).replace(/-/g,"+").replace(/_/g,"/"));return Uint8Array.from([...r].map(c=>c.charCodeAt(0)))}
+async function enablePush(){
+ if(!("Notification"in window)||!("serviceWorker"in navigator)||!("PushManager"in window)){alert("Pada iPhone, Add to Home Screen dahulu dan buka app dari Home Screen.");return}
+ const b=$("notify");try{b.disabled=true;b.textContent="⏳ Enabling...";const perm=await Notification.requestPermission();if(perm!=="granted")throw Error("Notification permission tidak diberikan.");const reg=await navigator.serviceWorker.register("/sw.js",{scope:"/"});await navigator.serviceWorker.ready;const cr=await fetch("/api/push-config?t="+Date.now(),{cache:"no-store"}),c=await cr.json();if(!cr.ok||!c.publicKey)throw Error("VAPID public key tidak tersedia.");let sub=await reg.pushManager.getSubscription();if(!sub)sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:await b64(c.publicKey)});const sr=await fetch("/api/push-subscribe",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(sub)}),sj=await sr.json();if(!sr.ok||!sj.success)throw Error(sj.error||"Gagal simpan subscription.");b.className="btn on";b.textContent="🔔 Notifications ON";b.disabled=false}catch(e){b.disabled=false;b.textContent="🔔 Enable Notifications";alert(e.message||"Push gagal")}
+}
+$("notify").addEventListener("click",enablePush);if("Notification"in window&&Notification.permission==="granted"){$("notify").className="btn on";$("notify").textContent="🔔 Notifications ON"}
+load();setInterval(load,REFRESH_MS);
+</script>
+</body>
+</html>
