@@ -10,6 +10,25 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Check XAU signal
+      - name: Trigger XAU Signal Engine
         run: |
-          curl -f -sS "https://sn-r-xauusd-ta3j.vercel.app/api/scalp?source=github-actions"
+          echo "======================================"
+          echo "XAUUSDSNIPER BACKGROUND SIGNAL CHECK"
+          echo "======================================"
+          echo "Time: $(date -u)"
+
+          RESPONSE=$(curl -sS \
+            --max-time 55 \
+            -w "\nHTTP_STATUS:%{http_code}" \
+            "https://sn-r-xauusd-ta3j.vercel.app/api/scalp?source=github-actions")
+
+          echo "$RESPONSE"
+
+          STATUS=$(echo "$RESPONSE" | grep "HTTP_STATUS:" | cut -d: -f2)
+
+          if [ "$STATUS" != "200" ]; then
+            echo "ERROR: Vercel API returned HTTP $STATUS"
+            exit 1
+          fi
+
+          echo "XAU signal engine executed successfully."
