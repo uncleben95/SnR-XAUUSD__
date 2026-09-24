@@ -13,9 +13,9 @@ jobs:
       - name: Trigger XAUUSD push engine
         env:
           XAU_APP_URL: ${{ secrets.XAU_APP_URL }}
-          PUSH_CRON_SECRET: ${{ secrets.PUSH_CRON_SECRET }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
         run: |
           curl -fsS \
-            -H "x-push-cron-secret: ${PUSH_CRON_SECRET}" \
+            -H "x-push-cron-secret: ${CRON_SECRET}" \
             -H "cache-control: no-cache" \
             "${XAU_APP_URL}/api/push-cron?cron=$(date +%s)"
