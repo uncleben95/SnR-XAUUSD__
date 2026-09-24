@@ -2,33 +2,101 @@ name: XAU Signal Push
 
 on:
   schedule:
+    # Run every 5 minutes
     - cron: "*/5 * * * *"
+
+  # Allow manual testing from GitHub Actions
   workflow_dispatch:
 
 jobs:
   check-signal:
     runs-on: ubuntu-latest
 
+    timeout-minutes: 2
+
     steps:
       - name: Trigger XAU Signal Engine
+        shell: bash
         run: |
-          echo "======================================"
-          echo "XAUUSDSNIPER BACKGROUND SIGNAL CHECK"
-          echo "======================================"
-          echo "Time: $(date -u)"
+          set -u
 
-          RESPONSE=$(curl -sS \
+          echo "=============================================="
+          echo " XAUUSDSNIPER BACKGROUND SIGNAL ENGINE"
+          echo "=============================================="
+          echo "UTC Time : $(date -u '+%Y-%m-%d %H:%M:%S')"
+          echo "Malaysia : $(TZ=Asia/Kuala_Lumpur date '+%Y-%m-%d %H:%M:%S')"
+          echo "=============================================="
+
+          API_URL="https://sn-r-xauusd-ta3j.vercel.app/api/scalp?source=github-actions"
+
+          echo "Calling:"
+          echo "$API_URL"
+          echo ""
+
+          RESPONSE_FILE="$(mktemp)"
+
+          HTTP_STATUS=$(curl \
+            --silent \
+            --show-error \
+            --location \
             --max-time 55 \
-            -w "\nHTTP_STATUS:%{http_code}" \
-            "https://sn-r-xauusd-ta3j.vercel.app/api/scalp?source=github-actions")
+            --connect-timeout 15 \
+            --retry 2 \
+            --retry-delay 2 \
+            --output "$RESPONSE_FILE" \
+            --write-out "%{http_code}" \
+            "$API_URL" || true)
 
-          echo "$RESPONSE"
+          echo ""
+          echo "HTTP STATUS: $HTTP_STATUS"
+          echo "----------------------------------------------"
 
-          STATUS=$(echo "$RESPONSE" | grep "HTTP_STATUS:" | cut -d: -f2)
+          if [ -s "$RESPONSE_FILE" ]; then
+            cat "$RESPONSE_FILE"
+          else
+            echo "EMPTY RESPONSE FROM VERCEL"
+          fi
 
-          if [ "$STATUS" != "200" ]; then
-            echo "ERROR: Vercel API returned HTTP $STATUS"
+          echo ""
+          echo "----------------------------------------------"
+
+          if [ "$HTTP_STATUS" = "200" ]; then
+            echo "SUCCESS: XAU signal engine executed."
+            echo "Background signal check completed."
+            exit 0
+          fi
+
+          if [ "$HTTP_STATUS" = "401" ]; then
+            echo "ERROR: Vercel returned HTTP 401."
+            echo ""
+            echo "The Vercel deployment is protected."
+            echo "GitHub Actions cannot access /api/scalp."
+            echo ""
+            echo "Check Vercel Deployment Protection /"
+            echo "Automation Bypass configuration."
             exit 1
           fi
 
-          echo "XAU signal engine executed successfully."
+          if [ "$HTTP_STATUS" = "429" ]; then
+            echo "ERROR: HTTP 429 - rate limited."
+            echo "The workflow will try again on the next schedule."
+            exit 1
+          fi
+
+          if [ "$HTTP_STATUS" = "404" ]; then
+            echo "ERROR: HTTP 404 - /api/scalp was not found."
+            exit 1
+          fi
+
+          if [ "$HTTP_STATUS" = "500" ]; then
+            echo "ERROR: HTTP 500 - Vercel API/server error."
+            exit 1
+          fi
+
+          if [ "$HTTP_STATUS" = "000" ]; then
+            echo "ERROR: Could not connect to Vercel."
+            exit 1
+          fi
+
+          echo "ERROR: Vercel API returned HTTP $HTTP_STATUS"
+          exit 1
