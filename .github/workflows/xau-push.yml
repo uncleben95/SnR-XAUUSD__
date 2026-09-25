@@ -2,28 +2,25 @@ name: XAU Signal Push
 
 on:
   schedule:
-    # Run every 5 minutes
     - cron: "*/5 * * * *"
 
-  # Allow manual testing from GitHub Actions
   workflow_dispatch:
 
 jobs:
   check-signal:
     runs-on: ubuntu-latest
-
     timeout-minutes: 2
 
     steps:
-      - name: Trigger XAU Signal Engine
+      - name: Trigger XAU Scalp Engine
         shell: bash
         run: |
           set -u
 
           echo "=============================================="
-          echo " XAUUSDSNIPER BACKGROUND SIGNAL ENGINE"
+          echo " XAUUSD SCALP SIGNAL ENGINE"
           echo "=============================================="
-          echo "UTC Time : $(date -u '+%Y-%m-%d %H:%M:%S')"
+          echo "UTC      : $(date -u '+%Y-%m-%d %H:%M:%S')"
           echo "Malaysia : $(TZ=Asia/Kuala_Lumpur date '+%Y-%m-%d %H:%M:%S')"
           echo "=============================================="
 
@@ -60,43 +57,56 @@ jobs:
           echo ""
           echo "----------------------------------------------"
 
-          if [ "$HTTP_STATUS" = "200" ]; then
-            echo "SUCCESS: XAU signal engine executed."
-            echo "Background signal check completed."
-            exit 0
-          fi
+          case "$HTTP_STATUS" in
 
-          if [ "$HTTP_STATUS" = "401" ]; then
-            echo "ERROR: Vercel returned HTTP 401."
-            echo ""
-            echo "The Vercel deployment is protected."
-            echo "GitHub Actions cannot access /api/scalp."
-            echo ""
-            echo "Check Vercel Deployment Protection /"
-            echo "Automation Bypass configuration."
-            exit 1
-          fi
+            200)
+              echo "SUCCESS"
+              echo "Scalp engine executed successfully."
+              echo "M5 trigger check completed."
+              echo "----------------------------------------------"
+              exit 0
+              ;;
 
-          if [ "$HTTP_STATUS" = "429" ]; then
-            echo "ERROR: HTTP 429 - rate limited."
-            echo "The workflow will try again on the next schedule."
-            exit 1
-          fi
+            401)
+              echo "ERROR: HTTP 401"
+              echo "Vercel Deployment Protection is blocking GitHub Actions."
+              exit 1
+              ;;
 
-          if [ "$HTTP_STATUS" = "404" ]; then
-            echo "ERROR: HTTP 404 - /api/scalp was not found."
-            exit 1
-          fi
+            404)
+              echo "ERROR: HTTP 404"
+              echo "The endpoint /api/scalp does not exist on this deployment."
+              echo "Check the Vercel project root and API file location."
+              exit 1
+              ;;
 
-          if [ "$HTTP_STATUS" = "500" ]; then
-            echo "ERROR: HTTP 500 - Vercel API/server error."
-            exit 1
-          fi
+            429)
+              echo "ERROR: HTTP 429"
+              echo "Rate limited. Next scheduled run will try again."
+              exit 1
+              ;;
 
-          if [ "$HTTP_STATUS" = "000" ]; then
-            echo "ERROR: Could not connect to Vercel."
-            exit 1
-          fi
+            500)
+              echo "ERROR: HTTP 500"
+              echo "Scalp engine returned a server error."
+              exit 1
+              ;;
 
-          echo "ERROR: Vercel API returned HTTP $HTTP_STATUS"
-          exit 1
+            502|503|504)
+              echo "ERROR: HTTP $HTTP_STATUS"
+              echo "Temporary Vercel/server problem."
+              exit 1
+              ;;
+
+            000)
+              echo "ERROR: Connection failed."
+              echo "Could not connect to Vercel."
+              exit 1
+              ;;
+
+            *)
+              echo "ERROR: Unexpected HTTP status: $HTTP_STATUS"
+              exit 1
+              ;;
+
+          esac
