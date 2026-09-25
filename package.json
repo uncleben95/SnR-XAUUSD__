@@ -1,0 +1,13 @@
+{
+  "name": "snr-xauusd",
+  "version": "1.0.0",
+  "private": true,
+  "engines": {
+    "node": ">=20.x"
+  },
+  "type": "module",
+  "dependencies": {
+    "@upstash/redis": "latest",
+    "web-push": "^3.6.7"
+  }
+}
