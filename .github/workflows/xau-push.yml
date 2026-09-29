@@ -2,7 +2,7 @@ name: XAU Signal Push
 
 on:
   schedule:
-    - cron: "*/5 * * * *"
+    - cron: "*/2 * * * *"
 
   workflow_dispatch:
 
