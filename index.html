@@ -11,7 +11,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 
-<title>XAU/USD Pro Sniper — V18 Regime + Multi-TF S/R</title>
+<title>XAU/USD Pro Sniper — V12 Fixed Trade Plan</title>
 
 <style>
 :root{
@@ -359,7 +359,8 @@ header p{
 <header>
 <h1>XAU/USD PRO SNIPER</h1>
 <p>
-V18 • M15 Confirmation → M5 Trigger → Multi-TF S/R → Market Regime → Fixed Entry/SL/TP → Server Push
+V18 • M5 Scalp Trigger → M15 Confirmation → H1 Hold Context →
+Multi-TF S/R → Market Regime → Volatility-Aware SL/TP → Server Push
 </p>
 </header>
 
@@ -486,32 +487,32 @@ Entry Quality:
 <div class="card">
 
 <h3 style="margin:0 0 8px;color:var(--blue);font-size:.82rem">
-🌡️ MARKET REGIME
+📊 MARKET REGIME
 </h3>
 
 <div class="metric">
-<span>Regime</span>
-<strong id="regime">--</strong>
+<span>Market Status</span>
+<strong id="marketStatus">--</strong>
 </div>
 
 <div class="metric">
-<span>Efficiency Ratio M15</span>
-<strong id="erM15">--</strong>
+<span>Structure</span>
+<strong id="marketStructure">--</strong>
+</div>
+
+<div class="metric">
+<span>M15 Efficiency Ratio</span>
+<strong id="marketER">--</strong>
 </div>
 
 <div class="metric">
 <span>Volatility</span>
-<strong id="volatility">--</strong>
+<strong id="marketVolatility">--</strong>
 </div>
 
 <div class="metric">
-<span>ATR Ratio M5 / M15</span>
-<strong id="atrRegime">--</strong>
-</div>
-
-<div class="metric">
-<span>Role</span>
-<strong>CONTEXT + RISK</strong>
+<span>New Signal</span>
+<strong id="marketSignalAllowed">--</strong>
 </div>
 
 </div>
@@ -612,7 +613,7 @@ SETUP
 </div>
 
 <div class="metric target">
-<span>Multi-TF S/R Target</span>
+<span>H1 S/R Target</span>
 <strong id="buyTarget">--</strong>
 </div>
 
@@ -649,7 +650,7 @@ SETUP
 </div>
 
 <div class="metric target">
-<span>Multi-TF S/R Target</span>
+<span>H1 S/R Target</span>
 <strong id="sellTarget">--</strong>
 </div>
 
@@ -662,7 +663,7 @@ SETUP
 <div class="card">
 
 <h3 style="margin:0 0 8px;color:var(--blue);font-size:.82rem">
-🎯 ACTIVE MULTI-TF S/R TARGET
+🎯 ACTIVE H1 S/R TARGET
 </h3>
 
 <div class="metric">
@@ -956,8 +957,8 @@ SCALP SCORE
 
 
 <div class="foot">
-V18 • Server-side signal engine • M5 Standalone Trigger •
-Multi-TF S/R • Market Regime • Fixed Entry/SL/TP • Frontend refresh 15s •
+V12 • Server-side signal engine • Reversal/Continuation •
+H1 S/R Target • Fixed Entry/SL/TP • Frontend refresh 15s •
 Push handled by backend
 </div>
 
@@ -1403,22 +1404,38 @@ function render(d){
      MARKET REGIME
      ======================================================= */
 
-  const regime = d.marketRegime || {};
-  const erM15 = regime.efficiencyRatio?.m15;
-  const vol = regime.volatility || {};
+  const mr = d.marketRegime || {};
+  const ms = d.marketStatus || {};
 
-  text("regime", regime.label || "--");
   text(
-    "erM15",
-    erM15 == null ? "--" : Number(erM15).toFixed(2)
+    "marketStatus",
+    ms.open === false
+      ? "CLOSED"
+      : "OPEN"
   );
+
   text(
-    "volatility",
-    vol.composite || "--"
+    "marketStructure",
+    mr.structure || "--"
   );
+
   text(
-    "atrRegime",
-    `${vol.m5?.ratio ?? "--"} / ${vol.m15?.ratio ?? "--"}`
+    "marketER",
+    mr.efficiencyRatio?.m15 == null
+      ? "--"
+      : Number(mr.efficiencyRatio.m15).toFixed(3)
+  );
+
+  text(
+    "marketVolatility",
+    mr.volatility?.composite || "--"
+  );
+
+  text(
+    "marketSignalAllowed",
+    ms.allowNewSignal === false
+      ? "NO"
+      : "YES"
   );
 
 
