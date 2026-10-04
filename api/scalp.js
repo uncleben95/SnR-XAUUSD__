@@ -63,31 +63,19 @@ export default async function handler(req, res) {
 
     reversalZoneMultiplier: 1.0,
 
-    /*
-     * MARKET REGIME / EFFICIENCY
-     *
-     * ER = directional efficiency (0..1). Higher = cleaner trend,
-     * lower = more chop/range. Regime is context/risk/target guidance;
-     * it NEVER blocks a valid M5 scalp trigger by itself.
-     */
-    erPeriodM5: 20,
-    erPeriodM15: 20,
-    erPeriodH1: 20,
-    volatilityBaselineBars: 60,
-    trendERMin: 0.45,
-    rangeERMax: 0.25,
-    highVolRatio: 1.60,
-    lowVolRatio: 0.70,
-    regimeScoreTrendBonus: 5,
-    regimeScoreRangePenalty: 5,
-    regimeScoreHighVolPenalty: 5,
-    slAtrBufferNormal: 0.15,
-    slAtrBufferHighVol: 0.20,
-    slAtrBufferLowVol: 0.12,
-
     // S/R is context + target selection. It NEVER blocks a valid M5 scalp.
     minTargetR: 1.50,
     requireValidSRTarget: false,
+
+    /* MARKET REGIME */
+    regimeERLookbackM5: 20,
+    regimeERLookbackM15: 20,
+    regimeERLookbackH1: 20,
+    regimeATRBaselineBars: 40,
+    regimeTrendER: 0.35,
+    regimeRangeER: 0.20,
+    regimeHighVolRatio: 1.35,
+    regimeLowVolRatio: 0.70,
 
     /*
      * ROADBLOCK
@@ -162,7 +150,7 @@ export default async function handler(req, res) {
 
   const cronSecret = process.env.XAU_CRON_SECRET;
   const suppliedCronSecret = req.headers["x-xau-cron-secret"];
-  const backgroundPushAuthorized =
+  const backgroundPushRequestAuthorized =
     req.query?.source === "github-actions" &&
     Boolean(cronSecret) &&
     suppliedCronSecret === cronSecret;
@@ -180,6 +168,123 @@ export default async function handler(req, res) {
 
   const clamp = (n, a, b) =>
     Math.max(a, Math.min(b, n));
+
+  function trueRanges(data) {
+    if (!Array.isArray(data) || data.length < 2) return [];
+    const tr = [];
+    for (let i = 1; i < data.length; i++) {
+      const c = data[i];
+      const pc = data[i - 1].close;
+      tr.push(Math.max(
+        c.high - c.low,
+        Math.abs(c.high - pc),
+        Math.abs(c.low - pc)
+      ));
+    }
+    return tr.filter(Number.isFinite);
+  }
+
+  function atrBaseline(data, period = 14, baselineBars = 40) {
+    const tr = trueRanges(data);
+    if (tr.length < period + 5) return null;
+    const atrValues = [];
+    for (let i = period; i <= tr.length; i++) {
+      const value = avg(tr.slice(i - period, i));
+      if (Number.isFinite(value)) atrValues.push(value);
+    }
+    if (!atrValues.length) return null;
+    const sample = atrValues.slice(-baselineBars);
+    return avg(sample);
+  }
+
+  function efficiencyRatio(data, lookback = 20) {
+    if (!Array.isArray(data) || data.length < lookback + 1) return null;
+    const src = data.slice(-(lookback + 1));
+    const net = Math.abs(src.at(-1).close - src[0].close);
+    let noise = 0;
+    for (let i = 1; i < src.length; i++) {
+      noise += Math.abs(src[i].close - src[i - 1].close);
+    }
+    if (noise <= 0) return 0;
+    return clamp(net / noise, 0, 1);
+  }
+
+  function volatilityState(currentATR, baselineATR) {
+    if (!Number.isFinite(currentATR) || !Number.isFinite(baselineATR) || baselineATR <= 0) {
+      return { ratio: null, state: "UNKNOWN" };
+    }
+    const ratio = currentATR / baselineATR;
+    const state = ratio >= CFG.regimeHighVolRatio
+      ? "HIGH"
+      : ratio <= CFG.regimeLowVolRatio
+        ? "LOW"
+        : "NORMAL";
+    return { ratio: Number(ratio.toFixed(3)), state };
+  }
+
+  function regimeSnapshot(data, currentATR, erLookback) {
+    const er = efficiencyRatio(data, erLookback);
+    const baselineATR = atrBaseline(data, 14, CFG.regimeATRBaselineBars);
+    const volatility = volatilityState(currentATR, baselineATR);
+    return {
+      efficiencyRatio: er == null ? null : Number(er.toFixed(3)),
+      atr: currentATR == null ? null : Number(currentATR.toFixed(4)),
+      baselineATR: baselineATR == null ? null : Number(baselineATR.toFixed(4)),
+      ratio: volatility.ratio,
+      state: volatility.state
+    };
+  }
+
+  function detectMarketStatus(m5, m15, h1, livePrice) {
+    const nowDate = new Date();
+    const day = nowDate.getUTCDay();
+    const weekend = day === 0 || day === 6;
+
+    const latest = m5?.at(-1);
+    const latestTime = latest?.time
+      ? Date.parse(`${String(latest.time).replace(" ", "T")}Z`)
+      : NaN;
+    const latestAgeMin = Number.isFinite(latestTime)
+      ? Math.max(0, (Date.now() - latestTime) / 60000)
+      : null;
+
+    const sample = (m5 || []).slice(-20);
+    const ranges = sample.map(c => c.high - c.low).filter(Number.isFinite);
+    const avgRange = avg(ranges) || 0;
+    const opens = sample.map(c => c.open).filter(Number.isFinite);
+    const openSpan = opens.length ? Math.max(...opens) - Math.min(...opens) : null;
+    const repeatedOpenFeed =
+      sample.length >= 12 &&
+      openSpan != null &&
+      openSpan <= Math.max(0.05, avgRange * 0.35);
+
+    const closeValues = sample.map(c => c.close).filter(Number.isFinite);
+    const uniqueCloseRatio = closeValues.length
+      ? new Set(closeValues.map(v => v.toFixed(4))).size / closeValues.length
+      : 1;
+    const syntheticFlatFeed =
+      sample.length >= 12 &&
+      repeatedOpenFeed &&
+      uniqueCloseRatio < 0.75;
+
+    const staleCandle = latestAgeMin != null && latestAgeMin > 20;
+    const closed = weekend || syntheticFlatFeed || staleCandle;
+    const reasons = [];
+    if (weekend) reasons.push("WEEKEND_MARKET_CLOSED");
+    if (syntheticFlatFeed) reasons.push("FLAT_OR_SYNTHETIC_CANDLE_FEED");
+    if (staleCandle) reasons.push("LATEST_CLOSED_CANDLE_STALE");
+
+    return {
+      open: !closed,
+      allowNewSignal: !closed,
+      allowPush: !closed,
+      reason: closed ? reasons[0] || "MARKET_CLOSED" : "MARKET_OPEN",
+      reasons,
+      latestCandle: latest?.time || null,
+      latestCandleAgeMinutes: latestAgeMin == null ? null : Number(latestAgeMin.toFixed(1)),
+      syntheticFlatFeed
+    };
+  }
 
   function getCandleTTL(key) {
     if (key === "m5") {
@@ -335,115 +440,6 @@ export default async function handler(req, res) {
     }
 
     return avg(tr.slice(-p));
-  }
-
-  function efficiencyRatio(d, period = 20) {
-    if (!Array.isArray(d) || d.length < period + 1) return null;
-
-    const end = d.length - 1;
-    const start = end - period;
-    const net = Math.abs(d[end].close - d[start].close);
-    let volatility = 0;
-
-    for (let i = start + 1; i <= end; i++) {
-      volatility += Math.abs(d[i].close - d[i - 1].close);
-    }
-
-    if (!Number.isFinite(volatility) || volatility <= 0) return 0;
-    return clamp(net / volatility, 0, 1);
-  }
-
-  function atrSeries(d, period = 14) {
-    if (!Array.isArray(d) || d.length < period + 1) return [];
-
-    const tr = [];
-    for (let i = 1; i < d.length; i++) {
-      const c = d[i];
-      const pc = d[i - 1].close;
-      tr.push(Math.max(
-        c.high - c.low,
-        Math.abs(c.high - pc),
-        Math.abs(c.low - pc)
-      ));
-    }
-
-    const out = [];
-    for (let i = period - 1; i < tr.length; i++) {
-      out.push(avg(tr.slice(i - period + 1, i + 1)));
-    }
-    return out;
-  }
-
-  function volatilityProfile(d, period = 14, baselineBars = 60) {
-    const values = atrSeries(d, period);
-    if (!values.length) {
-      return { atr: null, baselineATR: null, ratio: null, state: "UNKNOWN" };
-    }
-
-    const current = values.at(-1);
-    const previous = values.slice(Math.max(0, values.length - baselineBars - 1), -1);
-    const baseline = previous.length ? avg(previous) : current;
-    const ratio = baseline > 0 ? current / baseline : 1;
-
-    const state =
-      ratio >= CFG.highVolRatio ? "HIGH" :
-      ratio <= CFG.lowVolRatio ? "LOW" :
-      "NORMAL";
-
-    return {
-      atr: Number(current.toFixed(4)),
-      baselineATR: Number(baseline.toFixed(4)),
-      ratio: Number(ratio.toFixed(3)),
-      state
-    };
-  }
-
-  function classifyRegime(er, volatility, direction = "NEUTRAL") {
-    let structure = "TRANSITION";
-    if (er != null && er >= CFG.trendERMin) structure = "TRENDING";
-    else if (er != null && er <= CFG.rangeERMax) structure = "RANGING";
-
-    return {
-      structure,
-      direction: structure === "TRENDING" ? direction : "NEUTRAL",
-      volatility: volatility || "NORMAL",
-      label: `${structure}${structure === "TRENDING" && direction !== "NEUTRAL" ? `_${direction}` : ""}_${volatility || "NORMAL"}`
-    };
-  }
-
-  function buildMarketRegime(m5Data, m15Data, h1Data, m15Direction, h1Direction) {
-    const m5ER = efficiencyRatio(m5Data, CFG.erPeriodM5);
-    const m15ER = efficiencyRatio(m15Data, CFG.erPeriodM15);
-    const h1ER = efficiencyRatio(h1Data, CFG.erPeriodH1);
-
-    const m5Vol = volatilityProfile(m5Data, 14, CFG.volatilityBaselineBars);
-    const m15Vol = volatilityProfile(m15Data, 14, CFG.volatilityBaselineBars);
-    const h1Vol = volatilityProfile(h1Data, 14, CFG.volatilityBaselineBars);
-
-    const direction =
-      m15Direction === "BUY" || m15Direction === "SELL"
-        ? m15Direction
-        : h1Direction === "BUY" || h1Direction === "SELL"
-          ? h1Direction
-          : "NEUTRAL";
-
-    const compositeVol =
-      m5Vol.state === "HIGH" || m15Vol.state === "HIGH"
-        ? "HIGH"
-        : m5Vol.state === "LOW" && m15Vol.state === "LOW"
-          ? "LOW"
-          : "NORMAL";
-
-    const regime = classifyRegime(m15ER, compositeVol, direction);
-
-    return {
-      ...regime,
-      efficiencyRatio: { m5: m5ER, m15: m15ER, h1: h1ER },
-      volatility: { m5: m5Vol, m15: m15Vol, h1: h1Vol, composite: compositeVol },
-      driver: "M15_ER + M5/M15_ATR_REGIME",
-      role: "CONTEXT_AND_RISK",
-      blocksScalpEntry: false
-    };
   }
 
   function macd(v) {
@@ -1918,6 +1914,17 @@ export default async function handler(req, res) {
     candlePrice =
       m5.at(-1).close;
 
+    const marketStatus = detectMarketStatus(
+      m5,
+      m15,
+      h1,
+      livePrice
+    );
+
+    const pushAllowed =
+      backgroundPushRequestAuthorized &&
+      marketStatus.allowPush;
+
     /*
      * ==========================================================
      * H1
@@ -2267,7 +2274,64 @@ export default async function handler(req, res) {
     const m5ATR =
       atr(m5);
 
-    const m5Struct =
+    const regimeM5 = regimeSnapshot(
+      m5,
+      m5ATR,
+      CFG.regimeERLookbackM5
+    );
+    const regimeM15 = regimeSnapshot(
+      m15,
+      m15ATR,
+      CFG.regimeERLookbackM15
+    );
+    const regimeH1 = regimeSnapshot(
+      h1,
+      h1ATR,
+      CFG.regimeERLookbackH1
+    );
+
+    const regimeStructure =
+      (regimeM15.efficiencyRatio ?? 0) >= CFG.regimeTrendER
+        ? "TRENDING"
+        : (regimeM15.efficiencyRatio ?? 0) <= CFG.regimeRangeER
+          ? "RANGING"
+          : "TRANSITION";
+
+    const volatilityStates = [regimeM5.state, regimeM15.state].filter(x => x !== "UNKNOWN");
+    const compositeVolatility =
+      volatilityStates.includes("HIGH")
+        ? "HIGH"
+        : volatilityStates.includes("LOW") && volatilityStates.every(x => x === "LOW")
+          ? "LOW"
+          : "NORMAL";
+
+    const marketRegime = {
+      structure: regimeStructure,
+      direction: h1Direction,
+      volatility: {
+        m5: regimeM5,
+        m15: regimeM15,
+        h1: regimeH1,
+        composite: compositeVolatility
+      },
+      efficiencyRatio: {
+        m5: regimeM5.efficiencyRatio,
+        m15: regimeM15.efficiencyRatio,
+        h1: regimeH1.efficiencyRatio
+      },
+      driver: "M15_ER + M5/M15_ATR_REGIME",
+      role: "CONTEXT_AND_RISK",
+      blocksScalpEntry: false
+    };
+
+    const regimeRiskMultiplier =
+      compositeVolatility === "HIGH" ? 1.15
+        : compositeVolatility === "LOW" ? 0.90
+          : 1.00;
+
+    /*
+     * ==========================================================
+     * M5
       structure(
         m5,
         24
@@ -2489,45 +2553,6 @@ export default async function handler(req, res) {
         : m5SellTriggered
           ? "SELL"
           : "WAIT";
-
-    /*
-     * ==========================================================
-     * MARKET REGIME
-     * ==========================================================
-     */
-
-    const marketRegime = buildMarketRegime(
-      m5,
-      m15,
-      h1,
-      m15Confirmation,
-      h1Direction
-    );
-
-    const regimeScoreAdjustment = (direction) => {
-      let adjustment = 0;
-      const notes = [];
-
-      if (marketRegime.structure === "TRENDING") {
-        if (marketRegime.direction === direction) {
-          adjustment += CFG.regimeScoreTrendBonus;
-          notes.push(`REGIME trending ${direction} +${CFG.regimeScoreTrendBonus}`);
-        } else if (marketRegime.direction !== "NEUTRAL") {
-          adjustment -= CFG.regimeScoreTrendBonus;
-          notes.push(`REGIME trend opposes ${direction} -${CFG.regimeScoreTrendBonus}`);
-        }
-      } else if (marketRegime.structure === "RANGING") {
-        adjustment -= CFG.regimeScoreRangePenalty;
-        notes.push(`REGIME range -${CFG.regimeScoreRangePenalty}`);
-      }
-
-      if (marketRegime.volatility === "HIGH") {
-        adjustment -= CFG.regimeScoreHighVolPenalty;
-        notes.push(`HIGH volatility -${CFG.regimeScoreHighVolPenalty}`);
-      }
-
-      return { adjustment, notes };
-    };
 
     /*
      * ==========================================================
@@ -2894,16 +2919,7 @@ export default async function handler(req, res) {
           ) / 2
         );
 
-      {
-        const regimeAdj = regimeScoreAdjustment("BUY");
-        score = clamp(score + regimeAdj.adjustment, 0, 100);
-        reasons = [
-          ...regimeAdj.notes
-        ];
-      }
-
       reasons = [
-        ...reasons,
         "M15 BUY confirmed",
         "M5 BUY trigger confirmed",
         "M15 + M5 aligned",
@@ -2961,16 +2977,7 @@ export default async function handler(req, res) {
           ) / 2
         );
 
-      {
-        const regimeAdj = regimeScoreAdjustment("SELL");
-        score = clamp(score + regimeAdj.adjustment, 0, 100);
-        reasons = [
-          ...regimeAdj.notes
-        ];
-      }
-
       reasons = [
-        ...reasons,
         "M15 SELL confirmed",
         "M5 SELL trigger confirmed",
         "M15 + M5 aligned",
@@ -3052,6 +3059,24 @@ export default async function handler(req, res) {
     }
 
     /*
+     * MARKET CLOSED GUARD
+     * Never emit a new scalp entry or background event from
+     * weekend/stale/synthetic candle data. Existing H1 context
+     * is still returned for inspection, but it is not tradable.
+     */
+    if (!marketStatus.allowNewSignal) {
+      signal = "WAIT";
+      status = "MARKET_CLOSED";
+      execution = "MARKET_CLOSED";
+      setupType = "MARKET_CLOSED";
+      score = 0;
+      reasons = [
+        "Market closed / data not tradable",
+        ...marketStatus.reasons
+      ];
+    }
+
+    /*
      * ==========================================================
      * H1 HOLD
      * ==========================================================
@@ -3111,7 +3136,7 @@ export default async function handler(req, res) {
 
     const signalKey =
       signal !== "WAIT"
-        ? `XAUUSD|SRV2|${signal}|${signalCandle}`
+        ? `XAUUSD|SRV3|${signal}|${signalCandle}`
         : null;
 
     /*
@@ -3216,7 +3241,7 @@ export default async function handler(req, res) {
     let candidateRisk =
       m5ATR != null
         ? Math.max(
-            m5ATR * 1.25,
+            m5ATR * 1.25 * regimeRiskMultiplier,
             0.8
           )
         : null;
@@ -3272,13 +3297,10 @@ export default async function handler(req, res) {
        * This is more meaningful for a scalp than a fixed ATR-only SL.
        */
       const triggerCandle = m5.at(-1);
-      const slBufferFactor =
-        marketRegime.volatility === "HIGH"
-          ? CFG.slAtrBufferHighVol
-          : marketRegime.volatility === "LOW"
-            ? CFG.slAtrBufferLowVol
-            : CFG.slAtrBufferNormal;
-      const slBuffer = Math.max(0.10, m5ATR * slBufferFactor);
+      const slBuffer = Math.max(
+        0.10,
+        m5ATR * (compositeVolatility === "HIGH" ? 0.20 : compositeVolatility === "LOW" ? 0.12 : 0.15)
+      );
 
       if (signal === "BUY") {
         stopLoss = Number(
@@ -3294,9 +3316,9 @@ export default async function handler(req, res) {
 
       const minR = CFG.minTargetR;
       const fallbackR =
-        marketRegime.structure === "TRENDING"
+        regimeStructure === "TRENDING"
           ? [1.5, 3.0, 5.0]
-          : marketRegime.structure === "RANGING"
+          : regimeStructure === "RANGING"
             ? [1.5, 2.25, 3.0]
             : [1.5, 2.5, 4.0];
 
@@ -3344,23 +3366,14 @@ export default async function handler(req, res) {
           ? entry + risk * fallbackR[0]
           : entry - risk * fallbackR[0];
 
-      const tp2MinR =
-        marketRegime.structure === "TRENDING" ? 3.0 :
-        marketRegime.structure === "RANGING" ? 2.25 :
-        2.5;
-      const tp3MinR =
-        marketRegime.structure === "TRENDING" ? 5.0 :
-        marketRegime.structure === "RANGING" ? 3.0 :
-        4.0;
-
-      const tp2Level = pickTarget(Math.max(tp2MinR, tp1R + 0.5), tp1Price);
+      const tp2Level = pickTarget(Math.max(2.5, tp1R + 0.5), tp1Price);
       const tp2Price = tp2Level
         ? tp2Level.price
         : signal === "BUY"
           ? entry + risk * fallbackR[1]
           : entry - risk * fallbackR[1];
 
-      const tp3Level = pickTarget(Math.max(tp3MinR, targetForR(tp2Level) + 0.5), tp2Price);
+      const tp3Level = pickTarget(Math.max(4.0, targetForR(tp2Level) + 0.5), tp2Price);
       const tp3Price = tp3Level
         ? tp3Level.price
         : signal === "BUY"
@@ -3426,7 +3439,7 @@ export default async function handler(req, res) {
         targetSRValid,
         targetMeta,
         createdAt: new Date().toISOString(),
-        planVersion: "SR-V3-MULTI-TF-REGIME"
+        planVersion: "SR-V3-REGIME-FINAL"
       };
 
       await saveLockedTradePlan(signalKey, newPlan);
@@ -3494,7 +3507,7 @@ export default async function handler(req, res) {
       }
     }
 
-    if (backgroundPushAuthorized && CFG.pushChochEvents) {
+    if (pushAllowed && CFG.pushChochEvents) {
       async function notifyChochEvent(timeframe, direction, event) {
         if (!event?.candle || (!event.bullish && !event.bearish)) return;
 
@@ -3534,7 +3547,7 @@ export default async function handler(req, res) {
     }
 
     if (
-      backgroundPushAuthorized &&
+      pushAllowed &&
       CFG.pushEntrySignals &&
       signal !== "WAIT" &&
       status === "ENTRY" &&
@@ -3580,7 +3593,7 @@ export default async function handler(req, res) {
           signalKey
         });
       }
-    } else if (backgroundPushAuthorized) {
+    } else if (pushAllowed) {
       // Record WAIT so a later BUY/SELL transition can notify again.
       await redis.set("xau_signal_push_state", signal, { ex: CFG.pushLockTTL });
     }
@@ -3687,10 +3700,13 @@ export default async function handler(req, res) {
       ok: true,
 
       version:
-        "V18-SCALP-SR-V3-REGIME",
+        "V18-SCALP-SR-V3-REGIME-FINAL",
 
       architecture:
-        "M15+M5-ALIGNED-SIGNAL + H1-HOLD + MULTI-TF-SR-TARGET + M15/M5-ROADBLOCK + MARKET-REGIME-ER + VOLATILITY-AWARE-SL-TP + STRUCTURE-SL-TP + AUTHENTICATED-BACKGROUND-PUSH + EVENT-DEDUPE + TIMEFRAME-CACHE + LIVE-PRICE",
+        "M15+M5-ALIGNED-SIGNAL + H1-HOLD + MULTI-TF-SR-TARGET + M15/M5-ROADBLOCK + MARKET-REGIME-ER + VOLATILITY-AWARE-SL-TP + STRUCTURE-SL-TP + MARKET-CLOSED-GUARD + AUTHENTICATED-BACKGROUND-PUSH + EVENT-DEDUPE + TIMEFRAME-CACHE + LIVE-PRICE",
+
+      marketStatus,
+      marketRegime,
 
       symbol:
         CFG.symbol,
@@ -3784,8 +3800,6 @@ export default async function handler(req, res) {
 
       score,
 
-      marketRegime,
-
       context,
 
       reasons,
@@ -3795,7 +3809,7 @@ export default async function handler(req, res) {
       signalCandle,
 
       push: {
-        authorized: backgroundPushAuthorized,
+        authorized: pushAllowed,
         mode: "ENTRY_AND_CHOCH_EVENT",
         attempted: chochPushEvents.length > 0 || entryPushEvents.length > 0,
         sent: pushSent,
@@ -3849,6 +3863,8 @@ export default async function handler(req, res) {
 
         atr:
           h1ATR,
+
+        regime: regimeH1,
 
         holdBias,
 
@@ -3927,6 +3943,8 @@ export default async function handler(req, res) {
         atr:
           m15ATR,
 
+        regime: regimeM15,
+
         bos:
           m15BOS,
 
@@ -3994,6 +4012,8 @@ export default async function handler(req, res) {
 
         atr:
           m5ATR,
+
+        regime: regimeM5,
 
         bos:
           m5BOS,
