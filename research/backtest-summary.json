@@ -1,0 +1,53 @@
+{
+  "datasets": {
+    "M5": {
+      "rows": 100000,
+      "from_utc": "2025-04-30 00:35:00+00:00",
+      "to_utc": "2026-09-24 23:55:00+00:00"
+    },
+    "M15": {
+      "rows": 100000,
+      "from_utc": "2022-07-04 11:45:00+00:00",
+      "to_utc": "2026-09-24 23:45:00+00:00"
+    },
+    "H1": {
+      "rows": 100000,
+      "from_utc": "2010-01-06 22:00:00+00:00",
+      "to_utc": "2026-09-24 23:00:00+00:00"
+    }
+  },
+  "engine": "XAUUSD-SCALP-V4",
+  "model": {
+    "trigger": "closed M5 cross of confirmed 2-left/2-right swing",
+    "minimum_score": 85,
+    "rr": 1.5,
+    "sl_buffer_atr": 0.15,
+    "max_holding_bars": 24,
+    "entry": "M5 close",
+    "same_bar_conflict": "SL first (conservative)"
+  },
+  "descriptive_backtest": {
+    "whole": [
+      3358,
+      0.024552135121451095,
+      0.416617033948779,
+      1.0431299635900246,
+      82.44606973783277
+    ],
+    "first_70_percent": [
+      2365,
+      0.048995358966383774,
+      0.426215644820296,
+      1.0875741924806683,
+      115.87402395549763
+    ],
+    "last_30_percent": [
+      994,
+      -0.034328120776945796,
+      0.3933601609657948,
+      0.9420789095088856,
+      -34.12215205228412
+    ]
+  },
+  "warning": "Historical CSV testing is descriptive and does not establish future profitability, accuracy, or execution quality. No spread/slippage/commission model is included."
+}
