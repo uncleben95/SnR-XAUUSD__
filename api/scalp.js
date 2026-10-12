@@ -2330,230 +2330,150 @@ export default async function handler(req, res) {
           : 1.00;
 
     /*
-     * ==========================================================
-     * M5
-      structure(
-        m5,
-        24
-      );
+ * ============================================================
+ * M5 STRUCTURE + SCALP TRIGGER
+ * ============================================================
+ */
 
-    const m5BOS =
-      bos(
-        m5,
-        10
-      );
+const m5Struct = structure(m5, 24);
 
-    const m5CHOCH =
-      choch(
-        m5,
-        8
-      );
+const m5BOS = bos(m5, 10);
+const m5CHOCH = choch(m5, 8);
+const m5CHOCHEvent = chochEvent(m5, 8);
+const m5Sweep = sweep(m5, 10);
+const m5Mom = momentum(m5);
 
-    const m5CHOCHEvent =
-      chochEvent(
-        m5,
-        8
-      );
+let m5Buy = 0;
+let m5Sell = 0;
 
-    const m5Sweep =
-      sweep(
-        m5,
-        10
-      );
+const r5b = [];
+const r5s = [];
 
-    const m5Mom =
-      momentum(m5);
+// EMA20 / EMA50
+if (m5EMA20 != null && m5EMA50 != null) {
+  if (m5EMA20 > m5EMA50) {
+    m5Buy += 20;
+    r5b.push("EMA20 > EMA50");
+  }
 
-    let m5Buy = 0;
-    let m5Sell = 0;
+  if (m5EMA20 < m5EMA50) {
+    m5Sell += 20;
+    r5s.push("EMA20 < EMA50");
+  }
+}
 
-    const r5b = [];
-    const r5s = [];
+// Price vs EMA9
+if (m5EMA9 != null) {
+  if (livePrice > m5EMA9) {
+    m5Buy += 8;
+    r5b.push("Price > EMA9");
+  }
 
-    if (
-      m5EMA20 != null &&
-      m5EMA50 != null
-    ) {
-      if (
-        m5EMA20 >
-        m5EMA50
-      ) {
-        m5Buy += 20;
-        r5b.push(
-          "EMA20 > EMA50"
-        );
-      }
+  if (livePrice < m5EMA9) {
+    m5Sell += 8;
+    r5s.push("Price < EMA9");
+  }
+}
 
-      if (
-        m5EMA20 <
-        m5EMA50
-      ) {
-        m5Sell += 20;
-        r5s.push(
-          "EMA20 < EMA50"
-        );
-      }
-    }
+// RSI
+if (m5RSI != null) {
+  if (m5RSI >= 50 && m5RSI < 75) {
+    m5Buy += 10;
+    r5b.push("RSI bullish");
+  }
 
-    if (m5EMA9 != null) {
-      if (
-        livePrice >
-        m5EMA9
-      ) {
-        m5Buy += 8;
-        r5b.push(
-          "Price > EMA9"
-        );
-      }
+  if (m5RSI > 25 && m5RSI < 50) {
+    m5Sell += 10;
+    r5s.push("RSI bearish");
+  }
+}
 
-      if (
-        livePrice <
-        m5EMA9
-      ) {
-        m5Sell += 8;
-        r5s.push(
-          "Price < EMA9"
-        );
-      }
-    }
+// MACD
+if (m5MACD?.bullish) {
+  m5Buy += 10;
+  r5b.push("MACD bullish");
+}
 
-    if (m5RSI != null) {
-      if (
-        m5RSI >= 50 &&
-        m5RSI < 75
-      ) {
-        m5Buy += 10;
-        r5b.push(
-          "RSI bullish"
-        );
-      }
+if (m5MACD?.bearish) {
+  m5Sell += 10;
+  r5s.push("MACD bearish");
+}
 
-      if (
-        m5RSI > 25 &&
-        m5RSI < 50
-      ) {
-        m5Sell += 10;
-        r5s.push(
-          "RSI bearish"
-        );
-      }
-    }
+// Market structure
+if (m5Struct.bullish) {
+  m5Buy += 12;
+  r5b.push("Structure bullish");
+}
 
-    if (m5MACD?.bullish) {
-      m5Buy += 10;
-      r5b.push(
-        "MACD bullish"
-      );
-    }
+if (m5Struct.bearish) {
+  m5Sell += 12;
+  r5s.push("Structure bearish");
+}
 
-    if (m5MACD?.bearish) {
-      m5Sell += 10;
-      r5s.push(
-        "MACD bearish"
-      );
-    }
+// Break of structure
+if (m5BOS.bullish) {
+  m5Buy += 15;
+  r5b.push("BOS bullish");
+}
 
-    if (m5Struct.bullish) {
-      m5Buy += 12;
-      r5b.push(
-        "Structure bullish"
-      );
-    }
+if (m5BOS.bearish) {
+  m5Sell += 15;
+  r5s.push("BOS bearish");
+}
 
-    if (m5Struct.bearish) {
-      m5Sell += 12;
-      r5s.push(
-        "Structure bearish"
-      );
-    }
+// Change of character
+if (m5CHOCH.bullish) {
+  m5Buy += 12;
+  r5b.push("CHOCH bullish");
+}
 
-    if (m5BOS.bullish) {
-      m5Buy += 15;
-      r5b.push(
-        "BOS bullish"
-      );
-    }
+if (m5CHOCH.bearish) {
+  m5Sell += 12;
+  r5s.push("CHOCH bearish");
+}
 
-    if (m5BOS.bearish) {
-      m5Sell += 15;
-      r5s.push(
-        "BOS bearish"
-      );
-    }
+// Liquidity sweep
+if (m5Sweep.bullish) {
+  m5Buy += 8;
+  r5b.push("Sell-side sweep");
+}
 
-    if (m5CHOCH.bullish) {
-      m5Buy += 12;
-      r5b.push(
-        "CHOCH bullish"
-      );
-    }
+if (m5Sweep.bearish) {
+  m5Sell += 8;
+  r5s.push("Buy-side sweep");
+}
 
-    if (m5CHOCH.bearish) {
-      m5Sell += 12;
-      r5s.push(
-        "CHOCH bearish"
-      );
-    }
+// Candle momentum
+if (m5Mom.bullish) {
+  m5Buy += 5;
+  r5b.push("Momentum bullish");
+}
 
-    if (m5Sweep.bullish) {
-      m5Buy += 8;
-      r5b.push(
-        "Sell-side sweep"
-      );
-    }
+if (m5Mom.bearish) {
+  m5Sell += 5;
+  r5s.push("Momentum bearish");
+}
 
-    if (m5Sweep.bearish) {
-      m5Sell += 8;
-      r5s.push(
-        "Buy-side sweep"
-      );
-    }
+// Final scores
+m5Buy = clamp(m5Buy, 0, 100);
+m5Sell = clamp(m5Sell, 0, 100);
 
-    if (m5Mom.bullish) {
-      m5Buy += 5;
-      r5b.push(
-        "Momentum bullish"
-      );
-    }
+// M5 trigger
+const m5BuyTriggered =
+  m5Buy >= 50 &&
+  m5Buy >= m5Sell + 8;
 
-    if (m5Mom.bearish) {
-      m5Sell += 5;
-      r5s.push(
-        "Momentum bearish"
-      );
-    }
+const m5SellTriggered =
+  m5Sell >= 50 &&
+  m5Sell >= m5Buy + 8;
 
-    m5Buy =
-      clamp(
-        m5Buy,
-        0,
-        100
-      );
-
-    m5Sell =
-      clamp(
-        m5Sell,
-        0,
-        100
-      );
-
-    const m5BuyTriggered =
-      m5Buy >= 50 &&
-      m5Buy >=
-        m5Sell + 8;
-
-    const m5SellTriggered =
-      m5Sell >= 50 &&
-      m5Sell >=
-        m5Buy + 8;
-
-    const m5Trigger =
-      m5BuyTriggered
-        ? "BUY"
-        : m5SellTriggered
-          ? "SELL"
-          : "WAIT";
-
+const m5Trigger =
+  m5BuyTriggered
+    ? "BUY"
+    : m5SellTriggered
+      ? "SELL"
+      : "WAIT";
+    
     /*
      * ==========================================================
      * ALIGNMENT
