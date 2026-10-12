@@ -2923,60 +2923,50 @@ const m5Trigger =
       }
     }
 
-    /*
-     * H1 S/R is context only. It never creates a WAIT/BLOCKED state.
-     */
+    // H1 S/R warnings: context only, never blocks entry.
+if (
+  signal === "BUY" &&
+  h1SupportResistance.nearResistance
+) {
+  reasons.push(
+    "H1 resistance nearby — manage TP/hold, not an entry block"
+  );
+}
 
-    if (signal === "BUY" && h1SupportResistance.nearResistance) {
-      reasons.push("H1 resistance nearby — manage TP/hold, not an entry block");
-    }
+if (
+  signal === "SELL" &&
+  h1SupportResistance.nearSupport
+) {
+  reasons.push(
+    "H1 support nearby — manage TP/hold, not an entry block"
+  );
+}
 
-    if (signal === "SELL" && h1SupportResistance.nearSupport) {
-      reasons.push("H1 support nearby — manage TP/hold, not an entry block");
-    }
-
-    /*
-     * Conflict
-     */
-
-    else if (
-      m15BuyConfirmed &&
-      m5SellTriggered
-    ) {
-      reasons = [
-        "M15 BUY vs M5 SELL — conflicting"
-      ];
-    }
-
-    else if (
-      m15SellConfirmed &&
-      m5BuyTriggered
-    ) {
-      reasons = [
-        "M15 SELL vs M5 BUY — conflicting"
-      ];
-    }
-
-    /*
-     * Partial
-     */
-
-    else if (
-      m15BuyConfirmed ||
-      m15SellConfirmed ||
-      m5BuyTriggered ||
-      m5SellTriggered
-    ) {
-      reasons = [
-        "Waiting for timeframe alignment"
-      ];
-    }
-
-    else {
-      reasons = [
-        "M15 + M5 not aligned"
-      ];
-    }
+// Conflict / partial alignment reasons apply only to WAIT.
+if (signal === "WAIT") {
+  if (m15BuyConfirmed && m5SellTriggered) {
+    reasons = [
+      "M15 BUY vs M5 SELL — conflicting"
+    ];
+  } else if (m15SellConfirmed && m5BuyTriggered) {
+    reasons = [
+      "M15 SELL vs M5 BUY — conflicting"
+    ];
+  } else if (
+    m15BuyConfirmed ||
+    m15SellConfirmed ||
+    m5BuyTriggered ||
+    m5SellTriggered
+  ) {
+    reasons = [
+      "Waiting for timeframe alignment"
+    ];
+  } else {
+    reasons = [
+      "M15 + M5 not aligned"
+    ];
+  }
+}
 
     /*
      * MARKET CLOSED GUARD
