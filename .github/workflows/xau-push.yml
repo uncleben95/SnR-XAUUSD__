@@ -1,9 +1,9 @@
+
 name: XAU Signal Push
 
 on:
   schedule:
-    - cron: "*/2 * * * *"
-
+    - cron: "*/5 * * * *"
   workflow_dispatch:
 
 jobs:
@@ -14,21 +14,17 @@ jobs:
     steps:
       - name: Trigger XAU Scalp Engine
         shell: bash
+        env:
+          XAU_CRON_SECRET: ${{ secrets.XAU_CRON_SECRET }}
         run: |
           set -u
 
-          echo "=============================================="
-          echo " XAUUSD SCALP SIGNAL ENGINE"
-          echo "=============================================="
-          echo "UTC      : $(date -u '+%Y-%m-%d %H:%M:%S')"
-          echo "Malaysia : $(TZ=Asia/Kuala_Lumpur date '+%Y-%m-%d %H:%M:%S')"
-          echo "=============================================="
+          if [ -z "${XAU_CRON_SECRET:-}" ]; then
+            echo "ERROR: GitHub Secret XAU_CRON_SECRET belum diset."
+            exit 1
+          fi
 
           API_URL="https://sn-r-xauusd-ta3j.vercel.app/api/scalp?source=github-actions"
-
-          echo "Calling:"
-          echo "$API_URL"
-          echo ""
 
           RESPONSE_FILE="$(mktemp)"
 
@@ -40,73 +36,20 @@ jobs:
             --connect-timeout 15 \
             --retry 2 \
             --retry-delay 2 \
+            --header "x-xau-cron-secret: ${XAU_CRON_SECRET}" \
             --output "$RESPONSE_FILE" \
             --write-out "%{http_code}" \
             "$API_URL" || true)
 
-          echo ""
+          echo "Malaysia: $(TZ=Asia/Kuala_Lumpur date '+%Y-%m-%d %H:%M:%S')"
           echo "HTTP STATUS: $HTTP_STATUS"
-          echo "----------------------------------------------"
+          echo "API RESPONSE:"
+          cat "$RESPONSE_FILE"
+          echo ""
 
-          if [ -s "$RESPONSE_FILE" ]; then
-            cat "$RESPONSE_FILE"
-          else
-            echo "EMPTY RESPONSE FROM VERCEL"
+          if [ "$HTTP_STATUS" != "200" ]; then
+            echo "ERROR: API request failed."
+            exit 1
           fi
 
-          echo ""
-          echo "----------------------------------------------"
-
-          case "$HTTP_STATUS" in
-
-            200)
-              echo "SUCCESS"
-              echo "Scalp engine executed successfully."
-              echo "M5 trigger check completed."
-              echo "----------------------------------------------"
-              exit 0
-              ;;
-
-            401)
-              echo "ERROR: HTTP 401"
-              echo "Vercel Deployment Protection is blocking GitHub Actions."
-              exit 1
-              ;;
-
-            404)
-              echo "ERROR: HTTP 404"
-              echo "The endpoint /api/scalp does not exist on this deployment."
-              echo "Check the Vercel project root and API file location."
-              exit 1
-              ;;
-
-            429)
-              echo "ERROR: HTTP 429"
-              echo "Rate limited. Next scheduled run will try again."
-              exit 1
-              ;;
-
-            500)
-              echo "ERROR: HTTP 500"
-              echo "Scalp engine returned a server error."
-              exit 1
-              ;;
-
-            502|503|504)
-              echo "ERROR: HTTP $HTTP_STATUS"
-              echo "Temporary Vercel/server problem."
-              exit 1
-              ;;
-
-            000)
-              echo "ERROR: Connection failed."
-              echo "Could not connect to Vercel."
-              exit 1
-              ;;
-
-            *)
-              echo "ERROR: Unexpected HTTP status: $HTTP_STATUS"
-              exit 1
-              ;;
-
-          esac
+          echo "API request completed."
