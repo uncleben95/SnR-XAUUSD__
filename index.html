@@ -1,0 +1,277 @@
+<!doctype html>
+<html lang="ms">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#f5f7fb">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="manifest" href="/manifest.json">
+<link rel="apple-touch-icon" href="/icon.png">
+<title>XAU/USD Pro Sniper — Market Structure</title>
+<style>
+:root{color-scheme:light;--bg:#f4f7fb;--card:#fff;--ink:#172033;--muted:#667085;--line:#e4e9f1;--soft:#f8fafc;--blue:#2458d3;--blue-soft:#edf3ff;--green:#087443;--green-bg:#e8f7ef;--red:#b42318;--red-bg:#fff0ee;--amber:#945b00;--amber-bg:#fff5dc;--shadow:0 8px 28px rgba(22,34,55,.055)}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--bg);color:var(--ink);font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;font-size:14px;line-height:1.45}.wrap{max-width:1180px;margin:auto;padding:14px 14px calc(28px + env(safe-area-inset-bottom))}.top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px}.brand{display:flex;align-items:center;gap:11px;min-width:0}.logo{width:42px;height:42px;flex:0 0 42px;display:grid;place-items:center;border-radius:13px;background:#172b54;color:#fff;font-size:14px;font-weight:850;letter-spacing:-.5px}.brand h1{font-size:18px;line-height:1.15;margin:0;font-weight:850;letter-spacing:-.45px}.brand p{margin:4px 0 0;color:var(--muted);font-size:11px}.top-right{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end}.status-pill,.tiny-pill{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:999px;padding:6px 10px;background:#fff;font-size:11px;font-weight:750;white-space:nowrap}.dot{width:7px;height:7px;border-radius:50%;background:#98a2b3}.dot.good{background:#12a36b}.dot.bad{background:#d92d20}.dot.wait{background:#d99000}.btn{border:1px solid var(--line);background:#fff;color:var(--ink);border-radius:9px;padding:8px 11px;font-weight:750;font-size:12px;cursor:pointer}.btn:active{transform:translateY(1px)}.btn.active{background:var(--blue-soft);border-color:#b7cbff;color:var(--blue)}.layout{display:grid;grid-template-columns:minmax(0,1.65fr) minmax(270px,.85fr);gap:14px;align-items:start}.stack{display:grid;gap:14px;min-width:0}.card{min-width:0;background:var(--card);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);padding:15px}.section-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:12px}.section-head h2,.section-head h3{margin:0;font-size:14px;letter-spacing:-.2px}.section-head p{margin:4px 0 0;color:var(--muted);font-size:11px}.segmented{display:flex;gap:4px;background:#f1f4f9;border:1px solid var(--line);padding:3px;border-radius:10px}.segmented button{border:0;background:transparent;border-radius:7px;padding:6px 9px;font-size:11px;font-weight:800;color:var(--muted);cursor:pointer}.segmented button.active{background:#fff;color:var(--blue);box-shadow:0 1px 4px #18243a12}.price-row{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;margin-bottom:13px}.price{font-size:clamp(27px,5vw,39px);line-height:1;font-weight:850;letter-spacing:-1.1px;font-variant-numeric:tabular-nums}.price-meta{font-size:11px;color:var(--muted);margin-top:7px}.signal-state{text-align:right}.signal-label{font-size:10px;color:var(--muted);font-weight:800;text-transform:uppercase;letter-spacing:.6px}.signal-badge{display:inline-flex;margin-top:5px;align-items:center;justify-content:center;min-width:86px;padding:7px 12px;border-radius:9px;background:#f2f4f7;color:#475467;font-size:12px;font-weight:850;border:1px solid #e4e7ec}.signal-badge.buy{background:var(--green-bg);color:var(--green);border-color:#b7e6ca}.signal-badge.sell{background:var(--red-bg);color:var(--red);border-color:#ffc9c2}.signal-badge.wait{background:var(--amber-bg);color:var(--amber);border-color:#f1d99c}.chart-wrap{position:relative;height:clamp(280px,42vw,420px);min-height:250px;border:1px solid #e6ebf3;border-radius:12px;overflow:hidden;background:#fff}.chart-wrap canvas{display:block;width:100%;height:100%;touch-action:pan-y}.chart-legend{display:flex;flex-wrap:wrap;gap:10px;margin-top:10px;color:var(--muted);font-size:10px}.legend-item{display:inline-flex;align-items:center;gap:5px}.legend-line{width:16px;height:3px;border-radius:2px;background:#2458d3}.legend-line.price-line{background:#b7791f}.legend-line.support{background:#0b9960}.legend-line.resistance{background:#d04444}.chart-note{font-size:10px;color:var(--muted);margin-top:8px}.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.stat{padding:11px;border:1px solid var(--line);background:var(--soft);border-radius:11px;min-width:0}.stat .k{color:var(--muted);font-size:10px;font-weight:750}.stat .v{margin-top:4px;font-size:14px;font-weight:850;overflow-wrap:anywhere;font-variant-numeric:tabular-nums}.stat .sub{margin-top:3px;color:var(--muted);font-size:10px}.levels{display:grid;grid-template-columns:1fr 1fr;gap:8px}.level{border:1px solid var(--line);border-radius:11px;padding:12px;background:#fff;min-width:0}.level.support{background:#f0fbf5;border-color:#c6ead5}.level.resistance{background:#fff5f3;border-color:#f6d0ca}.level .k{font-size:10px;font-weight:800;color:var(--muted)}.level .v{font-size:19px;font-weight:850;margin-top:3px;font-variant-numeric:tabular-nums}.level .sub{font-size:10px;color:var(--muted);margin-top:2px}.tf-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.tf{border:1px solid var(--line);border-radius:11px;padding:11px;background:#fff;min-width:0}.tf-head{display:flex;align-items:center;justify-content:space-between;gap:6px;font-weight:850;font-size:11px}.tf-dir{font-size:10px;font-weight:850;padding:4px 6px;border-radius:6px;background:#f2f4f7;color:#475467}.tf-dir.bull{background:var(--green-bg);color:var(--green)}.tf-dir.bear{background:var(--red-bg);color:var(--red)}.tf-detail{font-size:10px;color:var(--muted);margin-top:7px;line-height:1.5;overflow-wrap:anywhere}.model-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}.model{border:1px solid var(--line);border-radius:13px;padding:12px;min-width:0;background:#fff}.model-top{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}.model-code{display:inline-flex;align-items:center;justify-content:center;width:27px;height:27px;border-radius:8px;background:#edf3ff;color:var(--blue);font-weight:900;font-size:11px}.model h3{font-size:12px;margin:7px 0 0;line-height:1.3}.model p{font-size:10px;color:var(--muted);margin:6px 0 0;min-height:29px}.model-state{display:inline-block;margin-top:10px;padding:5px 7px;border-radius:6px;background:#f2f4f7;color:#475467;font-size:9px;font-weight:900;letter-spacing:.2px}.model-state.watch{background:var(--amber-bg);color:var(--amber)}.model-state.ready{background:var(--green-bg);color:var(--green)}.model-state.invalid{background:var(--red-bg);color:var(--red)}.model-meta{border-top:1px solid var(--line);margin-top:10px;padding-top:8px;font-size:10px;color:#475467;line-height:1.55;overflow-wrap:anywhere}.model-meta strong{color:var(--ink)}.model-foot{margin-top:10px;color:var(--muted);font-size:9px;line-height:1.45}.trade-plan{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.plan-cell{padding:10px;border-radius:10px;background:var(--soft);border:1px solid var(--line);min-width:0}.plan-cell span{display:block;color:var(--muted);font-size:10px;font-weight:750}.plan-cell strong{display:block;margin-top:4px;font-size:14px;overflow-wrap:anywhere;font-variant-numeric:tabular-nums}.reasons{font-size:11px;color:#475467;line-height:1.65;margin:0;padding-left:18px}.foot{padding:14px 4px;text-align:center;color:var(--muted);font-size:10px}.error{display:none;padding:10px 12px;border-radius:10px;border:1px solid #f4c7c3;background:#fff0ee;color:#b42318;font-size:12px;margin-bottom:12px}.error.show{display:block}.muted{color:var(--muted)}details summary{cursor:pointer;font-size:12px;font-weight:800}details .details-body{margin-top:12px}.refresh{font-size:10px;color:var(--muted);white-space:nowrap}
+@media(max-width:820px){.wrap{padding:10px 10px 24px}.layout{grid-template-columns:1fr}.top{align-items:flex-start}.top-right{max-width:44%}.model-grid{grid-template-columns:1fr}.model{padding:13px}.model p{min-height:0}.model-meta{font-size:11px}.chart-wrap{height:330px}.stats{grid-template-columns:repeat(3,minmax(0,1fr))}.right-col{grid-row:auto}}
+@media(max-width:430px){.brand h1{font-size:15px}.brand p{font-size:10px}.logo{width:37px;height:37px;flex-basis:37px}.top-right{gap:5px;max-width:none}.status-pill{padding:6px 8px;font-size:10px}.top{gap:8px}.card{padding:12px;border-radius:14px}.chart-wrap{height:300px;min-height:260px}.price{font-size:29px}.stats{gap:6px}.stat{padding:9px}.stat .v{font-size:12px}.tf-grid{gap:6px}.tf{padding:8px}.tf-head{font-size:10px}.levels .v{font-size:17px}.trade-plan{grid-template-columns:repeat(2,minmax(0,1fr))}.section-head{gap:7px}.segmented button{padding:6px 7px}}
+
+/* Standalone H1 bias panel: display-only, not connected to scalp entry logic */
+.h1-bias-panel{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:16px;border:1px solid var(--line);border-radius:13px;background:linear-gradient(135deg,#fff 0%,#f8fafc 100%)}
+.h1-bias-kicker{font-size:10px;font-weight:850;letter-spacing:.8px;color:var(--muted);text-transform:uppercase}
+.h1-bias-value{display:inline-flex;align-items:center;justify-content:center;min-width:108px;padding:10px 18px;border-radius:10px;background:#f2f4f7;color:#475467;border:1px solid #e4e7ec;font-size:18px;font-weight:900;letter-spacing:.3px}
+.h1-bias-value.bull{background:var(--green-bg);color:var(--green);border-color:#b7e6ca}
+.h1-bias-value.bear{background:var(--red-bg);color:var(--red);border-color:#ffc9c2}
+.h1-bias-value.wait{background:var(--amber-bg);color:var(--amber);border-color:#f1d99c}
+.h1-bias-note{margin-top:5px;color:var(--muted);font-size:11px}
+.h1-score-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin-top:10px}
+.h1-score-card{padding:12px;border:1px solid var(--line);border-radius:12px;background:#fff;min-width:0}
+.h1-score-label{font-size:10px;font-weight:850;letter-spacing:.5px;color:var(--muted)}
+.h1-score-number{display:flex;align-items:baseline;gap:4px;margin-top:5px;font-size:25px;font-weight:900;font-variant-numeric:tabular-nums}
+.h1-score-number small{font-size:11px;color:var(--muted);font-weight:750}
+.buy-score-card .h1-score-number{color:var(--green)}.sell-score-card .h1-score-number{color:var(--red)}
+.h1-score-track{height:6px;background:#eef1f5;border-radius:99px;overflow:hidden;margin-top:9px}
+.h1-score-track span{display:block;width:0;height:100%;border-radius:99px;transition:width .2s ease}
+.buy-score-card .h1-score-track span{background:var(--green)}.sell-score-card .h1-score-track span{background:var(--red)}
+.tf-grid-two{grid-template-columns:repeat(2,minmax(0,1fr))}
+@media(max-width:430px){.h1-bias-panel{padding:12px}.h1-bias-value{min-width:88px;padding:9px 12px;font-size:16px}}
+
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <div class="logo">XAU</div>
+      <div><h1>XAU/USD PRO SNIPER</h1><p>Market structure · S/R · 3 setup models · Manual review</p></div>
+    </div>
+    <div class="top-right">
+      <div class="status-pill"><span id="apiDot" class="dot wait"></span><span id="apiStatus">Menyambung…</span></div>
+      <div class="status-pill"><span class="dot"></span><span id="clock">--:--:-- MYT</span></div>
+      <button id="pushEnableBtn" class="btn" type="button">🔔 Enable Notification</button>
+      <div id="pushStatus" class="status-pill" role="status" aria-live="polite">Push belum diaktifkan</div>
+    </div>
+  </header>
+  <div id="errorBox" class="error"></div>
+  <div class="layout">
+    <main class="stack">
+      <section class="card">
+        <div class="price-row">
+          <div><div class="muted" style="font-size:11px;font-weight:800;letter-spacing:.6px">GOLD SPOT · XAU/USD</div><div id="price" class="price">--</div><div id="priceMeta" class="price-meta">Menunggu harga live…</div></div>
+          <div class="signal-state"><div class="signal-label">Status engine asal</div><div id="signalBadge" class="signal-badge wait">WAIT</div><div id="signalMeta" class="price-meta">Semak manual sebelum trade</div></div>
+        </div>
+        <div class="section-head"><div><h2>Graf harga & struktur</h2><p id="chartSubtitle">M5 · Candle terkini</p></div><div class="segmented" aria-label="Bilangan candle"><button data-bars="30">30</button><button data-bars="60" class="active">60</button></div></div>
+        <div class="chart-wrap"><canvas id="chart" aria-label="Graf candlestick XAU/USD"></canvas></div>
+        <div class="chart-legend"><span class="legend-item"><span class="legend-line price-line"></span>Harga semasa</span><span class="legend-item"><span class="legend-line support"></span>H1 Support</span><span class="legend-item"><span class="legend-line resistance"></span>H1 Resistance</span></div>
+        <div id="chartNote" class="chart-note">Graf menggunakan candle M5 yang dibekalkan API. Garisan S/R H1 dipaparkan jika berada dalam julat graf.</div>
+      </section>
+      <section class="card" id="h1BiasCard">
+        <div class="section-head"><div><h2>H1 Bias — arah pasaran</h2><p>Panel berasingan · paparan sahaja, tidak mengawal engine scalping</p></div><span class="tiny-pill">EMA50 / EMA200</span></div>
+        <div class="h1-bias-panel">
+          <div><div class="h1-bias-kicker">Bias timeframe H1</div><div id="h1BiasMeta" class="h1-bias-note">Menunggu data H1…</div></div>
+          <div id="h1BiasDir" class="h1-bias-value wait">WAIT</div>
+        </div>
+        <div class="h1-score-grid">
+          <div class="h1-score-card buy-score-card"><div class="h1-score-label">H1 BUY SCORE</div><div class="h1-score-number"><span id="h1BuyScore">--</span><small>/100</small></div><div class="h1-score-track"><span id="h1BuyBar"></span></div></div>
+          <div class="h1-score-card sell-score-card"><div class="h1-score-label">H1 SELL SCORE</div><div class="h1-score-number"><span id="h1SellScore">--</span><small>/100</small></div><div class="h1-score-track"><span id="h1SellBar"></span></div></div>
+        </div>
+        <div class="chart-note">Skor H1 ialah pemarkahan heuristik daripada EMA, harga, struktur, RSI dan MACD. Ia untuk konteks sahaja, bukan kebarangkalian menang atau arahan entry.</div>
+      </section>
+      <section class="card">
+        <div class="section-head"><div><h2>Tiga model scalping</h2><p>Berjalan berasingan · status untuk pemerhatian manual, bukan arahan auto-entry</p></div><span id="modelUpdated" class="refresh">Belum dikemas kini</span></div>
+        <div class="model-grid">
+          <article class="model"><div class="model-top"><div><span class="model-code">A</span><h3>Liquidity Sweep</h3></div></div><p>Sapu swing high/low dan kembali ke dalam kawasan.</p><span id="aState" class="model-state">MENUNGGU DATA</span><div id="aMeta" class="model-meta">Menilai struktur M5…</div><div class="model-foot">Pengesanan heuristik awal. Semak candle dan paras pada graf.</div></article>
+          <article class="model"><div class="model-top"><div><span class="model-code">B</span><h3>FVG Retracement</h3></div></div><p>Displacement dan zon imbalance yang mungkin diuji semula.</p><span id="bState" class="model-state">MENUNGGU DATA</span><div id="bMeta" class="model-meta">Mencari FVG…</div><div class="model-foot">Zon FVG yang dikesan secara heuristik; bukan jaminan reaksi harga.</div></article>
+          <article class="model"><div class="model-top"><div><span class="model-code">C</span><h3>Trend Pullback</h3></div></div><p>Pullback M5 yang searah dengan konteks struktur M15.</p><span id="cState" class="model-state">MENUNGGU DATA</span><div id="cMeta" class="model-meta">Menilai trend…</div><div class="model-foot">H1 kekal konteks; tidak digunakan sebagai penghalang mutlak scalping.</div></article>
+        </div>
+      </section>
+      <section class="card">
+        <div class="section-head"><div><h2>Trade plan engine asal</h2><p>Rujukan sahaja · paparan ini tidak membuka trade secara automatik</p></div><span id="planStatus" class="tiny-pill">WAIT</span></div>
+        <div class="trade-plan">
+          <div class="plan-cell"><span>Entry</span><strong id="entry">--</strong></div><div class="plan-cell"><span>Stop-loss</span><strong id="sl">--</strong></div><div class="plan-cell"><span>Risk : Reward</span><strong id="rr">--</strong></div><div class="plan-cell"><span>TP1</span><strong id="tp1">--</strong></div><div class="plan-cell"><span>TP2</span><strong id="tp2">--</strong></div><div class="plan-cell"><span>TP3</span><strong id="tp3">--</strong></div>
+        </div>
+        <div id="planNote" class="chart-note">Tiada trade plan yang sah dikembalikan oleh engine.</div>
+      </section>
+      <section class="card">
+        <div class="section-head"><div><h2>Kenapa engine beri status ini?</h2><p>Alasan daripada engine asal (API V19)</p></div></div>
+        <ul id="reasons" class="reasons"><li>Menunggu data API.</li></ul>
+      </section>
+    </main>
+    <aside class="stack right-col">
+      <section class="card">
+        <div class="section-head"><div><h2>Support & resistance</h2><p>Paras utama H1</p></div></div>
+        <div class="levels"><div class="level support"><div class="k">SUPPORT</div><div id="support" class="v">--</div><div id="supportDist" class="sub">Jarak: --</div></div><div class="level resistance"><div class="k">RESISTANCE</div><div id="resistance" class="v">--</div><div id="resistanceDist" class="sub">Jarak: --</div></div></div>
+        <div class="stats" style="margin-top:8px"><div class="stat"><div class="k">Harga vs S/R</div><div id="srPosition" class="v">--</div></div><div class="stat"><div class="k">Regime</div><div id="regime" class="v">--</div></div><div class="stat"><div class="k">Volatiliti</div><div id="volatility" class="v">--</div></div></div>
+      </section>
+      <section class="card">
+        <div class="section-head"><div><h2>Struktur multi-timeframe</h2><p>Ringkasan konteks, bukan syarat wajib entry</p></div></div>
+        <div class="tf-grid tf-grid-two">
+          <div class="tf"><div class="tf-head"><span>M15</span><span id="m15dir" class="tf-dir">--</span></div><div id="m15detail" class="tf-detail">Struktur: --</div></div>
+          <div class="tf"><div class="tf-head"><span>M5</span><span id="m5dir" class="tf-dir">--</span></div><div id="m5detail" class="tf-detail">Trigger: --</div></div>
+        </div>
+      </section>
+      <section class="card">
+        <div class="section-head"><div><h2>Data & status</h2><p>Semakan ringkas freshness data</p></div></div>
+        <div class="stats">
+          <div class="stat"><div class="k">Sumber harga</div><div id="source" class="v">--</div></div>
+          <div class="stat"><div class="k">Sumber candle</div><div id="candleSource" class="v">--</div></div>
+          <div class="stat"><div class="k">Data stale?</div><div id="stale" class="v">--</div></div>
+          <div class="stat"><div class="k">Candle M5</div><div id="m5count" class="v">--</div></div>
+          <div class="stat"><div class="k">Candle M15</div><div id="m15count" class="v">--</div></div>
+          <div class="stat"><div class="k">Candle H1</div><div id="h1count" class="v">--</div></div>
+        </div>
+        <div class="chart-note" id="lastCandle">Candle terakhir: --</div>
+      </section>
+      <section class="card">
+        <details><summary>Indikator tambahan (untuk semakan)</summary><div class="details-body"><div class="stats"><div class="stat"><div class="k">M5 RSI</div><div id="m5rsi" class="v">--</div></div><div class="stat"><div class="k">M15 RSI</div><div id="m15rsi" class="v">--</div></div><div class="stat"><div class="k">M5 ATR</div><div id="m5atr" class="v">--</div></div><div class="stat"><div class="k">M15 EMA20/50</div><div id="m15ema" class="v">--</div></div><div class="stat"><div class="k">M5 EMA9/20/50</div><div id="m5ema" class="v">--</div></div><div class="stat"><div class="k">Skor engine</div><div id="score" class="v">--</div></div></div></div></details>
+      </section>
+    </aside>
+  </div>
+  <footer class="foot">V19 API · UI ringkas untuk semakan manual · Model A/B/C ialah calon setup eksperimen yang dikira server-side; belum disahkan melalui backtest. Data stale menyekat signal; bukan bukti pasaran tutup. Tiada jaminan prestasi atau arahan pelaburan.</footer>
+</div>
+<script>
+'use strict';
+const $ = id => document.getElementById(id);
+let apiData = null;
+let candles = [];
+let barsToShow = 60;
+let modelZones = [];
+const num = v => { if (v === null || v === undefined || v === '') return null; const n = Number(v); return Number.isFinite(n) ? n : null; };
+const fmt = v => { const n = num(v); return n === null ? '--' : n.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}); };
+const short = v => v == null || v === '' ? '--' : String(v).replaceAll('_',' ');
+function setText(id,v){const el=$(id);if(el)el.textContent=(v===null||v===undefined||v==='')?'--':String(v)}
+function setHTML(id,v){const el=$(id);if(el)el.innerHTML=String(v??'--')}
+function dirClass(v){const s=String(v||'').toUpperCase();return /BULL|BUY|UP|ALLOWED/.test(s)?'bull':/BEAR|SELL|DOWN|BLOCKED/.test(s)?'bear':''}
+function setDir(id,v){const el=$(id);if(!el)return;el.textContent=short(v||'WAIT');el.className='tf-dir '+dirClass(v)}
+function updateClock(){setText('clock',new Date().toLocaleTimeString('en-MY',{hour12:false})+' MYT')}
+function setState(id,state,kind=''){const el=$(id);if(!el)return;el.textContent=state;el.className='model-state'+(kind?' '+kind:'')}
+function closeCandles(){return candles.length>1?candles.slice(0,-1):candles.slice()}
+function trueRange(c,prev){return Math.max(c.high-c.low,Math.abs(c.high-(prev?.close??c.close)),Math.abs(c.low-(prev?.close??c.close)))}
+function estimateAtr(data){if(data.length<3)return null;const a=data.slice(-15);const vals=a.map((c,i)=>trueRange(c,a[i-1]));return vals.reduce((s,v)=>s+v,0)/vals.length}
+function pivots(data,left=2,right=2){const out=[];for(let i=left;i<data.length-right;i++){let high=true,low=true;for(let j=i-left;j<=i+right;j++){if(j===i)continue;if(data[j].high>=data[i].high)high=false;if(data[j].low<=data[i].low)low=false}if(high)out.push({i,type:'H',price:data[i].high,time:data[i].time});if(low)out.push({i,type:'L',price:data[i].low,time:data[i].time})}return out}
+function detectModels(d){const data=closeCandles();const price=num(d?.livePrice?.price??d?.price)??(data.at(-1)?.close??null);const atr=estimateAtr(data);const recentPivots=pivots(data);modelZones=[];const models={A:{state:'WAIT',kind:'',direction:'NEUTRAL',meta:'Belum cukup bukti struktur.'},B:{state:'WAIT',kind:'',direction:'NEUTRAL',meta:'Tiada FVG terkini yang memenuhi kriteria.'},C:{state:'WAIT',kind:'',direction:'NEUTRAL',meta:'Trend/pullback belum cukup jelas.'}};
+  if(data.length<15||price===null)return models;
+  // A: sweep of the prior 8 bars, close back within the range. Use closed candles only.
+  const start=Math.max(9,data.length-5);let sweepFound=null;
+  for(let i=data.length-1;i>=start;i--){const c=data[i];const prior=data.slice(Math.max(0,i-10),i);if(prior.length<6)continue;const ph=Math.max(...prior.map(x=>x.high));const pl=Math.min(...prior.map(x=>x.low));if(c.low<pl&&c.close>pl){sweepFound={direction:'BUY',c,level:pl,extreme:c.low,i};break}if(c.high>ph&&c.close<ph){sweepFound={direction:'SELL',c,level:ph,extreme:c.high,i};break}}
+  if(sweepFound){models.A={state:'SWEEP DIKESAN',kind:'ready',direction:sweepFound.direction,meta:`<strong>${sweepFound.direction}</strong> · Paras disapu ${fmt(sweepFound.level)} · Ekstrem ${fmt(sweepFound.extreme)}<br>Candle: ${escapeHtml(String(sweepFound.c.time||'terkini'))}<br>Periksa reaksi selepas sweep dan SL di luar ekstrem.`};modelZones.push({type:'sweep',low:sweepFound.c.low,high:sweepFound.c.high,label:'Sweep'})}else{const near=recentPivots.slice(-8).filter(p=>atr&&Math.abs(price-p.price)<=atr*.45).sort((a,b)=>Math.abs(price-a.price)-Math.abs(price-b.price))[0];if(near){models.A={state:'ZON HAMPIR',kind:'watch',direction:near.type==='L'?'BUY':'SELL',meta:`Harga hampir swing ${near.type==='L'?'low':'high'} ${fmt(near.price)}.<br>Belum ada sweep yang disahkan.`}}else{models.A.meta='Belum nampak sweep + close kembali yang jelas pada candle tertutup.'}}
+  // B: classic three-candle FVG, scan recent completed candles and retain nearest recent zone.
+  let fvg=null;const from=Math.max(2,data.length-18);for(let i=data.length-1;i>=from;i--){const left=data[i-2],mid=data[i-1],right=data[i];if(left.high<right.low){const low=left.high,high=right.low;const touched=data.slice(i+1).some(c=>c.low<=high&&c.high>=low);fvg={direction:'BUY',low,high,mid,right,i,touched};break}if(left.low>right.high){const low=right.high,high=left.low;const touched=data.slice(i+1).some(c=>c.low<=high&&c.high>=low);fvg={direction:'SELL',low,high,mid,right,i,touched};break}}
+  if(fvg){const distance=price<fvg.low?fvg.low-price:price>fvg.high?price-fvg.high:0;const near=atr&&distance<=atr*.65;const invalid=fvg.direction==='BUY'?price<fvg.low-((atr||0)*.2):price>fvg.high+((atr||0)*.2);let state=invalid?'ZON INVALID':near?'HAMPIR / DALAM ZON':fvg.touched?'ZON PERNAH DISENTUH':'FVG DIKESAN';let kind=invalid?'invalid':near?'watch':'';models.B={state,kind,direction:fvg.direction,meta:`<strong>${fvg.direction}</strong> · Zon ${fmt(fvg.low)} – ${fmt(fvg.high)}<br>Jarak harga: ${fmt(distance)} · ${fvg.touched?'pernah disentuh':'belum disentuh selepas terbentuk'}<br>${near?'Harga menghampiri zon; tunggu tindak balas yang ditetapkan.':'Pantau jika harga retrace ke zon.'}`};if(!invalid)modelZones.push({type:'fvg',low:fvg.low,high:fvg.high,label:'FVG'})}else models.B.meta='Tiada FVG 3-candle dalam candle terkini yang memenuhi definisi asas.';
+  // C: direction uses M15 structure/direction; local pullback judged from last 5 vs previous 5 closed bars.
+  const m15=d?.m15||{};const m5=d?.m5||{};const m15Text=String(m15.direction||m15.confirmation||'').toUpperCase();let trend='NEUTRAL';if(/BULL/.test(m15Text)||m15.structure?.bullish)trend='BUY';else if(/BEAR/.test(m15Text)||m15.structure?.bearish)trend='SELL';else{const recent=data.slice(-5),prev=data.slice(-10,-5);if(recent.length===5&&prev.length===5){const a=recent.at(-1).close-recent[0].open,b=prev.at(-1).close-prev[0].open;if(a>0&&b>0)trend='BUY';if(a<0&&b<0)trend='SELL'}}
+  const recent=data.slice(-5);const prev=data.slice(-10,-5);if(trend!=='NEUTRAL'&&recent.length>=4&&prev.length>=4){const impulse=prev.at(-1).close-prev[0].open;const pullback=recent.at(-1).close-recent[0].open;const aligned=trend==='BUY'?impulse>0&&pullback<0:impulse<0&&pullback>0;const resumed=trend==='BUY'?recent.at(-1).close>recent.at(-2).high:recent.at(-1).close<recent.at(-2).low;const status=aligned?(resumed?'REAKSI PULLBACK':'PULLBACK DIKESAN'):'TREND CONTEXT';models.C={state:aligned?(resumed?'REAKSI AWAL':'PULLBACK DIKESAN'):'PANTAU TREND',kind:aligned?(resumed?'ready':'watch'):'',direction:trend,meta:`Konteks M15: <strong>${trend}</strong><br>${aligned?'Retracement jangka pendek dikesan.':'Belum ada retracement yang jelas dalam 5 candle terakhir.'}<br>EMA/struktur perlu disemak bersama sebelum membuat keputusan.`};if(aligned)modelZones.push({type:'pullback',low:Math.min(...recent.map(c=>c.low)),high:Math.max(...recent.map(c=>c.high)),label:'Pullback'})}else models.C.meta='M15 belum menunjukkan arah yang cukup jelas untuk model ini.';
+  return models}
+function escapeHtml(s){return s.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function renderModels(d){
+  const serverModels=d?.experimentalModels?.models;
+  let m;
+  if(serverModels){
+    modelZones=[];
+    m={};
+    for(const key of ['A','B','C']){
+      const obj=serverModels[key]||{};
+      const state=String(obj.state||'WAIT');
+      const kind=/EARLY_SETUP/.test(state)?'ready':/WATCH|FOUND|CONTEXT/.test(state)?'watch':/INVALID/.test(state)?'invalid':'';
+      const zone=obj.zone||obj.entryZone;
+      if(zone&&Number.isFinite(Number(zone.low))&&Number.isFinite(Number(zone.high)))modelZones.push({type:zone.type||key.toLowerCase(),low:Number(zone.low),high:Number(zone.high),label:key});
+      const z=obj.entryZone;
+      const zoneText=z?`${fmt(z.low)} – ${fmt(z.high)}`:'Belum ada zon entry';
+      const invalidation=obj.invalidation==null?'--':fmt(obj.invalidation);
+      const target=obj.target==null?'--':fmt(obj.target);
+      const direction=escapeHtml(String(obj.direction||'NEUTRAL'));
+      const reason=escapeHtml(String(obj.reason||'Tiada sebab disediakan.'));
+      m[key]={state:state.replaceAll('_',' '),kind,meta:`<strong>${direction}</strong><br>Zon: ${zoneText}<br>Invalidation: ${invalidation} · Sasaran struktur: ${target}<br>${reason}`};
+    }
+  }else{
+    m=detectModels(d);
+  }
+  for(const key of ['A','B','C']){const obj=m[key];setState(key.toLowerCase()+'State',obj.state,obj.kind);$(key.toLowerCase()+'Meta').innerHTML=obj.meta}
+  setText('modelUpdated','Dikemas kini '+new Date().toLocaleTimeString('en-MY',{hour12:false}));
+  drawChart();
+}
+function drawChart(){const c=$('chart');if(!c)return;const rect=c.getBoundingClientRect();if(!rect.width||!rect.height)return;const dpr=window.devicePixelRatio||1;c.width=Math.round(rect.width*dpr);c.height=Math.round(rect.height*dpr);const ctx=c.getContext('2d');ctx.setTransform(dpr,0,0,dpr,0,0);const w=rect.width,h=rect.height;ctx.clearRect(0,0,w,h);ctx.fillStyle='#fff';ctx.fillRect(0,0,w,h);const data=candles.slice(-barsToShow);if(data.length<2){ctx.fillStyle='#667085';ctx.font='12px sans-serif';ctx.fillText('Menunggu candle M5…',16,28);return}const d=apiData||{};const price=num(d.livePrice?.price??d.price)??data.at(-1).close;const sr=d.srAnalysis||d.h1?.supportResistance||{};const support=num(sr.support?.price??sr.support);const resistance=num(sr.resistance?.price??sr.resistance);const values=data.flatMap(x=>[x.high,x.low, x.close]);values.push(price);const localRange=Math.max(...values)-Math.min(...values);const pad=(localRange||1)*.12;let min=Math.min(...values)-pad,max=Math.max(...values)+pad;const atr=estimateAtr(data);if(support!==null&&support>=min-(atr||0)*1.2&&support<=max+(atr||0)*1.2){min=Math.min(min,support-(atr||0)*.05);max=Math.max(max,support+(atr||0)*.05)}if(resistance!==null&&resistance>=min-(atr||0)*1.2&&resistance<=max+(atr||0)*1.2){min=Math.min(min,resistance-(atr||0)*.05);max=Math.max(max,resistance+(atr||0)*.05)}const left=8,right=64,top=18,bottom=24,plotW=w-left-right,plotH=h-top-bottom;const Y=p=>top+(max-p)/(max-min||1)*plotH;const X=i=>left+(i+.5)*plotW/data.length;ctx.font='10px -apple-system,BlinkMacSystemFont,sans-serif';ctx.lineWidth=1;for(let i=0;i<=4;i++){const y=top+i*plotH/4;ctx.strokeStyle='#edf0f5';ctx.beginPath();ctx.moveTo(left,y);ctx.lineTo(w-right+2,y);ctx.stroke();const p=max-i*(max-min)/4;ctx.fillStyle='#667085';ctx.textAlign='left';ctx.fillText(p.toFixed(2),w-right+6,y+3)}
+  function hline(value,color,label,dash=[]){if(value===null||value<min||value>max)return;const y=Y(value);ctx.save();ctx.strokeStyle=color;ctx.setLineDash(dash);ctx.beginPath();ctx.moveTo(left,y);ctx.lineTo(w-right+2,y);ctx.stroke();ctx.setLineDash([]);ctx.fillStyle=color;ctx.font='bold 9px sans-serif';ctx.fillText(label,w-right+5,Math.max(10,Math.min(h-6,y-4)));ctx.restore()}
+  if(support!==null)hline(support,'#0b9960','S/R S');if(resistance!==null)hline(resistance,'#d04444','S/R R');for(const z of modelZones){const low=num(z.low),high=num(z.high);if(low===null||high===null||high<min||low>max)continue;const y1=Y(Math.min(high,max)),y2=Y(Math.max(low,min));ctx.fillStyle=z.type==='fvg'?'rgba(36,88,211,.10)':z.type==='sweep'?'rgba(217,144,0,.10)':'rgba(124,58,237,.08)';ctx.fillRect(left,y1,plotW,Math.max(2,y2-y1));ctx.strokeStyle=z.type==='fvg'?'rgba(36,88,211,.45)':z.type==='sweep'?'rgba(217,144,0,.5)':'rgba(124,58,237,.4)';ctx.strokeRect(left,y1,plotW,Math.max(2,y2-y1))}
+  const step=plotW/data.length;const bodyW=Math.max(2,Math.min(9,step*.58));data.forEach((c,i)=>{const x=X(i);const up=c.close>=c.open;const color=up?'#079669':'#d94841';ctx.strokeStyle=color;ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(x,Y(c.high));ctx.lineTo(x,Y(c.low));ctx.stroke();const y1=Y(Math.max(c.open,c.close)),y2=Y(Math.min(c.open,c.close));ctx.fillStyle=color;ctx.fillRect(x-bodyW/2,y1,bodyW,Math.max(1.5,y2-y1));});hline(price,'#b7791f','LIVE',[4,3]);ctx.fillStyle='#667085';ctx.textAlign='left';ctx.font='9px sans-serif';ctx.fillText(String(data[0].time||'').slice(11,16)||'lama',left,h-7);ctx.textAlign='right';ctx.fillText(String(data.at(-1).time||'').slice(11,16)||'terkini',w-right,h-7)}
+function render(d){apiData=d;const price=num(d.livePrice?.price??d.price);setText('price',price===null?'--':price.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}));const stale=d.stale===true;const marketReasons=Array.isArray(d.marketStatus?.reasons)?d.marketStatus.reasons:[];const candleStale=marketReasons.some(x=>String(x).endsWith('_CANDLE_STALE')||x==='FLAT_OR_SYNTHETIC_CANDLE_FEED');const weekendClosed=marketReasons.includes('WEEKEND_MARKET_CLOSED');const open=d.marketStatus?.open!==false;const marketLabel=candleStale?'DATA CANDLE STALE':weekendClosed?'PASARAN TUTUP (HUJUNG MINGGU)':open?'PASARAN DIBUKA':'DATA TIDAK BOLEH DIDAGANGKAN';setText('priceMeta',`${d.livePrice?.source||d.dataSource||'Sumber tidak diketahui'} · ${stale?'DATA CACHE/STALE':marketLabel} · ${new Date().toLocaleTimeString('en-MY',{hour12:false})}`);setText('apiStatus',stale?'DATA CACHE':d.ok?'API LIVE':'SEMAK API');$('apiDot').className='dot '+(stale?'wait':d.ok?'good':'bad');const err=$('errorBox');err.classList.remove('show');const sig=String(d.signal||'WAIT').toUpperCase();const badge=$('signalBadge');badge.textContent=sig;badge.className='signal-badge '+(sig==='BUY'?'buy':sig==='SELL'?'sell':'wait');setText('signalMeta',d.execution||'Semak manual sebelum trade');setText('support',fmt(d.srAnalysis?.support?.price??d.h1?.supportResistance?.support?.price));setText('resistance',fmt(d.srAnalysis?.resistance?.price??d.h1?.supportResistance?.resistance?.price));const sd=num(d.srAnalysis?.supportDistance),rd=num(d.srAnalysis?.resistanceDistance);setText('supportDist',`Jarak: ${sd===null?'--':fmt(sd)}`);setText('resistanceDist',`Jarak: ${rd===null?'--':fmt(rd)}`);setText('srPosition',d.srAnalysis?.position||'--');setText('regime',d.marketRegime?.label||d.marketRegime?.structure||'--');setText('volatility',d.marketRegime?.volatility?.composite||'--');const h1Bias=String(d.h1?.direction||d.h1?.holdBias||'WAIT').toUpperCase();const h1BiasEl=$('h1BiasDir');if(h1BiasEl){h1BiasEl.textContent=h1Bias;h1BiasEl.className='h1-bias-value '+(/BUY|BULL/.test(h1Bias)?'bull':/SELL|BEAR/.test(h1Bias)?'bear':'wait')}setText('h1BiasMeta',`EMA50: ${fmt(d.h1?.ema50)} · EMA200: ${fmt(d.h1?.ema200)} · Struktur: ${d.h1?.structure?.bullish?'Bullish':d.h1?.structure?.bearish?'Bearish':'Range/neutral'}`);const h1Buy=num(d.h1?.buyScore),h1Sell=num(d.h1?.sellScore);setText('h1BuyScore',h1Buy===null?'--':Math.round(h1Buy));setText('h1SellScore',h1Sell===null?'--':Math.round(h1Sell));const h1BuyBar=$('h1BuyBar'),h1SellBar=$('h1SellBar');if(h1BuyBar)h1BuyBar.style.width=`${Math.max(0,Math.min(100,h1Buy??0))}%`;if(h1SellBar)h1SellBar.style.width=`${Math.max(0,Math.min(100,h1Sell??0))}%`;setDir('m15dir',d.m15?.direction||d.m15?.confirmation);setHTML('m15detail',`Struktur: ${d.m15?.structure?.bullish?'Bullish':d.m15?.structure?.bearish?'Bearish':'Range/neutral'}<br>RSI: ${fmt(d.m15?.rsi)} · MACD: ${d.m15?.macd?.bullish?'Bullish':d.m15?.macd?.bearish?'Bearish':'Neutral'}`);setDir('m5dir',d.m5?.trigger||d.m5?.confirmation);setHTML('m5detail',`Trigger: ${escapeHtml(String(d.m5?.trigger||'WAIT'))}<br>RSI: ${fmt(d.m5?.rsi)} · MACD: ${d.m5?.macd?.bullish?'Bullish':d.m5?.macd?.bearish?'Bearish':'Neutral'}`);const tp=d.tradePlan||{};setText('planStatus',tp.entry!=null&&tp.stopLoss!=null?'PLAN ADA':d.status||'WAIT');setText('entry',fmt(tp.entry));setText('sl',fmt(tp.stopLoss));setText('rr',tp.rr==null?'--':tp.rr);setText('tp1',fmt(tp.tp1));setText('tp2',fmt(tp.tp2));setText('tp3',fmt(tp.tp3));setText('planNote',tp.entry!=null?`Setup: ${d.setupType||tp.source||'--'} · Sasaran S/R: ${fmt(tp.targetSR)}`:'Tiada trade plan yang sah dikembalikan oleh engine. Ini bukan bermaksud model eksperimen A/B/C tiada setup untuk dipantau.');const reasons=Array.isArray(d.reasons)?d.reasons:[d.reason||'Tiada sebab khusus dibekalkan.'];$('reasons').replaceChildren(...reasons.map(s=>{const li=document.createElement('li');li.textContent=String(s);return li}));setText('source',d.livePrice?.source||d.dataSource||'--');setText('candleSource',d.cache?.sources?.m5||'--');setText('stale',stale?'YA':'TIDAK');setText('m5count',d.data?.m5Candles??candles.length);setText('m15count',d.data?.m15Candles??'--');setText('h1count',d.data?.h1Candles??'--');setText('lastCandle',`Candle terakhir M5: ${d.signalCandle||candles.at(-1)?.time||'--'} · Cache candle: ${d.cache?.ageSeconds?.m5==null?'--':Math.round(d.cache.ageSeconds.m5)+'s'}`);setText('m5rsi',fmt(d.m5?.rsi));setText('m15rsi',fmt(d.m15?.rsi));setText('m5atr',fmt(d.m5?.atr));setText('m15ema',`${fmt(d.m15?.ema20)} / ${fmt(d.m15?.ema50)}`);setText('m5ema',`${fmt(d.m5?.ema9)} / ${fmt(d.m5?.ema20)} / ${fmt(d.m5?.ema50)}`);setText('score',`${Math.round(num(d.score)||0)}/100`);renderModels(d);}
+async function fetchData(){try{const r=await fetch('/api/scalp?ts='+Date.now(),{cache:'no-store'});const d=await r.json();if(!r.ok||!d.ok)throw new Error(d.error||`HTTP ${r.status}`);candles=Array.isArray(d.candles)?d.candles.map(x=>({time:x.time||x.datetime,open:Number(x.open),high:Number(x.high),low:Number(x.low),close:Number(x.close)})).filter(x=>[x.open,x.high,x.low,x.close].every(Number.isFinite)):[];render(d);drawChart()}catch(e){console.error('scalp API',e);setText('apiStatus','API ERROR');$('apiDot').className='dot bad';$('errorBox').textContent=`API tidak dapat dibaca: ${e.message}. Semak endpoint /api/scalp dan deployment.`;$('errorBox').classList.add('show')}}
+document.querySelectorAll('[data-bars]').forEach(btn=>btn.addEventListener('click',()=>{barsToShow=Number(btn.dataset.bars)||60;document.querySelectorAll('[data-bars]').forEach(b=>b.classList.toggle('active',b===btn));drawChart()}));window.addEventListener('resize',drawChart);window.addEventListener('orientationchange',()=>setTimeout(drawChart,100));updateClock();setInterval(updateClock,1000);fetchData();setInterval(fetchData,15000);
+
+// Web Push setup: must be started by a user gesture, especially on iOS.
+const pushButton = $('pushEnableBtn');
+const pushStatus = $('pushStatus');
+function setPushStatus(message, ok=false){
+  if(pushStatus){
+    pushStatus.textContent = message;
+    pushStatus.style.borderColor = ok ? '#b7e6ca' : '';
+    pushStatus.style.color = ok ? '#087443' : '';
+    pushStatus.style.background = ok ? '#e8f7ef' : '';
+  }
+}
+function base64UrlToUint8Array(base64String){
+  const padding = '='.repeat((4 - base64String.length % 4) % 4);
+  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+  const raw = atob(base64);
+  const output = new Uint8Array(raw.length);
+  for(let i=0;i<raw.length;i++) output[i] = raw.charCodeAt(i);
+  return output;
+}
+async function enableWebPush(){
+  if(!('serviceWorker' in navigator) || !('PushManager' in window) || !('Notification' in window)){
+    setPushStatus('Browser ini tidak menyokong Web Push.');
+    alert('Browser ini tidak menyokong Web Push. Pada iPhone, gunakan iOS 16.4+ dan tambah website ke Home Screen dahulu.');
+    return;
+  }
+  const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+  const isStandalone = window.navigator.standalone === true || window.matchMedia('(display-mode: standalone)').matches;
+  if(isIOS && !isStandalone){
+    setPushStatus('Tambah ke Home Screen dahulu.');
+    alert('Untuk iPhone: tekan Share dalam Safari → Add to Home Screen. Buka dashboard melalui ikon Home Screen, kemudian tekan Enable Notification.');
+    return;
+  }
+  pushButton.disabled = true;
+  pushButton.textContent = 'Mengaktifkan…';
+  try{
+    const permission = Notification.permission === 'granted' ? 'granted' : await Notification.requestPermission();
+    if(permission !== 'granted'){
+      setPushStatus(permission === 'denied' ? 'Permission ditolak — semak Settings.' : 'Permission belum diberi.');
+      alert('Notification belum dibenarkan. Semak tetapan notification untuk website/web app ini dalam Settings.');
+      return;
+    }
+    const configResponse = await fetch('/api/push-config', {cache:'no-store'});
+    if(!configResponse.ok) throw new Error('Gagal membaca /api/push-config ('+configResponse.status+')');
+    const config = await configResponse.json();
+    if(!config.publicKey) throw new Error('VAPID_PUBLIC_KEY belum diset dalam Vercel Environment Variables.');
+    const registration = await navigator.serviceWorker.register('/sw.js', {scope:'/'});
+    await navigator.serviceWorker.ready;
+    let subscription = await registration.pushManager.getSubscription();
+    if(!subscription){
+      subscription = await registration.pushManager.subscribe({
+        userVisibleOnly:true,
+        applicationServerKey:base64UrlToUint8Array(config.publicKey)
+      });
+    }
+    const saveResponse = await fetch('/api/push-subscribe', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify(subscription)
+    });
+    const saved = await saveResponse.json().catch(()=>({}));
+    if(!saveResponse.ok || saved.success !== true) throw new Error(saved.error || 'Gagal menyimpan push subscription ('+saveResponse.status+')');
+    setPushStatus('Push aktif pada peranti ini.', true);
+    pushButton.textContent = '✓ Notification Aktif';
+    pushButton.classList.add('active');
+    alert('Web Push berjaya diaktifkan untuk peranti ini. Seterusnya buat ujian push dari server untuk sahkan notification sampai ketika dashboard ditutup.');
+  }catch(error){
+    console.error('Enable Web Push failed:', error);
+    setPushStatus('Gagal aktif: '+(error.message || 'ralat tidak diketahui'));
+    alert('Gagal aktifkan Web Push: '+(error.message || error)+'\nSemak VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY, VAPID_SUBJECT dan Redis env dalam Vercel.');
+  }finally{
+    pushButton.disabled = false;
+    if(!pushButton.classList.contains('active')) pushButton.textContent = '🔔 Enable Notification';
+  }
+}
+if(pushButton) pushButton.addEventListener('click', enableWebPush);
+</script>
+</body>
+</html>
