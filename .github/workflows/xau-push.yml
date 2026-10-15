@@ -1,10 +1,16 @@
-
 name: XAU Signal Push
 
 on:
   schedule:
     - cron: "*/5 * * * *"
   workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: xau-signal-push
+  cancel-in-progress: false
 
 jobs:
   check-signal:
@@ -17,18 +23,27 @@ jobs:
         env:
           XAU_CRON_SECRET: ${{ secrets.XAU_CRON_SECRET }}
         run: |
-          set -u
+          set -euo pipefail
 
           if [ -z "${XAU_CRON_SECRET:-}" ]; then
-            echo "ERROR: GitHub Secret XAU_CRON_SECRET belum diset."
+            echo "::error::GitHub Secret XAU_CRON_SECRET is not configured."
             exit 1
           fi
 
           API_URL="https://sn-r-xauusd-ta3j.vercel.app/api/scalp?source=github-actions"
-
           RESPONSE_FILE="$(mktemp)"
 
-          HTTP_STATUS=$(curl \
+          cleanup() {
+            rm -f "$RESPONSE_FILE"
+          }
+          trap cleanup EXIT
+
+          echo "Malaysia Time: $(TZ=Asia/Kuala_Lumpur date '+%Y-%m-%d %H:%M:%S')"
+          echo "Triggering XAU Scalp Engine..."
+
+          HTTP_STATUS="000"
+
+          if HTTP_STATUS=$(curl \
             --silent \
             --show-error \
             --location \
@@ -36,20 +51,31 @@ jobs:
             --connect-timeout 15 \
             --retry 2 \
             --retry-delay 2 \
+            --retry-connrefused \
             --header "x-xau-cron-secret: ${XAU_CRON_SECRET}" \
+            --header "Accept: application/json" \
             --output "$RESPONSE_FILE" \
             --write-out "%{http_code}" \
-            "$API_URL" || true)
+            "$API_URL"); then
+            :
+          else
+            CURL_EXIT_CODE=$?
+            echo "::error::API request failed. curl exit code: ${CURL_EXIT_CODE}"
+            if [ -s "$RESPONSE_FILE" ]; then
+              cat "$RESPONSE_FILE"
+              echo ""
+            fi
+            exit 1
+          fi
 
-          echo "Malaysia: $(TZ=Asia/Kuala_Lumpur date '+%Y-%m-%d %H:%M:%S')"
-          echo "HTTP STATUS: $HTTP_STATUS"
-          echo "API RESPONSE:"
+          echo "HTTP Status: ${HTTP_STATUS}"
+          echo "API Response:"
           cat "$RESPONSE_FILE"
           echo ""
 
           if [ "$HTTP_STATUS" != "200" ]; then
-            echo "ERROR: API request failed."
+            echo "::error::API returned HTTP status ${HTTP_STATUS}."
             exit 1
           fi
 
-          echo "API request completed."
+          echo "API request completed successfully."
