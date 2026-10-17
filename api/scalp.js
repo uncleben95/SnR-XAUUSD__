@@ -246,10 +246,10 @@ export default async function handler(req, res) {
     return Date.parse(hasTimezone ? normalized : `${normalized}Z`);
   }
 
-  function detectMarketStatus(m5, m15, h1, livePrice) {
+  function detectMarketStatus(m5, m15, h1, livePrice, livePriceSavedAt = Date.now()) {
     const nowDate = new Date();
     const day = nowDate.getUTCDay();
-    const weekend = day === 0 || day === 6;
+    const weekend = day === 6;
 
     const latest = m5?.at(-1);
     const latestTime = candleTimestampMs(latest?.time);
@@ -289,14 +289,19 @@ export default async function handler(req, res) {
     const staleM5 = latestAgeMin != null && latestAgeMin > 10;
     const staleM15 = m15AgeMin != null && m15AgeMin > 45;
     const staleH1 = h1AgeMin != null && h1AgeMin > 120;
+    const priceAgeMin = Number.isFinite(Number(livePriceSavedAt))
+      ? Math.max(0, (Date.now() - Number(livePriceSavedAt)) / 60000)
+      : Infinity;
+    const stalePrice = !Number.isFinite(Number(livePrice)) || priceAgeMin > 10;
     const staleCandle = staleM5 || staleM15 || staleH1;
-    const closed = weekend || syntheticFlatFeed || staleCandle;
+    const closed = weekend || syntheticFlatFeed || staleCandle || stalePrice;
     const reasons = [];
     if (weekend) reasons.push("WEEKEND_MARKET_CLOSED");
     if (syntheticFlatFeed) reasons.push("FLAT_OR_SYNTHETIC_CANDLE_FEED");
     if (staleM5) reasons.push("LATEST_M5_CANDLE_STALE");
     if (staleM15) reasons.push("LATEST_M15_CANDLE_STALE");
     if (staleH1) reasons.push("LATEST_H1_CANDLE_STALE");
+    if (stalePrice) reasons.push("LIVE_PRICE_STALE_OR_UNAVAILABLE");
 
     return {
       open: !closed,
@@ -306,6 +311,7 @@ export default async function handler(req, res) {
       reasons,
       latestCandle: latest?.time || null,
       latestCandleAgeMinutes: latestAgeMin == null ? null : Number(latestAgeMin.toFixed(1)),
+      livePriceAgeMinutes: Number.isFinite(priceAgeMin) ? Number(priceAgeMin.toFixed(1)) : null,
       timeframeCandleAgeMinutes: {
         m5: latestAgeMin == null ? null : Number(latestAgeMin.toFixed(1)),
         m15: m15AgeMin == null ? null : Number(m15AgeMin.toFixed(1)),
@@ -917,7 +923,7 @@ export default async function handler(req, res) {
         return Number.isFinite(timeMs) && timeMs + 5 * 60_000 <= Date.now() && Number.isFinite(Number(candle?.close));
       })
       .sort((a, b) => candleTimestampMs(a.time) - candleTimestampMs(b.time))
-      .slice(-4);
+      .slice(-2);
     if (recent.length < 2) return none;
 
     const candidates = [];
@@ -2122,7 +2128,8 @@ export default async function handler(req, res) {
       m5,
       m15,
       h1,
-      livePrice
+      livePrice,
+      priceResult.savedAt
     );
 
     const pushAllowed =
