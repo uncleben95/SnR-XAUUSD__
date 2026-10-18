@@ -249,8 +249,25 @@ export default async function handler(req, res) {
 
   function detectMarketStatus(m5, m15, h1, livePrice, livePriceSavedAt = Date.now()) {
     const nowDate = new Date();
-    const day = nowDate.getUTCDay();
-    const weekend = day === 6;
+    // XAUUSD generally trades Sunday 18:00 through Friday 17:00 New York
+    // time, with a daily 17:00-18:00 ET rollover break Mon-Thu. Use the
+    // exchange session's local clock so DST is handled by Intl automatically.
+    const nyParts = new Intl.DateTimeFormat("en-US", {
+      timeZone: "America/New_York",
+      weekday: "short",
+      hour: "2-digit",
+      minute: "2-digit",
+      hourCycle: "h23"
+    }).formatToParts(nowDate);
+    const ny = Object.fromEntries(nyParts.map(part => [part.type, part.value]));
+    const nyWeekday = ny.weekday;
+    const nyMinuteOfDay = Number(ny.hour) * 60 + Number(ny.minute);
+    const weekend = nyWeekday === "Sat" ||
+      (nyWeekday === "Sun" && nyMinuteOfDay < 18 * 60) ||
+      (nyWeekday === "Fri" && nyMinuteOfDay >= 17 * 60);
+    const dailyRollover = ["Mon", "Tue", "Wed", "Thu"].includes(nyWeekday) &&
+      nyMinuteOfDay >= 17 * 60 && nyMinuteOfDay < 18 * 60;
+    const scheduledClosed = weekend || dailyRollover;
 
     const latest = m5?.at(-1);
     const latestTime = candleTimestampMs(latest?.time);
@@ -295,9 +312,10 @@ export default async function handler(req, res) {
       : Infinity;
     const stalePrice = !Number.isFinite(Number(livePrice)) || priceAgeMin > 10;
     const staleCandle = staleM5 || staleM15 || staleH1;
-    const closed = weekend || syntheticFlatFeed || staleCandle || stalePrice;
+    const closed = scheduledClosed || syntheticFlatFeed || staleCandle || stalePrice;
     const reasons = [];
     if (weekend) reasons.push("WEEKEND_MARKET_CLOSED");
+    else if (dailyRollover) reasons.push("DAILY_ROLLOVER_CLOSED");
     if (syntheticFlatFeed) reasons.push("FLAT_OR_SYNTHETIC_CANDLE_FEED");
     if (staleM5) reasons.push("LATEST_M5_CANDLE_STALE");
     if (staleM15) reasons.push("LATEST_M15_CANDLE_STALE");
@@ -982,10 +1000,23 @@ export default async function handler(req, res) {
       .filter(x => x.type === "RESISTANCE" && x.price > price && isStrongZone(x))
       .sort((a, b) => a.price - b.price);
 
-    const support = supports[0] || null;
-    const resistance = resistances[0] || null;
+    // Keep entry-quality zones separate from display levels. The dashboard
+    // should still show the nearest detected S/R even when it is not strong
+    // enough to authorize an entry.
+    const strongSupport = supports[0] || null;
+    const strongResistance = resistances[0] || null;
+    const displaySupports = levels
+      .filter(x => x.type === "SUPPORT" && x.price < price)
+      .sort((a, b) => b.price - a.price);
+    const displayResistances = levels
+      .filter(x => x.type === "RESISTANCE" && x.price > price)
+      .sort((a, b) => a.price - b.price);
+    const support = displaySupports[0] || null;
+    const resistance = displayResistances[0] || null;
     const supportDistance = support ? price - support.price : null;
     const resistanceDistance = resistance ? resistance.price - price : null;
+    const strongSupportDistance = strongSupport ? price - strongSupport.price : null;
+    const strongResistanceDistance = strongResistance ? strongResistance.price - price : null;
 
     const threshold = Math.max(
       (h1ATR || 10) * CFG.srATRMultiplier,
@@ -993,12 +1024,14 @@ export default async function handler(req, res) {
     );
     const reversalThreshold = threshold * CFG.reversalZoneMultiplier;
 
-    const nearSupport = supportDistance != null && supportDistance <= threshold;
-    const nearResistance = resistanceDistance != null && resistanceDistance <= threshold;
-    const atSupport = supportDistance != null && supportDistance <= threshold * 0.35;
-    const atResistance = resistanceDistance != null && resistanceDistance <= threshold * 0.35;
-    const reversalAtSupport = supportDistance != null && supportDistance <= reversalThreshold;
-    const reversalAtResistance = resistanceDistance != null && resistanceDistance <= reversalThreshold;
+    // Entry filters intentionally use only strong zones; display distances
+    // above may refer to ordinary levels and must not relax the entry filter.
+    const nearSupport = strongSupportDistance != null && strongSupportDistance <= threshold;
+    const nearResistance = strongResistanceDistance != null && strongResistanceDistance <= threshold;
+    const atSupport = strongSupportDistance != null && strongSupportDistance <= threshold * 0.35;
+    const atResistance = strongResistanceDistance != null && strongResistanceDistance <= threshold * 0.35;
+    const reversalAtSupport = strongSupportDistance != null && strongSupportDistance <= reversalThreshold;
+    const reversalAtResistance = strongResistanceDistance != null && strongResistanceDistance <= reversalThreshold;
 
     let position = "BETWEEN S/R";
     let zone = "NEUTRAL";
@@ -1016,6 +1049,10 @@ export default async function handler(req, res) {
     return {
       support,
       resistance,
+      strongSupport,
+      strongResistance,
+      strongSupportDistance: strongSupportDistance != null ? Number(strongSupportDistance.toFixed(2)) : null,
+      strongResistanceDistance: strongResistanceDistance != null ? Number(strongResistanceDistance.toFixed(2)) : null,
       levels: levels
         .sort((a, b) => Math.abs(a.price - price) - Math.abs(b.price - price))
         .slice(0, CFG.srMaxLevels),
