@@ -1,5 +1,6 @@
 import { sendPushToAll, redis } from "./push-lib.js";
 import { buildScalpModels } from "./scalp-models.js";
+import { shouldNotifyEntryEvent } from "./push-state.js";
 
 export default async function handler(req, res) {
   const API_KEY = process.env.TWELVE_DATA_API_KEY;
@@ -3924,7 +3925,7 @@ export default async function handler(req, res) {
       const signalStateKey = "xau_signal_push_state";
       const previousSignal = await redis.get(signalStateKey);
 
-      if (previousSignal !== signal) {
+      if (shouldNotifyEntryEvent(previousSignal, signalKey)) {
         const entryResult = await notifyPushOnce(
         "ENTRY",
         signalKey,
@@ -3945,11 +3946,11 @@ export default async function handler(req, res) {
 
         if (entryResult.status === "SENT") {
           entryPushSent = true;
-          await redis.set(signalStateKey, signal, { ex: CFG.pushLockTTL });
+          await redis.set(signalStateKey, signalKey, { ex: CFG.pushLockTTL });
         }
         if (entryResult.status === "ALREADY_NOTIFIED") {
           entryPushSkipped = true;
-          await redis.set(signalStateKey, signal, { ex: CFG.pushLockTTL });
+          await redis.set(signalStateKey, signalKey, { ex: CFG.pushLockTTL });
         }
         entryPushEvents.push(entryResult);
       } else {
