@@ -47,8 +47,8 @@
     <div class="top-right">
       <div class="status-pill"><span id="apiDot" class="dot wait"></span><span id="apiStatus">Connecting…</span></div>
       <div class="status-pill"><span class="dot"></span><span id="clock">--:--:-- MYT</span></div>
-      <button id="pushEnableBtn" class="btn" type="button">🔔 Enable Notification</button>
-      <div id="pushStatus" class="status-pill" role="status" aria-live="polite">Push notifications are not enabled</div>
+      <button id="pushEnableBtn" class="btn" type="button">🔔 Allow Notifications</button>
+      <div id="pushStatus" class="status-pill" role="status" aria-live="polite">Tap the button to choose whether to allow notifications.</div>
     </div>
   </header>
   <div id="errorBox" class="error"></div>
@@ -218,6 +218,21 @@ function setPushStatus(message, ok=false){
     pushStatus.style.background = ok ? '#e8f7ef' : '';
   }
 }
+function updatePushPermissionUI(){
+  if(!pushButton || !pushStatus || !('Notification' in window)) return;
+  if(Notification.permission === 'default'){
+    pushButton.textContent = '🔔 Allow Notifications';
+    pushStatus.textContent = 'Not decided yet — tap Allow Notifications to show the iPhone permission prompt.';
+    pushButton.classList.remove('active');
+  }else if(Notification.permission === 'denied'){
+    pushButton.textContent = '⚙️ Notification Settings';
+    pushStatus.textContent = 'Notifications are blocked. Change permission in iPhone Settings; this page cannot show the prompt again.';
+    pushButton.classList.remove('active');
+  }else{
+    pushButton.textContent = '🔄 Activate Notifications';
+    pushStatus.textContent = 'Permission is allowed. Tap to register this device for push notifications.';
+  }
+}
 function base64UrlToUint8Array(base64String){
   const padding = '='.repeat((4 - base64String.length % 4) % 4);
   const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
@@ -239,13 +254,21 @@ async function enableWebPush(){
     alert('On iPhone: tap Share in Safari → Add to Home Screen. Open the dashboard from the Home Screen icon, then tap Enable Notification.');
     return;
   }
+  if(Notification.permission === 'denied'){
+    setPushStatus('Notifications are blocked in iOS settings.');
+    alert('iPhone has already blocked notifications for this web app, so iOS will not show Allow / Don’t Allow again. Open Settings → Notifications → this web app, turn on Allow Notifications, then return and tap this button.');
+    updatePushPermissionUI();
+    return;
+  }
   pushButton.disabled = true;
-  pushButton.textContent = 'Mengaktifkan…';
+  pushButton.textContent = 'Requesting permission…';
   try{
+    // Must be invoked directly from this button click so iOS can show its native prompt.
     const permission = Notification.permission === 'granted' ? 'granted' : await Notification.requestPermission();
     if(permission !== 'granted'){
       setPushStatus(permission === 'denied' ? 'Permission denied — check Settings.' : 'Permission has not been granted.');
-      alert('Notifications are not allowed. Check this website/web app notification settings.');
+      alert(permission === 'denied' ? 'Notifications were denied. Open iPhone Settings → Notifications → this web app and enable Allow Notifications.' : 'No permission was selected. Tap Allow Notifications and choose Allow.');
+      updatePushPermissionUI();
       return;
     }
     const configResponse = await fetch('/api/push-config', {cache:'no-store'});
@@ -289,7 +312,7 @@ async function enableWebPush(){
     const saved = await saveResponse.json().catch(()=>({}));
     if(!saveResponse.ok || saved.success !== true) throw new Error(saved.error || 'Failed to save push subscription ('+saveResponse.status+')');
     setPushStatus('Push notifications are enabled on this device.', true);
-    pushButton.textContent = '✓ Notification Aktif';
+    pushButton.textContent = '✓ Notification Permission Granted';
     pushButton.classList.add('active');
     alert('Web Push is enabled for this device. Send a test push from the server to verify notifications arrive while the dashboard is closed.');
   }catch(error){
@@ -298,10 +321,11 @@ async function enableWebPush(){
     alert('Failed to enable Web Push: '+(error.message || error)+'\nCheck VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY, VAPID_SUBJECT, and Redis environment variables in Vercel.');
   }finally{
     pushButton.disabled = false;
-    if(!pushButton.classList.contains('active')) pushButton.textContent = '🔔 Enable Notification';
+    if(!pushButton.classList.contains('active')) updatePushPermissionUI();
   }
 }
 if(pushButton) pushButton.addEventListener('click', enableWebPush);
+updatePushPermissionUI();
 </script>
 </body>
 </html>
