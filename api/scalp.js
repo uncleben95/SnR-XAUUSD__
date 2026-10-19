@@ -1,6 +1,7 @@
 import { sendPushToAll, redis } from "./push-lib.js";
 import { buildScalpModels } from "./scalp-models.js";
 import { shouldNotifyEntryEvent } from "./push-state.js";
+import { isH1DirectionAllowed, isMarketDataStale, isTradePlanValid } from "./signal-policy.js";
 
 export default async function handler(req, res) {
   const API_KEY = process.env.TWELVE_DATA_API_KEY;
@@ -304,13 +305,13 @@ export default async function handler(req, res) {
     // Twelve Data timestamps identify candle OPEN time, not close time.
     // If the newest closed M5 candle is over 10 minutes old by open-time,
     // at least one expected M5 update is missing/late; block actionable signals.
-    const staleM5 = latestAgeMin != null && latestAgeMin > 10;
-    const staleM15 = m15AgeMin != null && m15AgeMin > 45;
-    const staleH1 = h1AgeMin != null && h1AgeMin > 120;
+    const staleM5 = latestAgeMin == null || latestAgeMin > 10;
+    const staleM15 = m15AgeMin == null || m15AgeMin > 45;
+    const staleH1 = h1AgeMin == null || h1AgeMin > 120;
     const priceAgeMin = Number.isFinite(Number(livePriceSavedAt))
       ? Math.max(0, (Date.now() - Number(livePriceSavedAt)) / 60000)
       : Infinity;
-    const stalePrice = !Number.isFinite(Number(livePrice)) || priceAgeMin > 10;
+    const stalePrice = !Number.isFinite(Number(livePrice)) || Number(livePrice) <= 0 || priceAgeMin > 10;
     const staleCandle = staleM5 || staleM15 || staleH1;
     const closed = scheduledClosed || syntheticFlatFeed || staleCandle || stalePrice;
     const reasons = [];
@@ -1760,21 +1761,18 @@ export default async function handler(req, res) {
           closedRedisData.length >=
           minRequired
         ) {
+          const cachedSavedAt = Number(redisCache.savedAt);
           C.candles[key] = {
-            at:
-              redisCache.savedAt ||
-              Date.now(),
-
-            data:
-              closedRedisData
+            // Missing cache metadata must not make an old cache look freshly written.
+            at: Number.isFinite(cachedSavedAt) && cachedSavedAt > 0 ? cachedSavedAt : 0,
+            data: closedRedisData
           };
 
           C.dataSource[key] =
             "REDIS_CACHE";
 
           C.cacheAt[key] =
-            redisCache.savedAt ||
-            Date.now();
+            Number.isFinite(cachedSavedAt) && cachedSavedAt > 0 ? cachedSavedAt : 0;
 
           return closedRedisData;
         }
@@ -1906,7 +1904,8 @@ export default async function handler(req, res) {
       if (
         !pr.ok ||
         pj.status === "error" ||
-        !Number.isFinite(p)
+        !Number.isFinite(p) ||
+        p <= 0
       ) {
         throw new Error(
           pj.message ||
@@ -1972,30 +1971,21 @@ export default async function handler(req, res) {
           cachedPrice
         )
       ) {
-        C.price =
-          cachedPrice;
+        const cachedPriceSavedAt = Number(redisPrice?.savedAt);
+        const validCachedPriceTime = Number.isFinite(cachedPriceSavedAt) && cachedPriceSavedAt > 0
+          ? cachedPriceSavedAt
+          : 0;
 
-        C.priceAt =
-          redisPrice.savedAt ||
-          Date.now();
-
-        C.dataSource.price =
-          "REDIS_CACHE";
-
-        C.cacheAt.price =
-          redisPrice.savedAt ||
-          Date.now();
+        C.price = cachedPrice;
+        C.priceAt = validCachedPriceTime;
+        C.dataSource.price = "REDIS_CACHE";
+        C.cacheAt.price = validCachedPriceTime;
 
         return {
-          price:
-            cachedPrice,
-
-          savedAt:
-            redisPrice.savedAt ||
-            Date.now(),
-
-          source:
-            "REDIS_CACHE"
+          price: cachedPrice,
+          // 0 deliberately makes the market-data guard reject an undated cache.
+          savedAt: validCachedPriceTime,
+          source: "REDIS_CACHE"
         };
       }
 
@@ -2902,14 +2892,12 @@ export default async function handler(req, res) {
 
     /*
      * ==========================================================
-     * H1 S/R ENTRY-QUALITY FILTER
+     * H1 DIRECTION / REVERSAL CONTEXT
      * ==========================================================
      */
 
-    // Require a nearby, quality-filtered H1 zone on the trade's entry side.
-    // BUY setups need strong support nearby; SELL setups need strong resistance.
-    const srBuyAllowed = h1SupportResistance.nearSupport;
-    const srSellAllowed = h1SupportResistance.nearResistance;
+    // S/R proximity is context and target information. It is not a mandatory
+    // entry condition when H1 is neutral or agrees with M15+M5.
 
     const srBuyContext =
       h1SupportResistance.nearResistance
@@ -2961,15 +2949,26 @@ export default async function handler(req, res) {
       h1Direction !==
         "SELL";
 
+    // H1 is a hold/context filter, not a mandatory S/R-touch requirement.
+    // Allow aligned M15+M5 signals when H1 is neutral or agrees; if H1 is
+    // explicitly opposite, require a reversal at the corresponding strong zone.
+    const buyH1Allowed = isH1DirectionAllowed("BUY", h1Direction, buyReversal);
+    const sellH1Allowed = isH1DirectionAllowed("SELL", h1Direction, sellReversal);
+    // Preserve response field names for dashboard compatibility; these now
+    // describe H1 directional permission, not distance to an S/R zone.
+    const srBuyAllowed = buyH1Allowed;
+    const srSellAllowed = sellH1Allowed;
+
     if (buyContinuation) {
       buySetupType =
         "CONTINUATION";
     } else if (buyReversal) {
       buySetupType =
         "REVERSAL";
+    } else if (rawBuyAlignment && h1Direction === "WAIT") {
+      buySetupType = "H1_NEUTRAL_ALIGNMENT";
     } else if (rawBuyAlignment) {
-      buySetupType =
-        "COUNTER-TREND";
+      buySetupType = "COUNTER-TREND";
     }
 
     if (sellContinuation) {
@@ -2978,9 +2977,10 @@ export default async function handler(req, res) {
     } else if (sellReversal) {
       sellSetupType =
         "REVERSAL";
+    } else if (rawSellAlignment && h1Direction === "WAIT") {
+      sellSetupType = "H1_NEUTRAL_ALIGNMENT";
     } else if (rawSellAlignment) {
-      sellSetupType =
-        "COUNTER-TREND";
+      sellSetupType = "COUNTER-TREND";
     }
 
     /*
@@ -3034,6 +3034,10 @@ export default async function handler(req, res) {
           ).toFixed(2)
         );
     }
+
+    // Preserve the nearest H1 level in the trade direction before trade-plan
+    // selection may replace targetSR with a nearer M5/M15 target.
+    const h1ContextTargetSR = targetSR;
 
     /*
      * ==========================================================
@@ -3231,7 +3235,7 @@ export default async function handler(req, res) {
 
     if (
       rawBuyAlignment &&
-      srBuyAllowed
+      buyH1Allowed
     ) {
       signal =
         "BUY";
@@ -3289,7 +3293,7 @@ export default async function handler(req, res) {
 
     else if (
       rawSellAlignment &&
-      srSellAllowed
+      sellH1Allowed
     ) {
       signal =
         "SELL";
@@ -3337,10 +3341,7 @@ export default async function handler(req, res) {
       }
     }
 
-    /*
-     * Strong H1 S/R is an entry-quality gate. Nearby weak/one-off swings
-     * do not qualify; if no strong zone is close enough, the signal stays WAIT.
-     */
+    /* H1 opposition blocks an aligned setup unless a strong-zone reversal is confirmed. */
 
     if (signal === "BUY" && h1SupportResistance.nearResistance) {
       reasons.push("H1 resistance nearby — manage TP/hold, not an entry block");
@@ -3381,11 +3382,11 @@ export default async function handler(req, res) {
         if (m5BuyTriggered && !m15BuyConfirmed) {
           reasons.push("M5 BUY trigger detected; waiting for M15 BUY confirmation");
         }
-        if (rawSellAlignment && !srSellAllowed) {
-          reasons.push("SELL alignment detected; waiting for price to approach a strong H1 resistance zone");
+        if (rawSellAlignment && !sellH1Allowed) {
+          reasons.push("SELL alignment conflicts with H1 BUY bias; a confirmed reversal at strong H1 resistance is required");
         }
-        if (rawBuyAlignment && !srBuyAllowed) {
-          reasons.push("BUY alignment detected; waiting for price to approach a strong H1 support zone");
+        if (rawBuyAlignment && !buyH1Allowed) {
+          reasons.push("BUY alignment conflicts with H1 SELL bias; a confirmed reversal at strong H1 support is required");
         }
         if (!reasons.length) reasons.push("Entry conditions are incomplete; check the score and timeframe status");
       }
@@ -3405,7 +3406,9 @@ export default async function handler(req, res) {
       signal = "WAIT";
       score = 0;
       const dataQualityBlocked = marketStatus.reasons?.some(reason =>
-        reason.endsWith("_CANDLE_STALE") || reason === "FLAT_OR_SYNTHETIC_CANDLE_FEED"
+        reason.endsWith("_CANDLE_STALE") ||
+        reason === "FLAT_OR_SYNTHETIC_CANDLE_FEED" ||
+        reason === "LIVE_PRICE_STALE_OR_UNAVAILABLE"
       );
       // Do not label stale/malformed feed as an actual market closure.
       status = dataQualityBlocked ? "DATA_STALE" : "MARKET_CLOSED";
@@ -3492,7 +3495,7 @@ export default async function handler(req, res) {
       m5.at(-1)?.time ||
       new Date().toISOString();
 
-    const signalKey =
+    let signalKey =
       signal !== "WAIT"
         ? `XAUUSD|SRV3|${signal}|${signalCandle}`
         : null;
@@ -3673,12 +3676,14 @@ export default async function handler(req, res) {
       risk = Math.abs(entry - stopLoss);
 
       const minR = CFG.minTargetR;
+      // Small rounding buffers keep the displayed TP1 at or above the
+      // configured minimum R after prices are rounded to two decimals.
       const fallbackR =
         regimeStructure === "TRENDING"
-          ? [1.5, 3.0, 5.0]
+          ? [Math.max(1.6, CFG.minTargetR), 3.0, 5.0]
           : regimeStructure === "RANGING"
-            ? [1.5, 2.25, 3.0]
-            : [1.5, 2.5, 4.0];
+            ? [Math.max(1.6, CFG.minTargetR), 2.25, 3.0]
+            : [Math.max(1.6, CFG.minTargetR), 2.5, 4.0];
 
       const targetPool = [
         ...directionalM5Targets.map(x => ({ ...x, source: "M5_S/R" })),
@@ -3803,6 +3808,42 @@ export default async function handler(req, res) {
       await saveLockedTradePlan(signalKey, newPlan);
       tradePlanLocked = true;
       tradePlanSource = "NEW_REDIS_LOCK";
+    }
+
+    // Never expose or notify ENTRY READY when its fixed plan is missing,
+    // malformed, on the wrong side, or below the minimum reward/risk.
+    const crossesH1Obstacle = h1ContextTargetSR != null && Number.isFinite(Number(h1ContextTargetSR)) &&
+      (signal === "BUY"
+        ? Number(tp1) > Number(h1ContextTargetSR) + 0.02
+        : signal === "SELL"
+          ? Number(tp1) < Number(h1ContextTargetSR) - 0.02
+          : false);
+
+    if (signal !== "WAIT" && (!isTradePlanValid({
+      signal, entry, stopLoss, tp1, tp2, tp3, minR: CFG.minTargetR
+    }) || crossesH1Obstacle)) {
+      if (signalKey) {
+        try { await redis.del(`xau_trade_plan:${signalKey}`); } catch {}
+      }
+      signal = "WAIT";
+      status = "WAIT";
+      execution = "WAIT";
+      setupType = "INVALID TRADE PLAN";
+      signalKey = null;
+      entry = null;
+      stopLoss = null;
+      tp1 = null;
+      tp2 = null;
+      tp3 = null;
+      rr = null;
+      risk = null;
+      targetSRValid = false;
+      targetMeta = null;
+      tradePlanLocked = false;
+      tradePlanSource = "NONE";
+      reasons = [...reasons, crossesH1Obstacle
+        ? "Entry blocked: the minimum-R target would cross the nearest H1 support/resistance obstacle"
+        : "Entry blocked: a complete, correctly oriented trade plan meeting minimum R:R is unavailable"];
     }
 
     /*
@@ -4032,12 +4073,9 @@ export default async function handler(req, res) {
           x === "TWELVE_DATA"
       );
 
-    const stale =
-      sourceValues.some(
-        x =>
-          x === "REDIS_CACHE" ||
-          x === "STALE_LOCAL_CACHE"
-      );
+    // A cache is a transport/source choice, not proof that the data is stale.
+    // detectMarketStatus already evaluates actual candle and price timestamps.
+    const stale = isMarketDataStale(marketStatus.reasons);
 
     const cacheAges = {
       m5:
@@ -4081,19 +4119,11 @@ export default async function handler(req, res) {
           : null
     };
 
-    let overallDataSource =
-      "LIVE";
-
-    if (stale) {
-      overallDataSource =
-        "CACHE";
-    } else if (usingLive) {
-      overallDataSource =
-        "LIVE";
-    } else if (usingCache) {
-      overallDataSource =
-        "CACHE";
-    }
+    let overallDataSource = usingCache
+      ? "CACHE"
+      : usingLive
+        ? "LIVE"
+        : "UNKNOWN";
 
     /*
      * ==========================================================

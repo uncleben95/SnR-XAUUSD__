@@ -21,9 +21,10 @@ export default async function handler(req, res) {
       headers: {
         "cache-control": "no-cache",
         "x-xau-cron-secret": engineSecret
-      }
+      },
+      signal: AbortSignal.timeout(15_000)
     });
-    const data = await r.json();
+    const data = await r.json().catch(() => ({}));
 
     return res.status(r.status).json({
       ok: r.ok && data?.ok !== false,

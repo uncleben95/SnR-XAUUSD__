@@ -1,15 +1,32 @@
 // XAU/USD support/resistance + ADX helper endpoint.
 // Uses the same Twelve Data key as scalp.js.
 export default async function handler(req, res) {
+  if (req.method !== "GET") {
+    res.setHeader("Allow", "GET");
+    res.setHeader("Cache-Control", "no-store");
+    return res.status(405).json({ ok: false, error: "Method not allowed" });
+  }
+
+  // This informational endpoint makes four provider requests; briefly cache
+  // successful GET responses at the CDN to reduce repeated API consumption.
+  res.setHeader("Cache-Control", "public, s-maxage=60, stale-while-revalidate=30");
+
   const key = process.env.TWELVE_DATA_API_KEY;
   if (!key) return res.status(500).json({ok:false,error:"TWELVE_DATA_API_KEY is not configured"});
 
   const symbol = "XAU/USD";
+  const fetchJson = async (url, label) => {
+    const r = await fetch(url, { signal: AbortSignal.timeout(10_000) });
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok || j.status === "error" || j.code) {
+      throw new Error(j.message || `Twelve Data ${label} error`);
+    }
+    return j;
+  };
+
   const fetchSeries = async (interval, outputsize) => {
     const u = `https://api.twelvedata.com/time_series?symbol=${encodeURIComponent(symbol)}&interval=${interval}&outputsize=${outputsize}&apikey=${key}`;
-    const r = await fetch(u);
-    const j = await r.json();
-    if (!r.ok || j.status === "error") throw new Error(j.message || `Twelve Data ${interval} error`);
+    const j = await fetchJson(u, interval);
     return (j.values||[]).reverse().map(x=>({
       time:x.datetime, open:+x.open, high:+x.high, low:+x.low, close:+x.close
     })).filter(x=>[x.open,x.high,x.low,x.close].every(Number.isFinite));
@@ -97,7 +114,7 @@ export default async function handler(req, res) {
       fetchSeries("5min",300),
       fetchSeries("15min",300),
       fetchSeries("1h",200),
-      fetch(`https://api.twelvedata.com/price?symbol=${encodeURIComponent(symbol)}&apikey=${key}`).then(r=>r.json())
+      fetchJson(`https://api.twelvedata.com/price?symbol=${encodeURIComponent(symbol)}&apikey=${key}`, "price")
     ]);
     const price=Number(pr?.price);
     if(!Number.isFinite(price)) throw new Error("Live price unavailable");
@@ -122,7 +139,8 @@ export default async function handler(req, res) {
       timestamp:new Date().toISOString()
     });
   } catch(e) {
-    console.error("levels:",e);
-    return res.status(502).json({ok:false,error:e.message||"Levels error"});
+    res.setHeader("Cache-Control", "no-store");
+    console.error("levels:", e?.message || e);
+    return res.status(502).json({ok:false,error:e?.name === "TimeoutError" ? "Twelve Data request timed out" : e.message || "Levels error"});
   }
 }
