@@ -265,7 +265,8 @@ function render(d){apiData=d;const price=num(d.livePrice?.price??d.price);setTex
 async function fetchData(){try{const r=await fetch('/api/scalp?ts='+Date.now(),{cache:'no-store'});const d=await r.json();if(!r.ok||!d.ok)throw new Error(d.error||`HTTP ${r.status}`);candles=Array.isArray(d.candles)?d.candles.map(x=>({time:x.time||x.datetime,open:Number(x.open),high:Number(x.high),low:Number(x.low),close:Number(x.close)})).filter(x=>[x.open,x.high,x.low,x.close].every(Number.isFinite)):[];chartCandles=Array.isArray(d.m15ChartCandles)?d.m15ChartCandles.map(x=>({time:x.time||x.datetime,open:Number(x.open),high:Number(x.high),low:Number(x.low),close:Number(x.close)})).filter(x=>[x.open,x.high,x.low,x.close].every(Number.isFinite)):candles;render(d);drawChart()}catch(e){console.error('scalp API',e);setText('apiStatus','API ERROR');$('apiDot').className='dot bad';$('errorBox').textContent=`Unable to read API response: ${e.message}. Check the /api/scalp endpoint and deployment.`;$('errorBox').classList.add('show')}}
 document.querySelectorAll('[data-bars]').forEach(btn=>btn.addEventListener('click',()=>{barsToShow=Number(btn.dataset.bars)||60;document.querySelectorAll('[data-bars]').forEach(b=>b.classList.toggle('active',b===btn));drawChart()}));window.addEventListener('resize',drawChart);window.addEventListener('orientationchange',()=>setTimeout(drawChart,100));updateClock();setInterval(updateClock,1000);fetchData();setInterval(fetchData,8000);
 
-// Web Push setup: must be started by a user gesture, especially on iOS.
+// Web Push: subscription is saved server-side so scheduled jobs can notify
+// this device even when the dashboard is closed. iOS requires an installed PWA.
 const pushButton = $('pushEnableBtn');
 const pushStatus = $('pushStatus');
 function setPushStatus(message, ok=false){
@@ -284,32 +285,67 @@ function base64UrlToUint8Array(base64String){
   for(let i=0;i<raw.length;i++) output[i] = raw.charCodeAt(i);
   return output;
 }
-async function enableWebPush(){
-  if(!('serviceWorker' in navigator) || !('PushManager' in window) || !('Notification' in window)){
-    setPushStatus('This browser does not support Web Push.');
-    alert('This browser does not support Web Push. On iPhone, use iOS 16.4+ and add the website to the Home Screen first.');
+function pushSupported(){
+  return 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
+}
+function isIOSDevice(){ return /iphone|ipad|ipod/i.test(navigator.userAgent); }
+function isInstalledPWA(){ return window.navigator.standalone === true || window.matchMedia('(display-mode: standalone)').matches; }
+async function refreshPushState(){
+  if(!pushButton) return;
+  if(!pushSupported()){
+    pushButton.textContent = '🔔 Notification tidak disokong';
+    setPushStatus('Browser ini tidak menyokong Web Push.');
     return;
   }
-  const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
-  const isStandalone = window.navigator.standalone === true || window.matchMedia('(display-mode: standalone)').matches;
-  if(isIOS && !isStandalone){
-    setPushStatus('Tambah ke Home Screen dahulu.');
-    alert('On iPhone: tap Share in Safari → Add to Home Screen. Open the dashboard from the Home Screen icon, then tap Enable Notification.');
+  if(isIOSDevice() && !isInstalledPWA()){
+    pushButton.textContent = '🔔 Aktifkan Notification';
+    setPushStatus('iPhone: Add to Home Screen dahulu, kemudian buka dari ikon app.');
+    return;
+  }
+  if(Notification.permission === 'denied'){
+    setPushStatus('Notification disekat. Benarkan semula dalam Settings.');
+    return;
+  }
+  try{
+    const reg = await navigator.serviceWorker.getRegistration('/');
+    const sub = reg ? await reg.pushManager.getSubscription() : null;
+    if(Notification.permission === 'granted' && sub){
+      pushButton.textContent = '✓ Notification Aktif';
+      pushButton.classList.add('active');
+      setPushStatus('Peranti ini sudah subscribe. Push dihantar oleh server apabila signal layak muncul.', true);
+    }else{
+      pushButton.textContent = '🔔 Enable Notification';
+      pushButton.classList.remove('active');
+      setPushStatus('Belum aktif pada peranti ini. Tekan butang untuk benarkan push.');
+    }
+  }catch(error){
+    setPushStatus('Tekan Enable Notification untuk setup push.');
+  }
+}
+async function enableWebPush(){
+  if(!pushSupported()){
+    setPushStatus('Browser ini tidak menyokong Web Push.');
+    alert('Web Push tidak disokong oleh browser ini. Pada iPhone, gunakan iOS 16.4+ dan Add to Home Screen dahulu.');
+    return;
+  }
+  if(isIOSDevice() && !isInstalledPWA()){
+    setPushStatus('Add to Home Screen dahulu.');
+    alert('Pada iPhone: buka laman ini dalam Safari → Share → Add to Home Screen. Buka dashboard daripada ikon Home Screen, kemudian tekan Enable Notification.');
     return;
   }
   pushButton.disabled = true;
   pushButton.textContent = 'Mengaktifkan…';
+  setPushStatus('Meminta kebenaran dan menyimpan subscription ke server…');
   try{
     const permission = Notification.permission === 'granted' ? 'granted' : await Notification.requestPermission();
     if(permission !== 'granted'){
-      setPushStatus(permission === 'denied' ? 'Permission denied — check Settings.' : 'Permission has not been granted.');
-      alert('Notifications are not allowed. Check this website/web app notification settings.');
+      setPushStatus(permission === 'denied' ? 'Permission ditolak. Semak Settings peranti.' : 'Kebenaran notification belum diberi.');
       return;
     }
     const configResponse = await fetch('/api/push-config', {cache:'no-store'});
-    if(!configResponse.ok) throw new Error('Failed to read /api/push-config ('+configResponse.status+')');
+    if(!configResponse.ok) throw new Error('API push-config gagal ('+configResponse.status+')');
     const config = await configResponse.json();
-    if(!config.publicKey) throw new Error('VAPID_PUBLIC_KEY is not configured in Vercel Environment Variables.');
+    if(!config.publicKey) throw new Error('Vercel belum mempunyai VAPID_PUBLIC_KEY.');
     const registration = await navigator.serviceWorker.register('/sw.js', {scope:'/'});
     await navigator.serviceWorker.ready;
     let subscription = await registration.pushManager.getSubscription();
@@ -320,26 +356,27 @@ async function enableWebPush(){
       });
     }
     const saveResponse = await fetch('/api/push-subscribe', {
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify(subscription)
+      method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(subscription)
     });
     const saved = await saveResponse.json().catch(()=>({}));
-    if(!saveResponse.ok || saved.success !== true) throw new Error(saved.error || 'Failed to save push subscription ('+saveResponse.status+')');
-    setPushStatus('Push notifications are enabled on this device.', true);
+    if(!saveResponse.ok || saved.success !== true) throw new Error(saved.error || 'Subscription gagal disimpan ('+saveResponse.status+').');
     pushButton.textContent = '✓ Notification Aktif';
     pushButton.classList.add('active');
-    alert('Web Push is enabled for this device. Send a test push from the server to verify notifications arrive while the dashboard is closed.');
+    setPushStatus('Aktif dan subscription disimpan di server. Uji dengan telefon dikunci/ dashboard ditutup.', true);
+    alert('Notification berjaya diaktifkan pada peranti ini. Sekarang uji push sebenar ketika dashboard ditutup. Jika tidak masuk, semak Vercel Environment Variables dan GitHub Actions.');
   }catch(error){
     console.error('Enable Web Push failed:', error);
-    setPushStatus('Activation failed: '+(error.message || 'unknown error'));
-    alert('Failed to enable Web Push: '+(error.message || error)+'\nCheck VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY, VAPID_SUBJECT, and Redis environment variables in Vercel.');
+    setPushStatus('Gagal aktifkan: '+(error.message || 'ralat tidak diketahui'));
+    alert('Gagal aktifkan notification: '+(error.message || error)+'\nSemak VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY, VAPID_SUBJECT dan KV_REST_API_URL/KV_REST_API_TOKEN di Vercel.');
   }finally{
     pushButton.disabled = false;
-    if(!pushButton.classList.contains('active')) pushButton.textContent = '🔔 Enable Notification';
+    await refreshPushState();
   }
 }
-if(pushButton) pushButton.addEventListener('click', enableWebPush);
+if(pushButton){
+  pushButton.addEventListener('click', enableWebPush);
+  refreshPushState();
+}
 </script>
 </body>
 </html>
