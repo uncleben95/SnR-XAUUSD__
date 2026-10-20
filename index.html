@@ -47,8 +47,8 @@
     <div class="top-right">
       <div class="status-pill"><span id="apiDot" class="dot wait"></span><span id="apiStatus">Connecting…</span></div>
       <div class="status-pill"><span class="dot"></span><span id="clock">--:--:-- MYT</span></div>
-      <button id="pushEnableBtn" class="btn" type="button">🔔 Allow Notifications</button>
-      <div id="pushStatus" class="status-pill" role="status" aria-live="polite">Tap the button to choose whether to allow notifications.</div>
+      <button id="pushEnableBtn" class="btn" type="button">🔔 Enable Notification</button>
+      <div id="pushStatus" class="status-pill" role="status" aria-live="polite">Push notifications are not enabled</div>
     </div>
   </header>
   <div id="errorBox" class="error"></div>
@@ -69,10 +69,10 @@
           </div>
           <div class="chart-note">A detected breakout is not an entry. Wait for engine confirmation; this status is not an automatic trade instruction.</div>
         </section>
-        <div class="section-head"><div><h2>Price and structure chart</h2><p id="chartSubtitle">M15 · Latest candles · Standard Deviation</p></div><div class="segmented" aria-label="Number of candles"><button data-bars="30">30</button><button data-bars="60" class="active">60</button></div></div>
+        <div class="section-head"><div><h2>Price and structure chart</h2><p id="chartSubtitle">M15 · Structure, S/R and Fibonacci retracement</p></div><div class="segmented" aria-label="Number of candles"><button data-bars="30">30</button><button data-bars="60" class="active">60</button></div></div>
         <div class="chart-wrap"><canvas id="chart" aria-label="Graf candlestick XAU/USD"></canvas></div>
-        <div class="chart-legend"><span class="legend-item"><span class="legend-line price-line"></span>Live price</span><span class="legend-item"><span class="legend-line support"></span>H1 Support</span><span class="legend-item"><span class="legend-line resistance"></span>H1 Resistance</span><span class="legend-item"><span class="legend-line" style="background:#7c3aed"></span>Standard Deviation</span></div>
-        <div id="chartNote" class="chart-note">M15 candles only. Standard Deviation uses the rolling mean and population standard deviation of the latest 20 M15 closes; levels outside the visible price range are not drawn.</div>
+        <div class="chart-legend"><span class="legend-item"><span class="legend-line price-line"></span>Live price</span><span class="legend-item"><span class="legend-line support"></span>M15/H1 Support</span><span class="legend-item"><span class="legend-line resistance"></span>M15/H1 Resistance</span></div>
+        <div id="chartNote" class="chart-note">M15 chart with nearby swing support/resistance and Fibonacci retracement after a detected structure break. Zones are heuristic, not guaranteed entries.</div>
       </section>
       <section class="card" id="h1BiasCard">
         <div class="section-head"><div><h2>H1 Bias — market direction</h2><p>Separate panel · display only; does not control the scalping engine</p></div><span class="tiny-pill">EMA50 / EMA200</span></div>
@@ -143,6 +143,7 @@
 const $ = id => document.getElementById(id);
 let apiData = null;
 let candles = [];
+let chartCandles = [];
 let barsToShow = 60;
 let modelZones = [];
 const num = v => { if (v === null || v === undefined || v === '') return null; const n = Number(v); return Number.isFinite(n) ? n : null; };
@@ -200,36 +201,68 @@ function renderModels(d){
   drawChart();
 }
 function drawChart(){
-  const c=$('chart');if(!c)return;const rect=c.getBoundingClientRect();if(!rect.width||!rect.height)return;
+  const c=$('chart');if(!c)return;
+  const rect=c.getBoundingClientRect();if(!rect.width||!rect.height)return;
   const dpr=window.devicePixelRatio||1;c.width=Math.round(rect.width*dpr);c.height=Math.round(rect.height*dpr);
-  const ctx=c.getContext('2d');ctx.setTransform(dpr,0,0,dpr,0,0);const w=rect.width,h=rect.height;
-  ctx.clearRect(0,0,w,h);ctx.fillStyle='#fff';ctx.fillRect(0,0,w,h);
-  const data=candles.slice(-barsToShow);
-  if(data.length<2){ctx.fillStyle='#667085';ctx.font='12px sans-serif';ctx.fillText('Waiting for M15 candles…',16,28);return}
+  const ctx=c.getContext('2d');ctx.setTransform(dpr,0,0,dpr,0,0);
+  const w=rect.width,h=rect.height;ctx.clearRect(0,0,w,h);ctx.fillStyle='#fff';ctx.fillRect(0,0,w,h);
+  const data=chartCandles.slice(-barsToShow);
+  if(data.length<10){ctx.fillStyle='#667085';ctx.font='12px sans-serif';ctx.fillText('Waiting for M15 candles…',16,28);return}
   const d=apiData||{};const price=num(d.livePrice?.price??d.price)??data.at(-1).close;
-  const sr=d.srAnalysis||d.h1?.supportResistance||{};const support=num(sr.support?.price??sr.support);const resistance=num(sr.resistance?.price??sr.resistance);
-  // Common, explicit default: 20-candle rolling close mean plus population SD.
-  // This is a display indicator only; it does not alter M5 signal decisions.
-  const closes=(d.m15Candles||[]).slice(-20).map(x=>Number(x.close)).filter(Number.isFinite);
-  let sdLevels=[];
-  if(closes.length>=2){const mean=closes.reduce((a,b)=>a+b,0)/closes.length;const variance=closes.reduce((a,b)=>a+((b-mean)**2),0)/closes.length;const sd=Math.sqrt(variance);if(Number.isFinite(sd)&&sd>0)sdLevels=[{k:.5,label:'SD +0.5'},{k:1,label:'SD +1'},{k:-1,label:'SD -1'},{k:-2,label:'SD -2'},{k:-2.5,label:'SD -2.5'},{k:-4,label:'SD -4'}].map(x=>({...x,price:mean+x.k*sd}));}
+  const sr=d.srAnalysis||d.h1?.supportResistance||{};
+  const h1Support=num(sr.support?.price??sr.support),h1Resistance=num(sr.resistance?.price??sr.resistance);
+  const chartPivots=[];
+  for(let i=2;i<data.length-2;i++){
+    let hi=true,lo=true;
+    for(let j=i-2;j<=i+2;j++){if(j===i)continue;if(data[j].high>=data[i].high)hi=false;if(data[j].low<=data[i].low)lo=false}
+    if(hi)chartPivots.push({i,type:'H',price:data[i].high});
+    if(lo)chartPivots.push({i,type:'L',price:data[i].low});
+  }
+  const lastClose=data.at(-1).close;
+  const recent=chartPivots.filter(p=>p.i>=Math.max(0,data.length-30));
+  const lastHigh=[...recent].reverse().find(p=>p.type==='H'&&p.i<data.length-1);
+  const lastLow=[...recent].reverse().find(p=>p.type==='L'&&p.i<data.length-1);
+  let choch=null;
+  if(lastHigh&&lastClose>lastHigh.price)choch={direction:'BUY',level:lastHigh.price};
+  if(lastLow&&lastClose<lastLow.price)choch={direction:'SELL',level:lastLow.price};
+  // Select the latest confirmed swing impulse in the direction of the detected break.
+  let fib=null;
+  if(choch?.direction==='BUY'){
+    const low=[...chartPivots].reverse().find(p=>p.type==='L'&&p.i<(lastHigh?.i??data.length-1));
+    if(low&&lastHigh&&lastHigh.price>low.price)fib={direction:'BUY',a:low.price,b:lastHigh.price};
+  }else if(choch?.direction==='SELL'){
+    const high=[...chartPivots].reverse().find(p=>p.type==='H'&&p.i<(lastLow?.i??data.length-1));
+    if(high&&lastLow&&high.price>lastLow.price)fib={direction:'SELL',a:high.price,b:lastLow.price};
+  }
+  const fibLevels=fib?[0.5,0.618,0.705,0.786].map(r=>({r,price:fib.direction==='BUY'?fib.b-(fib.b-fib.a)*r:fib.b+(fib.a-fib.b)*r})): [];
+  const fibZone=fibLevels.length?{low:Math.min(fibLevels[1].price,fibLevels[2].price),high:Math.max(fibLevels[1].price,fibLevels[2].price)}:null;
+  const pivotSupports=chartPivots.filter(p=>p.type==='L'&&p.price<price).sort((a,b)=>Math.abs(a.price-price)-Math.abs(b.price-price)).slice(0,2);
+  const pivotResistances=chartPivots.filter(p=>p.type==='H'&&p.price>price).sort((a,b)=>Math.abs(a.price-price)-Math.abs(b.price-price)).slice(0,2);
   const values=data.flatMap(x=>[x.high,x.low,x.close]);values.push(price);
-  const localRange=Math.max(...values)-Math.min(...values);const pad=(localRange||1)*.12;let min=Math.min(...values)-pad,max=Math.max(...values)+pad;
-  const atr=estimateAtr(data);
-  if(support!==null&&support>=min-(atr||0)*1.2&&support<=max+(atr||0)*1.2){min=Math.min(min,support-(atr||0)*.05);max=Math.max(max,support+(atr||0)*.05)}
-  if(resistance!==null&&resistance>=min-(atr||0)*1.2&&resistance<=max+(atr||0)*1.2){min=Math.min(min,resistance-(atr||0)*.05);max=Math.max(max,resistance+(atr||0)*.05)}
-  const left=8,right=64,top=18,bottom=24,plotW=w-left-right,plotH=h-top-bottom;const Y=p=>top+(max-p)/(max-min||1)*plotH;const X=i=>left+(i+.5)*plotW/data.length;
+  [h1Support,h1Resistance,...pivotSupports.map(p=>p.price),...pivotResistances.map(p=>p.price),...fibLevels.map(p=>p.price)].forEach(v=>{if(Number.isFinite(v))values.push(v)});
+  let min=Math.min(...values),max=Math.max(...values);const pad=(max-min||1)*.12;min-=pad;max+=pad;
+  const left=8,right=65,top=18,bottom=24,plotW=w-left-right,plotH=h-top-bottom;
+  const Y=p=>top+(max-p)/(max-min||1)*plotH;const X=i=>left+(i+.5)*plotW/data.length;
   ctx.font='10px -apple-system,BlinkMacSystemFont,sans-serif';ctx.lineWidth=1;
-  for(let i=0;i<=4;i++){const y=top+i*plotH/4;ctx.strokeStyle='#edf0f5';ctx.beginPath();ctx.moveTo(left,y);ctx.lineTo(w-right+2,y);ctx.stroke();const p=max-i*(max-min)/4;ctx.fillStyle='#667085';ctx.textAlign='left';ctx.fillText(p.toFixed(2),w-right+6,y+3)}
+  for(let i=0;i<=4;i++){const y=top+i*plotH/4;ctx.strokeStyle='#edf0f5';ctx.beginPath();ctx.moveTo(left,y);ctx.lineTo(w-right+2,y);ctx.stroke();const p=max-i*(max-min)/4;ctx.fillStyle='#667085';ctx.textAlign='left';ctx.fillText(p.toFixed(2),w-right+5,y+3)}
   function hline(value,color,label,dash=[]){if(value===null||!Number.isFinite(value)||value<min||value>max)return;const y=Y(value);ctx.save();ctx.strokeStyle=color;ctx.setLineDash(dash);ctx.beginPath();ctx.moveTo(left,y);ctx.lineTo(w-right+2,y);ctx.stroke();ctx.setLineDash([]);ctx.fillStyle=color;ctx.font='bold 9px sans-serif';ctx.fillText(label,w-right+5,Math.max(10,Math.min(h-6,y-4)));ctx.restore()}
-  if(support!==null)hline(support,'#0b9960','S/R S');if(resistance!==null)hline(resistance,'#d04444','S/R R');
-  sdLevels.forEach(level=>hline(level.price,'#7c3aed',level.label,[3,3]));
-  for(const z of modelZones){const low=num(z.low),high=num(z.high);if(low===null||high===null||high<min||low>max)continue;const y1=Y(Math.min(high,max)),y2=Y(Math.max(low,min));ctx.fillStyle=z.type==='fvg'?'rgba(36,88,211,.10)':z.type==='sweep'?'rgba(217,144,0,.10)':'rgba(124,58,237,.08)';ctx.fillRect(left,y1,plotW,Math.max(2,y2-y1));ctx.strokeStyle=z.type==='fvg'?'rgba(36,88,211,.45)':z.type==='sweep'?'rgba(217,144,0,.5)':'rgba(124,58,237,.4)';ctx.strokeRect(left,y1,plotW,Math.max(2,y2-y1))}
-  const step=plotW/data.length;const bodyW=Math.max(2,Math.min(9,step*.58));data.forEach((c,i)=>{const x=X(i);const up=c.close>=c.open;const color=up?'#079669':'#d94841';ctx.strokeStyle=color;ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(x,Y(c.high));ctx.lineTo(x,Y(c.low));ctx.stroke();const y1=Y(Math.max(c.open,c.close)),y2=Y(Math.min(c.open,c.close));ctx.fillStyle=color;ctx.fillRect(x-bodyW/2,y1,bodyW,Math.max(1.5,y2-y1));});
-  hline(price,'#b7791f','LIVE',[4,3]);ctx.fillStyle='#667085';ctx.textAlign='left';ctx.font='9px sans-serif';ctx.fillText(String(data[0].time||'').slice(11,16)||'old',left,h-7);ctx.textAlign='right';ctx.fillText(String(data.at(-1).time||'').slice(11,16)||'latest',w-right,h-7);
+  if(fibZone&&fibZone.high>=min&&fibZone.low<=max){const y1=Y(Math.min(fibZone.high,max)),y2=Y(Math.max(fibZone.low,min));ctx.fillStyle=fib.direction==='BUY'?'rgba(7,150,105,.14)':'rgba(217,72,65,.13)';ctx.fillRect(left,y1,plotW,Math.max(2,y2-y1));ctx.strokeStyle=fib.direction==='BUY'?'rgba(7,150,105,.7)':'rgba(217,72,65,.7)';ctx.strokeRect(left,y1,plotW,Math.max(2,y2-y1))}
+  hline(h1Support,'#0b9960','H1 S');hline(h1Resistance,'#d04444','H1 R');
+  pivotSupports.forEach((p,i)=>hline(p.price,'#13a77b',`M15 S${i+1}`,[3,2]));
+  pivotResistances.forEach((p,i)=>hline(p.price,'#e05252',`M15 R${i+1}`,[3,2]));
+  fibLevels.forEach(f=>hline(f.price,'#7554c9',`F${(f.r*100).toFixed(1)}`,[4,3]));
+  const step=plotW/data.length,bodyW=Math.max(2,Math.min(9,step*.58));
+  data.forEach((c,i)=>{const x=X(i),up=c.close>=c.open,color=up?'#079669':'#d94841';ctx.strokeStyle=color;ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(x,Y(c.high));ctx.lineTo(x,Y(c.low));ctx.stroke();const y1=Y(Math.max(c.open,c.close)),y2=Y(Math.min(c.open,c.close));ctx.fillStyle=color;ctx.fillRect(x-bodyW/2,y1,bodyW,Math.max(1.5,y2-y1))});
+  hline(price,'#b7791f','LIVE',[4,3]);
+  // Clear status annotation: CHoCH is context; Fibonacci zone is a candidate retracement only.
+  ctx.textAlign='left';ctx.font='bold 10px sans-serif';
+  if(choch){ctx.fillStyle=choch.direction==='BUY'?'#087f5b':'#c92a2a';ctx.fillText(`M15 CHoCH ${choch.direction} · close-confirmed`,left,12)}
+  else {ctx.fillStyle='#667085';ctx.fillText('M15 structure · no confirmed CHoCH break',left,12)}
+  if(fibZone){ctx.fillStyle='#7554c9';ctx.fillText(`${fib.direction} retracement zone ${fibZone.low.toFixed(2)}–${fibZone.high.toFixed(2)}`,left,Math.min(h-30,top+14))}
+  ctx.fillStyle='#667085';ctx.textAlign='left';ctx.font='9px sans-serif';ctx.fillText(String(data[0].time||'').slice(11,16)||'old',left,h-7);ctx.textAlign='right';ctx.fillText(String(data.at(-1).time||'').slice(11,16)||'latest',w-right,h-7);
 }
-function render(d){apiData=d;const price=num(d.livePrice?.price??d.price);setText('price',price===null?'--':price.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}));const stale=d.stale===true;const marketReasons=Array.isArray(d.marketStatus?.reasons)?d.marketStatus.reasons:[];const candleStale=marketReasons.some(x=>String(x).endsWith('_CANDLE_STALE')||x==='FLAT_OR_SYNTHETIC_CANDLE_FEED');const weekendClosed=marketReasons.includes('WEEKEND_MARKET_CLOSED');const rolloverClosed=marketReasons.includes('DAILY_ROLLOVER_CLOSED');const open=d.marketStatus?.open!==false;const marketLabel=candleStale?'STALE CANDLE DATA':weekendClosed?'MARKET CLOSED (WEEKEND)':rolloverClosed?'MARKET CLOSED (DAILY ROLLOVER)':open?'MARKET OPEN':'DATA NO BOLEH DIDAGANGKAN';setText('priceMeta',`${d.livePrice?.source||d.dataSource||'Unknown source'} · ${stale?'CACHED/STALE DATA':marketLabel} · ${new Date().toLocaleTimeString('en-MY',{hour12:false})}`);setText('apiStatus',stale?'DATA CACHE':d.ok?'LIVE API':'CHECK API');$('apiDot').className='dot '+(stale?'wait':d.ok?'good':'bad');const err=$('errorBox');err.classList.remove('show');const sig=String(d.signal||'WAIT').toUpperCase();const badge=$('signalBadge');badge.textContent=sig;badge.className='signal-badge '+(sig==='BUY'?'buy':sig==='SELL'?'sell':'wait');setText('signalMeta',d.execution||'Review manually before trading');setText('signalStage',d.signalStage?.message||'WAIT — waiting for setup');const bw=d.breakoutWatch||{};const bState=bw.state||'DATA_UNAVAILABLE';const bBadge=$('breakoutBadge');if(bBadge){bBadge.textContent=bState==='BREAKOUT_DETECTED'?`${bw.direction||''} BREAKOUT`:bState==='DATA_UNAVAILABLE'?'DATA NO SAH':'MONITORING';bBadge.className='signal-badge '+(bState==='BREAKOUT_DETECTED'?(bw.direction==='BUY'?'buy':'sell'):'wait')}setText('breakoutMessage',bw.message||'Breakout monitor has not received data yet.');setText('breakoutDirection',bState==='BREAKOUT_DETECTED'?(bw.direction||'WAIT'):'WAIT');setText('breakoutLevel',bw.level==null?'--':fmt(bw.level));setText('breakoutCandle',bw.candleTime?String(bw.candleTime).replace('T',' ').slice(0,16):'--');setText('support',fmt(d.srAnalysis?.support?.price??d.h1?.supportResistance?.support?.price));setText('resistance',fmt(d.srAnalysis?.resistance?.price??d.h1?.supportResistance?.resistance?.price));const sd=num(d.srAnalysis?.supportDistance),rd=num(d.srAnalysis?.resistanceDistance);setText('supportDist',`Distance: ${sd===null?'--':fmt(sd)}`);setText('resistanceDist',`Distance: ${rd===null?'--':fmt(rd)}`);setText('srPosition',d.srAnalysis?.position||'--');setText('regime',d.marketRegime?.label||d.marketRegime?.structure||'--');setText('volatility',d.marketRegime?.volatility?.composite||'--');const h1Bias=String(d.h1?.direction||d.h1?.holdBias||'WAIT').toUpperCase();const h1BiasEl=$('h1BiasDir');if(h1BiasEl){h1BiasEl.textContent=h1Bias;h1BiasEl.className='h1-bias-value '+(/BUY|BULL/.test(h1Bias)?'bull':/SELL|BEAR/.test(h1Bias)?'bear':'wait')}setText('h1BiasMeta',`EMA50: ${fmt(d.h1?.ema50)} · EMA200: ${fmt(d.h1?.ema200)} · Struktur: ${d.h1?.structure?.bullish?'Bullish':d.h1?.structure?.bearish?'Bearish':'Range/neutral'}`);const h1Buy=num(d.h1?.buyScore),h1Sell=num(d.h1?.sellScore);setText('h1BuyScore',h1Buy===null?'--':Math.round(h1Buy));setText('h1SellScore',h1Sell===null?'--':Math.round(h1Sell));const h1BuyBar=$('h1BuyBar'),h1SellBar=$('h1SellBar');if(h1BuyBar)h1BuyBar.style.width=`${Math.max(0,Math.min(100,h1Buy??0))}%`;if(h1SellBar)h1SellBar.style.width=`${Math.max(0,Math.min(100,h1Sell??0))}%`;setDir('m15dir',d.m15?.direction||d.m15?.confirmation);setHTML('m15detail',`Struktur: ${d.m15?.structure?.bullish?'Bullish':d.m15?.structure?.bearish?'Bearish':'Range/neutral'}<br>RSI: ${fmt(d.m15?.rsi)} · MACD: ${d.m15?.macd?.bullish?'Bullish':d.m15?.macd?.bearish?'Bearish':'Neutral'}`);setDir('m5dir',d.m5?.trigger||d.m5?.confirmation);setHTML('m5detail',`Trigger: ${escapeHtml(String(d.m5?.trigger||'WAIT'))}<br>RSI: ${fmt(d.m5?.rsi)} · MACD: ${d.m5?.macd?.bullish?'Bullish':d.m5?.macd?.bearish?'Bearish':'Neutral'}`);const tp=d.tradePlan||{};setText('planStatus',tp.entry!=null&&tp.stopLoss!=null?'PLAN AVAILABLE':d.status||'WAIT');setText('entry',fmt(tp.entry));setText('sl',fmt(tp.stopLoss));setText('rr',tp.rr==null?'--':tp.rr);setText('tp1',fmt(tp.tp1));setText('tp2',fmt(tp.tp2));setText('tp3',fmt(tp.tp3));setText('planNote',tp.entry!=null?`Setup: ${d.setupType||tp.source||'--'} · Sasaran S/R: ${fmt(tp.targetSR)}`:'The engine returned no valid trade plan. This does not mean experimental models A/B/C have no setups to monitor.');const reasons=Array.isArray(d.reasons)?d.reasons:[d.reason||'No specific reason was provided.'];$('reasons').replaceChildren(...reasons.map(s=>{const li=document.createElement('li');li.textContent=String(s);return li}));setText('source',d.livePrice?.source||d.dataSource||'--');setText('candleSource',d.cache?.sources?.m5||'--');setText('stale',stale?'YES':'NO');setText('m5count',d.data?.m5Candles??candles.length);setText('m15count',d.data?.m15Candles??'--');setText('h1count',d.data?.h1Candles??'--');setText('lastCandle',`Latest M5 signal candle: ${d.signalCandle||'--'} · M15 chart candle: ${candles.at(-1)?.time||'--'} · Cache M5: ${d.cache?.ageSeconds?.m5==null?'--':Math.round(d.cache.ageSeconds.m5)+'s'}`);setText('m5rsi',fmt(d.m5?.rsi));setText('m15rsi',fmt(d.m15?.rsi));setText('m5atr',fmt(d.m5?.atr));setText('m15ema',`${fmt(d.m15?.ema20)} / ${fmt(d.m15?.ema50)}`);setText('m5ema',`${fmt(d.m5?.ema9)} / ${fmt(d.m5?.ema20)} / ${fmt(d.m5?.ema50)}`);setText('score',`${Math.round(num(d.score)||0)}/100`);renderModels(d);}
-async function fetchData(){try{const r=await fetch('/api/scalp?ts='+Date.now(),{cache:'no-store'});const d=await r.json();if(!r.ok||!d.ok)throw new Error(d.error||`HTTP ${r.status}`);candles=Array.isArray(d.m15Candles)?d.m15Candles.map(x=>({time:x.time||x.datetime,open:Number(x.open),high:Number(x.high),low:Number(x.low),close:Number(x.close)})).filter(x=>[x.open,x.high,x.low,x.close].every(Number.isFinite)):[];render(d);drawChart()}catch(e){console.error('scalp API',e);setText('apiStatus','API ERROR');$('apiDot').className='dot bad';$('errorBox').textContent=`Unable to read API response: ${e.message}. Check the /api/scalp endpoint and deployment.`;$('errorBox').classList.add('show')}}
+function render(d){apiData=d;const price=num(d.livePrice?.price??d.price);setText('price',price===null?'--':price.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}));const stale=d.stale===true;const marketReasons=Array.isArray(d.marketStatus?.reasons)?d.marketStatus.reasons:[];const candleStale=marketReasons.some(x=>String(x).endsWith('_CANDLE_STALE')||x==='FLAT_OR_SYNTHETIC_CANDLE_FEED');const weekendClosed=marketReasons.includes('WEEKEND_MARKET_CLOSED');const rolloverClosed=marketReasons.includes('DAILY_ROLLOVER_CLOSED');const open=d.marketStatus?.open!==false;const marketLabel=candleStale?'STALE CANDLE DATA':weekendClosed?'MARKET CLOSED (WEEKEND)':rolloverClosed?'MARKET CLOSED (DAILY ROLLOVER)':open?'MARKET OPEN':'DATA NO BOLEH DIDAGANGKAN';setText('priceMeta',`${d.livePrice?.source||d.dataSource||'Unknown source'} · ${stale?'CACHED/STALE DATA':marketLabel} · ${new Date().toLocaleTimeString('en-MY',{hour12:false})}`);setText('apiStatus',stale?'DATA CACHE':d.ok?'LIVE API':'CHECK API');$('apiDot').className='dot '+(stale?'wait':d.ok?'good':'bad');const err=$('errorBox');err.classList.remove('show');const sig=String(d.signal||'WAIT').toUpperCase();const badge=$('signalBadge');badge.textContent=sig;badge.className='signal-badge '+(sig==='BUY'?'buy':sig==='SELL'?'sell':'wait');setText('signalMeta',d.execution||'Review manually before trading');setText('signalStage',d.signalStage?.message||'WAIT — waiting for setup');const bw=d.breakoutWatch||{};const bState=bw.state||'DATA_UNAVAILABLE';const bBadge=$('breakoutBadge');if(bBadge){bBadge.textContent=bState==='BREAKOUT_DETECTED'?`${bw.direction||''} BREAKOUT`:bState==='DATA_UNAVAILABLE'?'DATA NO SAH':'MONITORING';bBadge.className='signal-badge '+(bState==='BREAKOUT_DETECTED'?(bw.direction==='BUY'?'buy':'sell'):'wait')}setText('breakoutMessage',bw.message||'Breakout monitor has not received data yet.');setText('breakoutDirection',bState==='BREAKOUT_DETECTED'?(bw.direction||'WAIT'):'WAIT');setText('breakoutLevel',bw.level==null?'--':fmt(bw.level));setText('breakoutCandle',bw.candleTime?String(bw.candleTime).replace('T',' ').slice(0,16):'--');setText('support',fmt(d.srAnalysis?.support?.price??d.h1?.supportResistance?.support?.price));setText('resistance',fmt(d.srAnalysis?.resistance?.price??d.h1?.supportResistance?.resistance?.price));const sd=num(d.srAnalysis?.supportDistance),rd=num(d.srAnalysis?.resistanceDistance);setText('supportDist',`Distance: ${sd===null?'--':fmt(sd)}`);setText('resistanceDist',`Distance: ${rd===null?'--':fmt(rd)}`);setText('srPosition',d.srAnalysis?.position||'--');setText('regime',d.marketRegime?.label||d.marketRegime?.structure||'--');setText('volatility',d.marketRegime?.volatility?.composite||'--');const h1Bias=String(d.h1?.direction||d.h1?.holdBias||'WAIT').toUpperCase();const h1BiasEl=$('h1BiasDir');if(h1BiasEl){h1BiasEl.textContent=h1Bias;h1BiasEl.className='h1-bias-value '+(/BUY|BULL/.test(h1Bias)?'bull':/SELL|BEAR/.test(h1Bias)?'bear':'wait')}setText('h1BiasMeta',`EMA50: ${fmt(d.h1?.ema50)} · EMA200: ${fmt(d.h1?.ema200)} · Struktur: ${d.h1?.structure?.bullish?'Bullish':d.h1?.structure?.bearish?'Bearish':'Range/neutral'}`);const h1Buy=num(d.h1?.buyScore),h1Sell=num(d.h1?.sellScore);setText('h1BuyScore',h1Buy===null?'--':Math.round(h1Buy));setText('h1SellScore',h1Sell===null?'--':Math.round(h1Sell));const h1BuyBar=$('h1BuyBar'),h1SellBar=$('h1SellBar');if(h1BuyBar)h1BuyBar.style.width=`${Math.max(0,Math.min(100,h1Buy??0))}%`;if(h1SellBar)h1SellBar.style.width=`${Math.max(0,Math.min(100,h1Sell??0))}%`;setDir('m15dir',d.m15?.direction||d.m15?.confirmation);setHTML('m15detail',`Struktur: ${d.m15?.structure?.bullish?'Bullish':d.m15?.structure?.bearish?'Bearish':'Range/neutral'}<br>RSI: ${fmt(d.m15?.rsi)} · MACD: ${d.m15?.macd?.bullish?'Bullish':d.m15?.macd?.bearish?'Bearish':'Neutral'}`);setDir('m5dir',d.m5?.trigger||d.m5?.confirmation);setHTML('m5detail',`Trigger: ${escapeHtml(String(d.m5?.trigger||'WAIT'))}<br>RSI: ${fmt(d.m5?.rsi)} · MACD: ${d.m5?.macd?.bullish?'Bullish':d.m5?.macd?.bearish?'Bearish':'Neutral'}`);const tp=d.tradePlan||{};setText('planStatus',tp.entry!=null&&tp.stopLoss!=null?'PLAN AVAILABLE':d.status||'WAIT');setText('entry',fmt(tp.entry));setText('sl',fmt(tp.stopLoss));setText('rr',tp.rr==null?'--':tp.rr);setText('tp1',fmt(tp.tp1));setText('tp2',fmt(tp.tp2));setText('tp3',fmt(tp.tp3));setText('planNote',tp.entry!=null?`Setup: ${d.setupType||tp.source||'--'} · Sasaran S/R: ${fmt(tp.targetSR)}`:'The engine returned no valid trade plan. This does not mean experimental models A/B/C have no setups to monitor.');const reasons=Array.isArray(d.reasons)?d.reasons:[d.reason||'No specific reason was provided.'];$('reasons').replaceChildren(...reasons.map(s=>{const li=document.createElement('li');li.textContent=String(s);return li}));setText('source',d.livePrice?.source||d.dataSource||'--');setText('candleSource',d.cache?.sources?.m5||'--');setText('stale',stale?'YES':'NO');setText('m5count',d.data?.m5Candles??candles.length);setText('m15count',d.data?.m15Candles??'--');setText('h1count',d.data?.h1Candles??'--');setText('lastCandle',`Latest M5 candle: ${d.signalCandle||candles.at(-1)?.time||'--'} · Cache candle: ${d.cache?.ageSeconds?.m5==null?'--':Math.round(d.cache.ageSeconds.m5)+'s'}`);setText('m5rsi',fmt(d.m5?.rsi));setText('m15rsi',fmt(d.m15?.rsi));setText('m5atr',fmt(d.m5?.atr));setText('m15ema',`${fmt(d.m15?.ema20)} / ${fmt(d.m15?.ema50)}`);setText('m5ema',`${fmt(d.m5?.ema9)} / ${fmt(d.m5?.ema20)} / ${fmt(d.m5?.ema50)}`);setText('score',`${Math.round(num(d.score)||0)}/100`);renderModels(d);}
+async function fetchData(){try{const r=await fetch('/api/scalp?ts='+Date.now(),{cache:'no-store'});const d=await r.json();if(!r.ok||!d.ok)throw new Error(d.error||`HTTP ${r.status}`);candles=Array.isArray(d.candles)?d.candles.map(x=>({time:x.time||x.datetime,open:Number(x.open),high:Number(x.high),low:Number(x.low),close:Number(x.close)})).filter(x=>[x.open,x.high,x.low,x.close].every(Number.isFinite)):[];chartCandles=Array.isArray(d.m15ChartCandles)?d.m15ChartCandles.map(x=>({time:x.time||x.datetime,open:Number(x.open),high:Number(x.high),low:Number(x.low),close:Number(x.close)})).filter(x=>[x.open,x.high,x.low,x.close].every(Number.isFinite)):candles;render(d);drawChart()}catch(e){console.error('scalp API',e);setText('apiStatus','API ERROR');$('apiDot').className='dot bad';$('errorBox').textContent=`Unable to read API response: ${e.message}. Check the /api/scalp endpoint and deployment.`;$('errorBox').classList.add('show')}}
 document.querySelectorAll('[data-bars]').forEach(btn=>btn.addEventListener('click',()=>{barsToShow=Number(btn.dataset.bars)||60;document.querySelectorAll('[data-bars]').forEach(b=>b.classList.toggle('active',b===btn));drawChart()}));window.addEventListener('resize',drawChart);window.addEventListener('orientationchange',()=>setTimeout(drawChart,100));updateClock();setInterval(updateClock,1000);fetchData();setInterval(fetchData,8000);
 
 // Web Push setup: must be started by a user gesture, especially on iOS.
@@ -241,21 +274,6 @@ function setPushStatus(message, ok=false){
     pushStatus.style.borderColor = ok ? '#b7e6ca' : '';
     pushStatus.style.color = ok ? '#087443' : '';
     pushStatus.style.background = ok ? '#e8f7ef' : '';
-  }
-}
-function updatePushPermissionUI(){
-  if(!pushButton || !pushStatus || !('Notification' in window)) return;
-  if(Notification.permission === 'default'){
-    pushButton.textContent = '🔔 Allow Notifications';
-    pushStatus.textContent = 'Not decided yet — tap Allow Notifications to show the iPhone permission prompt.';
-    pushButton.classList.remove('active');
-  }else if(Notification.permission === 'denied'){
-    pushButton.textContent = '⚙️ Notification Settings';
-    pushStatus.textContent = 'Notifications are blocked. Change permission in iPhone Settings; this page cannot show the prompt again.';
-    pushButton.classList.remove('active');
-  }else{
-    pushButton.textContent = '🔄 Activate Notifications';
-    pushStatus.textContent = 'Permission is allowed. Tap to register this device for push notifications.';
   }
 }
 function base64UrlToUint8Array(base64String){
@@ -279,21 +297,13 @@ async function enableWebPush(){
     alert('On iPhone: tap Share in Safari → Add to Home Screen. Open the dashboard from the Home Screen icon, then tap Enable Notification.');
     return;
   }
-  if(Notification.permission === 'denied'){
-    setPushStatus('Notifications are blocked in iOS settings.');
-    alert('iPhone has already blocked notifications for this web app, so iOS will not show Allow / Don’t Allow again. Open Settings → Notifications → this web app, turn on Allow Notifications, then return and tap this button.');
-    updatePushPermissionUI();
-    return;
-  }
   pushButton.disabled = true;
-  pushButton.textContent = 'Requesting permission…';
+  pushButton.textContent = 'Mengaktifkan…';
   try{
-    // Must be invoked directly from this button click so iOS can show its native prompt.
     const permission = Notification.permission === 'granted' ? 'granted' : await Notification.requestPermission();
     if(permission !== 'granted'){
       setPushStatus(permission === 'denied' ? 'Permission denied — check Settings.' : 'Permission has not been granted.');
-      alert(permission === 'denied' ? 'Notifications were denied. Open iPhone Settings → Notifications → this web app and enable Allow Notifications.' : 'No permission was selected. Tap Allow Notifications and choose Allow.');
-      updatePushPermissionUI();
+      alert('Notifications are not allowed. Check this website/web app notification settings.');
       return;
     }
     const configResponse = await fetch('/api/push-config', {cache:'no-store'});
@@ -302,31 +312,11 @@ async function enableWebPush(){
     if(!config.publicKey) throw new Error('VAPID_PUBLIC_KEY is not configured in Vercel Environment Variables.');
     const registration = await navigator.serviceWorker.register('/sw.js', {scope:'/'});
     await navigator.serviceWorker.ready;
-    if(typeof registration.update === 'function') await registration.update();
-
-    const applicationServerKey = base64UrlToUint8Array(config.publicKey);
     let subscription = await registration.pushManager.getSubscription();
-
-    // A subscription is bound to the VAPID public key used when it was created.
-    // If Vercel's public key changed, reusing the old subscription can make
-    // every push fail even though /api/push-subscribe returns HTTP 200.
-    if(subscription){
-      const existingKey = subscription.options && subscription.options.applicationServerKey;
-      if(existingKey){
-        const existingBytes = new Uint8Array(existingKey);
-        const keyMatches = existingBytes.length === applicationServerKey.length &&
-          existingBytes.every((value, index) => value === applicationServerKey[index]);
-        if(!keyMatches){
-          await subscription.unsubscribe();
-          subscription = null;
-        }
-      }
-    }
-
     if(!subscription){
       subscription = await registration.pushManager.subscribe({
         userVisibleOnly:true,
-        applicationServerKey
+        applicationServerKey:base64UrlToUint8Array(config.publicKey)
       });
     }
     const saveResponse = await fetch('/api/push-subscribe', {
@@ -337,7 +327,7 @@ async function enableWebPush(){
     const saved = await saveResponse.json().catch(()=>({}));
     if(!saveResponse.ok || saved.success !== true) throw new Error(saved.error || 'Failed to save push subscription ('+saveResponse.status+')');
     setPushStatus('Push notifications are enabled on this device.', true);
-    pushButton.textContent = '✓ Notification Permission Granted';
+    pushButton.textContent = '✓ Notification Aktif';
     pushButton.classList.add('active');
     alert('Web Push is enabled for this device. Send a test push from the server to verify notifications arrive while the dashboard is closed.');
   }catch(error){
@@ -346,11 +336,10 @@ async function enableWebPush(){
     alert('Failed to enable Web Push: '+(error.message || error)+'\nCheck VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY, VAPID_SUBJECT, and Redis environment variables in Vercel.');
   }finally{
     pushButton.disabled = false;
-    if(!pushButton.classList.contains('active')) updatePushPermissionUI();
+    if(!pushButton.classList.contains('active')) pushButton.textContent = '🔔 Enable Notification';
   }
 }
 if(pushButton) pushButton.addEventListener('click', enableWebPush);
-updatePushPermissionUI();
 </script>
 </body>
 </html>
