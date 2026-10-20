@@ -303,7 +303,7 @@ async function refreshPushState(){
     return;
   }
   if(Notification.permission === 'denied'){
-    setPushStatus('Notification disekat. Benarkan semula dalam Settings.');
+    setPushStatus('Notification disekat. Benarkan semula melalui Settings browser/peranti.');
     return;
   }
   try{
@@ -312,7 +312,7 @@ async function refreshPushState(){
     if(Notification.permission === 'granted' && sub){
       pushButton.textContent = '✓ Notification Aktif';
       pushButton.classList.add('active');
-      setPushStatus('Peranti ini sudah subscribe. Push dihantar oleh server apabila signal layak muncul.', true);
+      setPushStatus('Notification dibenarkan pada peranti ini.', true);
     }else{
       pushButton.textContent = '🔔 Enable Notification';
       pushButton.classList.remove('active');
@@ -335,11 +335,13 @@ async function enableWebPush(){
   }
   pushButton.disabled = true;
   pushButton.textContent = 'Mengaktifkan…';
-  setPushStatus('Meminta kebenaran dan menyimpan subscription ke server…');
+  setPushStatus('Meminta kebenaran notification…');
   try{
-    const permission = Notification.permission === 'granted' ? 'granted' : await Notification.requestPermission();
+    // Request permission immediately from the button click so browsers can show their native prompt.
+    // Browsers do not show the prompt again if permission is already granted or denied.
+    const permission = Notification.permission === 'default' ? await Notification.requestPermission() : Notification.permission;
     if(permission !== 'granted'){
-      setPushStatus(permission === 'denied' ? 'Permission ditolak. Semak Settings peranti.' : 'Kebenaran notification belum diberi.');
+      setPushStatus(permission === 'denied' ? 'Notification disekat. Benarkan semula melalui Settings browser/peranti.' : 'Kebenaran notification belum diberi. Tekan butang sekali lagi untuk cuba.');
       return;
     }
     const configResponse = await fetch('/api/push-config', {cache:'no-store'});
@@ -362,7 +364,7 @@ async function enableWebPush(){
     if(!saveResponse.ok || saved.success !== true) throw new Error(saved.error || 'Subscription gagal disimpan ('+saveResponse.status+').');
     pushButton.textContent = '✓ Notification Aktif';
     pushButton.classList.add('active');
-    setPushStatus('Aktif dan subscription disimpan di server. Uji dengan telefon dikunci/ dashboard ditutup.', true);
+    setPushStatus('Notification berjaya diaktifkan. Push akan dihantar apabila server mengesan signal yang layak.', true);
     alert('Notification berjaya diaktifkan pada peranti ini. Sekarang uji push sebenar ketika dashboard ditutup. Jika tidak masuk, semak Vercel Environment Variables dan GitHub Actions.');
   }catch(error){
     console.error('Enable Web Push failed:', error);
