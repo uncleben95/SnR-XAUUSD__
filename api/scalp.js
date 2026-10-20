@@ -4222,10 +4222,9 @@ export default async function handler(req, res) {
       candles:
         m5.slice(-60),
 
-      // Display-only M15 candles aggregated locally from the existing M5 feed.
-      // The trading/signal engine continues to use its existing M5 inputs.
-      m15Candles:
-        m15.slice(-60),
+      // Dedicated visual chart feed: closed M15 candles; does not alter M5 signal logic.
+      m15ChartCandles:
+        m15.slice(-240),
 
       status,
       signal,
