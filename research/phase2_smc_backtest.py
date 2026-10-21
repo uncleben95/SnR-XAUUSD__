@@ -61,6 +61,7 @@ def backtest(df, offset=0, rr=1.5, risk_buffer=0.0, spread=0.30, min_gap=0.20,
     m15["bear_bottom"]=m15.high
     # Session filter UTC: London 07-11 and New York 13-17. Strict hours.
     trades=[]
+    diagnostics={"m15_bars":int(len(m15)),"session_bars":0,"m15_buy_sweeps":0,"m15_sell_sweeps":0,"h1_buy_sweep_context_bars":int(m15.h1_sweep_lo.sum()),"h1_sell_sweep_context_bars":int(m15.h1_sweep_hi.sum()),"buy_sweep_with_h1":0,"sell_sweep_with_h1":0,"buy_choch":0,"sell_choch":0,"buy_bos":0,"sell_bos":0,"buy_fvg_after_bos":0,"sell_fvg_after_bos":0,"buy_discount_rejections":0,"sell_premium_rejections":0,"buy_retrace_touches":0,"sell_retrace_touches":0,"risk_rejections":0,"resolved_trades":0}
     # State machine: sweep -> CHOCH -> BOS with FVG -> retracement; independently per side.
     states={"BUY":None,"SELL":None}
     # Map M5 bars to each completed M15 close. Entries execute only after the signal M15 closes.
@@ -70,14 +71,18 @@ def backtest(df, offset=0, rr=1.5, risk_buffer=0.0, spread=0.30, min_gap=0.20,
         if pd.isna(row.prior_hi) or pd.isna(row.range_hi): continue
         hour=t.hour
         if not (7<=hour<11 or 13<=hour<17): continue
+        diagnostics["session_bars"] += 1
         # Update independent state machines.
         for side in ("BUY","SELL"):
             bullish=side=="BUY"
             sweep=(row.low<row.prior_lo and row.close>row.prior_lo)
             if not bullish: sweep=(row.high>row.prior_hi and row.close<row.prior_hi)
             h1ok=bool(row.h1_sweep_lo if bullish else row.h1_sweep_hi)
+            if sweep:
+                diagnostics["m15_buy_sweeps" if bullish else "m15_sell_sweeps"] += 1
             if states[side] is None:
-                if sweep:
+                if sweep and h1ok:
+                    diagnostics["buy_sweep_with_h1" if bullish else "sell_sweep_with_h1"] += 1
                     states[side]={"stage":"swept","sweep_extreme":float(row.low if bullish else row.high),
                                   "sweep_time":t,"choch_level":float(row.struct_hi if bullish else row.struct_lo)}
                 continue
@@ -88,24 +93,46 @@ def backtest(df, offset=0, rr=1.5, risk_buffer=0.0, spread=0.30, min_gap=0.20,
             if st["stage"]=="swept":
                 choch=(row.close>st["choch_level"]) if bullish else (row.close<st["choch_level"])
                 if choch:
+                    diagnostics["buy_choch" if bullish else "sell_choch"] += 1
                     st["stage"]="choch"; st["choch_time"]=t
                 continue
             if st["stage"]=="choch":
                 bos=(row.close>row.struct_hi) if bullish else (row.close<row.struct_lo)
                 if bos:
+                    diagnostics["buy_bos" if bullish else "sell_bos"] += 1
                     st.update(stage="bos", bos_time=t, expiry=t+pd.Timedelta(minutes=15*4))
+                    # A valid displacement FVG may form on the BOS candle itself.
+                    fvg=bool(row.bull_fvg if bullish else row.bear_fvg)
+                    if fvg:
+                        diagnostics["buy_fvg_after_bos" if bullish else "sell_fvg_after_bos"] += 1
+                        lo=float(row.bull_bottom if bullish else row.bear_bottom)
+                        hi=float(row.bull_top if bullish else row.bear_top)
+                        if np.isfinite(lo+hi) and hi>lo:
+                            mid=(float(row.range_hi)+float(row.range_lo))/2
+                            zone_mid=(lo+hi)/2
+                            if (bullish and zone_mid>=mid):
+                                diagnostics["buy_discount_rejections"] += 1
+                                states[side]=None
+                            elif ((not bullish) and zone_mid<=mid):
+                                diagnostics["sell_premium_rejections"] += 1
+                                states[side]=None
+                            else:
+                                st.update(stage="retrace", fvg_lo=lo, fvg_hi=hi, entry=(lo+hi)/2,
+                                          expiry=t+pd.Timedelta(minutes=15*8))
                 continue
             if st["stage"]=="bos":
                 if t>st["expiry"]:
                     states[side]=None; continue
                 fvg=bool(row.bull_fvg if bullish else row.bear_fvg)
                 if not fvg: continue
+                diagnostics["buy_fvg_after_bos" if bullish else "sell_fvg_after_bos"] += 1
                 lo=float(row.bull_bottom if bullish else row.bear_bottom)
                 hi=float(row.bull_top if bullish else row.bear_top)
                 if not np.isfinite(lo+hi) or hi<=lo: continue
                 mid=(float(row.range_hi)+float(row.range_lo))/2
                 zone_mid=(lo+hi)/2
                 if (bullish and zone_mid>=mid) or ((not bullish) and zone_mid<=mid):
+                    diagnostics["buy_discount_rejections" if bullish else "sell_premium_rejections"] += 1
                     states[side]=None; continue
                 st.update(stage="retrace", fvg_lo=lo, fvg_hi=hi, entry=(lo+hi)/2,
                           expiry=t+pd.Timedelta(minutes=15*8))
@@ -116,10 +143,12 @@ def backtest(df, offset=0, rr=1.5, risk_buffer=0.0, spread=0.30, min_gap=0.20,
                 # Need subsequent bars to revisit FVG midpoint.
                 touched=(row.low<=st["entry"]<=row.high)
                 if not touched or t<=st["bos_time"]: continue
+                diagnostics["buy_retrace_touches" if bullish else "sell_retrace_touches"] += 1
                 entry=float(st["entry"])
                 stop=float(st["sweep_extreme"] - risk_buffer if bullish else st["sweep_extreme"] + risk_buffer)
                 risk=(entry-stop) if bullish else (stop-entry)
                 if risk<=spread*2 or risk>max(10.0, entry*0.01):
+                    diagnostics["risk_rejections"] += 1
                     states[side]=None; continue
                 target=entry+rr*risk if bullish else entry-rr*risk
                 # Execute from next M5 bar after M15 signal/touch close, conservative no lookahead.
@@ -137,13 +166,14 @@ def backtest(df, offset=0, rr=1.5, risk_buffer=0.0, spread=0.30, min_gap=0.20,
                     if tp: outcome="WIN"; exit_price=target; exit_time=ft; break
                 if outcome:
                     pnl=(exit_price-entry if bullish else entry-exit_price)-spread
+                    diagnostics["resolved_trades"] += 1
                     trades.append({"side":side,"entry_time":t.isoformat(),"exit_time":exit_time.isoformat(),
                                    "entry":entry,"stop":stop,"target":target,"result":outcome,
                                    "pnl_price":round(pnl,5),"R":round((pnl/risk),4),
                                    "sweep_time":st["sweep_time"].isoformat(),"choch_time":st.get("choch_time","").isoformat() if st.get("choch_time") is not None else "",
                                    "bos_time":st.get("bos_time","").isoformat() if st.get("bos_time") is not None else ""})
                 states[side]=None
-    return pd.DataFrame(trades),m15
+    return pd.DataFrame(trades),m15,diagnostics
 
 def main():
     ap=argparse.ArgumentParser()
@@ -156,7 +186,7 @@ def main():
     ap.add_argument("--min-fvg-gap",type=float,default=0.20)
     args=ap.parse_args()
     df=load_data(args.csv)
-    trades,_=backtest(df,offset=args.timezone_offset_hours,rr=args.rr,spread=args.spread,min_gap=args.min_fvg_gap)
+    trades,_,diagnostics=backtest(df,offset=args.timezone_offset_hours,rr=args.rr,spread=args.spread,min_gap=args.min_fvg_gap)
     out=Path(args.out); out.mkdir(parents=True,exist_ok=True)
     trades.to_csv(out/"trades.csv",index=False)
     summaries=[]
@@ -173,13 +203,14 @@ def main():
           "expectancy_R":round(float(x.R.mean()),4) if n else None,
           "profit_factor":round(float(gross_win/gross_loss),3) if gross_loss else (None if not n else "inf"),
           "max_drawdown_R":round(dd,3),"target_80pct_met":bool(n>=30 and wins/n>=0.8)})
-    report={"engine":"Phase 2 SMC research backtester v1.0","symbol":"XAUUSD",
+    report={"engine":"Phase 2 SMC research backtester v1.1-diagnostic","symbol":"XAUUSD",
       "input":str(Path(args.csv).name),"source_rows":int(len(df)),
       "start":str(df.index.min()),"end":str(df.index.max()),
       "timezone_assumption":"CSV timestamps treated as UTC unless --timezone-offset-hours is set",
       "sessions_UTC":["07:00-10:59","13:00-16:59"],
       "rr":args.rr,"round_trip_cost_price_units":args.spread,
       "same_bar_sl_tp":"stop loss first","trade_count":int(len(trades)),
+      "diagnostics":diagnostics,
       "models":summaries,
       "limitations":["Research implementation; verify broker timestamp offset and realistic XAUUSD spread/commission/slippage.",
         "H1 sweep must be confirmed by closed H1 candle. No parameter optimization performed.",
