@@ -1,0 +1,42 @@
+
+name: Phase 2 SMC Backtest
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  backtest:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Check engine and CSV
+        run: |
+          test -f XAUUSD5.csv
+          test -f research/phase2_smc_backtest.py
+
+      - name: Run backtest
+        run: |
+          python research/phase2_smc_backtest.py \
+            --csv XAUUSD5.csv \
+            --out research/backtest-results
+
+      - name: Upload backtest results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: phase2-backtest-results
+          path: research/backtest-results/
+          if-no-files-found: warn
