@@ -5,9 +5,8 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: "Method not allowed" });
   }
 
-  // Prefer the deployment key name used by this project; retain legacy compatibility.
-  const secret = process.env.PUSH_TEST_KEY || process.env.PUSH_TEST_SECRET;
-  const supplied = req.headers["x-push-test-key"] || req.headers["x-push-test-secret"];
+  const secret = process.env.PUSH_TEST_SECRET;
+  const supplied = req.headers["x-push-test-secret"];
   if (!secret || supplied !== secret) {
     return res.status(401).json({ error: "Unauthorized" });
   }
