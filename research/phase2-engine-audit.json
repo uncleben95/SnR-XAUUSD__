@@ -1,0 +1,35 @@
+{
+  "source_file": "XAUUSD5.csv",
+  "timeframe_inferred": "M5",
+  "rows": 100000,
+  "from_utc": "2025-05-25T22:35:00+00:00",
+  "to_utc": "2026-10-20T20:55:00+00:00",
+  "span_days": 512,
+  "duplicate_timestamps": 0,
+  "timestamps_monotonic": true,
+  "interval_median_seconds": 300.0,
+  "gaps_over_5m": 366,
+  "ohlc_nulls": {
+    "open": 0,
+    "high": 0,
+    "low": 0,
+    "close": 0
+  },
+  "invalid_ohlc_rows": 0,
+  "engine_tests": {
+    "passed": 16,
+    "failed": 0
+  },
+  "syntax_check": "PASS",
+  "findings": [
+    "Current api/scalp-models.js exposes three experimental models (Liquidity Sweep, FVG Retracement, Trend Pullback), not the requested integrated seven-gate strategy.",
+    "Liquidity Sweep implementation scans recent M5 bars and a 10-bar rolling range; it does not verify H1 and M15 liquidity sweeps together.",
+    "FVG model identifies a three-candle gap and later touch/fill, but it does not require the complete sequence sweep -> CHOCH -> BOS -> displacement -> retracement.",
+    "No explicit Premium/Discount dealing-range gate or London/New York session gate exists in the experimental model.",
+    "buildScalpModels explicitly returns backtested:false; its candidates are not a historical backtest.",
+    "Existing research/backtest-summary.json uses different date ranges (M5 ends 2026-09-24); supplied CSV ends 2026-10-20. Its reported metrics must not be attributed to this CSV.",
+    "CSV has 366 intervals greater than 5 minutes; these gaps require session/data-quality review before interpreting results."
+  ],
+  "status": "AUDIT_COMPLETE_NEW_STRATEGY_NOT_BACKTESTED",
+  "decision": "NOT PASS: no valid Phase 2 backtest for the requested seven-gate model exists yet; 80% win-rate target remains unverified."
+}

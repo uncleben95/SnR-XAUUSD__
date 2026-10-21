@@ -1,0 +1,33 @@
+{
+  "phase": "PHASE2_SMC_REBUILD",
+  "symbol": "XAUUSD",
+  "source_timeframe": "M5",
+  "context_timeframes": [
+    "H1",
+    "M15"
+  ],
+  "models": [
+    "BUY",
+    "SELL"
+  ],
+  "required_gates": [
+    "liquidity_sweep_H1_M15",
+    "CHOCH_after_sweep",
+    "BOS_confirmation",
+    "displacement_FVG",
+    "FVG_retracement",
+    "premium_discount",
+    "London_session",
+    "New_York_session"
+  ],
+  "target_win_rate": 0.8,
+  "win_rate_scope": "out_of_sample_separately_for_BUY_and_SELL",
+  "pass_requires": [
+    "adequate_trade_count",
+    "positive_after_cost_expectancy",
+    "acceptable_predeclared_drawdown",
+    "walk_forward_stability"
+  ],
+  "conservative_same_bar_SL_TP": "SL_first",
+  "status": "SPECIFICATION_ONLY_NOT_BACKTESTED"
+}
