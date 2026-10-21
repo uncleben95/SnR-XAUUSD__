@@ -69,10 +69,10 @@
           </div>
           <div class="chart-note">A detected breakout is not an entry. Wait for engine confirmation; this status is not an automatic trade instruction.</div>
         </section>
-        <div class="section-head"><div><h2>Price and structure chart</h2><p id="chartSubtitle">M15 · Structure, S/R and Fibonacci retracement</p></div><div class="segmented" aria-label="Number of candles"><button data-bars="30">30</button><button data-bars="60" class="active">60</button></div></div>
+        <div class="section-head"><div><h2>Price and structure chart</h2><p id="chartSubtitle">M15 · CHOCH / BOS, FVG and retracement</p></div><div class="segmented" aria-label="Number of candles"><button data-bars="30">30</button><button data-bars="60" class="active">60</button></div></div>
         <div class="chart-wrap"><canvas id="chart" aria-label="Graf candlestick XAU/USD"></canvas></div>
-        <div class="chart-legend"><span class="legend-item"><span class="legend-line price-line"></span>Live price</span><span class="legend-item"><span class="legend-line support"></span>M15/H1 Support</span><span class="legend-item"><span class="legend-line resistance"></span>M15/H1 Resistance</span></div>
-        <div id="chartNote" class="chart-note">M15 chart with nearby swing support/resistance and Fibonacci retracement after a detected structure break. Zones are heuristic, not guaranteed entries.</div>
+        <div class="chart-legend"><span class="legend-item"><span class="legend-line price-line"></span>Live price</span><span class="legend-item"><span class="legend-line support"></span>H1 Support</span><span class="legend-item"><span class="legend-line resistance"></span>H1 Resistance</span><span class="legend-item"><span class="legend-line" style="background:#7554c9"></span>FVG / Retracement</span></div>
+        <div id="chartNote" class="chart-note">H1 S/R is retained as context. M15 focuses on CHOCH/BOS structure, recent FVG and retracement zones; these are analysis markers, not guaranteed entries.</div>
       </section>
       <section class="card" id="h1BiasCard">
         <div class="section-head"><div><h2>H1 Bias — market direction</h2><p>Separate panel · display only; does not control the scalping engine</p></div><span class="tiny-pill">EMA50 / EMA200</span></div>
@@ -220,6 +220,20 @@ function drawChart(){
   }
   const lastClose=data.at(-1).close;
   const recent=chartPivots.filter(p=>p.i>=Math.max(0,data.length-30));
+  // Reconstruct recent close-confirmed structure breaks from already formed swing levels.
+  // CHOCH marks a break against the prior directional bias; BOS marks continuation.
+  const structureBreaks=[];let structureBias='NEUTRAL';
+  for(let bi=3;bi<data.length;bi++){
+    const priorHigh=[...chartPivots].reverse().find(p=>p.type==='H'&&p.i<=bi-2);
+    const priorLow=[...chartPivots].reverse().find(p=>p.type==='L'&&p.i<=bi-2);
+    const prev=data[bi-1].close,close=data[bi].close;
+    if(priorHigh&&prev<=priorHigh.price&&close>priorHigh.price){
+      const kind=structureBias==='BEAR'?'CHOCH':'BOS';structureBreaks.push({i:bi,kind,direction:'BUY',level:priorHigh.price});structureBias='BULL';
+    }else if(priorLow&&prev>=priorLow.price&&close<priorLow.price){
+      const kind=structureBias==='BULL'?'CHOCH':'BOS';structureBreaks.push({i:bi,kind,direction:'SELL',level:priorLow.price});structureBias='BEAR';
+    }
+  }
+  const latestStructureBreak=structureBreaks.at(-1);
   const lastHigh=[...recent].reverse().find(p=>p.type==='H'&&p.i<data.length-1);
   const lastLow=[...recent].reverse().find(p=>p.type==='L'&&p.i<data.length-1);
   let choch=null;
@@ -236,10 +250,15 @@ function drawChart(){
   }
   const fibLevels=fib?[0.5,0.618,0.705,0.786].map(r=>({r,price:fib.direction==='BUY'?fib.b-(fib.b-fib.a)*r:fib.b+(fib.a-fib.b)*r})): [];
   const fibZone=fibLevels.length?{low:Math.min(fibLevels[1].price,fibLevels[2].price),high:Math.max(fibLevels[1].price,fibLevels[2].price)}:null;
-  const pivotSupports=chartPivots.filter(p=>p.type==='L'&&p.price<price).sort((a,b)=>Math.abs(a.price-price)-Math.abs(b.price-price)).slice(0,2);
-  const pivotResistances=chartPivots.filter(p=>p.type==='H'&&p.price>price).sort((a,b)=>Math.abs(a.price-price)-Math.abs(b.price-price)).slice(0,2);
+  // Detect the latest three-candle fair-value gap for visual context.
+  let fvgZone=null;
+  for(let i=data.length-1;i>=2&&i>=data.length-16;i--){
+    const a=data[i-2],b=data[i-1],z=data[i];
+    if(a.high<z.low&&b.close>b.open){fvgZone={direction:'BUY',low:a.high,high:z.low,index:i};break}
+    if(a.low>z.high&&b.close<b.open){fvgZone={direction:'SELL',low:z.high,high:a.low,index:i};break}
+  }
   const values=data.flatMap(x=>[x.high,x.low,x.close]);values.push(price);
-  [h1Support,h1Resistance,...pivotSupports.map(p=>p.price),...pivotResistances.map(p=>p.price),...fibLevels.map(p=>p.price)].forEach(v=>{if(Number.isFinite(v))values.push(v)});
+  [h1Support,h1Resistance,...fibLevels.map(p=>p.price),...(fvgZone?[fvgZone.low,fvgZone.high]:[])].forEach(v=>{if(Number.isFinite(v))values.push(v)});
   let min=Math.min(...values),max=Math.max(...values);const pad=(max-min||1)*.12;min-=pad;max+=pad;
   const left=8,right=65,top=18,bottom=24,plotW=w-left-right,plotH=h-top-bottom;
   const Y=p=>top+(max-p)/(max-min||1)*plotH;const X=i=>left+(i+.5)*plotW/data.length;
@@ -248,17 +267,24 @@ function drawChart(){
   function hline(value,color,label,dash=[]){if(value===null||!Number.isFinite(value)||value<min||value>max)return;const y=Y(value);ctx.save();ctx.strokeStyle=color;ctx.setLineDash(dash);ctx.beginPath();ctx.moveTo(left,y);ctx.lineTo(w-right+2,y);ctx.stroke();ctx.setLineDash([]);ctx.fillStyle=color;ctx.font='bold 9px sans-serif';ctx.fillText(label,w-right+5,Math.max(10,Math.min(h-6,y-4)));ctx.restore()}
   if(fibZone&&fibZone.high>=min&&fibZone.low<=max){const y1=Y(Math.min(fibZone.high,max)),y2=Y(Math.max(fibZone.low,min));ctx.fillStyle=fib.direction==='BUY'?'rgba(7,150,105,.14)':'rgba(217,72,65,.13)';ctx.fillRect(left,y1,plotW,Math.max(2,y2-y1));ctx.strokeStyle=fib.direction==='BUY'?'rgba(7,150,105,.7)':'rgba(217,72,65,.7)';ctx.strokeRect(left,y1,plotW,Math.max(2,y2-y1))}
   hline(h1Support,'#0b9960','H1 S');hline(h1Resistance,'#d04444','H1 R');
-  pivotSupports.forEach((p,i)=>hline(p.price,'#13a77b',`M15 S${i+1}`,[3,2]));
-  pivotResistances.forEach((p,i)=>hline(p.price,'#e05252',`M15 R${i+1}`,[3,2]));
+  if(fvgZone&&fvgZone.high>=min&&fvgZone.low<=max){const y1=Y(Math.min(fvgZone.high,max)),y2=Y(Math.max(fvgZone.low,min));ctx.fillStyle=fvgZone.direction==='BUY'?'rgba(117,84,201,.16)':'rgba(117,84,201,.11)';ctx.fillRect(left,y1,plotW,Math.max(2,y2-y1));ctx.strokeStyle='#7554c9';ctx.setLineDash([3,3]);ctx.strokeRect(left,y1,plotW,Math.max(2,y2-y1));ctx.setLineDash([])}
   fibLevels.forEach(f=>hline(f.price,'#7554c9',`F${(f.r*100).toFixed(1)}`,[4,3]));
   const step=plotW/data.length,bodyW=Math.max(2,Math.min(9,step*.58));
   data.forEach((c,i)=>{const x=X(i),up=c.close>=c.open,color=up?'#079669':'#d94841';ctx.strokeStyle=color;ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(x,Y(c.high));ctx.lineTo(x,Y(c.low));ctx.stroke();const y1=Y(Math.max(c.open,c.close)),y2=Y(Math.min(c.open,c.close));ctx.fillStyle=color;ctx.fillRect(x-bodyW/2,y1,bodyW,Math.max(1.5,y2-y1))});
+  // Label the most recent confirmed CHOCH/BOS events on the candle chart.
+  structureBreaks.filter(e=>e.i>=Math.max(0,data.length-18)).slice(-5).forEach((e,n)=>{
+    const x=X(e.i),y=Math.max(top+12,Math.min(h-bottom-8,Y(e.level)+(e.direction==='BUY'?-9:14)));
+    ctx.save();ctx.font='bold 9px sans-serif';ctx.textAlign='center';ctx.fillStyle=e.kind==='CHOCH'?(e.direction==='BUY'?'#087f5b':'#c92a2a'):'#3157b7';
+    ctx.fillText(`${e.kind} ${e.direction}`,x,y);ctx.restore();
+  });
   hline(price,'#b7791f','LIVE',[4,3]);
-  // Clear status annotation: CHoCH is context; Fibonacci zone is a candidate retracement only.
+  // Chart labels show the latest closed-candle structure break and the latest visible FVG.
   ctx.textAlign='left';ctx.font='bold 10px sans-serif';
-  if(choch){ctx.fillStyle=choch.direction==='BUY'?'#087f5b':'#c92a2a';ctx.fillText(`M15 CHoCH ${choch.direction} · close-confirmed`,left,12)}
-  else {ctx.fillStyle='#667085';ctx.fillText('M15 structure · no confirmed CHoCH break',left,12)}
-  if(fibZone){ctx.fillStyle='#7554c9';ctx.fillText(`${fib.direction} retracement zone ${fibZone.low.toFixed(2)}–${fibZone.high.toFixed(2)}`,left,Math.min(h-30,top+14))}
+  if(latestStructureBreak){ctx.fillStyle=latestStructureBreak.kind==='CHOCH'?(latestStructureBreak.direction==='BUY'?'#087f5b':'#c92a2a'):'#3157b7';ctx.fillText(`M15 ${latestStructureBreak.kind} ${latestStructureBreak.direction} · close-confirmed`,left,12)}
+  else if(choch){ctx.fillStyle=choch.direction==='BUY'?'#087f5b':'#c92a2a';ctx.fillText(`M15 CHOCH ${choch.direction} · close-confirmed`,left,12)}
+  else {ctx.fillStyle='#667085';ctx.fillText('M15 structure · waiting for CHOCH / BOS',left,12)}
+  if(fvgZone){ctx.fillStyle='#7554c9';ctx.fillText(`${fvgZone.direction} FVG ${fvgZone.low.toFixed(2)}–${fvgZone.high.toFixed(2)}`,left,Math.min(h-30,top+14))}
+  if(fibZone){ctx.fillStyle='#7554c9';ctx.fillText(`${fib.direction} retracement ${fibZone.low.toFixed(2)}–${fibZone.high.toFixed(2)}`,left,Math.min(h-18,top+27))}
   ctx.fillStyle='#667085';ctx.textAlign='left';ctx.font='9px sans-serif';ctx.fillText(String(data[0].time||'').slice(11,16)||'old',left,h-7);ctx.textAlign='right';ctx.fillText(String(data.at(-1).time||'').slice(11,16)||'latest',w-right,h-7);
 }
 function render(d){apiData=d;const price=num(d.livePrice?.price??d.price);setText('price',price===null?'--':price.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}));const stale=d.stale===true;const marketReasons=Array.isArray(d.marketStatus?.reasons)?d.marketStatus.reasons:[];const candleStale=marketReasons.some(x=>String(x).endsWith('_CANDLE_STALE')||x==='FLAT_OR_SYNTHETIC_CANDLE_FEED');const weekendClosed=marketReasons.includes('WEEKEND_MARKET_CLOSED');const rolloverClosed=marketReasons.includes('DAILY_ROLLOVER_CLOSED');const open=d.marketStatus?.open!==false;const marketLabel=candleStale?'STALE CANDLE DATA':weekendClosed?'MARKET CLOSED (WEEKEND)':rolloverClosed?'MARKET CLOSED (DAILY ROLLOVER)':open?'MARKET OPEN':'DATA NO BOLEH DIDAGANGKAN';setText('priceMeta',`${d.livePrice?.source||d.dataSource||'Unknown source'} · ${stale?'CACHED/STALE DATA':marketLabel} · ${new Date().toLocaleTimeString('en-MY',{hour12:false})}`);setText('apiStatus',stale?'DATA CACHE':d.ok?'LIVE API':'CHECK API');$('apiDot').className='dot '+(stale?'wait':d.ok?'good':'bad');const err=$('errorBox');err.classList.remove('show');const sig=String(d.signal||'WAIT').toUpperCase();const badge=$('signalBadge');badge.textContent=sig;badge.className='signal-badge '+(sig==='BUY'?'buy':sig==='SELL'?'sell':'wait');setText('signalMeta',d.execution||'Review manually before trading');setText('signalStage',d.signalStage?.message||'WAIT — waiting for setup');const bw=d.breakoutWatch||{};const bState=bw.state||'DATA_UNAVAILABLE';const bBadge=$('breakoutBadge');if(bBadge){bBadge.textContent=bState==='BREAKOUT_DETECTED'?`${bw.direction||''} BREAKOUT`:bState==='DATA_UNAVAILABLE'?'DATA NO SAH':'MONITORING';bBadge.className='signal-badge '+(bState==='BREAKOUT_DETECTED'?(bw.direction==='BUY'?'buy':'sell'):'wait')}setText('breakoutMessage',bw.message||'Breakout monitor has not received data yet.');setText('breakoutDirection',bState==='BREAKOUT_DETECTED'?(bw.direction||'WAIT'):'WAIT');setText('breakoutLevel',bw.level==null?'--':fmt(bw.level));setText('breakoutCandle',bw.candleTime?String(bw.candleTime).replace('T',' ').slice(0,16):'--');setText('support',fmt(d.srAnalysis?.support?.price??d.h1?.supportResistance?.support?.price));setText('resistance',fmt(d.srAnalysis?.resistance?.price??d.h1?.supportResistance?.resistance?.price));const sd=num(d.srAnalysis?.supportDistance),rd=num(d.srAnalysis?.resistanceDistance);setText('supportDist',`Distance: ${sd===null?'--':fmt(sd)}`);setText('resistanceDist',`Distance: ${rd===null?'--':fmt(rd)}`);setText('srPosition',d.srAnalysis?.position||'--');setText('regime',d.marketRegime?.label||d.marketRegime?.structure||'--');setText('volatility',d.marketRegime?.volatility?.composite||'--');const h1Bias=String(d.h1?.direction||d.h1?.holdBias||'WAIT').toUpperCase();const h1BiasEl=$('h1BiasDir');if(h1BiasEl){h1BiasEl.textContent=h1Bias;h1BiasEl.className='h1-bias-value '+(/BUY|BULL/.test(h1Bias)?'bull':/SELL|BEAR/.test(h1Bias)?'bear':'wait')}setText('h1BiasMeta',`EMA50: ${fmt(d.h1?.ema50)} · EMA200: ${fmt(d.h1?.ema200)} · Struktur: ${d.h1?.structure?.bullish?'Bullish':d.h1?.structure?.bearish?'Bearish':'Range/neutral'}`);const h1Buy=num(d.h1?.buyScore),h1Sell=num(d.h1?.sellScore);setText('h1BuyScore',h1Buy===null?'--':Math.round(h1Buy));setText('h1SellScore',h1Sell===null?'--':Math.round(h1Sell));const h1BuyBar=$('h1BuyBar'),h1SellBar=$('h1SellBar');if(h1BuyBar)h1BuyBar.style.width=`${Math.max(0,Math.min(100,h1Buy??0))}%`;if(h1SellBar)h1SellBar.style.width=`${Math.max(0,Math.min(100,h1Sell??0))}%`;setDir('m15dir',d.m15?.direction||d.m15?.confirmation);setHTML('m15detail',`Struktur: ${d.m15?.structure?.bullish?'Bullish':d.m15?.structure?.bearish?'Bearish':'Range/neutral'}<br>RSI: ${fmt(d.m15?.rsi)} · MACD: ${d.m15?.macd?.bullish?'Bullish':d.m15?.macd?.bearish?'Bearish':'Neutral'}`);setDir('m5dir',d.m5?.trigger||d.m5?.confirmation);setHTML('m5detail',`Trigger: ${escapeHtml(String(d.m5?.trigger||'WAIT'))}<br>RSI: ${fmt(d.m5?.rsi)} · MACD: ${d.m5?.macd?.bullish?'Bullish':d.m5?.macd?.bearish?'Bearish':'Neutral'}`);const tp=d.tradePlan||{};setText('planStatus',tp.entry!=null&&tp.stopLoss!=null?'PLAN AVAILABLE':d.status||'WAIT');setText('entry',fmt(tp.entry));setText('sl',fmt(tp.stopLoss));setText('rr',tp.rr==null?'--':tp.rr);setText('tp1',fmt(tp.tp1));setText('tp2',fmt(tp.tp2));setText('tp3',fmt(tp.tp3));setText('planNote',tp.entry!=null?`Setup: ${d.setupType||tp.source||'--'} · Sasaran S/R: ${fmt(tp.targetSR)}`:'The engine returned no valid trade plan. This does not mean experimental models A/B/C have no setups to monitor.');const reasons=Array.isArray(d.reasons)?d.reasons:[d.reason||'No specific reason was provided.'];$('reasons').replaceChildren(...reasons.map(s=>{const li=document.createElement('li');li.textContent=String(s);return li}));setText('source',d.livePrice?.source||d.dataSource||'--');setText('candleSource',d.cache?.sources?.m5||'--');setText('stale',stale?'YES':'NO');setText('m5count',d.data?.m5Candles??candles.length);setText('m15count',d.data?.m15Candles??'--');setText('h1count',d.data?.h1Candles??'--');setText('lastCandle',`Latest M5 candle: ${d.signalCandle||candles.at(-1)?.time||'--'} · Cache candle: ${d.cache?.ageSeconds?.m5==null?'--':Math.round(d.cache.ageSeconds.m5)+'s'}`);setText('m5rsi',fmt(d.m5?.rsi));setText('m15rsi',fmt(d.m15?.rsi));setText('m5atr',fmt(d.m5?.atr));setText('m15ema',`${fmt(d.m15?.ema20)} / ${fmt(d.m15?.ema50)}`);setText('m5ema',`${fmt(d.m5?.ema9)} / ${fmt(d.m5?.ema20)} / ${fmt(d.m5?.ema50)}`);setText('score',`${Math.round(num(d.score)||0)}/100`);renderModels(d);}
