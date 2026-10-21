@@ -3236,65 +3236,110 @@ export default async function handler(req, res) {
      * ==========================================================
      */
 
-    function buildPhase2LiveSetup(candles, quote, atrValue) {
-      const out = { engine: "PHASE2_SMC_LIVE_V1", state: "WAIT", signal: "WAIT", reason: "No complete Sweep -> CHOCH -> BOS -> FVG retracement setup on the latest closed M5 candle.", setup: null };
-      if (!Array.isArray(candles) || candles.length < 40 || !Number.isFinite(Number(quote))) return { ...out, reason: "Insufficient closed M5 candles or live price." };
-      const bars = candles.slice(-100), lastIndex = Math.min(candles.length, 100) - 1;
-      const lastBar = bars[lastIndex];
-      const timeText = String(lastBar.time || "");
-      const iso = /Z$|[+-]\d\d:\d\d$/.test(timeText) ? timeText : `${timeText.replace(" ", "T")}Z`;
-      const lastTime = Date.parse(iso);
-      if (!Number.isFinite(lastTime)) return { ...out, reason: "Latest M5 candle timestamp is invalid." };
-      const utcHour = new Date(lastTime).getUTCHours();
-      if (!((utcHour >= 7 && utcHour < 11) || (utcHour >= 13 && utcHour < 17))) return { ...out, reason: `Outside configured UTC sessions (07:00-11:00, 13:00-17:00); latest candle hour=${utcHour}.` };
-      const atr = Number.isFinite(atrValue) && atrValue > 0 ? atrValue : Math.max(lastBar.high - lastBar.low, 0.5);
-      const buffer = Math.max(0.15, atr * 0.15), entryPrice = Number(Number(quote).toFixed(2));
-      const firstSweep = Math.max(10, lastIndex - 48);
-      for (let i = lastIndex - 12; i >= firstSweep; i--) {
-        const sweep = bars[i], prior = bars.slice(Math.max(0, i - 10), i);
-        if (prior.length < 8) continue;
-        const priorHigh = Math.max(...prior.map(x => x.high)), priorLow = Math.min(...prior.map(x => x.low));
+    function buildPhase2LiveSetup(m5Candles, m15Candles, h1Candles, quote, atrValue) {
+      const out = {
+        engine: "PHASE2_SMC_LIVE_V2",
+        state: "WAIT",
+        signal: "WAIT",
+        reason: "No complete H1-context / M15 Sweep -> CHOCH -> BOS -> FVG / M5 retracement setup on closed candles.",
+        setup: null
+      };
+      if (!Array.isArray(m5Candles) || !Array.isArray(m15Candles) || !Array.isArray(h1Candles) ||
+          m5Candles.length < 40 || m15Candles.length < 30 || h1Candles.length < 12 || !Number.isFinite(Number(quote))) {
+        return { ...out, reason: "Insufficient closed M5/M15/H1 candles or live price." };
+      }
+      // aggregateFromM5() returns only fully closed M15/H1 buckets. The latest M5
+      // candle is filtered by closedCandles() upstream; still require its timestamp to be old enough.
+      const m5 = m5Candles.slice(-120), m15 = m15Candles.slice(-100), h1 = h1Candles.slice(-24);
+      const last5 = m5.at(-1), last15 = m15.at(-1), lastH1 = h1.at(-1);
+      const timeMs = c => candleTimestampMs(c?.time);
+      if (!Number.isFinite(timeMs(last5)) || Date.now() - timeMs(last5) < 4 * 60_000 ||
+          !Number.isFinite(timeMs(last15)) || !Number.isFinite(timeMs(lastH1))) {
+        return { ...out, reason: "Latest candle timestamps are invalid or latest M5 candle may still be open." };
+      }
+      const utcHour = new Date(timeMs(last15) + 15 * 60_000).getUTCHours();
+      if (!((utcHour >= 7 && utcHour < 11) || (utcHour >= 13 && utcHour < 17))) {
+        return { ...out, reason: `Outside configured UTC sessions (07:00-11:00, 13:00-17:00); latest M15 close hour=${utcHour}.` };
+      }
+      const atr = Number.isFinite(atrValue) && atrValue > 0 ? atrValue : Math.max(last5.high - last5.low, 0.5);
+      const buffer = Math.max(0.15, atr * 0.15), price = Number(Number(quote).toFixed(2));
+      const h1Window = h1.slice(-8, -1); // closed H1 bars preceding the latest closed H1 bar
+      const h1PriorHigh = h1Window.length ? Math.max(...h1Window.map(x => x.high)) : NaN;
+      const h1PriorLow = h1Window.length ? Math.min(...h1Window.map(x => x.low)) : NaN;
+      const h1SweepBuy = Number.isFinite(h1PriorLow) && lastH1.low < h1PriorLow && lastH1.close > h1PriorLow;
+      const h1SweepSell = Number.isFinite(h1PriorHigh) && lastH1.high > h1PriorHigh && lastH1.close < h1PriorHigh;
+      const h1RecentBuy = h1SweepBuy || h1.slice(-4).some((c, idx, arr) => {
+        const globalIndex = h1.length - arr.length + idx;
+        if (globalIndex < 8) return false;
+        const prior = h1.slice(globalIndex - 8, globalIndex);
+        const lo = Math.min(...prior.map(x => x.low));
+        return c.low < lo && c.close > lo;
+      });
+      const h1RecentSell = h1SweepSell || h1.slice(-4).some((c, idx, arr) => {
+        const globalIndex = h1.length - arr.length + idx;
+        if (globalIndex < 8) return false;
+        const prior = h1.slice(globalIndex - 8, globalIndex);
+        const hi = Math.max(...prior.map(x => x.high));
+        return c.high > hi && c.close < hi;
+      });
+
+      // Search recent completed M15 candles for the newest valid setup sequence.
+      const first = Math.max(12, m15.length - 36);
+      for (let i = m15.length - 1; i >= first; i--) {
+        const sweep = m15[i];
+        const prior = m15.slice(Math.max(0, i - 12), i);
+        if (prior.length < 10) continue;
+        const priorHigh = Math.max(...prior.map(x => x.high));
+        const priorLow = Math.min(...prior.map(x => x.low));
         const sides = [];
-        if (sweep.low < priorLow && sweep.close > priorLow) sides.push({ direction: "BUY", extreme: sweep.low });
-        if (sweep.high > priorHigh && sweep.close < priorHigh) sides.push({ direction: "SELL", extreme: sweep.high });
+        if (sweep.low < priorLow && sweep.close > priorLow && h1RecentBuy) sides.push({ direction: "BUY", extreme: sweep.low, chochLevel: Math.max(...m15.slice(Math.max(0, i - 5), i).map(x => x.high)) });
+        if (sweep.high > priorHigh && sweep.close < priorHigh && h1RecentSell) sides.push({ direction: "SELL", extreme: sweep.high, chochLevel: Math.min(...m15.slice(Math.max(0, i - 5), i).map(x => x.low)) });
         for (const side of sides) {
-          const buy = side.direction === "BUY", priorStructure = bars.slice(Math.max(0, i - 5), i);
-          if (priorStructure.length < 3) continue;
-          const chochLevel = buy ? Math.max(...priorStructure.map(x => x.high)) : Math.min(...priorStructure.map(x => x.low));
+          const buy = side.direction === "BUY";
           let chochIndex = -1;
-          for (let j = i + 1; j <= Math.min(i + 8, lastIndex - 3); j++) if (buy ? bars[j].close > chochLevel : bars[j].close < chochLevel) { chochIndex = j; break; }
+          for (let j = i + 1; j <= Math.min(i + 8, m15.length - 3); j++) {
+            if (buy ? m15[j].close > side.chochLevel : m15[j].close < side.chochLevel) { chochIndex = j; break; }
+          }
           if (chochIndex < 0) continue;
           let bosIndex = -1;
-          for (let k = chochIndex + 1; k <= Math.min(chochIndex + 8, lastIndex - 2); k++) {
-            const local = bars.slice(Math.max(chochIndex, k - 3), k);
+          for (let k = chochIndex + 1; k <= Math.min(chochIndex + 8, m15.length - 2); k++) {
+            const local = m15.slice(Math.max(chochIndex, k - 3), k);
             if (local.length < 2) continue;
             const level = buy ? Math.max(...local.map(x => x.high)) : Math.min(...local.map(x => x.low));
-            if (buy ? bars[k].close > level : bars[k].close < level) { bosIndex = k; break; }
+            if (buy ? m15[k].close > level : m15[k].close < level) { bosIndex = k; break; }
           }
           if (bosIndex < 0) continue;
-          for (let f = bosIndex + 1; f <= Math.min(bosIndex + 4, lastIndex - 1); f++) {
-            const a = bars[f - 2], impulse = bars[f - 1], c = bars[f];
+          for (let f = bosIndex + 1; f <= Math.min(bosIndex + 4, m15.length - 1); f++) {
+            const a = m15[f - 2], impulse = m15[f - 1], c = m15[f];
             let zoneLow, zoneHigh, validFvg = false;
             if (buy && a.high < c.low && impulse.close > impulse.open) { zoneLow = a.high; zoneHigh = c.low; validFvg = true; }
             if (!buy && a.low > c.high && impulse.close < impulse.open) { zoneLow = c.high; zoneHigh = a.low; validFvg = true; }
-            if (!validFvg || !(zoneHigh > zoneLow) || zoneHigh - zoneLow > atr * 1.5 || lastIndex - f < 1 || lastIndex - f > 8) continue;
-            if (bars.slice(f + 1, lastIndex).some(x => buy ? x.low < zoneLow : x.high > zoneHigh)) continue;
-            if (!(lastBar.low <= zoneHigh && lastBar.high >= zoneLow)) continue;
-            if (!(entryPrice >= zoneLow - buffer && entryPrice <= zoneHigh + buffer)) continue;
-            const stopLoss = Number((buy ? side.extreme - buffer : side.extreme + buffer).toFixed(2)), risk = Math.abs(entryPrice - stopLoss);
-            if (!(risk > 0) || (buy ? stopLoss >= entryPrice : stopLoss <= entryPrice)) continue;
-            const target = Number((buy ? entryPrice + risk * 1.5 : entryPrice - risk * 1.5).toFixed(2));
-            return { engine: "PHASE2_SMC_LIVE_V1", state: "ENTRY_READY", signal: side.direction,
-              reason: `Confirmed ${side.direction} sequence: liquidity sweep, CHOCH, BOS, FVG, and latest-candle retracement.`,
-              setup: { direction: side.direction, sweepTime: sweep.time, chochTime: bars[chochIndex].time, bosTime: bars[bosIndex].time,
+            if (!validFvg || !(zoneHigh > zoneLow) || zoneHigh - zoneLow > atr * 1.5) continue;
+            if (m15.slice(f + 1).some(x => buy ? x.low < zoneLow : x.high > zoneHigh)) continue;
+            const fvgAge = m15.length - 1 - f;
+            if (fvgAge < 1 || fvgAge > 8) continue;
+            const lastM5 = m5.at(-1);
+            const touched = lastM5.low <= zoneHigh && lastM5.high >= zoneLow;
+            if (!touched || !(price >= zoneLow - buffer && price <= zoneHigh + buffer)) continue;
+            const stopLoss = Number((buy ? side.extreme - buffer : side.extreme + buffer).toFixed(2));
+            const risk = Math.abs(price - stopLoss);
+            if (!(risk > 0) || (buy ? stopLoss >= price : stopLoss <= price)) continue;
+            const target = Number((buy ? price + risk * 1.5 : price - risk * 1.5).toFixed(2));
+            return {
+              engine: "PHASE2_SMC_LIVE_V2", state: "ENTRY_READY", signal: side.direction,
+              reason: `Confirmed ${side.direction}: H1 liquidity-sweep context, M15 sweep -> CHOCH -> BOS -> FVG, and closed-M5 retracement confirmation.`,
+              setup: { direction: side.direction, h1Context: buy ? "H1_SWEEP_LOW" : "H1_SWEEP_HIGH",
+                sweepTime: sweep.time, chochTime: m15[chochIndex].time, bosTime: m15[bosIndex].time,
                 fvgTime: c.time, entryZone: { low: Number(zoneLow.toFixed(2)), high: Number(zoneHigh.toFixed(2)) },
-                entry: entryPrice, stopLoss, target, risk, rr: 1.5, signalCandle: lastBar.time, sessionUTC: utcHour } };
+                entry: price, stopLoss, target, risk, rr: 1.5, signalCandle: lastM5.time,
+                setupTimeframe: "M15", confirmationTimeframe: "M5", contextTimeframe: "H1", sessionUTC: utcHour }
+            };
           }
         }
       }
-      return out;
+      return { ...out, reason: "No complete H1 sweep context + M15 Sweep/CHOCH/BOS/FVG sequence with a confirmed M5 retest." };
     }
-    const phase2LiveSignal = buildPhase2LiveSetup(m5, livePrice, m5ATR);
+    const phase2LiveSignal = buildPhase2LiveSetup(m5, m15, h1, livePrice, m5ATR);
 
     let signal =
       "WAIT";
@@ -4306,7 +4351,7 @@ export default async function handler(req, res) {
       ok: true,
 
       version:
-        "PHASE2-SMC-LIVE-V1",
+        "PHASE2-SMC-LIVE-V2",
 
       architecture:
         "ONE-M5-TWELVE-DATA-CALL + LOCAL-M15-H1-AGGREGATION + SWEEP-CHOCH-BOS-FVG-RETRACE-SIGNAL + H1-CONTEXT-GUARD + SWEEP-EXTREME-SL + R-MULTIPLE-TP + MARKET-CLOSED-GUARD + AUTHENTICATED-BACKGROUND-PUSH + EVENT-DEDUPE + REDIS-CACHE + LIVE-PRICE",
