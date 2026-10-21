@@ -1,0 +1,70 @@
+{
+  "engine": "Phase 2 SMC research backtester v1.1-diagnostic",
+  "symbol": "XAUUSD",
+  "input": "XAUUSD5.csv",
+  "source_rows": 100000,
+  "start": "2025-05-25 22:35:00",
+  "end": "2026-10-20 20:55:00",
+  "timezone_assumption": "CSV timestamps treated as UTC unless --timezone-offset-hours is set",
+  "sessions_UTC": [
+    "07:00-10:59",
+    "13:00-16:59"
+  ],
+  "rr": 1.5,
+  "round_trip_cost_price_units": 0.3,
+  "same_bar_sl_tp": "stop loss first",
+  "trade_count": 1,
+  "diagnostics": {
+    "m15_bars": 33697,
+    "session_bars": 11641,
+    "m15_buy_sweeps": 908,
+    "m15_sell_sweeps": 963,
+    "h1_buy_sweep_context_bars": 9790,
+    "h1_sell_sweep_context_bars": 10520,
+    "buy_sweep_with_h1": 152,
+    "sell_sweep_with_h1": 171,
+    "buy_choch": 38,
+    "sell_choch": 56,
+    "buy_bos": 17,
+    "sell_bos": 24,
+    "buy_fvg_after_bos": 5,
+    "sell_fvg_after_bos": 8,
+    "buy_discount_rejections": 3,
+    "sell_premium_rejections": 3,
+    "buy_retrace_touches": 1,
+    "sell_retrace_touches": 0,
+    "risk_rejections": 0,
+    "resolved_trades": 1
+  },
+  "models": [
+    {
+      "model": "BUY",
+      "trades": 1,
+      "wins": 1,
+      "losses": 0,
+      "win_rate_pct": 100.0,
+      "net_pnl_price_units": 18.135,
+      "expectancy_R": 1.4756,
+      "profit_factor": "inf",
+      "max_drawdown_R": 0.0,
+      "target_80pct_met": false
+    },
+    {
+      "model": "SELL",
+      "trades": 0,
+      "wins": 0,
+      "losses": 0,
+      "win_rate_pct": null,
+      "net_pnl_price_units": 0,
+      "expectancy_R": null,
+      "profit_factor": null,
+      "max_drawdown_R": 0,
+      "target_80pct_met": false
+    }
+  ],
+  "limitations": [
+    "Research implementation; verify broker timestamp offset and realistic XAUUSD spread/commission/slippage.",
+    "H1 sweep must be confirmed by closed H1 candle. No parameter optimization performed.",
+    "Win-rate target is evaluated separately; target flag requires at least 30 trades and >=80% wins. This is not a profitability guarantee."
+  ]
+}
