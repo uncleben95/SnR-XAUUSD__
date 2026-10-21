@@ -61,6 +61,16 @@ def backtest(df, offset=0, rr=1.5, risk_buffer=0.0, spread=0.30, min_gap=0.20,
     m15["bear_bottom"]=m15.high
     # Session filter UTC: London 07-11 and New York 13-17. Strict hours.
     trades=[]
+    setup_events=[]
+    setup_seq=0
+    def event(st, side, t, event_name, reason="", **extra):
+        rec={"setup_id": st.get("setup_id", "") if st else "", "side": side, "time": t.isoformat(), "event": event_name, "reason": reason}
+        if st:
+            for key in ("sweep_time", "choch_time", "bos_time", "fvg_time", "expiry"):
+                val=st.get(key, "")
+                rec[key]=val.isoformat() if hasattr(val, "isoformat") else val
+        rec.update(extra)
+        setup_events.append(rec)
     diagnostics={"m15_bars":int(len(m15)),"session_bars":0,"m15_buy_sweeps":0,"m15_sell_sweeps":0,"h1_buy_sweep_context_bars":int(m15.h1_sweep_lo.sum()),"h1_sell_sweep_context_bars":int(m15.h1_sweep_hi.sum()),"buy_sweep_with_h1":0,"sell_sweep_with_h1":0,"buy_choch":0,"sell_choch":0,"buy_bos":0,"sell_bos":0,"buy_fvg_after_bos":0,"sell_fvg_after_bos":0,"buy_discount_rejections":0,"sell_premium_rejections":0,"buy_retrace_touches":0,"sell_retrace_touches":0,"risk_rejections":0,"resolved_trades":0}
     # State machine: sweep -> CHOCH -> BOS with FVG -> retracement; independently per side.
     states={"BUY":None,"SELL":None}
@@ -83,28 +93,34 @@ def backtest(df, offset=0, rr=1.5, risk_buffer=0.0, spread=0.30, min_gap=0.20,
             if states[side] is None:
                 if sweep and h1ok:
                     diagnostics["buy_sweep_with_h1" if bullish else "sell_sweep_with_h1"] += 1
-                    states[side]={"stage":"swept","sweep_extreme":float(row.low if bullish else row.high),
+                    setup_seq += 1
+                    states[side]={"setup_id":f"{side}-{setup_seq:05d}","stage":"swept","sweep_extreme":float(row.low if bullish else row.high),
                                   "sweep_time":t,"choch_level":float(row.struct_hi if bullish else row.struct_lo)}
+                    event(states[side], side, t, "SWEEP_ACCEPTED", "M15 sweep + valid closed-H1 context", sweep_extreme=states[side]["sweep_extreme"])
                 continue
             st=states[side]
             # Cancel stale setups after 16 M15 bars.
             if (t-st["sweep_time"]).total_seconds()>16*900:
+                event(st, side, t, "SETUP_CANCELLED", "stale before entry; >16 M15 bars since sweep")
                 states[side]=None; continue
             if st["stage"]=="swept":
                 choch=(row.close>st["choch_level"]) if bullish else (row.close<st["choch_level"])
                 if choch:
                     diagnostics["buy_choch" if bullish else "sell_choch"] += 1
                     st["stage"]="choch"; st["choch_time"]=t
+                    event(st, side, t, "CHOCH_CONFIRMED", "close broke stored structure level", close=float(row.close), choch_level=st["choch_level"])
                 continue
             if st["stage"]=="choch":
                 bos=(row.close>row.struct_hi) if bullish else (row.close<row.struct_lo)
                 if bos:
                     diagnostics["buy_bos" if bullish else "sell_bos"] += 1
                     st.update(stage="bos", bos_time=t, expiry=t+pd.Timedelta(minutes=15*4))
+                    event(st, side, t, "BOS_CONFIRMED", "close broke prior rolling structure", close=float(row.close))
                     # A valid displacement FVG may form on the BOS candle itself.
                     fvg=bool(row.bull_fvg if bullish else row.bear_fvg)
                     if fvg:
                         diagnostics["buy_fvg_after_bos" if bullish else "sell_fvg_after_bos"] += 1
+                        st["fvg_time"] = t
                         lo=float(row.bull_bottom if bullish else row.bear_bottom)
                         hi=float(row.bull_top if bullish else row.bear_top)
                         if np.isfinite(lo+hi) and hi>lo:
@@ -112,43 +128,55 @@ def backtest(df, offset=0, rr=1.5, risk_buffer=0.0, spread=0.30, min_gap=0.20,
                             zone_mid=(lo+hi)/2
                             if (bullish and zone_mid>=mid):
                                 diagnostics["buy_discount_rejections"] += 1
+                                event(st, side, t, "FVG_REJECTED", "BUY FVG midpoint not in discount", zone_mid=zone_mid, dealing_range_mid=mid)
                                 states[side]=None
                             elif ((not bullish) and zone_mid<=mid):
                                 diagnostics["sell_premium_rejections"] += 1
+                                event(st, side, t, "FVG_REJECTED", "SELL FVG midpoint not in premium", zone_mid=zone_mid, dealing_range_mid=mid)
                                 states[side]=None
                             else:
                                 st.update(stage="retrace", fvg_lo=lo, fvg_hi=hi, entry=(lo+hi)/2,
                                           expiry=t+pd.Timedelta(minutes=15*8))
+                                event(st, side, t, "FVG_ACCEPTED", "FVG passed premium/discount filter", fvg_low=lo, fvg_high=hi, entry=st["entry"])
                 continue
             if st["stage"]=="bos":
                 if t>st["expiry"]:
+                    event(st, side, t, "SETUP_CANCELLED", "no valid FVG before BOS-stage expiry")
                     states[side]=None; continue
                 fvg=bool(row.bull_fvg if bullish else row.bear_fvg)
                 if not fvg: continue
                 diagnostics["buy_fvg_after_bos" if bullish else "sell_fvg_after_bos"] += 1
+                st["fvg_time"] = t
                 lo=float(row.bull_bottom if bullish else row.bear_bottom)
                 hi=float(row.bull_top if bullish else row.bear_top)
-                if not np.isfinite(lo+hi) or hi<=lo: continue
+                if not np.isfinite(lo+hi) or hi<=lo:
+                    event(st, side, t, "FVG_REJECTED", "invalid FVG boundaries", fvg_low=lo, fvg_high=hi)
+                    continue
                 mid=(float(row.range_hi)+float(row.range_lo))/2
                 zone_mid=(lo+hi)/2
                 if (bullish and zone_mid>=mid) or ((not bullish) and zone_mid<=mid):
                     diagnostics["buy_discount_rejections" if bullish else "sell_premium_rejections"] += 1
+                    event(st, side, t, "FVG_REJECTED", "premium/discount filter", zone_mid=zone_mid, dealing_range_mid=mid)
                     states[side]=None; continue
                 st.update(stage="retrace", fvg_lo=lo, fvg_hi=hi, entry=(lo+hi)/2,
                           expiry=t+pd.Timedelta(minutes=15*8))
+                event(st, side, t, "FVG_ACCEPTED", "FVG passed premium/discount filter", fvg_low=lo, fvg_high=hi, entry=st["entry"])
                 continue
             if st["stage"]=="retrace":
                 if t>st["expiry"]:
+                    event(st, side, t, "SETUP_CANCELLED", "FVG midpoint not revisited before retracement expiry")
                     states[side]=None; continue
                 # Need subsequent bars to revisit FVG midpoint.
                 touched=(row.low<=st["entry"]<=row.high)
                 if not touched or t<=st["bos_time"]: continue
                 diagnostics["buy_retrace_touches" if bullish else "sell_retrace_touches"] += 1
                 entry=float(st["entry"])
+                event(st, side, t, "RETRACE_TOUCHED", "price crossed FVG midpoint", entry=entry, bar_low=float(row.low), bar_high=float(row.high))
                 stop=float(st["sweep_extreme"] - risk_buffer if bullish else st["sweep_extreme"] + risk_buffer)
                 risk=(entry-stop) if bullish else (stop-entry)
                 if risk<=spread*2 or risk>max(10.0, entry*0.01):
                     diagnostics["risk_rejections"] += 1
+                    event(st, side, t, "ENTRY_REJECTED", "risk outside configured bounds", risk=float(risk), spread=float(spread))
                     states[side]=None; continue
                 target=entry+rr*risk if bullish else entry-rr*risk
                 # Execute from next M5 bar after M15 signal/touch close, conservative no lookahead.
@@ -165,15 +193,19 @@ def backtest(df, offset=0, rr=1.5, risk_buffer=0.0, spread=0.30, min_gap=0.20,
                     if sl: outcome="LOSS"; exit_price=stop; exit_time=ft; break
                     if tp: outcome="WIN"; exit_price=target; exit_time=ft; break
                 if outcome:
+                    event(st, side, t, "TRADE_RESOLVED", outcome, exit_time=exit_time.isoformat(), exit_price=float(exit_price))
                     pnl=(exit_price-entry if bullish else entry-exit_price)-spread
                     diagnostics["resolved_trades"] += 1
                     trades.append({"side":side,"entry_time":t.isoformat(),"exit_time":exit_time.isoformat(),
                                    "entry":entry,"stop":stop,"target":target,"result":outcome,
                                    "pnl_price":round(pnl,5),"R":round((pnl/risk),4),
                                    "sweep_time":st["sweep_time"].isoformat(),"choch_time":st.get("choch_time","").isoformat() if st.get("choch_time") is not None else "",
-                                   "bos_time":st.get("bos_time","").isoformat() if st.get("bos_time") is not None else ""})
+                                   "bos_time":st.get("bos_time","").isoformat() if st.get("bos_time") is not None else "",
+                                   "setup_id":st.get("setup_id", "")})
+                else:
+                    event(st, side, t, "TRADE_UNRESOLVED", "no SL/TP hit in remaining source data")
                 states[side]=None
-    return pd.DataFrame(trades),m15,diagnostics
+    return pd.DataFrame(trades),m15,diagnostics,pd.DataFrame(setup_events)
 
 def main():
     ap=argparse.ArgumentParser()
@@ -186,9 +218,10 @@ def main():
     ap.add_argument("--min-fvg-gap",type=float,default=0.20)
     args=ap.parse_args()
     df=load_data(args.csv)
-    trades,_,diagnostics=backtest(df,offset=args.timezone_offset_hours,rr=args.rr,spread=args.spread,min_gap=args.min_fvg_gap)
+    trades,_,diagnostics,events=backtest(df,offset=args.timezone_offset_hours,rr=args.rr,spread=args.spread,min_gap=args.min_fvg_gap)
     out=Path(args.out); out.mkdir(parents=True,exist_ok=True)
     trades.to_csv(out/"trades.csv",index=False)
+    events.to_csv(out/"setup-events.csv",index=False)
     summaries=[]
     for side in ["BUY","SELL"]:
         x=trades[trades.side==side] if len(trades) else pd.DataFrame()
@@ -203,7 +236,7 @@ def main():
           "expectancy_R":round(float(x.R.mean()),4) if n else None,
           "profit_factor":round(float(gross_win/gross_loss),3) if gross_loss else (None if not n else "inf"),
           "max_drawdown_R":round(dd,3),"target_80pct_met":bool(n>=30 and wins/n>=0.8)})
-    report={"engine":"Phase 2 SMC research backtester v1.1-diagnostic","symbol":"XAUUSD",
+    report={"engine":"Phase 2 SMC research backtester v1.2-setup-audit","symbol":"XAUUSD",
       "input":str(Path(args.csv).name),"source_rows":int(len(df)),
       "start":str(df.index.min()),"end":str(df.index.max()),
       "timezone_assumption":"CSV timestamps treated as UTC unless --timezone-offset-hours is set",
@@ -211,6 +244,7 @@ def main():
       "rr":args.rr,"round_trip_cost_price_units":args.spread,
       "same_bar_sl_tp":"stop loss first","trade_count":int(len(trades)),
       "diagnostics":diagnostics,
+      "setup_audit":{"events":int(len(events)),"event_log":"setup-events.csv","event_counts":events["event"].value_counts().to_dict() if len(events) else {}},
       "models":summaries,
       "limitations":["Research implementation; verify broker timestamp offset and realistic XAUUSD spread/commission/slippage.",
         "H1 sweep must be confirmed by closed H1 candle. No parameter optimization performed.",
