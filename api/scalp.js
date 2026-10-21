@@ -3288,7 +3288,7 @@ export default async function handler(req, res) {
       for (let i = m15.length - 1; i >= first; i--) {
         const sweep = m15[i];
         const prior = m15.slice(Math.max(0, i - 12), i);
-        if (prior.length < 10) continue;
+        if (prior.length < 12) continue;
         const priorHigh = Math.max(...prior.map(x => x.high));
         const priorLow = Math.min(...prior.map(x => x.low));
         const sides = [];
@@ -3297,24 +3297,41 @@ export default async function handler(req, res) {
         for (const side of sides) {
           const buy = side.direction === "BUY";
           let chochIndex = -1;
-          for (let j = i + 1; j <= Math.min(i + 8, m15.length - 3); j++) {
+          for (let j = i + 1; j <= Math.min(i + 16, m15.length - 3); j++) {
             if (buy ? m15[j].close > side.chochLevel : m15[j].close < side.chochLevel) { chochIndex = j; break; }
           }
           if (chochIndex < 0) continue;
           let bosIndex = -1;
-          for (let k = chochIndex + 1; k <= Math.min(chochIndex + 8, m15.length - 2); k++) {
-            const local = m15.slice(Math.max(chochIndex, k - 3), k);
-            if (local.length < 2) continue;
+          for (let k = chochIndex + 1; k <= Math.min(chochIndex + 4, m15.length - 1); k++) {
+            // Match backtest: break the prior five-bar structure, excluding current bar.
+            const local = m15.slice(Math.max(0, k - 5), k);
+            if (local.length < 5) continue;
             const level = buy ? Math.max(...local.map(x => x.high)) : Math.min(...local.map(x => x.low));
             if (buy ? m15[k].close > level : m15[k].close < level) { bosIndex = k; break; }
           }
           if (bosIndex < 0) continue;
-          for (let f = bosIndex + 1; f <= Math.min(bosIndex + 4, m15.length - 1); f++) {
+          // Match backtest FVG filters; FVG may form on the BOS candle itself.
+          for (let f = bosIndex; f <= Math.min(bosIndex + 4, m15.length - 1); f++) {
             const a = m15[f - 2], impulse = m15[f - 1], c = m15[f];
+            if (!a || !impulse || !c) continue;
             let zoneLow, zoneHigh, validFvg = false;
-            if (buy && a.high < c.low && impulse.close > impulse.open) { zoneLow = a.high; zoneHigh = c.low; validFvg = true; }
-            if (!buy && a.low > c.high && impulse.close < impulse.open) { zoneLow = c.high; zoneHigh = a.low; validFvg = true; }
+            if (buy && a.high < c.low && (c.low - a.high) >= 0.20 && impulse.close > impulse.open &&
+                Math.abs(impulse.close - impulse.open) >= (impulse.high - impulse.low) * 0.55) {
+              zoneLow = a.high; zoneHigh = c.low; validFvg = true;
+            }
+            if (!buy && a.low > c.high && (a.low - c.high) >= 0.20 && impulse.close < impulse.open &&
+                Math.abs(impulse.close - impulse.open) >= (impulse.high - impulse.low) * 0.55) {
+              zoneLow = c.high; zoneHigh = a.low; validFvg = true;
+            }
             if (!validFvg || !(zoneHigh > zoneLow) || zoneHigh - zoneLow > atr * 1.5) continue;
+            // Match backtest premium/discount filter using prior 40 M15 bars.
+            const rangeBars = m15.slice(Math.max(0, f - 40), f);
+            if (rangeBars.length < 40) continue;
+            const rangeHigh = Math.max(...rangeBars.map(x => x.high));
+            const rangeLow = Math.min(...rangeBars.map(x => x.low));
+            const rangeMid = (rangeHigh + rangeLow) / 2;
+            const zoneMid = (zoneLow + zoneHigh) / 2;
+            if ((buy && zoneMid >= rangeMid) || (!buy && zoneMid <= rangeMid)) continue;
             if (m15.slice(f + 1).some(x => buy ? x.low < zoneLow : x.high > zoneHigh)) continue;
             const fvgAge = m15.length - 1 - f;
             if (fvgAge < 1 || fvgAge > 8) continue;
