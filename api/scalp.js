@@ -614,6 +614,33 @@ export default async function handler(req, res) {
     };
   }
 
+  // Detect a fresh BOS on the newest CLOSED candle (false -> true).
+  // The regular bos() helper is a state check; this helper emits one event.
+  function bosEvent(d, lookback = 10) {
+    const stateAt = endIndex => {
+      if (endIndex < lookback) return { bullish: false, bearish: false };
+      const last = d[endIndex];
+      const prior = d.slice(endIndex - lookback, endIndex);
+      if (!last || prior.length !== lookback) return { bullish: false, bearish: false };
+      return {
+        bullish: last.close > Math.max(...prior.map(x => x.high)),
+        bearish: last.close < Math.min(...prior.map(x => x.low))
+      };
+    };
+    if (d.length < lookback + 2) {
+      return { bullish: false, bearish: false, candle: d.at(-1) || null };
+    }
+    const i = d.length - 1;
+    const current = stateAt(i);
+    const previous = stateAt(i - 1);
+    return {
+      bullish: current.bullish && !previous.bullish,
+      bearish: current.bearish && !previous.bearish,
+      candle: d[i],
+      previous: d[i - 1]
+    };
+  }
+
   function choch(d, lookback = 8) {
     if (d.length < lookback * 2 + 2) {
       return {
@@ -2311,6 +2338,8 @@ export default async function handler(req, res) {
         12
       );
 
+    const m15BOSEvent = bosEvent(m15, 12);
+
     const m15CHOCH =
       choch(
         m15,
@@ -2625,6 +2654,8 @@ export default async function handler(req, res) {
         m5,
         10
       );
+
+    const m5BOSEvent = bosEvent(m5, 10);
 
     const m5CHOCH =
       choch(
@@ -3205,6 +3236,66 @@ export default async function handler(req, res) {
      * ==========================================================
      */
 
+    function buildPhase2LiveSetup(candles, quote, atrValue) {
+      const out = { engine: "PHASE2_SMC_LIVE_V1", state: "WAIT", signal: "WAIT", reason: "No complete Sweep -> CHOCH -> BOS -> FVG retracement setup on the latest closed M5 candle.", setup: null };
+      if (!Array.isArray(candles) || candles.length < 40 || !Number.isFinite(Number(quote))) return { ...out, reason: "Insufficient closed M5 candles or live price." };
+      const bars = candles.slice(-100), lastIndex = Math.min(candles.length, 100) - 1;
+      const lastBar = bars[lastIndex];
+      const timeText = String(lastBar.time || "");
+      const iso = /Z$|[+-]\d\d:\d\d$/.test(timeText) ? timeText : `${timeText.replace(" ", "T")}Z`;
+      const lastTime = Date.parse(iso);
+      if (!Number.isFinite(lastTime)) return { ...out, reason: "Latest M5 candle timestamp is invalid." };
+      const utcHour = new Date(lastTime).getUTCHours();
+      if (!((utcHour >= 7 && utcHour < 11) || (utcHour >= 13 && utcHour < 17))) return { ...out, reason: `Outside configured UTC sessions (07:00-11:00, 13:00-17:00); latest candle hour=${utcHour}.` };
+      const atr = Number.isFinite(atrValue) && atrValue > 0 ? atrValue : Math.max(lastBar.high - lastBar.low, 0.5);
+      const buffer = Math.max(0.15, atr * 0.15), entryPrice = Number(Number(quote).toFixed(2));
+      const firstSweep = Math.max(10, lastIndex - 48);
+      for (let i = lastIndex - 12; i >= firstSweep; i--) {
+        const sweep = bars[i], prior = bars.slice(Math.max(0, i - 10), i);
+        if (prior.length < 8) continue;
+        const priorHigh = Math.max(...prior.map(x => x.high)), priorLow = Math.min(...prior.map(x => x.low));
+        const sides = [];
+        if (sweep.low < priorLow && sweep.close > priorLow) sides.push({ direction: "BUY", extreme: sweep.low });
+        if (sweep.high > priorHigh && sweep.close < priorHigh) sides.push({ direction: "SELL", extreme: sweep.high });
+        for (const side of sides) {
+          const buy = side.direction === "BUY", priorStructure = bars.slice(Math.max(0, i - 5), i);
+          if (priorStructure.length < 3) continue;
+          const chochLevel = buy ? Math.max(...priorStructure.map(x => x.high)) : Math.min(...priorStructure.map(x => x.low));
+          let chochIndex = -1;
+          for (let j = i + 1; j <= Math.min(i + 8, lastIndex - 3); j++) if (buy ? bars[j].close > chochLevel : bars[j].close < chochLevel) { chochIndex = j; break; }
+          if (chochIndex < 0) continue;
+          let bosIndex = -1;
+          for (let k = chochIndex + 1; k <= Math.min(chochIndex + 8, lastIndex - 2); k++) {
+            const local = bars.slice(Math.max(chochIndex, k - 3), k);
+            if (local.length < 2) continue;
+            const level = buy ? Math.max(...local.map(x => x.high)) : Math.min(...local.map(x => x.low));
+            if (buy ? bars[k].close > level : bars[k].close < level) { bosIndex = k; break; }
+          }
+          if (bosIndex < 0) continue;
+          for (let f = bosIndex + 1; f <= Math.min(bosIndex + 4, lastIndex - 1); f++) {
+            const a = bars[f - 2], impulse = bars[f - 1], c = bars[f];
+            let zoneLow, zoneHigh, validFvg = false;
+            if (buy && a.high < c.low && impulse.close > impulse.open) { zoneLow = a.high; zoneHigh = c.low; validFvg = true; }
+            if (!buy && a.low > c.high && impulse.close < impulse.open) { zoneLow = c.high; zoneHigh = a.low; validFvg = true; }
+            if (!validFvg || !(zoneHigh > zoneLow) || zoneHigh - zoneLow > atr * 1.5 || lastIndex - f < 1 || lastIndex - f > 8) continue;
+            if (bars.slice(f + 1, lastIndex).some(x => buy ? x.low < zoneLow : x.high > zoneHigh)) continue;
+            if (!(lastBar.low <= zoneHigh && lastBar.high >= zoneLow)) continue;
+            if (!(entryPrice >= zoneLow - buffer && entryPrice <= zoneHigh + buffer)) continue;
+            const stopLoss = Number((buy ? side.extreme - buffer : side.extreme + buffer).toFixed(2)), risk = Math.abs(entryPrice - stopLoss);
+            if (!(risk > 0) || (buy ? stopLoss >= entryPrice : stopLoss <= entryPrice)) continue;
+            const target = Number((buy ? entryPrice + risk * 1.5 : entryPrice - risk * 1.5).toFixed(2));
+            return { engine: "PHASE2_SMC_LIVE_V1", state: "ENTRY_READY", signal: side.direction,
+              reason: `Confirmed ${side.direction} sequence: liquidity sweep, CHOCH, BOS, FVG, and latest-candle retracement.`,
+              setup: { direction: side.direction, sweepTime: sweep.time, chochTime: bars[chochIndex].time, bosTime: bars[bosIndex].time,
+                fvgTime: c.time, entryZone: { low: Number(zoneLow.toFixed(2)), high: Number(zoneHigh.toFixed(2)) },
+                entry: entryPrice, stopLoss, target, risk, rr: 1.5, signalCandle: lastBar.time, sessionUTC: utcHour } };
+          }
+        }
+      }
+      return out;
+    }
+    const phase2LiveSignal = buildPhase2LiveSetup(m5, livePrice, m5ATR);
+
     let signal =
       "WAIT";
 
@@ -3392,6 +3483,18 @@ export default async function handler(req, res) {
       }
     }
 
+    // Phase 2 SMC is the sole authorizer for live BUY/SELL entries.
+    if (phase2LiveSignal.signal === "BUY" && buyH1Allowed) {
+      signal = "BUY"; status = "ENTRY"; execution = "READY"; setupType = "PHASE2_SMC_SWEEP_CHOCH_BOS_FVG_RETRACE"; score = 90;
+      reasons = [phase2LiveSignal.reason, `H1 context: ${h1Direction}`, `FVG zone ${phase2LiveSignal.setup.entryZone.low}-${phase2LiveSignal.setup.entryZone.high}`, "Stop uses sweep extreme; targets use 1.5R/2.5R/3.5R"];
+    } else if (phase2LiveSignal.signal === "SELL" && sellH1Allowed) {
+      signal = "SELL"; status = "ENTRY"; execution = "READY"; setupType = "PHASE2_SMC_SWEEP_CHOCH_BOS_FVG_RETRACE"; score = 90;
+      reasons = [phase2LiveSignal.reason, `H1 context: ${h1Direction}`, `FVG zone ${phase2LiveSignal.setup.entryZone.low}-${phase2LiveSignal.setup.entryZone.high}`, "Stop uses sweep extreme; targets use 1.5R/2.5R/3.5R"];
+    } else {
+      signal = "WAIT"; status = "WAIT"; execution = "WAIT"; setupType = phase2LiveSignal.signal !== "WAIT" ? "PHASE2_BLOCKED_BY_H1_CONTEXT" : "PHASE2_SETUP_INCOMPLETE"; score = 0;
+      reasons = [phase2LiveSignal.signal !== "WAIT" ? `${phase2LiveSignal.signal} SMC sequence detected but blocked by H1 context.` : phase2LiveSignal.reason];
+    }
+
     /*
      * MARKET CLOSED GUARD
      * Never emit a new scalp entry or background event from
@@ -3497,7 +3600,7 @@ export default async function handler(req, res) {
 
     let signalKey =
       signal !== "WAIT"
-        ? `XAUUSD|SRV3|${signal}|${signalCandle}`
+        ? `XAUUSD|PHASE2|${signal}|${signalCandle}`
         : null;
 
     /*
@@ -3648,7 +3751,8 @@ export default async function handler(req, res) {
       execution === "READY" &&
       m5ATR != null &&
       signalKey &&
-      !tradePlanLocked
+      !tradePlanLocked &&
+      !(phase2LiveSignal.setup && phase2LiveSignal.signal === signal)
     ) {
       entry = candidateEntry;
 
@@ -3810,6 +3914,22 @@ export default async function handler(req, res) {
       tradePlanSource = "NEW_REDIS_LOCK";
     }
 
+    // Apply Phase 2's sweep-extreme stop and R-multiple targets. Preserve an existing locked plan for this candle.
+    if (signal !== "WAIT" && phase2LiveSignal.setup && phase2LiveSignal.signal === signal && !tradePlanLocked) {
+      entry = Number(livePrice.toFixed(2)); stopLoss = phase2LiveSignal.setup.stopLoss; risk = Math.abs(entry - stopLoss);
+      if (risk > 0) {
+        tp1 = Number((signal === "BUY" ? entry + risk * 1.5 : entry - risk * 1.5).toFixed(2));
+        tp2 = Number((signal === "BUY" ? entry + risk * 2.5 : entry - risk * 2.5).toFixed(2));
+        tp3 = Number((signal === "BUY" ? entry + risk * 3.5 : entry - risk * 3.5).toFixed(2));
+        rr = "1 : 1.50 / 2.50 / 3.50"; targetSR = tp1; targetSRType = "PHASE2_SMC_R_MULTIPLE";
+        targetSRDistance = Number(Math.abs(tp1 - entry).toFixed(2)); targetSRValid = true;
+        targetMeta = { method: "PHASE2_SMC_SWEEP_EXTREME", rr: [1.5, 2.5, 3.5], fvg: phase2LiveSignal.setup.entryZone };
+        await saveLockedTradePlan(signalKey, { entry, stopLoss, tp1, tp2, tp3, rr, risk, signal, signalKey, signalCandle, setupType,
+          targetSR, targetSRType, targetSRDistance, targetSRValid, targetMeta, createdAt: new Date().toISOString(), planVersion: "PHASE2-SMC-LIVE-V1" });
+        tradePlanLocked = true; tradePlanSource = "PHASE2_SMC";
+      }
+    }
+
     // Never expose or notify ENTRY READY when its fixed plan is missing,
     // malformed, on the wrong side, or below the minimum reward/risk.
     const crossesH1Obstacle = h1ContextTargetSR != null && Number.isFinite(Number(h1ContextTargetSR)) &&
@@ -3865,6 +3985,9 @@ export default async function handler(req, res) {
     let breakoutPushSent = false;
     let breakoutPushSkipped = false;
     let chochPushEvents = [];
+    let bosPushSent = false;
+    let bosPushSkipped = false;
+    let bosPushEvents = [];
     let entryPushEvents = [];
     let breakoutPushEvents = [];
 
@@ -3923,6 +4046,10 @@ export default async function handler(req, res) {
 
         const candleTime = event.candle.time;
         const eventKey = `XAUUSD|${timeframe}|CHOCH|${direction}|${candleTime}`;
+        const contextKey = `xau_smc_last_choch|${timeframe}`;
+        // Keep the latest directional CHOCH so a later same-direction BOS
+        // can be highlighted even when it arrives on a separate cron run.
+        await redis.set(contextKey, JSON.stringify({ direction, candleTime, eventKey }), { ex: 86400 * 3 });
         const emoji = direction === "BULLISH" ? "🟢" : "🔴";
         const price = Number(event.candle.close).toFixed(2);
 
@@ -3954,6 +4081,50 @@ export default async function handler(req, res) {
       if (m15CHOCHEvent.bearish) await notifyChochEvent("M15", "BEARISH", m15CHOCHEvent);
       if (m5CHOCHEvent.bullish) await notifyChochEvent("M5", "BULLISH", m5CHOCHEvent);
       if (m5CHOCHEvent.bearish) await notifyChochEvent("M5", "BEARISH", m5CHOCHEvent);
+    }
+
+    // Highlight a fresh BOS only when a same-direction CHOCH was seen first.
+    // CHOCH context is persisted in Redis across scheduled invocations.
+    if (pushAllowed) {
+      async function notifyBosAfterChoch(timeframe, direction, event) {
+        if (!event?.candle || (!event.bullish && !event.bearish)) return;
+        const contextKey = `xau_smc_last_choch|${timeframe}`;
+        let context = null;
+        try { context = JSON.parse(await redis.get(contextKey) || "null"); } catch {}
+        if (!context || context.direction !== direction) return;
+        const bosTime = String(event.candle.time || "");
+        const chochTime = String(context.candleTime || "");
+        if (!bosTime || !chochTime || bosTime <= chochTime) return;
+
+        const eventKey = `XAUUSD|${timeframe}|BOS_AFTER_CHOCH|${direction}|${bosTime}`;
+        const emoji = direction === "BULLISH" ? "🚨🟢" : "🚨🔴";
+        const close = Number(event.candle.close);
+        const result = await notifyPushOnce(
+          "BOS_AFTER_CHOCH",
+          eventKey,
+          {
+            title: `${emoji} XAU/USD ${timeframe} BOS ${direction}`,
+            body: [
+              `BOS searah CHOCH ${direction} telah disahkan`,
+              `Close ${Number.isFinite(close) ? close.toFixed(2) : "—"}`,
+              `CHOCH terdahulu ${chochTime}`,
+              `BOS ${bosTime}`,
+              `PERHATIAN: bersedia pantau FVG dan retracement; ini belum signal ENTRY`
+            ].join(" • "),
+            tag: `xau-bos-after-choch|${eventKey}`,
+            url: "/"
+          },
+          { timeframe, direction, choch: chochTime, bos: bosTime, key: eventKey }
+        );
+        if (result.status === "SENT") bosPushSent = true;
+        if (result.status === "ALREADY_NOTIFIED") bosPushSkipped = true;
+        bosPushEvents.push(result);
+      }
+
+      if (m15BOSEvent.bullish) await notifyBosAfterChoch("M15", "BULLISH", m15BOSEvent);
+      if (m15BOSEvent.bearish) await notifyBosAfterChoch("M15", "BEARISH", m15BOSEvent);
+      if (m5BOSEvent.bullish) await notifyBosAfterChoch("M5", "BULLISH", m5BOSEvent);
+      if (m5BOSEvent.bearish) await notifyBosAfterChoch("M5", "BEARISH", m5BOSEvent);
     }
 
     // Notify a newly detected M5 S/R breakout. The event key includes the
@@ -4044,8 +4215,8 @@ export default async function handler(req, res) {
       await redis.set("xau_signal_push_state", signal, { ex: CFG.pushLockTTL });
     }
 
-    const pushSent = chochPushSent || entryPushSent || breakoutPushSent;
-    const pushSkipped = chochPushSkipped || entryPushSkipped || breakoutPushSkipped;
+    const pushSent = chochPushSent || bosPushSent || entryPushSent || breakoutPushSent;
+    const pushSkipped = chochPushSkipped || bosPushSkipped || entryPushSkipped || breakoutPushSkipped;
     /*
      * ==========================================================
      * DATA SOURCE STATUS
@@ -4135,13 +4306,14 @@ export default async function handler(req, res) {
       ok: true,
 
       version:
-        "V19-SCALP-SR-V4-M5-AGGREGATED-TF-5MIN",
+        "PHASE2-SMC-LIVE-V1",
 
       architecture:
-        "ONE-M5-TWELVE-DATA-CALL + LOCAL-M15-H1-AGGREGATION + M15+M5-ALIGNED-SIGNAL + H1-HOLD + MULTI-TF-SR-TARGET + M15/M5-ROADBLOCK + MARKET-REGIME-ER + VOLATILITY-AWARE-SL-TP + STRUCTURE-SL-TP + MARKET-CLOSED-GUARD + AUTHENTICATED-BACKGROUND-PUSH + EVENT-DEDUPE + REDIS-CACHE + LIVE-PRICE",
+        "ONE-M5-TWELVE-DATA-CALL + LOCAL-M15-H1-AGGREGATION + SWEEP-CHOCH-BOS-FVG-RETRACE-SIGNAL + H1-CONTEXT-GUARD + SWEEP-EXTREME-SL + R-MULTIPLE-TP + MARKET-CLOSED-GUARD + AUTHENTICATED-BACKGROUND-PUSH + EVENT-DEDUPE + REDIS-CACHE + LIVE-PRICE",
 
       marketStatus,
       marketRegime,
+      phase2LiveSignal,
       experimentalModels,
 
       symbol:
@@ -4256,6 +4428,7 @@ export default async function handler(req, res) {
         sent: pushSent,
         skipped: pushSkipped,
         chochEvents: chochPushEvents,
+        bosEvents: bosPushEvents,
         entryEvents: entryPushEvents,
         breakoutEvents: breakoutPushEvents
       },
