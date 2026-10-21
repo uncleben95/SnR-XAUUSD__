@@ -27,7 +27,8 @@ def ohlc_resample(df, rule):
         {"open":"first","high":"max","low":"min","close":"last","volume":"sum"}).dropna(subset=["open","high","low","close"])
 
 def backtest(df, offset=0, rr=1.5, risk_buffer=0.0, spread=0.30, min_gap=0.20,
-             sweep_lookback=12, structure_lookback=5, range_lookback=40):
+             sweep_lookback=12, structure_lookback=5, range_lookback=40,
+             require_h1_context=True, max_setup_bars=16, max_bos_wait_bars=4, max_retrace_bars=8):
     # Shift timestamps to UTC for session filter; user can adjust offset.
     m5=df.copy()
     m5.index = m5.index - pd.Timedelta(hours=offset)
@@ -91,18 +92,26 @@ def backtest(df, offset=0, rr=1.5, risk_buffer=0.0, spread=0.30, min_gap=0.20,
             if sweep:
                 diagnostics["m15_buy_sweeps" if bullish else "m15_sell_sweeps"] += 1
             if states[side] is None:
-                if sweep and h1ok:
-                    diagnostics["buy_sweep_with_h1" if bullish else "sell_sweep_with_h1"] += 1
+                if sweep and (h1ok or not require_h1_context):
+                    if h1ok:
+                        diagnostics["buy_sweep_with_h1" if bullish else "sell_sweep_with_h1"] += 1
                     setup_seq += 1
                     states[side]={"setup_id":f"{side}-{setup_seq:05d}","stage":"swept","sweep_extreme":float(row.low if bullish else row.high),
-                                  "sweep_time":t,"choch_level":float(row.struct_hi if bullish else row.struct_lo)}
-                    event(states[side], side, t, "SWEEP_ACCEPTED", "M15 sweep + valid closed-H1 context", sweep_extreme=states[side]["sweep_extreme"])
+                                  "sweep_time":t,"choch_level":float(row.struct_hi if bullish else row.struct_lo),
+                                  "session_bars_since_sweep":0,"session_bars_since_bos":0,"session_bars_since_fvg":0,
+                                  "h1_context":bool(h1ok)}
+                    event(states[side], side, t, "SWEEP_ACCEPTED", "M15 sweep; H1 context=" + ("yes" if h1ok else "no"), sweep_extreme=states[side]["sweep_extreme"], h1_context=bool(h1ok))
                 continue
             st=states[side]
-            # Cancel stale setups after 16 M15 bars.
-            if (t-st["sweep_time"]).total_seconds()>16*900:
-                event(st, side, t, "SETUP_CANCELLED", "stale before entry; >16 M15 bars since sweep")
+            # Count eligible in-session M15 candles, not elapsed wall-clock time.
+            st["session_bars_since_sweep"] = st.get("session_bars_since_sweep", 0) + 1
+            if st["stage"] != "retrace" and st["session_bars_since_sweep"] > max_setup_bars:
+                event(st, side, t, "SETUP_CANCELLED", f"pre-FVG setup exceeded {max_setup_bars} active session bars")
                 states[side]=None; continue
+            if st["stage"] == "bos":
+                st["session_bars_since_bos"] = st.get("session_bars_since_bos", 0) + 1
+            if st["stage"] == "retrace":
+                st["session_bars_since_fvg"] = st.get("session_bars_since_fvg", 0) + 1
             if st["stage"]=="swept":
                 choch=(row.close>st["choch_level"]) if bullish else (row.close<st["choch_level"])
                 if choch:
@@ -114,7 +123,7 @@ def backtest(df, offset=0, rr=1.5, risk_buffer=0.0, spread=0.30, min_gap=0.20,
                 bos=(row.close>row.struct_hi) if bullish else (row.close<row.struct_lo)
                 if bos:
                     diagnostics["buy_bos" if bullish else "sell_bos"] += 1
-                    st.update(stage="bos", bos_time=t, expiry=t+pd.Timedelta(minutes=15*4))
+                    st.update(stage="bos", bos_time=t, expiry=t+pd.Timedelta(minutes=15*max_bos_wait_bars), session_bars_since_bos=0)
                     event(st, side, t, "BOS_CONFIRMED", "close broke prior rolling structure", close=float(row.close))
                     # A valid displacement FVG may form on the BOS candle itself.
                     fvg=bool(row.bull_fvg if bullish else row.bear_fvg)
@@ -136,12 +145,12 @@ def backtest(df, offset=0, rr=1.5, risk_buffer=0.0, spread=0.30, min_gap=0.20,
                                 states[side]=None
                             else:
                                 st.update(stage="retrace", fvg_lo=lo, fvg_hi=hi, entry=(lo+hi)/2,
-                                          expiry=t+pd.Timedelta(minutes=15*8))
+                                          expiry=t+pd.Timedelta(minutes=15*max_retrace_bars), session_bars_since_fvg=0)
                                 event(st, side, t, "FVG_ACCEPTED", "FVG passed premium/discount filter", fvg_low=lo, fvg_high=hi, entry=st["entry"])
                 continue
             if st["stage"]=="bos":
-                if t>st["expiry"]:
-                    event(st, side, t, "SETUP_CANCELLED", "no valid FVG before BOS-stage expiry")
+                if st.get("session_bars_since_bos", 0) > max_bos_wait_bars:
+                    event(st, side, t, "SETUP_CANCELLED", f"no valid FVG within {max_bos_wait_bars} active session bars after BOS")
                     states[side]=None; continue
                 fvg=bool(row.bull_fvg if bullish else row.bear_fvg)
                 if not fvg: continue
@@ -159,12 +168,12 @@ def backtest(df, offset=0, rr=1.5, risk_buffer=0.0, spread=0.30, min_gap=0.20,
                     event(st, side, t, "FVG_REJECTED", "premium/discount filter", zone_mid=zone_mid, dealing_range_mid=mid)
                     states[side]=None; continue
                 st.update(stage="retrace", fvg_lo=lo, fvg_hi=hi, entry=(lo+hi)/2,
-                          expiry=t+pd.Timedelta(minutes=15*8))
+                          expiry=t+pd.Timedelta(minutes=15*max_retrace_bars), session_bars_since_fvg=0)
                 event(st, side, t, "FVG_ACCEPTED", "FVG passed premium/discount filter", fvg_low=lo, fvg_high=hi, entry=st["entry"])
                 continue
             if st["stage"]=="retrace":
-                if t>st["expiry"]:
-                    event(st, side, t, "SETUP_CANCELLED", "FVG midpoint not revisited before retracement expiry")
+                if st.get("session_bars_since_fvg", 0) > max_retrace_bars:
+                    event(st, side, t, "SETUP_CANCELLED", f"FVG midpoint not revisited within {max_retrace_bars} active session bars")
                     states[side]=None; continue
                 # Need subsequent bars to revisit FVG midpoint.
                 touched=(row.low<=st["entry"]<=row.high)
@@ -216,9 +225,15 @@ def main():
     ap.add_argument("--rr",type=float,default=1.5)
     ap.add_argument("--spread",type=float,default=0.30,help="round-trip cost in XAU price units, applied to each trade")
     ap.add_argument("--min-fvg-gap",type=float,default=0.20)
+    ap.add_argument("--allow-no-h1-context",action="store_true",help="Experimental: allow M15 sweep setups without H1 sweep context; default keeps H1 confirmation")
+    ap.add_argument("--max-setup-bars",type=int,default=16)
+    ap.add_argument("--max-bos-wait-bars",type=int,default=4)
+    ap.add_argument("--max-retrace-bars",type=int,default=8)
     args=ap.parse_args()
     df=load_data(args.csv)
-    trades,_,diagnostics,events=backtest(df,offset=args.timezone_offset_hours,rr=args.rr,spread=args.spread,min_gap=args.min_fvg_gap)
+    trades,_,diagnostics,events=backtest(df,offset=args.timezone_offset_hours,rr=args.rr,spread=args.spread,min_gap=args.min_fvg_gap,
+        require_h1_context=(not args.allow_no_h1_context),max_setup_bars=args.max_setup_bars,
+        max_bos_wait_bars=args.max_bos_wait_bars,max_retrace_bars=args.max_retrace_bars)
     out=Path(args.out); out.mkdir(parents=True,exist_ok=True)
     trades.to_csv(out/"trades.csv",index=False)
     events.to_csv(out/"setup-events.csv",index=False)
@@ -236,12 +251,13 @@ def main():
           "expectancy_R":round(float(x.R.mean()),4) if n else None,
           "profit_factor":round(float(gross_win/gross_loss),3) if gross_loss else (None if not n else "inf"),
           "max_drawdown_R":round(dd,3),"target_80pct_met":bool(n>=30 and wins/n>=0.8)})
-    report={"engine":"Phase 2 SMC research backtester v1.2-setup-audit","symbol":"XAUUSD",
+    report={"engine":"Phase 2 SMC research backtester v1.4-repo-bundle","symbol":"XAUUSD",
       "input":str(Path(args.csv).name),"source_rows":int(len(df)),
       "start":str(df.index.min()),"end":str(df.index.max()),
       "timezone_assumption":"CSV timestamps treated as UTC unless --timezone-offset-hours is set",
       "sessions_UTC":["07:00-10:59","13:00-16:59"],
       "rr":args.rr,"round_trip_cost_price_units":args.spread,
+      "setup_policy":{"require_h1_context":(not args.allow_no_h1_context),"max_setup_bars":args.max_setup_bars,"max_bos_wait_bars":args.max_bos_wait_bars,"max_retrace_bars":args.max_retrace_bars,"setup_age_clock":"eligible in-session M15 bars"},
       "same_bar_sl_tp":"stop loss first","trade_count":int(len(trades)),
       "diagnostics":diagnostics,
       "setup_audit":{"events":int(len(events)),"event_log":"setup-events.csv","event_counts":events["event"].value_counts().to_dict() if len(events) else {}},
