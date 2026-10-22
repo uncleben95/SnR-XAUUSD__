@@ -52,7 +52,3 @@ python research/phase2_smc_backtest.py --csv XAUUSD5.csv --out research/backtest
 ```
 
 Optional lifecycle settings: `--max-setup-bars 16`, `--max-bos-wait-bars 4`, and `--max-retrace-bars 8`. These are counts of eligible in-session M15 candles. The bundled v1.3 run produced 4 resolved trades (BUY 1 win / 1 loss; SELL 0 wins / 2 losses), versus 1 resolved trade in the previous v1.2 run. This is still far too small a sample to establish edge or a target win rate, and the SELL model is currently poor. Treat this as a corrected research baseline, not a live-trading recommendation.
-
-
-## Final SMC contract (2026-10-23)
-See `FINAL_SMC_ENGINE_CONTRACT.md` for the frozen closed-candle sequence, M5 retest trigger, risk/cost rules, lifecycle, live/backtest parity criteria, and regression gate. This is a specification, not a claim that the live API has been integrated with it. Production integration is intentionally blocked until parity tests pass.
