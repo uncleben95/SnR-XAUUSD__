@@ -4485,8 +4485,8 @@ export default async function handler(req, res) {
 
       push: {
         authorized: pushAllowed,
-        mode: "ENTRY_CHOCH_AND_BREAKOUT_EVENTS",
-        attempted: chochPushEvents.length > 0 || entryPushEvents.length > 0 || breakoutPushEvents.length > 0,
+        mode: "CHOCH_BOS_BREAKOUT_AND_ENTRY_EVENTS",
+        attempted: chochPushEvents.length > 0 || bosPushEvents.length > 0 || entryPushEvents.length > 0 || breakoutPushEvents.length > 0,
         sent: pushSent,
         skipped: pushSkipped,
         chochEvents: chochPushEvents,
