@@ -1,0 +1,91 @@
+{
+  "engine": "Phase 2 SMC research backtester v1.4-repo-bundle",
+  "symbol": "XAUUSD",
+  "input": "XAUUSD5.csv",
+  "source_rows": 100000,
+  "start": "2025-05-25 22:35:00",
+  "end": "2026-10-20 20:55:00",
+  "timezone_assumption": "CSV timestamps treated as UTC unless --timezone-offset-hours is set",
+  "sessions_UTC": [
+    "07:00-10:59",
+    "13:00-16:59"
+  ],
+  "rr": 1.5,
+  "round_trip_cost_price_units": 0.3,
+  "setup_policy": {
+    "require_h1_context": true,
+    "max_setup_bars": 16,
+    "max_bos_wait_bars": 4,
+    "max_retrace_bars": 8,
+    "setup_age_clock": "eligible in-session M15 bars"
+  },
+  "same_bar_sl_tp": "stop loss first",
+  "trade_count": 4,
+  "diagnostics": {
+    "m15_bars": 33697,
+    "session_bars": 11641,
+    "m15_buy_sweeps": 908,
+    "m15_sell_sweeps": 963,
+    "h1_buy_sweep_context_bars": 9790,
+    "h1_sell_sweep_context_bars": 10520,
+    "buy_sweep_with_h1": 132,
+    "sell_sweep_with_h1": 155,
+    "buy_choch": 58,
+    "sell_choch": 78,
+    "buy_bos": 33,
+    "sell_bos": 48,
+    "buy_fvg_after_bos": 7,
+    "sell_fvg_after_bos": 17,
+    "buy_discount_rejections": 4,
+    "sell_premium_rejections": 10,
+    "buy_retrace_touches": 2,
+    "sell_retrace_touches": 2,
+    "risk_rejections": 0,
+    "resolved_trades": 4
+  },
+  "setup_audit": {
+    "events": 805,
+    "event_log": "setup-events.csv",
+    "event_counts": {
+      "SWEEP_ACCEPTED": 287,
+      "SETUP_CANCELLED": 269,
+      "CHOCH_CONFIRMED": 136,
+      "BOS_CONFIRMED": 81,
+      "FVG_REJECTED": 14,
+      "FVG_ACCEPTED": 10,
+      "RETRACE_TOUCHED": 4,
+      "TRADE_RESOLVED": 4
+    }
+  },
+  "models": [
+    {
+      "model": "BUY",
+      "trades": 2,
+      "wins": 1,
+      "losses": 1,
+      "win_rate_pct": 50.0,
+      "net_pnl_price_units": 10.73,
+      "expectancy_R": 0.2167,
+      "profit_factor": 2.449,
+      "max_drawdown_R": -1.042,
+      "target_80pct_met": false
+    },
+    {
+      "model": "SELL",
+      "trades": 2,
+      "wins": 0,
+      "losses": 2,
+      "win_rate_pct": 0.0,
+      "net_pnl_price_units": -19.915,
+      "expectancy_R": -1.1101,
+      "profit_factor": 0.0,
+      "max_drawdown_R": -1.017,
+      "target_80pct_met": false
+    }
+  ],
+  "limitations": [
+    "Research implementation; verify broker timestamp offset and realistic XAUUSD spread/commission/slippage.",
+    "H1 sweep must be confirmed by closed H1 candle. No parameter optimization performed.",
+    "Win-rate target is evaluated separately; target flag requires at least 30 trades and >=80% wins. This is not a profitability guarantee."
+  ]
+}
