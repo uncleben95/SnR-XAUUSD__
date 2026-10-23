@@ -71,6 +71,11 @@ export default async function handler(req, res) {
     // S/R is context + target selection. It NEVER blocks a valid M5 scalp.
     minTargetR: 1.50,
     requireValidSRTarget: false,
+    // Estimated full round-trip cost in XAUUSD price units. Override with
+    // XAU_ROUND_TRIP_COST_PRICE_UNITS after verifying broker spread/fees.
+    roundTripCostPriceUnits: Number.isFinite(Number(process.env.XAU_ROUND_TRIP_COST_PRICE_UNITS))
+      ? Math.max(0, Number(process.env.XAU_ROUND_TRIP_COST_PRICE_UNITS))
+      : 0.30,
 
     /* MARKET REGIME */
     regimeERLookbackM5: 20,
@@ -3257,9 +3262,11 @@ export default async function handler(req, res) {
           !Number.isFinite(timeMs(last15)) || !Number.isFinite(timeMs(lastH1))) {
         return { ...out, reason: "Latest candle timestamps are invalid or latest M5 candle may still be open." };
       }
-      const utcHour = new Date(timeMs(last15) + 15 * 60_000).getUTCHours();
-      if (!((utcHour >= 7 && utcHour < 11) || (utcHour >= 13 && utcHour < 17))) {
-        return { ...out, reason: `Outside configured UTC sessions (07:00-11:00, 13:00-17:00); latest M15 close hour=${utcHour}.` };
+      // Session membership uses the candle OPEN timestamp, matching the
+      // research backtester sessions (07:00-10:59 and 13:00-16:59 UTC).
+      const sessionHour = new Date(timeMs(last15)).getUTCHours();
+      if (!((sessionHour >= 7 && sessionHour < 11) || (sessionHour >= 13 && sessionHour < 17))) {
+        return { ...out, reason: `Outside configured UTC sessions (07:00-10:59, 13:00-16:59 candle-open time); latest M15 open hour=${sessionHour}.` };
       }
       const atr = Number.isFinite(atrValue) && atrValue > 0 ? atrValue : Math.max(last5.high - last5.low, 0.5);
       const buffer = Math.max(0.15, atr * 0.15), price = Number(Number(quote).toFixed(2));
@@ -3337,19 +3344,32 @@ export default async function handler(req, res) {
             if (fvgAge < 1 || fvgAge > 8) continue;
             const lastM5 = m5.at(-1);
             const touched = lastM5.low <= zoneHigh && lastM5.high >= zoneLow;
-            if (!touched || !(price >= zoneLow - buffer && price <= zoneHigh + buffer)) continue;
+            // Deterministic closed-candle trigger: the retest candle must touch
+            // the FVG and close in the trade direction, on the favorable half
+            // of the zone. A wick touch alone is never an entry trigger.
+            const candleRange = Math.max(0, Number(lastM5.high) - Number(lastM5.low));
+            const bullishConfirmation = Number(lastM5.close) > Number(lastM5.open) &&
+              Number(lastM5.close) >= zoneMid && candleRange > 0;
+            const bearishConfirmation = Number(lastM5.close) < Number(lastM5.open) &&
+              Number(lastM5.close) <= zoneMid && candleRange > 0;
+            const candleConfirmed = buy ? bullishConfirmation : bearishConfirmation;
+            if (!touched || !candleConfirmed || !(price >= zoneLow - buffer && price <= zoneHigh + buffer)) continue;
             const stopLoss = Number((buy ? side.extreme - buffer : side.extreme + buffer).toFixed(2));
             const risk = Math.abs(price - stopLoss);
             if (!(risk > 0) || (buy ? stopLoss >= price : stopLoss <= price)) continue;
-            const target = Number((buy ? price + risk * 1.5 : price - risk * 1.5).toFixed(2));
+            // Keep target RR at >=1.5 AFTER estimated round-trip costs.
+            const roundTripCost = CFG.roundTripCostPriceUnits;
+            const targetDistance = risk * 1.5 + roundTripCost;
+            const target = Number((buy ? price + targetDistance : price - targetDistance).toFixed(2));
             return {
               engine: "PHASE2_SMC_LIVE_V2", state: "ENTRY_READY", signal: side.direction,
-              reason: `Confirmed ${side.direction}: H1 liquidity-sweep context, M15 sweep -> CHOCH -> BOS -> FVG, and closed-M5 retracement confirmation.`,
+              reason: `Confirmed ${side.direction}: H1 liquidity-sweep context, M15 sweep -> CHOCH -> BOS -> FVG, and directional closed-M5 retest candle confirmation.`,
               setup: { direction: side.direction, h1Context: buy ? "H1_SWEEP_LOW" : "H1_SWEEP_HIGH",
                 sweepTime: sweep.time, chochTime: m15[chochIndex].time, bosTime: m15[bosIndex].time,
                 fvgTime: c.time, entryZone: { low: Number(zoneLow.toFixed(2)), high: Number(zoneHigh.toFixed(2)) },
-                entry: price, stopLoss, target, risk, rr: 1.5, signalCandle: lastM5.time,
-                setupTimeframe: "M15", confirmationTimeframe: "M5", contextTimeframe: "H1", sessionUTC: utcHour }
+                entry: price, stopLoss, target, risk, rr: 1.5, roundTripCostPriceUnits: roundTripCost,
+                signalCandle: lastM5.time, candleConfirmation: buy ? "BULLISH_CLOSE_IN_FVG_UPPER_HALF" : "BEARISH_CLOSE_IN_FVG_LOWER_HALF",
+                setupTimeframe: "M15", confirmationTimeframe: "M5", contextTimeframe: "H1", sessionUTC: sessionHour }
             };
           }
         }
@@ -3980,9 +4000,10 @@ export default async function handler(req, res) {
     if (signal !== "WAIT" && phase2LiveSignal.setup && phase2LiveSignal.signal === signal && !tradePlanLocked) {
       entry = Number(livePrice.toFixed(2)); stopLoss = phase2LiveSignal.setup.stopLoss; risk = Math.abs(entry - stopLoss);
       if (risk > 0) {
-        tp1 = Number((signal === "BUY" ? entry + risk * 1.5 : entry - risk * 1.5).toFixed(2));
-        tp2 = Number((signal === "BUY" ? entry + risk * 2.5 : entry - risk * 2.5).toFixed(2));
-        tp3 = Number((signal === "BUY" ? entry + risk * 3.5 : entry - risk * 3.5).toFixed(2));
+        const costAdjustedR15Distance = risk * 1.5 + CFG.roundTripCostPriceUnits;
+        tp1 = Number((signal === "BUY" ? entry + costAdjustedR15Distance : entry - costAdjustedR15Distance).toFixed(2));
+        tp2 = Number((signal === "BUY" ? entry + risk * 2.5 + CFG.roundTripCostPriceUnits : entry - risk * 2.5 - CFG.roundTripCostPriceUnits).toFixed(2));
+        tp3 = Number((signal === "BUY" ? entry + risk * 3.5 + CFG.roundTripCostPriceUnits : entry - risk * 3.5 - CFG.roundTripCostPriceUnits).toFixed(2));
         rr = "1 : 1.50 / 2.50 / 3.50"; targetSR = tp1; targetSRType = "PHASE2_SMC_R_MULTIPLE";
         targetSRDistance = Number(Math.abs(tp1 - entry).toFixed(2)); targetSRValid = true;
         targetMeta = { method: "PHASE2_SMC_SWEEP_EXTREME", rr: [1.5, 2.5, 3.5], fvg: phase2LiveSignal.setup.entryZone };
@@ -4156,7 +4177,12 @@ export default async function handler(req, res) {
         if (!context || context.direction !== direction) return;
         const bosTime = String(event.candle.time || "");
         const chochTime = String(context.candleTime || "");
-        if (!bosTime || !chochTime || bosTime <= chochTime) return;
+        const bosMs = candleTimestampMs(bosTime);
+        const chochMs = candleTimestampMs(chochTime);
+        const timeframeMs = timeframe === "M15" ? 15 * 60_000 : 5 * 60_000;
+        const maxBosWaitBars = 4;
+        if (!bosTime || !chochTime || !Number.isFinite(bosMs) || !Number.isFinite(chochMs) ||
+            bosMs <= chochMs || bosMs - chochMs > timeframeMs * maxBosWaitBars) return;
 
         const eventKey = `XAUUSD|${timeframe}|BOS_AFTER_CHOCH|${direction}|${bosTime}`;
         const emoji = direction === "BULLISH" ? "🚨🟢" : "🚨🔴";
