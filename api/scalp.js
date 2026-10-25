@@ -114,6 +114,7 @@ export default async function handler(req, res) {
     pushEntrySignals: true,
     pushChochEvents: true,
     pushBreakoutEvents: true,
+    pushLifecycleEvents: true,
 
     /*
      * REDIS
@@ -3390,7 +3391,7 @@ export default async function handler(req, res) {
                 return {
                   ...out, state: "RETRACE_ALREADY_OCCURRED_NO_CURRENT_TRIGGER", signal: "WAIT",
                   reason: "FVG was touched earlier, but the latest closed M5 candle is no longer a valid in-zone trigger. Do not chase; wait for a new setup.",
-                  setup: { ...lifecycleSetup, lifecycle: "RETRACE_ALREADY_OCCURRED_NO_CURRENT_TRIGGER" }
+                  setup: { ...lifecycleSetup, lifecycle: "RETRACE_ALREADY_OCCURRED_NO_CURRENT_TRIGGER", retestCandleTime: pathBars[firstRetestIndex]?.time || null }
                 };
               }
               return {
@@ -3413,7 +3414,7 @@ export default async function handler(req, res) {
               return {
                 ...out, state: "RETRACE_TOUCHED_WAIT_M5_CONFIRMATION", signal: "WAIT",
                 reason: "Latest closed M5 candle touched the FVG, but directional candle confirmation is not complete.",
-                setup: { ...lifecycleSetup, lifecycle: "RETRACE_TOUCHED_WAIT_M5_CONFIRMATION" }
+                setup: { ...lifecycleSetup, lifecycle: "RETRACE_TOUCHED_WAIT_M5_CONFIRMATION", retestCandleTime: lastM5.time }
               };
             }
             const stopLoss = Number((buy ? side.extreme - buffer : side.extreme + buffer).toFixed(2));
@@ -3426,7 +3427,7 @@ export default async function handler(req, res) {
             return {
               engine: "PHASE2_SMC_LIVE_V2", state: "ENTRY_READY", signal: side.direction,
               reason: `Confirmed ${side.direction}: H1 liquidity-sweep context, M15 sweep -> CHOCH -> BOS -> FVG, and directional closed-M5 retest candle confirmation.`,
-              setup: { ...lifecycleSetup, lifecycle: "ENTRY_READY_AFTER_RETEST",
+              setup: { ...lifecycleSetup, lifecycle: "ENTRY_READY_AFTER_RETEST", retestCandleTime: lastM5.time,
                 entry: price, stopLoss, target, risk, rr: 1.5, roundTripCostPriceUnits: roundTripCost,
                 signalCandle: lastM5.time, candleConfirmation: buy ? "BULLISH_CLOSE_IN_FVG_UPPER_HALF" : "BEARISH_CLOSE_IN_FVG_LOWER_HALF",
                 setupTimeframe: "M15", confirmationTimeframe: "M5", contextTimeframe: "H1", sessionUTC: sessionHour }
@@ -4145,6 +4146,9 @@ export default async function handler(req, res) {
     let bosPushEvents = [];
     let entryPushEvents = [];
     let breakoutPushEvents = [];
+    let lifecyclePushSent = false;
+    let lifecyclePushSkipped = false;
+    let lifecyclePushEvents = [];
 
     async function notifyPushOnce(kind, eventKey, payload, eventMeta = {}) {
       const lockKey = `xau_push_notification|${kind}|${eventKey}`;
@@ -4287,6 +4291,78 @@ export default async function handler(req, res) {
       if (m5BOSEvent.bearish) await notifyBosAfterChoch("M5", "BEARISH", m5BOSEvent);
     }
 
+    // Notify the two post-FVG outcomes independently of ENTRY. A retest event
+    // is informational until M5 confirmation; continuation is informational
+    // only and must never be interpreted as permission to chase price.
+    if (pushAllowed && CFG.pushLifecycleEvents) {
+      const setup = phase2LiveSignal?.setup;
+      const setupState = String(phase2LiveSignal?.state || "");
+      const direction = String(setup?.direction || phase2LiveSignal?.signal || "").toUpperCase();
+      const validDirection = direction === "BUY" || direction === "SELL";
+      const bosTime = String(setup?.bosTime || "");
+      const fvgTime = String(setup?.fvgTime || "");
+      const setupIdentityValid = validDirection && bosTime && fvgTime;
+
+      if (setupIdentityValid && setupState === "CONTINUATION_NO_RETEST") {
+        const eventKey = `XAUUSD|M15|SMC_LIFECYCLE|${direction}|${bosTime}|${fvgTime}|CONTINUATION_NO_RETEST`;
+        const emoji = direction === "BUY" ? "🟢" : "🔴";
+        const result = await notifyPushOnce(
+          "SMC_CONTINUATION_NO_RETEST", eventKey,
+          {
+            title: `${emoji} XAU/USD ${direction} CONTINUATION`,
+            body: [
+              "BOS + FVG setup mencapai 1 ATR sebelum harga menyentuh FVG",
+              `BOS ${bosTime}`, `FVG ${fvgTime}`,
+              `Ambang ${Number(setup.continuationLevel).toFixed(2)}`,
+              "Tiada ENTRY automatik — jangan kejar harga"
+            ].join(" • "),
+            tag: eventKey, url: "/"
+          },
+          { event: "CONTINUATION_NO_RETEST", direction, bos: bosTime, fvg: fvgTime, key: eventKey }
+        );
+        if (result.status === "SENT") lifecyclePushSent = true;
+        if (result.status === "ALREADY_NOTIFIED") lifecyclePushSkipped = true;
+        lifecyclePushEvents.push(result);
+      }
+
+      const retestStates = new Set([
+        "RETRACE_TOUCHED_WAIT_M5_CONFIRMATION",
+        "RETRACE_ALREADY_OCCURRED_NO_CURRENT_TRIGGER",
+        "ENTRY_READY"
+      ]);
+      const isRetrace = retestStates.has(setupState) ||
+        setup?.lifecycle === "RETRACE_TOUCHED_WAIT_M5_CONFIRMATION" ||
+        setup?.lifecycle === "RETRACE_ALREADY_OCCURRED_NO_CURRENT_TRIGGER" ||
+        setup?.lifecycle === "ENTRY_READY_AFTER_RETEST";
+
+      if (setupIdentityValid && isRetrace) {
+        const retestTime = String(setup?.retestCandleTime || setup?.signalCandle || m5.at(-1)?.time || "");
+        if (retestTime) {
+          const eventKey = `XAUUSD|M15|SMC_LIFECYCLE|${direction}|${bosTime}|${fvgTime}|RETRACE|${retestTime}`;
+          const emoji = direction === "BUY" ? "🟢" : "🔴";
+          const result = await notifyPushOnce(
+            "SMC_RETRACE", eventKey,
+            {
+              title: `${emoji} XAU/USD ${direction} FVG RETRACE`,
+              body: [
+                "Harga menyentuh zon FVG selepas BOS",
+                `Zon ${Number(setup.entryZone?.low).toFixed(2)}–${Number(setup.entryZone?.high).toFixed(2)}`,
+                `Candle retest M5 ${retestTime}`,
+                setupState === "ENTRY_READY" || setup?.lifecycle === "ENTRY_READY_AFTER_RETEST"
+                  ? "M5 mengesahkan arah — semak notification ENTRY berasingan"
+                  : "Belum ENTRY — tunggu pengesahan candle M5"
+              ].join(" • "),
+              tag: eventKey, url: "/"
+            },
+            { event: "RETRACE", direction, bos: bosTime, fvg: fvgTime, retestCandle: retestTime, key: eventKey }
+          );
+          if (result.status === "SENT") lifecyclePushSent = true;
+          if (result.status === "ALREADY_NOTIFIED") lifecyclePushSkipped = true;
+          lifecyclePushEvents.push(result);
+        }
+      }
+    }
+
     // Notify a newly detected M5 S/R breakout. The event key includes the
     // closed candle and level, so the 5-minute cron cannot spam the same event.
     if (
@@ -4375,8 +4451,8 @@ export default async function handler(req, res) {
       await redis.set("xau_signal_push_state", signal, { ex: CFG.pushLockTTL });
     }
 
-    const pushSent = chochPushSent || bosPushSent || entryPushSent || breakoutPushSent;
-    const pushSkipped = chochPushSkipped || bosPushSkipped || entryPushSkipped || breakoutPushSkipped;
+    const pushSent = chochPushSent || bosPushSent || entryPushSent || breakoutPushSent || lifecyclePushSent;
+    const pushSkipped = chochPushSkipped || bosPushSkipped || entryPushSkipped || breakoutPushSkipped || lifecyclePushSkipped;
     /*
      * ==========================================================
      * DATA SOURCE STATUS
@@ -4583,12 +4659,13 @@ export default async function handler(req, res) {
 
       push: {
         authorized: pushAllowed,
-        mode: "CHOCH_BOS_BREAKOUT_AND_ENTRY_EVENTS",
-        attempted: chochPushEvents.length > 0 || bosPushEvents.length > 0 || entryPushEvents.length > 0 || breakoutPushEvents.length > 0,
+        mode: "CHOCH_BOS_RETRACE_CONTINUATION_BREAKOUT_AND_ENTRY_EVENTS",
+        attempted: chochPushEvents.length > 0 || bosPushEvents.length > 0 || entryPushEvents.length > 0 || breakoutPushEvents.length > 0 || lifecyclePushEvents.length > 0,
         sent: pushSent,
         skipped: pushSkipped,
         chochEvents: chochPushEvents,
         bosEvents: bosPushEvents,
+        lifecycleEvents: lifecyclePushEvents,
         entryEvents: entryPushEvents,
         breakoutEvents: breakoutPushEvents
       },
