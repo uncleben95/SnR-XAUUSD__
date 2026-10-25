@@ -3344,6 +3344,62 @@ export default async function handler(req, res) {
             if (fvgAge < 1 || fvgAge > 8) continue;
             const lastM5 = m5.at(-1);
             const touched = lastM5.low <= zoneHigh && lastM5.high >= zoneLow;
+            // Track the path after the FVG formed, not just the latest candle.
+            // A previous touch means the setup is a retest candidate, not a
+            // "no-retest continuation" even if price has since moved away.
+            const fvgTimeMs = timeMs(c);
+            const bosClose = Number(m15[bosIndex].close);
+            // M15 candle timestamps represent candle-open time in this feed.
+            // Only M5 candles after the full FVG candle has closed are eligible;
+            // otherwise the classifier could use pre-confirmation intrabar data.
+            const fvgConfirmedAtMs = Number.isFinite(fvgTimeMs) ? fvgTimeMs + 15 * 60_000 : NaN;
+            const pathBars = m5.filter(bar => Number.isFinite(timeMs(bar)) &&
+              Number.isFinite(fvgConfirmedAtMs) && timeMs(bar) >= fvgConfirmedAtMs);
+            const firstRetestIndex = pathBars.findIndex(bar =>
+              Number(bar.low) <= zoneHigh && Number(bar.high) >= zoneLow);
+            const continuationLevel = buy ? bosClose + atr : bosClose - atr;
+            const firstContinuationIndex = pathBars.findIndex(bar =>
+              buy ? Number(bar.high) >= continuationLevel : Number(bar.low) <= continuationLevel);
+            const retestSeen = firstRetestIndex >= 0;
+            const continuationSeen = firstContinuationIndex >= 0 &&
+              (!retestSeen || firstContinuationIndex < firstRetestIndex);
+
+            const lifecycleSetup = {
+              direction: side.direction,
+              h1Context: buy ? "H1_SWEEP_LOW" : "H1_SWEEP_HIGH",
+              sweepTime: sweep.time, chochTime: m15[chochIndex].time,
+              bosTime: m15[bosIndex].time, fvgTime: c.time,
+              entryZone: { low: Number(zoneLow.toFixed(2)), high: Number(zoneHigh.toFixed(2)) },
+              continuationLevel: Number(continuationLevel.toFixed(2)),
+              continuationThresholdATR: 1,
+              retestSeen,
+              lifecycle: retestSeen ? "RETRACE_SEEN" : continuationSeen ? "CONTINUATION_NO_RETEST" : "WAITING_FOR_RETRACE",
+              setupTimeframe: "M15", confirmationTimeframe: "M5", contextTimeframe: "H1",
+              sessionUTC: sessionHour
+            };
+
+            if (!touched || !Number.isFinite(price) || !(price >= zoneLow - buffer && price <= zoneHigh + buffer)) {
+              if (continuationSeen && !retestSeen) {
+                return {
+                  ...out, state: "CONTINUATION_NO_RETEST", signal: "WAIT",
+                  reason: `M15 BOS/FVG confirmed; price reached 1 ATR continuation before any observed M5 FVG retest. Do not chase; setup is informational only.`,
+                  setup: lifecycleSetup
+                };
+              }
+              if (retestSeen) {
+                return {
+                  ...out, state: "RETRACE_ALREADY_OCCURRED_NO_CURRENT_TRIGGER", signal: "WAIT",
+                  reason: "FVG was touched earlier, but the latest closed M5 candle is no longer a valid in-zone trigger. Do not chase; wait for a new setup.",
+                  setup: { ...lifecycleSetup, lifecycle: "RETRACE_ALREADY_OCCURRED_NO_CURRENT_TRIGGER" }
+                };
+              }
+              return {
+                ...out, state: "WAITING_FOR_RETRACE", signal: "WAIT",
+                reason: "CHOCH and BOS formed a valid directional FVG. Waiting for the first M5 retest; continuation threshold not reached first.",
+                setup: lifecycleSetup
+              };
+            }
+
             // Deterministic closed-candle trigger: the retest candle must touch
             // the FVG and close in the trade direction, on the favorable half
             // of the zone. A wick touch alone is never an entry trigger.
@@ -3353,7 +3409,13 @@ export default async function handler(req, res) {
             const bearishConfirmation = Number(lastM5.close) < Number(lastM5.open) &&
               Number(lastM5.close) <= zoneMid && candleRange > 0;
             const candleConfirmed = buy ? bullishConfirmation : bearishConfirmation;
-            if (!touched || !candleConfirmed || !(price >= zoneLow - buffer && price <= zoneHigh + buffer)) continue;
+            if (!touched || !candleConfirmed) {
+              return {
+                ...out, state: "RETRACE_TOUCHED_WAIT_M5_CONFIRMATION", signal: "WAIT",
+                reason: "Latest closed M5 candle touched the FVG, but directional candle confirmation is not complete.",
+                setup: { ...lifecycleSetup, lifecycle: "RETRACE_TOUCHED_WAIT_M5_CONFIRMATION" }
+              };
+            }
             const stopLoss = Number((buy ? side.extreme - buffer : side.extreme + buffer).toFixed(2));
             const risk = Math.abs(price - stopLoss);
             if (!(risk > 0) || (buy ? stopLoss >= price : stopLoss <= price)) continue;
@@ -3364,9 +3426,7 @@ export default async function handler(req, res) {
             return {
               engine: "PHASE2_SMC_LIVE_V2", state: "ENTRY_READY", signal: side.direction,
               reason: `Confirmed ${side.direction}: H1 liquidity-sweep context, M15 sweep -> CHOCH -> BOS -> FVG, and directional closed-M5 retest candle confirmation.`,
-              setup: { direction: side.direction, h1Context: buy ? "H1_SWEEP_LOW" : "H1_SWEEP_HIGH",
-                sweepTime: sweep.time, chochTime: m15[chochIndex].time, bosTime: m15[bosIndex].time,
-                fvgTime: c.time, entryZone: { low: Number(zoneLow.toFixed(2)), high: Number(zoneHigh.toFixed(2)) },
+              setup: { ...lifecycleSetup, lifecycle: "ENTRY_READY_AFTER_RETEST",
                 entry: price, stopLoss, target, risk, rr: 1.5, roundTripCostPriceUnits: roundTripCost,
                 signalCandle: lastM5.time, candleConfirmation: buy ? "BULLISH_CLOSE_IN_FVG_UPPER_HALF" : "BEARISH_CLOSE_IN_FVG_LOWER_HALF",
                 setupTimeframe: "M15", confirmationTimeframe: "M5", contextTimeframe: "H1", sessionUTC: sessionHour }
@@ -3573,8 +3633,20 @@ export default async function handler(req, res) {
       signal = "SELL"; status = "ENTRY"; execution = "READY"; setupType = "PHASE2_SMC_SWEEP_CHOCH_BOS_FVG_RETRACE"; score = 90;
       reasons = [phase2LiveSignal.reason, `H1 context: ${h1Direction}`, `FVG zone ${phase2LiveSignal.setup.entryZone.low}-${phase2LiveSignal.setup.entryZone.high}`, "Stop uses sweep extreme; targets use 1.5R/2.5R/3.5R"];
     } else {
-      signal = "WAIT"; status = "WAIT"; execution = "WAIT"; setupType = phase2LiveSignal.signal !== "WAIT" ? "PHASE2_BLOCKED_BY_H1_CONTEXT" : "PHASE2_SETUP_INCOMPLETE"; score = 0;
-      reasons = [phase2LiveSignal.signal !== "WAIT" ? `${phase2LiveSignal.signal} SMC sequence detected but blocked by H1 context.` : phase2LiveSignal.reason];
+      signal = "WAIT"; status = "WAIT"; execution = "WAIT"; score = 0;
+      const lifecycleTypes = {
+        WAITING_FOR_RETRACE: "PHASE2_WAITING_FOR_FVG_RETRACE",
+        CONTINUATION_NO_RETEST: "PHASE2_CONTINUATION_NO_RETEST_DO_NOT_CHASE",
+        RETRACE_SEEN_WAIT_M5_CONFIRMATION: "PHASE2_RETRACE_WAIT_M5_CONFIRMATION",
+        RETRACE_TOUCHED_WAIT_M5_CONFIRMATION: "PHASE2_RETRACE_WAIT_M5_CONFIRMATION",
+        RETRACE_ALREADY_OCCURRED_NO_CURRENT_TRIGGER: "PHASE2_RETRACE_MISSED_WAIT_NEW_SETUP"
+      };
+      setupType = phase2LiveSignal.signal !== "WAIT"
+        ? "PHASE2_BLOCKED_BY_H1_CONTEXT"
+        : (lifecycleTypes[phase2LiveSignal.state] || "PHASE2_SETUP_INCOMPLETE");
+      reasons = [phase2LiveSignal.signal !== "WAIT"
+        ? `${phase2LiveSignal.signal} SMC sequence detected but blocked by H1 context.`
+        : phase2LiveSignal.reason];
     }
 
     /*
