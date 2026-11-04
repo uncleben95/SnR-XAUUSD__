@@ -37,9 +37,8 @@ export function isTradePlanValid({ signal, entry, stopLoss, tp1, tp2, tp3, minR 
 export function isMarketDataStale(reasons = []) {
   const staleReasons = new Set([
     "FLAT_OR_SYNTHETIC_CANDLE_FEED",
-    "LATEST_M5_CANDLE_STALE",
-    "LATEST_M15_CANDLE_STALE",
     "LATEST_H1_CANDLE_STALE",
+    "LATEST_H4_CANDLE_STALE",
     "LIVE_PRICE_STALE_OR_UNAVAILABLE"
   ]);
   return Array.isArray(reasons) && reasons.some(reason => staleReasons.has(reason));
