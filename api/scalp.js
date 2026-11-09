@@ -5,6 +5,10 @@ const SYMBOL = "XAU/USD";
 const DURATIONS = { "1h": 60 * 60 * 1000, "4h": 4 * 60 * 60 * 1000 };
 const LOCK_SECONDS = 120;
 const DEDUPE_SECONDS = 72 * 60 * 60;
+const MARKET_CACHE_KEY = "xau_market_data_h1_h4_v1";
+const MARKET_LOCK_KEY = "xau_market_data_fetch_lock_v1";
+const MARKET_CACHE_SECONDS = 75;
+const MARKET_LOCK_SECONDS = 30;
 
 export function parseUtcTime(value) {
   if (typeof value !== "string") return NaN;
@@ -122,10 +126,54 @@ export default async function handler(req, res) {
   };
 
   try {
-    const [h1, h4, priceResponse] = await Promise.all([
-      series("1h", 320), series("4h", 320),
-      get(`https://api.twelvedata.com/price?symbol=${encodeURIComponent(SYMBOL)}&apikey=${key}`, "price")
-    ]);
+    // Share one Twelve Data fetch across dashboard visitors and the GitHub Actions
+    // cron. Redis is required here: falling back to uncached provider calls could
+    // exceed the user's per-minute credit limit during concurrent requests.
+    let marketData = await redis.get(MARKET_CACHE_KEY).catch(() => null);
+    if (typeof marketData === "string") {
+      try { marketData = JSON.parse(marketData); } catch { marketData = null; }
+    }
+
+    if (!marketData?.h1?.length || !marketData?.h4?.length) {
+      const lockToken = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+      let lock = null;
+      try {
+        lock = await redis.set(MARKET_LOCK_KEY, lockToken, { nx: true, ex: MARKET_LOCK_SECONDS });
+      } catch (error) {
+        throw new Error(`Market-data cache unavailable (Redis lock): ${error.message}`);
+      }
+
+      if (lock !== "OK") {
+        // Another invocation is fetching. Wait briefly for its shared result;
+        // never launch a second Twelve Data request in parallel.
+        for (let attempt = 0; attempt < 52; attempt++) {
+          await new Promise(resolve => setTimeout(resolve, 250));
+          marketData = await redis.get(MARKET_CACHE_KEY).catch(() => null);
+          if (typeof marketData === "string") {
+            try { marketData = JSON.parse(marketData); } catch { marketData = null; }
+          }
+          if (marketData?.h1?.length && marketData?.h4?.length) break;
+        }
+        if (!marketData?.h1?.length || !marketData?.h4?.length) {
+          return res.status(503).json({ ok: false, error: "Market data refresh is already running. Retry shortly; no extra Twelve Data request was made." });
+        }
+      } else {
+        try {
+          const [freshH1, freshH4] = await Promise.all([
+            series("1h", 320), series("4h", 320)
+          ]);
+          if (freshH1.length < 30 || freshH4.length < 60) throw new Error("Insufficient fully closed H1/H4 candle history");
+          marketData = { h1: freshH1, h4: freshH4, fetchedAt: new Date().toISOString() };
+          await redis.set(MARKET_CACHE_KEY, JSON.stringify(marketData), { ex: MARKET_CACHE_SECONDS });
+        } finally {
+          // Fetch requests have a 12s timeout; the lock itself expires as a safety net.
+          await redis.del(MARKET_LOCK_KEY).catch(() => {});
+        }
+      }
+    }
+
+    const h1 = marketData.h1;
+    const h4 = marketData.h4;
     if (h1.length < 30 || h4.length < 60) throw new Error("Insufficient fully closed H1/H4 candle history");
 
     const h1Prev = h1.at(-2), h1Last = h1.at(-1);
@@ -148,8 +196,8 @@ export default async function handler(req, res) {
     const swingState = findSwingState(h1);
     signals.push(...swingState.signals);
 
-    const livePrice = Number(priceResponse?.price);
-    const price = Number.isFinite(livePrice) ? livePrice : h1Last.close;
+    // Avoid a separate /price request: use the latest fully closed H1 close.
+    const price = h1Last.close;
     const signalKey = signals.map(s => `${s.id}|${s.candleTime}|${fmt(s.level)}`).join(";") || null;
     const push = { authorized: Boolean(authorizedPush), sent: false, skipped: false, results: [] };
 
@@ -203,7 +251,7 @@ export default async function handler(req, res) {
       ok: true, engine: "XAU_H4_EMA_H1_SWING_V2", symbol: SYMBOL,
       signal: primary?.direction || "WAIT", status: signals.length ? "SIGNAL" : "MONITORING",
       execution: signals.length ? "ALERT" : "WAIT", score: signals.length ? 100 : 0, signalKey,
-      price: fmt(price), livePrice: { price: fmt(price), source: "Twelve Data" },
+      price: fmt(price), livePrice: { price: fmt(price), source: "Last closed H1 candle" },
       signals, signalSummary: signals.length ? signals.map(s => s.message) : ["No new closed-candle signal."],
       h4: { time: h4Last.time, close: fmt(h4Last.close), ema20: fmt(ema20.at(-1)), ema50: fmt(ema50.at(-1)), prevClose: fmt(h4Prev.close) },
       h1: {
@@ -211,7 +259,9 @@ export default async function handler(req, res) {
         nearestSwingHigh: swingState.nearestHigh ? { price: fmt(swingState.nearestHigh.price), time: swingState.nearestHigh.time } : null,
         nearestSwingLow: swingState.nearestLow ? { price: fmt(swingState.nearestLow.price), time: swingState.nearestLow.time } : null
       },
-      candles: h1.slice(-100), h1ChartCandles: h1.slice(-100), push, timestamp: new Date().toISOString()
+      candles: h1.slice(-100), h1ChartCandles: h1.slice(-100), push,
+      marketData: { source: "Twelve Data via shared Redis cache", fetchedAt: marketData.fetchedAt, cacheSeconds: MARKET_CACHE_SECONDS },
+      timestamp: new Date().toISOString()
     });
   } catch (error) {
     console.error("XAU signal engine:", error?.message || error);
