@@ -1,121 +1,97 @@
 import { sendPushToAll, redis } from "./push-lib.js";
 
-// H1 BREAKOUT ENGINE + H4 SUPPORT/RESISTANCE
-// Closed H1 candles are the only breakout trigger. H4 supplies the levels.
+// XAUUSD SIGNAL ENGINE
+// Closed candles only:
+// 1) H4 close crosses EMA20
+// 2) H4 close crosses EMA50
+// 3) H1 close breaks nearest confirmed swing high / low
 export default async function handler(req, res) {
   res.setHeader("Cache-Control", "no-store");
   const key = process.env.TWELVE_DATA_API_KEY;
   if (!key) return res.status(500).json({ ok:false, error:"TWELVE_DATA_API_KEY is not configured" });
 
-  const symbol = "XAU/USD";
-  const cronSecret = process.env.XAU_CRON_SECRET;
-  const authorizedPush = req.query?.source === "github-actions" && cronSecret && req.headers["x-xau-cron-secret"] === cronSecret;
+  const symbol="XAU/USD";
+  const cronSecret=process.env.XAU_CRON_SECRET;
+  const authorizedPush=req.query?.source==="github-actions" && cronSecret && req.headers["x-xau-cron-secret"]===cronSecret;
 
-  const get = async (url, label) => {
-    const r = await fetch(url, { signal: AbortSignal.timeout(12_000) });
-    const j = await r.json().catch(() => ({}));
-    if (!r.ok || j.status === "error" || j.code) throw new Error(j.message || `${label} request failed`);
+  const get=async(url,label)=>{
+    const r=await fetch(url,{signal:AbortSignal.timeout(12000)});
+    const j=await r.json().catch(()=>({}));
+    if(!r.ok||j.status==="error"||j.code) throw new Error(j.message||`${label} request failed`);
     return j;
   };
-  const series = async (interval, outputsize) => {
-    const u = `https://api.twelvedata.com/time_series?symbol=${encodeURIComponent(symbol)}&interval=${interval}&outputsize=${outputsize}&apikey=${key}`;
-    const j = await get(u, interval);
-    return (j.values || []).reverse().map(x => ({
-      time:x.datetime, open:+x.open, high:+x.high, low:+x.low, close:+x.close
-    })).filter(x => [x.open,x.high,x.low,x.close].every(Number.isFinite));
+  const series=async(interval,outputsize)=>{
+    const j=await get(`https://api.twelvedata.com/time_series?symbol=${encodeURIComponent(symbol)}&interval=${interval}&outputsize=${outputsize}&apikey=${key}`,interval);
+    return (j.values||[]).reverse().map(x=>({time:x.datetime,open:+x.open,high:+x.high,low:+x.low,close:+x.close}))
+      .filter(x=>[x.open,x.high,x.low,x.close].every(Number.isFinite));
   };
-  const fmt = n => Number.isFinite(n) ? Number(n.toFixed(2)) : null;
-  const atr = (d,p=14) => {
-    if (d.length < p + 1) return null;
-    const tr=[]; for(let i=1;i<d.length;i++){ const c=d[i],q=d[i-1]; tr.push(Math.max(c.high-c.low,Math.abs(c.high-q.close),Math.abs(c.low-q.close))); }
-    return tr.slice(-p).reduce((a,b)=>a+b,0)/p;
+  const fmt=n=>Number.isFinite(n)?Number(n.toFixed(2)):null;
+  const emaSeries=(data,period)=>{
+    if(data.length<period) return [];
+    const k=2/(period+1), out=Array(data.length).fill(null);
+    let v=data.slice(0,period).reduce((s,x)=>s+x.close,0)/period;
+    out[period-1]=v;
+    for(let i=period;i<data.length;i++){v=data[i].close*k+v*(1-k);out[i]=v;}
+    return out;
   };
-  const ema = (d,p) => {
-    if (d.length < p) return null;
-    const k=2/(p+1); let v=d.slice(0,p).reduce((s,x)=>s+x.close,0)/p;
-    for(let i=p;i<d.length;i++) v=d[i].close*k+v*(1-k); return v;
-  };
-
-  function h4Levels(data, price) {
-    const candidates=[];
-    // Confirmed pivots only: two candles on each side.
-    for(let i=2;i<data.length-2;i++) {
-      const x=data[i], left=data.slice(i-2,i), right=data.slice(i+1,i+3);
-      if (x.high >= Math.max(...left.map(a=>a.high),...right.map(a=>a.high))) candidates.push({ price:x.high, type:"RESISTANCE", time:x.time, touches:1 });
-      if (x.low <= Math.min(...left.map(a=>a.low),...right.map(a=>a.low))) candidates.push({ price:x.low, type:"SUPPORT", time:x.time, touches:1 });
+  const nearestSwings=(data, lastIndex)=>{
+    // confirmed pivot: 2 candles on each side
+    const highs=[], lows=[];
+    for(let i=2;i<=lastIndex-2;i++){
+      const x=data[i];
+      if(x.high>data[i-1].high&&x.high>=data[i-2].high&&x.high>data[i+1].high&&x.high>=data[i+2].high) highs.push({price:x.high,time:x.time,index:i});
+      if(x.low<data[i-1].low&&x.low<=data[i-2].low&&x.low<data[i+1].low&&x.low<=data[i+2].low) lows.push({price:x.low,time:x.time,index:i});
     }
-    const cluster = (arr,type) => {
-      const tol=Math.max((atr(data)||10)*0.35, 2);
-      const groups=[];
-      for(const x of arr.sort((a,b)=>a.price-b.price)){
-        const g=groups.at(-1);
-        if(g && Math.abs(x.price-g.anchor)<=tol){g.items.push(x); g.anchor=g.items.reduce((s,z)=>s+z.price,0)/g.items.length;}
-        else groups.push({anchor:x.price,items:[x]});
-      }
-      return groups.map(g=>({price:g.anchor,type,time:g.items.at(-1).time,touches:g.items.length,timeframe:"H4"}));
-    };
-    const supports=cluster(candidates.filter(x=>x.type==="SUPPORT"),"SUPPORT").filter(x=>x.price<price).sort((a,b)=>b.price-a.price).slice(0,8);
-    const resistances=cluster(candidates.filter(x=>x.type==="RESISTANCE"),"RESISTANCE").filter(x=>x.price>price).sort((a,b)=>a.price-b.price).slice(0,8);
-    return { supports, resistances, nearestSupport:supports[0]||null, nearestResistance:resistances[0]||null };
-  }
+    return { high:highs.at(-1)||null, low:lows.at(-1)||null };
+  };
 
-  try {
-    const [h1Raw,h4Raw,pr] = await Promise.all([
-      series("1h",300), series("4h",220), get(`https://api.twelvedata.com/price?symbol=${encodeURIComponent(symbol)}&apikey=${key}`,"price")
-    ]);
-    if (h1Raw.length < 30 || h4Raw.length < 30) throw new Error("Insufficient H1/H4 candle history");
-    // Provider can include an in-progress candle. Breakout detection never uses it.
+  try{
+    const [h1Raw,h4Raw,pr]=await Promise.all([series("1h",320),series("4h",320),get(`https://api.twelvedata.com/price?symbol=${encodeURIComponent(symbol)}&apikey=${key}`,"price")]);
+    if(h1Raw.length<30||h4Raw.length<60) throw new Error("Insufficient H1/H4 candle history");
+    // Drop provider's current/in-progress candle.
     const h1=h1Raw.slice(0,-1), h4=h4Raw.slice(0,-1);
-    const livePrice=Number(pr?.price);
-    const price=Number.isFinite(livePrice) ? livePrice : h1.at(-1).close;
-    const levels=h4Levels(h4,price);
-    const prev=h1.at(-2), last=h1.at(-1);
-    const allLevels=[...levels.supports,...levels.resistances];
-    const hits=[];
-    for(const level of allLevels){
-      if(level.type==="RESISTANCE" && prev.close<=level.price && last.close>level.price) hits.push({direction:"BUY",level:level.price,levelType:"H4_RESISTANCE",...level});
-      if(level.type==="SUPPORT" && prev.close>=level.price && last.close<level.price) hits.push({direction:"SELL",level:level.price,levelType:"H4_SUPPORT",...level});
-    }
-    hits.sort((a,b)=>Math.abs(last.close-a.level)-Math.abs(last.close-b.level));
-    const hit=hits[0]||null;
-    const breakoutWatch=hit ? {
-      state:"BREAKOUT_DETECTED", direction:hit.direction, level:fmt(hit.level), levelType:hit.levelType,
-      price:fmt(last.close), candleTime:last.time, timeframe:"H1",
-      message:`H1 closed ${hit.direction === "BUY" ? "above" : "below"} H4 ${hit.type.toLowerCase()} ${fmt(hit.level)}`
-    } : {state:"NO_BREAKOUT",direction:"WAIT",level:null,price:fmt(price),candleTime:last.time,timeframe:"H1",message:"No new confirmed H1 breakout through an H4 level."};
+    const h1Prev=h1.at(-2), h1Last=h1.at(-1), h4Prev=h4.at(-2), h4Last=h4.at(-1);
+    const e20=emaSeries(h4,20), e50=emaSeries(h4,50);
+    const signals=[];
 
-    const h1Atr=atr(h1), h4Atr=atr(h4), h1Ema20=ema(h1,20), h1Ema50=ema(h1,50), h1Ema200=ema(h1,200);
-    const trend = h1Ema20 && h1Ema50 && h1Ema200 ? (h1Ema20>h1Ema50&&h1Ema50>h1Ema200?"BULLISH":h1Ema20<h1Ema50&&h1Ema50<h1Ema200?"BEARISH":"MIXED") : "UNKNOWN";
-    const signal=hit?.direction||"WAIT";
-    const signalKey=hit ? `h1-breakout|${hit.direction}|${fmt(hit.level)}|${last.time}` : null;
-    let push={authorized:Boolean(authorizedPush),sent:false,skipped:false,reason:null};
-    if (authorizedPush && hit && signalKey) {
-      const lockKey=`xau_h1_breakout_push:${signalKey}`;
-      const locked=await redis.get(lockKey).catch(()=>null);
-      if (locked) push={...push,skipped:true,reason:"Duplicate H1 breakout already notified"};
-      else {
-        const delivery=await sendPushToAll({
-          title:`XAU/USD H1 ${hit.direction} BREAKOUT`,
-          body:`H1 candle closed ${hit.direction === "BUY" ? "above" : "below"} H4 ${hit.type.toLowerCase()} ${fmt(hit.level)}. Close: ${fmt(last.close)}`,
-          tag:`xau-h1-breakout-${signalKey}`, url:"/"
-        });
-        await redis.set(lockKey,"1",{ex:60*60*48}).catch(()=>{});
-        push={...push,sent:delivery.sent>0,delivery,reason:delivery.sent>0?"Push sent":"No active subscription or delivery failed"};
+    const addCross=(period,arr)=>{
+      const prev=arr.at(-2), now=arr.at(-1);
+      if(!Number.isFinite(prev)||!Number.isFinite(now)) return;
+      if(h4Prev.close<=prev&&h4Last.close>now) signals.push({id:`H4_EMA${period}_BUY`,direction:"BUY",type:`H4 EMA${period} BREAK`,timeframe:"H4",level:now,candleTime:h4Last.time,message:`H4 candle closed ABOVE EMA${period}`});
+      if(h4Prev.close>=prev&&h4Last.close<now) signals.push({id:`H4_EMA${period}_SELL`,direction:"SELL",type:`H4 EMA${period} BREAK`,timeframe:"H4",level:now,candleTime:h4Last.time,message:`H4 candle closed BELOW EMA${period}`});
+    };
+    addCross(20,e20); addCross(50,e50);
+
+    const swings=nearestSwings(h1,h1.length-1);
+    if(swings.high&&h1Prev.close<=swings.high.price&&h1Last.close>swings.high.price) signals.push({id:"H1_SWING_HIGH_BUY",direction:"BUY",type:"H1 SWING HIGH BREAK",timeframe:"H1",level:swings.high.price,candleTime:h1Last.time,swingTime:swings.high.time,message:"H1 candle closed ABOVE nearest confirmed swing high"});
+    if(swings.low&&h1Prev.close>=swings.low.price&&h1Last.close<swings.low.price) signals.push({id:"H1_SWING_LOW_SELL",direction:"SELL",type:"H1 SWING LOW BREAK",timeframe:"H1",level:swings.low.price,candleTime:h1Last.time,swingTime:swings.low.time,message:"H1 candle closed BELOW nearest confirmed swing low"});
+
+    const livePrice=Number(pr?.price), price=Number.isFinite(livePrice)?livePrice:h1Last.close;
+    const signalKey=signals.map(s=>`${s.id}|${s.candleTime}|${fmt(s.level)}`).join(";")||null;
+    let push={authorized:Boolean(authorizedPush),sent:false,skipped:false,results:[]};
+    if(authorizedPush&&signals.length){
+      for(const s of signals){
+        const lockKey=`xau_signal:${s.id}:${s.candleTime}:${fmt(s.level)}`;
+        const locked=await redis.get(lockKey).catch(()=>null);
+        if(locked){push.results.push({signal:s.id,skipped:true,reason:"Duplicate signal already notified"});continue;}
+        const delivery=await sendPushToAll({title:`XAU/USD ${s.direction} SIGNAL`,body:`${s.type} · ${s.message} · Level: ${fmt(s.level)} · Close: ${fmt(s.timeframe==="H4"?h4Last.close:h1Last.close)}`,tag:`xau-${s.id}-${s.candleTime}`,url:"/"});
+        await redis.set(lockKey,"1",{ex:60*60*72}).catch(()=>{});
+        push.results.push({signal:s.id,sent:delivery.sent>0,delivery});
       }
+      push.sent=push.results.some(x=>x.sent); push.skipped=push.results.length>0&&push.results.every(x=>x.skipped);
     }
 
+    const primary=signals[0]||null;
     return res.status(200).json({
-      ok:true, engine:"H1_BREAKOUT_H4_SR_V1", symbol, signal, status:hit?"BREAKOUT":"MONITORING", execution:hit?"ALERT":"WAIT",
-      score:hit?100:0, signalKey, livePrice:{price:fmt(price),source:"Twelve Data"}, price:fmt(price),
-      breakoutWatch, reasons:hit?[breakoutWatch.message,"Breakout is based on a closed H1 candle only; H4 provides the broken level."]:["Monitoring closed H1 candles against confirmed H4 support and resistance."],
-      h1:{time:last.time,open:fmt(last.open),high:fmt(last.high),low:fmt(last.low),close:fmt(last.close),atr:fmt(h1Atr),ema20:fmt(h1Ema20),ema50:fmt(h1Ema50),ema200:fmt(h1Ema200),direction:trend},
-      h4:{atr:fmt(h4Atr),supportResistance:levels,levels:[...levels.supports,...levels.resistances].sort((a,b)=>a.price-b.price)},
-      srAnalysis:{support:levels.nearestSupport,resistance:levels.nearestResistance,supportDistance:levels.nearestSupport?fmt(price-levels.nearestSupport.price):null,resistanceDistance:levels.nearestResistance?fmt(levels.nearestResistance.price-price):null,position:"H4_CONTEXT"},
-      data:{h1Candles:h1.length,h4Candles:h4.length}, candles:h1.slice(-80), h1ChartCandles:h1.slice(-80), marketStatus:{open:true,reasons:[]}, push,
-      timestamp:new Date().toISOString()
+      ok:true,engine:"XAU_H4_EMA_H1_SWING_V1",symbol,signal:primary?.direction||"WAIT",status:signals.length?"SIGNAL":"MONITORING",execution:signals.length?"ALERT":"WAIT",score:signals.length?100:0,signalKey,
+      price:fmt(price),livePrice:{price:fmt(price),source:"Twelve Data"},
+      signals, signalSummary:signals.length?signals.map(s=>s.message):["No new closed-candle signal."],
+      h4:{time:h4Last.time,close:fmt(h4Last.close),ema20:fmt(e20.at(-1)),ema50:fmt(e50.at(-1)),prevClose:fmt(h4Prev.close)},
+      h1:{time:h1Last.time,close:fmt(h1Last.close),prevClose:fmt(h1Prev.close),nearestSwingHigh:swings.high?{price:fmt(swings.high.price),time:swings.high.time}:null,nearestSwingLow:swings.low?{price:fmt(swings.low.price),time:swings.low.time}:null},
+      candles:h1.slice(-100),h1ChartCandles:h1.slice(-100),push,timestamp:new Date().toISOString()
     });
-  } catch(e) {
-    console.error("H1/H4 engine:",e?.message||e);
+  }catch(e){
+    console.error("XAU signal engine:",e?.message||e);
     return res.status(502).json({ok:false,error:e?.name==="TimeoutError"?"Twelve Data request timed out":e.message||"Engine error"});
   }
 }
