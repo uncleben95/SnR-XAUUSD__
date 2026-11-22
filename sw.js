@@ -1,4 +1,4 @@
-const CACHE_NAME = "xau-h1h4-v2";
+const CACHE_NAME = "xau-sniper-v5";
 
 self.addEventListener("install", event => {
   self.skipWaiting();
