@@ -1,31 +1,32 @@
-# XAUUSD Historical Indicator Research Dashboard
+# SnR XAUUSD — Historical Research Dashboard
 
-This repository is converted from a live signal/notification engine into a **historical, educational indicator dashboard**.
+This version is based on the originally attached repository. It retains the original project structure and non-trading API files, adds the historical M5/M15/H4 dashboard and Python research engine, and includes the supplied CSV datasets.
 
 ## Included
-- Supplied historical XAUUSD M5, M15 and H4 CSV datasets in `public/data/`.
-- Candlestick chart with EMA 20 and EMA 50 overlays.
-- Separate RSI 14, ADX 14 and ATR 14 charts.
-- Historical candle replay with pause, step and speed controls.
-- Optional browser notifications during replay for indicator-state changes (RSI 30/70, EMA 20/50 cross, ADX context changes).
-- No order execution, trade recommendations, entry/exit levels, position sizing, or live BUY/SELL signals.
+- Historical M5, M15 and H4 CSV data in `public/data/`
+- Browser dashboard with candlesticks and EMA20/EMA50, RSI14, ADX14 and ATR14 panels
+- Historical replay and educational indicator-change notices
+- Python research engine in `engine/`
+- Research outputs in `research_results/`
+- Original `api/` and `tests/` folders retained; legacy automated trading signal and push endpoints return HTTP 410 and the scheduled push workflow is removed
 
-## Run locally
+## Run historical research
 
-Use any static web server from the repository root. For example:
+```bash
+python -m pip install -r requirements.txt
+python -m engine
+```
+
+## Run dashboard locally
 
 ```bash
 python3 -m http.server 8080
 ```
+Open `http://localhost:8080`.
 
-Then open `http://localhost:8080`.
+## Data source separation
+- CSV files are used for historical research and replay.
+- No Twelve Data live feed is configured in this bundle. Live market polling and automated trading signals are not included.
+- Indicator calculations are local and are not broker instructions.
 
-## Deploy
-
-The app is static and can be deployed to Vercel or any static hosting provider. No API keys, Redis, VAPID keys, or trading broker credentials are required. The historical data files are served from `public/data/`.
-
-## Data format
-
-Whitespace-separated rows: `date time open high low close volume`.
-
-All notifications are generated locally while replaying the historical dataset. They do not monitor live markets and are not trading instructions.
+`directional_match_pct` in research output is a historical directional statistic, not a trade win rate or a forecast.
