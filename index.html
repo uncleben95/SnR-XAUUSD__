@@ -11,7 +11,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 
-<title>XAU/USD Pro Sniper — V12 Fixed Trade Plan</title>
+<title>XAU/USD SCALPING — H4 / M15 / M5</title>
 
 <style>
 :root{
@@ -319,6 +319,17 @@ header p{
 }
 
 .d span{color:#cbd5e1}
+
+.zone-big{
+  display:block;
+  text-align:center;
+  font-size:1.2rem;
+  font-weight:900;
+  padding:7px 5px;
+  margin-top:5px;
+  border-radius:7px;
+  background:#f3f4f6
+}
 
 .foot{
   text-align:center;
@@ -672,42 +683,22 @@ SETUP
 <div class="card">
 
 <h3 style="margin:0 0 8px;color:var(--blue);font-size:.82rem">
-H1 — CORE BIAS
+H4 — TREND DIRECTION
 </h3>
 
 <div class="metric">
 <span>Direction</span>
-<strong id="h1dir">--</strong>
+<strong id="h4dir">--</strong>
 </div>
 
 <div class="metric">
 <span>EMA 50</span>
-<strong id="h1ema50">--</strong>
+<strong id="h4ema50">--</strong>
 </div>
 
 <div class="metric">
 <span>EMA 200</span>
-<strong id="h1ema200">--</strong>
-</div>
-
-<div class="metric">
-<span>ATR</span>
-<strong id="h1atr">--</strong>
-</div>
-
-<div class="metric">
-<span>Structure</span>
-<strong id="h1struct">--</strong>
-</div>
-
-<div class="metric">
-<span>Hold Bias</span>
-<strong id="holdBias">--</strong>
-</div>
-
-<div class="metric">
-<span>Hold Permission</span>
-<strong id="hold">--</strong>
+<strong id="h4ema200">--</strong>
 </div>
 
 </div>
@@ -755,8 +746,18 @@ H1 — SUPPORT / RESISTANCE
 <div class="card">
 
 <h3 style="margin:0 0 8px;color:var(--blue);font-size:.82rem">
-M15 — CONFIRMATION
+M15 — ADX TREND STRENGTH
 </h3>
+
+<div class="metric">
+<span>ADX 14</span>
+<strong id="m15adx">--</strong>
+</div>
+
+<div class="metric">
+<span>ADX Classification</span>
+<strong id="m15adxStatus">--</strong>
+</div>
 
 <div class="metric">
 <span>Direction</span>
@@ -794,7 +795,7 @@ M15 — CONFIRMATION
 <div class="card">
 
 <h3 style="margin:0 0 8px;color:var(--blue);font-size:.82rem">
-M5 — TRIGGER
+M5 — RSI + ATR SCALPING
 </h3>
 
 <div class="metric">
@@ -813,13 +814,23 @@ M5 — TRIGGER
 </div>
 
 <div class="metric">
+<span>RSI ZONE</span>
+<strong id="m5rsiZone" class="zone-big">--</strong>
+</div>
+
+<div class="metric">
 <span>MACD</span>
 <strong id="m5macd">--</strong>
 </div>
 
 <div class="metric">
-<span>ATR</span>
+<span>ATR (M5)</span>
 <strong id="m5atr">--</strong>
+</div>
+
+<div class="metric">
+<span>VOLATILITY</span>
+<strong id="m5volatility" class="zone-big">--</strong>
 </div>
 
 <div class="metric">
@@ -1336,10 +1347,10 @@ function render(d){
 
   $("badge").textContent =
     sig === "BUY"
-      ? "🟢 BUY"
+      ? "🟢 SCALPING BUY"
       : sig === "SELL"
-        ? "🔴 SELL"
-        : "⏳ WAIT";
+        ? "🔴 SCALPING SELL"
+        : "⏳ SCALPING WAIT";
 
   $("badge").className =
     "badge " +
@@ -1554,59 +1565,15 @@ function render(d){
 
 
   /* =======================================================
-     H1
+     H4 TREND
      ======================================================= */
 
-  text(
-    "h1dir",
-    h1.direction
-  );
+  const h4 = d.h4 || {};
 
-  clsDirection(
-    $("h1dir"),
-    h1.direction
-  );
-
-  text(
-    "h1ema50",
-    fmt(h1.ema50)
-  );
-
-  text(
-    "h1ema200",
-    fmt(h1.ema200)
-  );
-
-  text(
-    "h1atr",
-    fmt(h1.atr)
-  );
-
-  text(
-    "h1struct",
-    h1.structure?.bullish
-      ? "BULLISH"
-      : h1.structure?.bearish
-        ? "BEARISH"
-        : "RANGE"
-  );
-
-  text(
-    "holdBias",
-    h1.holdBias ||
-    "--"
-  );
-
-  clsDirection(
-    $("holdBias"),
-    h1.holdBias
-  );
-
-  text(
-    "hold",
-    h1.holdPermission ||
-    "--"
-  );
+  text("h4dir", h4.direction || "WAIT");
+  clsDirection($("h4dir"), h4.direction);
+  text("h4ema50", fmt(h4.ema50));
+  text("h4ema200", fmt(h4.ema200));
 
 
   /* =======================================================
@@ -1692,6 +1659,10 @@ function render(d){
     m15.confirmation ||
     m15.direction
   );
+
+  text("m15adx", fmt(m15.adx));
+  text("m15adxStatus", m15.adxStatus || "--");
+  clsDirection($("m15adxStatus"), m15.adxStatus);
 
   text(
     "m15ema",
@@ -1779,6 +1750,9 @@ function render(d){
     fmt(m5.rsi)
   );
 
+  text("m5rsiZone", m5.rsiZone || "--");
+  clsDirection($("m5rsiZone"), m5.rsiZone);
+
   text(
     "m5macd",
     m5.macd?.bullish
@@ -1792,6 +1766,9 @@ function render(d){
     "m5atr",
     fmt(m5.atr)
   );
+
+  text("m5volatility", m5.volatility?.label || "--");
+  clsDirection($("m5volatility"), m5.volatility?.label);
 
   text(
     "m5structure",
