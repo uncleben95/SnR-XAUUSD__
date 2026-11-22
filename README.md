@@ -1,12 +1,31 @@
-# XAU/USD H1 Breakout + H4 Support/Resistance
+# XAUUSD Historical Indicator Research Dashboard
 
-## New engine rules
-- **H4**: support and resistance structure only.
-- **H1**: breakout trigger only.
-- A breakout is valid only after the **H1 candle has closed** beyond an H4 level.
-- **BUY breakout**: previous H1 close was at/below H4 resistance and latest closed H1 closes above it.
-- **SELL breakout**: previous H1 close was at/above H4 support and latest closed H1 closes below it.
-- **No M5 data, no M15 data, no M5 retest and no M15 confirmation.**
-- Push alert is deduplicated by direction + broken level + H1 candle time.
+This repository is converted from a live signal/notification engine into a **historical, educational indicator dashboard**.
 
-The dashboard is redesigned around H4 levels and H1 candles.
+## Included
+- Supplied historical XAUUSD M5, M15 and H4 CSV datasets in `public/data/`.
+- Candlestick chart with EMA 20 and EMA 50 overlays.
+- Separate RSI 14, ADX 14 and ATR 14 charts.
+- Historical candle replay with pause, step and speed controls.
+- Optional browser notifications during replay for indicator-state changes (RSI 30/70, EMA 20/50 cross, ADX context changes).
+- No order execution, trade recommendations, entry/exit levels, position sizing, or live BUY/SELL signals.
+
+## Run locally
+
+Use any static web server from the repository root. For example:
+
+```bash
+python3 -m http.server 8080
+```
+
+Then open `http://localhost:8080`.
+
+## Deploy
+
+The app is static and can be deployed to Vercel or any static hosting provider. No API keys, Redis, VAPID keys, or trading broker credentials are required. The historical data files are served from `public/data/`.
+
+## Data format
+
+Whitespace-separated rows: `date time open high low close volume`.
+
+All notifications are generated locally while replaying the historical dataset. They do not monitor live markets and are not trading instructions.

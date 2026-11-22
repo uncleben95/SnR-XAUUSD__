@@ -1,17 +1,9 @@
 {
-  "name": "snr-xauusd",
-  "version": "1.0.0",
+  "name": "xauusd-historical-indicator-dashboard",
+  "version": "2.0.0",
   "private": true,
-  "engines": {
-    "node": ">=20"
-  },
   "type": "module",
-  "dependencies": {
-    "@upstash/redis": "1.39.0",
-    "web-push": "^3.6.7"
-  },
   "scripts": {
-    "check": "node --check api/health.js && node --check api/levels.js && node --check api/push-config.js && node --check api/push-cron.js && node --check api/push-lib.js && node --check api/push-send.js && node --check api/push-state.js && node --check api/push-subscribe.js && node --check api/push-test.js && node --check api/scalp.js && node --check api/signal-policy.js",
-    "test": "echo \"No legacy M5/M15 engine tests\""
+    "check": "node --check scripts/dashboard-check.js"
   }
 }
