@@ -1,8 +1,4 @@
-/**
- * Entry push deduplication is event-based, not direction-based.
- * A new BUY or SELL event should be eligible even when the previous
- * delivered event had the same direction.
- */
-export function shouldNotifyEntryEvent(previousEventKey, currentEventKey) {
-  return Boolean(currentEventKey) && previousEventKey !== currentEventKey;
+// Legacy web-push route intentionally disabled in this educational build.
+export default function handler(_req, res) {
+  return res.status(410).json({ ok: false, disabled: true, message: 'Automated trading push notifications are disabled.' });
 }
