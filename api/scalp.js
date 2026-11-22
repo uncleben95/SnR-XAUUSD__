@@ -16,6 +16,7 @@ export default async function handler(req, res) {
     m5Size: 1500,
     m15Size: 500,
     h1Size: 300,
+    h4Size: 300,
 
     /*
      * ==========================================================
@@ -33,6 +34,7 @@ export default async function handler(req, res) {
     m5CacheTTL: 5 * 60_000,
     m15CacheTTL: 15 * 60_000,
     h1CacheTTL: 60 * 60_000,
+    h4CacheTTL: 4 * 60 * 60_000,
 
     /*
      * LIVE PRICE
@@ -45,6 +47,7 @@ export default async function handler(req, res) {
     minM5: 250,
     minM15: 100,
     minH1: 210,
+    minH4: 210,
 
     /*
      * H1 SUPPORT / RESISTANCE
@@ -95,6 +98,7 @@ export default async function handler(req, res) {
       m5: "xau_scalp_cache_m5",
       m15: "xau_scalp_cache_m15",
       h1: "xau_scalp_cache_h1",
+      h4: "xau_scalp_cache_h4",
       price: "xau_scalp_cache_price"
     }
   };
@@ -114,6 +118,7 @@ export default async function handler(req, res) {
       m5: "NONE",
       m15: "NONE",
       h1: "NONE",
+      h4: "NONE",
       price: "NONE"
     },
 
@@ -121,6 +126,7 @@ export default async function handler(req, res) {
       m5: 0,
       m15: 0,
       h1: 0,
+      h4: 0,
       price: 0
     }
   };
@@ -154,6 +160,10 @@ export default async function handler(req, res) {
 
     if (key === "h1") {
       return CFG.h1CacheTTL;
+    }
+
+    if (key === "h4") {
+      return CFG.h4CacheTTL;
     }
 
     return 60_000;
@@ -274,6 +284,75 @@ export default async function handler(req, res) {
       (losses / p);
 
     return 100 - 100 / (1 + rs);
+  }
+
+  function adx(d, p = 14) {
+    if (!Array.isArray(d) || d.length < p * 2 + 1) return null;
+    const tr = [], plusDM = [], minusDM = [];
+    for (let i = 1; i < d.length; i++) {
+      const cur = d[i], prev = d[i - 1];
+      const up = cur.high - prev.high;
+      const down = prev.low - cur.low;
+      tr.push(Math.max(cur.high-cur.low, Math.abs(cur.high-prev.close), Math.abs(cur.low-prev.close)));
+      plusDM.push(up > down && up > 0 ? up : 0);
+      minusDM.push(down > up && down > 0 ? down : 0);
+    }
+    let smTR = tr.slice(0,p).reduce((a,b)=>a+b,0);
+    let smPlus = plusDM.slice(0,p).reduce((a,b)=>a+b,0);
+    let smMinus = minusDM.slice(0,p).reduce((a,b)=>a+b,0);
+    const dx = [];
+    const calcDX = () => {
+      if (!smTR) return 0;
+      const pdi = 100 * smPlus / smTR;
+      const mdi = 100 * smMinus / smTR;
+      return (pdi + mdi) ? 100 * Math.abs(pdi-mdi)/(pdi+mdi) : 0;
+    };
+    dx.push(calcDX());
+    for (let i=p; i<tr.length; i++) {
+      smTR = smTR - smTR/p + tr[i];
+      smPlus = smPlus - smPlus/p + plusDM[i];
+      smMinus = smMinus - smMinus/p + minusDM[i];
+      dx.push(calcDX());
+    }
+    if (dx.length < p) return null;
+    let value = dx.slice(0,p).reduce((a,b)=>a+b,0)/p;
+    for (let i=p; i<dx.length; i++) value = (value*(p-1)+dx[i])/p;
+    return value;
+  }
+
+  function atrRegime(d, p = 14, baselineBars = 50) {
+    if (!Array.isArray(d) || d.length < p + baselineBars + 2) return null;
+    const values = [];
+    for (let end = d.length - baselineBars; end < d.length; end++) {
+      const sample = d.slice(0, end + 1);
+      values.push(atr(sample, p));
+    }
+    const valid = values.filter(Number.isFinite);
+    const current = atr(d, p);
+    if (!valid.length || current == null) return null;
+    const baseline = valid.reduce((a,b)=>a+b,0)/valid.length;
+    const ratio = baseline > 0 ? current/baseline : 1;
+    return {
+      value: current,
+      baseline,
+      ratio,
+      label: ratio >= 1.25 ? "HIGH VOLATILITY" : ratio <= 0.75 ? "LOW VOLATILITY" : "NEUTRAL VOLATILITY"
+    };
+  }
+
+  function adxLabel(value) {
+    if (value == null) return "NO DATA";
+    if (value <= 20) return "WEAK TREND";
+    if (value <= 50) return "NEUTRAL";
+    if (value <= 70) return "TREND EXPANDING";
+    return "STRONG TREND";
+  }
+
+  function rsiZone(value) {
+    if (value == null) return "NO DATA";
+    if (value >= 70) return "OVERBOUGHT";
+    if (value <= 30) return "OVERSOLD";
+    return "NEUTRAL ZONE";
   }
 
   function atr(d, p = 14) {
@@ -1359,7 +1438,9 @@ export default async function handler(req, res) {
         ? 5 * 60_000
         : interval === "15min"
           ? 15 * 60_000
-          : 60 * 60_000;
+          : interval === "4h"
+            ? 4 * 60 * 60_000
+            : 60 * 60_000;
 
     return data.filter(candle => {
       const candleStart =
@@ -1503,7 +1584,9 @@ export default async function handler(req, res) {
             CFG.minM15,
 
           "1h":
-            CFG.minH1
+            CFG.minH1,
+          "4h":
+            CFG.minH4
         }[interval];
 
       if (
@@ -1591,7 +1674,10 @@ export default async function handler(req, res) {
               CFG.minM15,
 
             "1h":
-              CFG.minH1
+              CFG.minH1,
+
+            "4h":
+              CFG.minH4
           }[interval];
 
         if (
@@ -1931,7 +2017,8 @@ export default async function handler(req, res) {
     [
       m5,
       m15,
-      h1
+      h1,
+      h4
     ] = await Promise.all([
       series(
         "5min",
@@ -1949,6 +2036,12 @@ export default async function handler(req, res) {
         "1h",
         CFG.h1Size,
         "h1"
+      ),
+
+      series(
+        "4h",
+        CFG.h4Size,
+        "h4"
       )
     ]);
 
@@ -1969,6 +2062,22 @@ export default async function handler(req, res) {
 
     candlePrice =
       m5.at(-1).close;
+
+    /*
+     * ==========================================================
+     * H4 TREND FILTER — EMA 50 / EMA 200
+     * ==========================================================
+     */
+
+    const c4 = h4.map(x => x.close);
+    const h4EMA50 = ema(c4, 50);
+    const h4EMA200 = ema(c4, 200);
+    let h4Direction = "WAIT";
+    if (h4EMA50 != null && h4EMA200 != null) {
+      if (h4EMA50 > h4EMA200) h4Direction = "BULLISH";
+      else if (h4EMA50 < h4EMA200) h4Direction = "BEARISH";
+      else h4Direction = "NEUTRAL";
+    }
 
     /*
      * ==========================================================
@@ -2062,6 +2171,9 @@ export default async function handler(req, res) {
 
     const m15ATR =
       atr(m15);
+
+    const m15ADX = adx(m15, 14);
+    const m15ADXStatus = adxLabel(m15ADX);
 
     const m15Struct =
       structure(
@@ -2319,6 +2431,9 @@ export default async function handler(req, res) {
     const m5ATR =
       atr(m5);
 
+    const m5RSIZone = rsiZone(m5RSI);
+    const m5Volatility = atrRegime(m5, 14, 50);
+
     const m5Struct =
       structure(
         m5,
@@ -2550,11 +2665,13 @@ export default async function handler(req, res) {
 
     const rawBuyAlignment =
       m15BuyConfirmed &&
-      m5BuyTriggered;
+      m5BuyTriggered &&
+      h4Direction === "BULLISH";
 
     const rawSellAlignment =
       m15SellConfirmed &&
-      m5SellTriggered;
+      m5SellTriggered &&
+      h4Direction === "BEARISH";
 
     /*
      * ==========================================================
@@ -3738,10 +3855,10 @@ export default async function handler(req, res) {
       ok: true,
 
       version:
-        "V15-SCALP-CLOSED-CANDLE-CHOCH-PUSH",
+        "V16-SCALPING-H4-EMA-M15-ADX-M5-RSI-ATR",
 
       architecture:
-        "M15+M5-ALIGNED-SIGNAL + H1-HOLD + H1-SR-TARGET + M15/M5-ROADBLOCK + FIXED-ENTRY-SL-TP + CLOSED-CANDLE-CHOCH-PUSH + TIMEFRAME-CACHE + LIVE-PRICE",
+        "H4-EMA50-EMA200-TREND + M15-ADX-STRENGTH + M5-RSI-ZONE + M5-ATR-VOLATILITY + SCALPING-LABEL + EXISTING-TRADE-PLAN-PUSH-CACHE",
 
       symbol:
         CFG.symbol,
@@ -3779,6 +3896,10 @@ export default async function handler(req, res) {
 
           h1:
             CFG.h1CacheTTL /
+            1000,
+
+          h4:
+            CFG.h4CacheTTL /
             1000
         },
 
@@ -3798,6 +3919,9 @@ export default async function handler(req, res) {
 
           h1:
             C.dataSource.h1,
+
+          h4:
+            C.dataSource.h4,
 
           price:
             priceSource
@@ -3823,11 +3947,10 @@ export default async function handler(req, res) {
 
       status,
       signal,
+      signalName: "SCALPING",
 
       signalType:
-        signal === "WAIT"
-          ? "NONE"
-          : setupType,
+        "SCALPING",
 
       setupType,
 
@@ -3892,6 +4015,13 @@ export default async function handler(req, res) {
        * H1
        * ========================================================
        */
+
+      h4: {
+        direction: h4Direction,
+        ema50: h4EMA50,
+        ema200: h4EMA200,
+        trend: h4Direction
+      },
 
       h1: {
         direction:
@@ -3977,6 +4107,9 @@ export default async function handler(req, res) {
         atr:
           m15ATR,
 
+        adx: m15ADX,
+        adxStatus: m15ADXStatus,
+
         bos:
           m15BOS,
 
@@ -4044,6 +4177,9 @@ export default async function handler(req, res) {
 
         atr:
           m5ATR,
+
+        rsiZone: m5RSIZone,
+        volatility: m5Volatility,
 
         bos:
           m5BOS,
@@ -4327,7 +4463,10 @@ export default async function handler(req, res) {
           m15.length,
 
         h1Candles:
-          h1.length
+          h1.length,
+
+        h4Candles:
+          h4.length
       },
 
       timestamp:
