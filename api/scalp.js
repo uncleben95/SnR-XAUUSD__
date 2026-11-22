@@ -1999,6 +1999,7 @@ export default async function handler(req, res) {
   let m5;
   let m15;
   let h1;
+  let h4;
 
   let livePrice;
   let candlePrice;
