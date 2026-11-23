@@ -63,7 +63,7 @@ export default async function handler(req, res) {
 
     minTargetR: 1.0,
 
-    requireValidSRTarget: true,
+    requireValidSRTarget: false,
 
     /*
      * ROADBLOCK
@@ -343,9 +343,10 @@ export default async function handler(req, res) {
   function adxLabel(value) {
     if (value == null) return "NO DATA";
     if (value <= 20) return "WEAK TREND";
-    if (value <= 50) return "NEUTRAL";
-    if (value < 70) return "TREND EXPANDING";
-    return "STRONG TREND";
+    if (value < 40) return "NEUTRAL";
+    if (value < 50) return "TREND EXPANDING";
+    if (value <= 70) return "STRONG TREND";
+    return "VERY STRONG TREND";
   }
 
   function rsiZone(value) {
@@ -2664,10 +2665,10 @@ export default async function handler(req, res) {
      */
 
     // M15 ADX is the trend-strength gate; M5 ATR low-volatility is excluded.
-    // ADX >= 50 qualifies (50-<70 expanding, >=70 strong).
+    // ADX >= 40 qualifies: 40-<50 expanding, 50-70 strong, >70 very strong.
     const m15AdxQualified =
       m15ADX != null &&
-      m15ADX >= 50;
+      m15ADX >= 40;
 
     const m5VolatilityAllowed =
       m5Volatility != null &&
@@ -3158,7 +3159,7 @@ export default async function handler(req, res) {
       reasons = [];
       if (h4Direction === "WAIT" || h4Direction === "NEUTRAL") reasons.push("H4 EMA50/EMA200 direction unavailable or neutral");
       else reasons.push(`H4 trend: ${h4Direction}`);
-      if (!m15AdxQualified) reasons.push(`M15 ADX ${m15ADX == null ? "NO DATA" : m15ADX.toFixed(1)}: need >= 50`);
+      if (!m15AdxQualified) reasons.push(`M15 ADX ${m15ADX == null ? "NO DATA" : m15ADX.toFixed(1)}: need >= 40`);
       if (!m5VolatilityAllowed) reasons.push(`M5 ATR: ${m5Volatility?.label || "NO DATA"}`);
       if (h4Direction === "BULLISH" && !m5BuyTriggered) reasons.push(`M5 RSI ${m5RSI == null ? "NO DATA" : m5RSI.toFixed(1)}: waiting for <= 30`);
       if (h4Direction === "BEARISH" && !m5SellTriggered) reasons.push(`M5 RSI ${m5RSI == null ? "NO DATA" : m5RSI.toFixed(1)}: waiting for >= 70`);
@@ -3404,9 +3405,9 @@ export default async function handler(req, res) {
           );
 
         tp1 =
-          Number(
-            targetSR.toFixed(2)
-          );
+          targetSRValid && targetSR != null
+            ? Number(targetSR.toFixed(2))
+            : Number((entry + risk * 1.5).toFixed(2));
 
         tp2 =
           Number(
@@ -3434,9 +3435,9 @@ export default async function handler(req, res) {
           );
 
         tp1 =
-          Number(
-            targetSR.toFixed(2)
-          );
+          targetSRValid && targetSR != null
+            ? Number(targetSR.toFixed(2))
+            : Number((entry - risk * 1.5).toFixed(2));
 
         tp2 =
           Number(
@@ -3726,6 +3727,27 @@ export default async function handler(req, res) {
     let entryPushSkipped = false;
     let entryPushEvents = [];
 
+    const buyEntryPushKey =
+      "xau_scalping_entry_notification|XAUUSD|BUY";
+    const sellEntryPushKey =
+      "xau_scalping_entry_notification|XAUUSD|SELL";
+
+    // Reset the direction lock only after RSI leaves its trigger zone.
+    // This prevents one push every 5 minutes while RSI stays overbought/oversold.
+    try {
+      if (m5RSI != null && m5RSI > 30) {
+        await redis.del(buyEntryPushKey);
+      }
+      if (m5RSI != null && m5RSI < 70) {
+        await redis.del(sellEntryPushKey);
+      }
+    } catch (resetError) {
+      console.error(
+        "SCALPING push lock reset error:",
+        resetError?.message || resetError
+      );
+    }
+
     const entryPushReady =
       status === "ENTRY" &&
       execution === "READY" &&
@@ -3737,7 +3759,9 @@ export default async function handler(req, res) {
 
     if (entryPushReady) {
       const entryPushKey =
-        `xau_scalping_entry_notification|${signalKey}`;
+        signal === "BUY"
+          ? buyEntryPushKey
+          : sellEntryPushKey;
 
       try {
         const alreadyNotified =
@@ -3916,10 +3940,10 @@ export default async function handler(req, res) {
       ok: true,
 
       version:
-        "V16-SCALPING-H4-EMA-M15-ADX-M5-RSI-ATR",
+        "V17-SCALPING-H4-EMA-M15-ADX40-M5-RSI-ATR-ENTRY-PUSH",
 
       architecture:
-        "H4-EMA50-EMA200-TREND + M15-ADX-STRENGTH + M5-RSI-ZONE + M5-ATR-VOLATILITY + SCALPING-LABEL + EXISTING-TRADE-PLAN-PUSH-CACHE",
+        "H4-EMA50-EMA200-TREND + M15-ADX40-STRENGTH + M5-RSI-TOUCH + M5-ATR-VOLATILITY + SCALPING-ENTRY-PUSH + CHOCH-PUSH + REDIS-DEDUPE",
 
       symbol:
         CFG.symbol,
