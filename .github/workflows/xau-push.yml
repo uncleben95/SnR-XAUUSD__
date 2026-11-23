@@ -78,4 +78,11 @@ jobs:
             exit 1
           fi
 
-          echo "API request completed successfully."
+          # Validate JSON response
+          if ! jq -e '.ok == true' "$RESPONSE_FILE" >/dev/null 2>&1; then
+            echo "::error::Scalp Engine returned ok:false or invalid JSON."
+            exit 1
+          fi
+
+          echo "Scalp Engine completed successfully."
+          echo "JSON validation passed."
