@@ -3715,6 +3715,109 @@ export default async function handler(req, res) {
 
     /*
      * ==========================================================
+     * SCALPING ENTRY PUSH
+     * ==========================================================
+     * Send one push when the FINAL trade plan is valid.
+     * This is separate from CHOCH alerts and is deduplicated
+     * by the M5 signal candle so the 5-minute cron cannot spam.
+     */
+
+    let entryPushSent = false;
+    let entryPushSkipped = false;
+    let entryPushEvents = [];
+
+    const entryPushReady =
+      status === "ENTRY" &&
+      execution === "READY" &&
+      signal !== "WAIT" &&
+      signalKey &&
+      entry != null &&
+      stopLoss != null &&
+      tp1 != null;
+
+    if (entryPushReady) {
+      const entryPushKey =
+        `xau_scalping_entry_notification|${signalKey}`;
+
+      try {
+        const alreadyNotified =
+          await redis.get(entryPushKey);
+
+        if (alreadyNotified) {
+          entryPushSkipped = true;
+          entryPushEvents.push({
+            signal,
+            signalKey,
+            status: "ALREADY_NOTIFIED"
+          });
+        } else {
+          const isBuy = signal === "BUY";
+          const emoji = isBuy ? "🟢" : "🔴";
+          const title = `${emoji} XAU/USD SCALPING ${signal}`;
+          const body = [
+            `Entry: ${Number(entry).toFixed(2)}`,
+            `SL: ${Number(stopLoss).toFixed(2)}`,
+            `TP1: ${Number(tp1).toFixed(2)}`,
+            tp2 != null ? `TP2: ${Number(tp2).toFixed(2)}` : null,
+            tp3 != null ? `TP3: ${Number(tp3).toFixed(2)}` : null,
+            `H4: ${h4Direction}`,
+            `M15 ADX: ${m15ADX == null ? "N/A" : Number(m15ADX).toFixed(1)} (${m15ADXStatus})`,
+            `M5 RSI: ${m5RSI == null ? "N/A" : Number(m5RSI).toFixed(1)}`,
+            `M5 ATR: ${m5Volatility?.label || "N/A"}`
+          ].filter(Boolean).join(" • ");
+
+          const delivery = await sendPushToAll({
+            title,
+            body,
+            tag: entryPushKey,
+            url: "/"
+          });
+
+          const sent = Number(delivery?.sent || 0) > 0;
+
+          if (sent) {
+            await redis.set(entryPushKey, "1", {
+              ex: CFG.redisCacheTTL
+            });
+            entryPushSent = true;
+            entryPushEvents.push({
+              signal,
+              signalKey,
+              status: "SENT",
+              sent: Number(delivery?.sent || 0),
+              removed: Number(delivery?.removed || 0),
+              total: Number(delivery?.total || 0)
+            });
+          } else {
+            entryPushEvents.push({
+              signal,
+              signalKey,
+              status: "NO_SUBSCRIBERS_OR_NOT_SENT",
+              sent: Number(delivery?.sent || 0),
+              removed: Number(delivery?.removed || 0),
+              total: Number(delivery?.total || 0)
+            });
+          }
+        }
+      } catch (pushError) {
+        console.error(
+          "SCALPING entry push error:",
+          pushError?.message || pushError
+        );
+        entryPushEvents.push({
+          signal,
+          signalKey,
+          status: "ERROR",
+          error: pushError?.message || String(pushError)
+        });
+      }
+    }
+
+    pushSent = pushSent || entryPushSent;
+    pushSkipped = pushSkipped || entryPushSkipped;
+
+    /*
+     * ==========================================================
      * DATA SOURCE STATUS
      * ==========================================================
      */
@@ -3926,10 +4029,10 @@ export default async function handler(req, res) {
 
       push: {
         mode:
-          "NEW_CHOCH_ONLY",
+          "CHOCH_AND_SCALPING_ENTRY",
 
         attempted:
-          chochPushEvents.length > 0,
+          chochPushEvents.length > 0 || entryPushEvents.length > 0,
 
         sent:
           pushSent,
@@ -3938,7 +4041,14 @@ export default async function handler(req, res) {
           pushSkipped,
 
         events:
-          chochPushEvents
+          chochPushEvents,
+
+        scalpingEntry: {
+          attempted: entryPushReady,
+          sent: entryPushSent,
+          skipped: entryPushSkipped,
+          events: entryPushEvents
+        }
       },
 
       choch: {
