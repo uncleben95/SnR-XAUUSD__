@@ -344,7 +344,7 @@ export default async function handler(req, res) {
     if (value == null) return "NO DATA";
     if (value <= 20) return "WEAK TREND";
     if (value <= 50) return "NEUTRAL";
-    if (value <= 70) return "TREND EXPANDING";
+    if (value < 70) return "TREND EXPANDING";
     return "STRONG TREND";
   }
 
@@ -2641,15 +2641,14 @@ export default async function handler(req, res) {
         100
       );
 
+    // SCALPING RSI TOUCH ENTRY (M5): BUY at/below 30, SELL at/above 70.
     const m5BuyTriggered =
-      m5Buy >= 50 &&
-      m5Buy >=
-        m5Sell + 8;
+      m5RSI != null &&
+      m5RSI <= 30;
 
     const m5SellTriggered =
-      m5Sell >= 50 &&
-      m5Sell >=
-        m5Buy + 8;
+      m5RSI != null &&
+      m5RSI >= 70;
 
     const m5Trigger =
       m5BuyTriggered
@@ -2664,19 +2663,31 @@ export default async function handler(req, res) {
      * ==========================================================
      */
 
+    // M15 ADX is the trend-strength gate; M5 ATR low-volatility is excluded.
+    // ADX >= 50 qualifies (50-<70 expanding, >=70 strong).
+    const m15AdxQualified =
+      m15ADX != null &&
+      m15ADX >= 50;
+
+    const m5VolatilityAllowed =
+      m5Volatility != null &&
+      m5Volatility.label !== "LOW VOLATILITY";
+
     const rawBuyAlignment =
-      m15BuyConfirmed &&
+      h4Direction === "BULLISH" &&
+      m15AdxQualified &&
       m5BuyTriggered &&
-      h4Direction === "BULLISH";
+      m5VolatilityAllowed;
 
     const rawSellAlignment =
-      m15SellConfirmed &&
+      h4Direction === "BEARISH" &&
+      m15AdxQualified &&
       m5SellTriggered &&
-      h4Direction === "BEARISH";
+      m5VolatilityAllowed;
 
     /*
      * ==========================================================
-     * H1 S/R FILTER
+     * H1 S/R CONTEXT (INFORMATION ONLY; NOT AN ENTRY FILTER)
      * ==========================================================
      */
 
@@ -3014,8 +3025,7 @@ export default async function handler(req, res) {
      */
 
     if (
-      rawBuyAlignment &&
-      srBuyAllowed
+      rawBuyAlignment
     ) {
       signal =
         "BUY";
@@ -3038,9 +3048,10 @@ export default async function handler(req, res) {
         );
 
       reasons = [
-        "M15 BUY confirmed",
-        "M5 BUY trigger confirmed",
-        "M15 + M5 aligned",
+        "H4 EMA50 > EMA200: BULLISH",
+        `M15 ADX ${m15ADX.toFixed(1)}: ${m15ADXStatus}`,
+        `M5 RSI ${m5RSI.toFixed(1)}: OVERSOLD TOUCH`,
+        `M5 ATR: ${m5Volatility.label}`,
         `SETUP: ${buySetupType}`,
         `H1 S/R: ${h1SupportResistance.position}`,
 
@@ -3072,8 +3083,7 @@ export default async function handler(req, res) {
      */
 
     else if (
-      rawSellAlignment &&
-      srSellAllowed
+      rawSellAlignment
     ) {
       signal =
         "SELL";
@@ -3096,9 +3106,10 @@ export default async function handler(req, res) {
         );
 
       reasons = [
-        "M15 SELL confirmed",
-        "M5 SELL trigger confirmed",
-        "M15 + M5 aligned",
+        "H4 EMA50 < EMA200: BEARISH",
+        `M15 ADX ${m15ADX.toFixed(1)}: ${m15ADXStatus}`,
+        `M5 RSI ${m5RSI.toFixed(1)}: OVERBOUGHT TOUCH`,
+        `M5 ATR: ${m5Volatility.label}`,
         `SETUP: ${sellSetupType}`,
         `H1 S/R: ${h1SupportResistance.position}`,
 
@@ -3143,69 +3154,15 @@ export default async function handler(req, res) {
       ];
     }
 
-    /*
-     * SELL blocked H1 S/R
-     */
-
-    else if (
-      rawSellAlignment &&
-      !srSellAllowed
-    ) {
-      reasons = [
-        "M15 SELL confirmed",
-        "M5 SELL trigger confirmed",
-        "SELL BLOCKED",
-        "Too close to H1 support",
-
-        `Support ${
-          h1SupportResistance
-            .support?.price ??
-          "N/A"
-        }`
-      ];
-    }
-
-    /*
-     * Conflict
-     */
-
-    else if (
-      m15BuyConfirmed &&
-      m5SellTriggered
-    ) {
-      reasons = [
-        "M15 BUY vs M5 SELL — conflicting"
-      ];
-    }
-
-    else if (
-      m15SellConfirmed &&
-      m5BuyTriggered
-    ) {
-      reasons = [
-        "M15 SELL vs M5 BUY — conflicting"
-      ];
-    }
-
-    /*
-     * Partial
-     */
-
-    else if (
-      m15BuyConfirmed ||
-      m15SellConfirmed ||
-      m5BuyTriggered ||
-      m5SellTriggered
-    ) {
-      reasons = [
-        "Waiting for timeframe alignment"
-      ];
-    }
-
     else {
-      reasons = [
-        "M15 + M5 not aligned"
-      ];
+      reasons = [];
+      if (h4Direction === "WAIT" || h4Direction === "NEUTRAL") reasons.push("H4 EMA50/EMA200 direction unavailable or neutral");
+      else reasons.push(`H4 trend: ${h4Direction}`);
+      if (!m15AdxQualified) reasons.push(`M15 ADX ${m15ADX == null ? "NO DATA" : m15ADX.toFixed(1)}: need >= 50`);
+      if (!m5VolatilityAllowed) reasons.push(`M5 ATR: ${m5Volatility?.label || "NO DATA"}`);
+      if (h4Direction === "BULLISH" && !m5BuyTriggered) reasons.push(`M5 RSI ${m5RSI == null ? "NO DATA" : m5RSI.toFixed(1)}: waiting for <= 30`);
+      if (h4Direction === "BEARISH" && !m5SellTriggered) reasons.push(`M5 RSI ${m5RSI == null ? "NO DATA" : m5RSI.toFixed(1)}: waiting for >= 70`);
+      if (!reasons.length) reasons.push("SCALPING conditions not aligned");
     }
 
     /*
